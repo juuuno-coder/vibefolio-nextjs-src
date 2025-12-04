@@ -1,7 +1,7 @@
 // src/components/Footer.tsx
 
 "use client"; // 🚨 FontAwesomeIcon, AppTooltip 등 클라이언트 상호작용 컴포넌트 사용을 위해 지정
-
+import React from "react";
 import { Separator } from "@/components/ui/separator"; // 🚨 Alias 경로 수정
 import {
   Tooltip,
