@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       // 위시리스트에 추가
       const { error } = await supabaseAdmin
         .from('Wishlist')
-        .insert([{ user_id, project_id }]);
+        .insert([{ user_id, project_id }] as any);
 
       if (error) {
         console.error('위시리스트 추가 실패:', error);

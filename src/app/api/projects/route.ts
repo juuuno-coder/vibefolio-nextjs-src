@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
           rendering_type,
           custom_data,
         },
-      ])
+      ] as any)
       .select(`
         *,
         users (

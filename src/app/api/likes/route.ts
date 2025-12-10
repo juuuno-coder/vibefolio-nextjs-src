@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       // 좋아요 추가
       const { error } = await supabaseAdmin
         .from('Like')
-        .insert([{ user_id, project_id }]);
+        .insert([{ user_id, project_id }] as any);
 
       if (error) {
         console.error('좋아요 추가 실패:', error);

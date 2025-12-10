@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
           project_id,
           content,
         },
-      ])
+      ] as any)
       .select(`
         *,
         users (
@@ -124,7 +124,7 @@ export async function DELETE(request: NextRequest) {
       .from('Comment')
       .select('user_id')
       .eq('comment_id', commentId)
-      .single();
+      .single() as { data: any, error: any }; // 타입 단언 추가
 
     if (!comment) {
       return NextResponse.json(
@@ -144,7 +144,7 @@ export async function DELETE(request: NextRequest) {
     // 소프트 삭제
     const { error } = await supabaseAdmin
       .from('Comment')
-      .update({ is_deleted: true })
+      .update({ is_deleted: true } as any)
       .eq('comment_id', commentId);
 
     if (error) {
