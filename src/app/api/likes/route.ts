@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     if (existingLike) {
       // 좋아요 제거
-      const { error } = await supabaseAdmin
+      const { error } = await (supabaseAdmin as any)
         .from('Like')
         .delete()
         .eq('user_id', user_id)
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ liked: false, message: '좋아요가 취소되었습니다.' });
     } else {
       // 좋아요 추가
-      const { error } = await supabaseAdmin
+      const { error } = await (supabaseAdmin as any)
         .from('Like')
         .insert([{ user_id, project_id }] as any);
 

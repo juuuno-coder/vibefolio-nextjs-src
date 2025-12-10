@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     if (existingWishlist) {
       // 위시리스트에서 제거
-      const { error } = await supabaseAdmin
+      const { error } = await (supabaseAdmin as any)
         .from('Wishlist')
         .delete()
         .eq('user_id', user_id)
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // 위시리스트에 추가
-      const { error } = await supabaseAdmin
+      const { error } = await (supabaseAdmin as any)
         .from('Wishlist')
         .insert([{ user_id, project_id }] as any);
 

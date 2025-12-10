@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await (supabaseAdmin as any)
       .from('Comment')
       .insert([
         {
@@ -142,9 +142,9 @@ export async function DELETE(request: NextRequest) {
     }
 
     // 소프트 삭제
-    const { error } = await supabaseAdmin
+    const { error } = await (supabaseAdmin as any)
       .from('Comment')
-      .update({ is_deleted: true } as any)
+      .update({ is_deleted: true })
       .eq('comment_id', commentId);
 
     if (error) {
