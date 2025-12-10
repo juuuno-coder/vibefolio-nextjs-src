@@ -55,7 +55,7 @@ export function Footer() {
       {/* 텍스트 묶음 영역 */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
-          <p className="text-xs font-semibold">(주)스터닝</p>
+          <p className="text-xs font-semibold">(주)디어스</p>
           <p className="text-xs">사업자 정보</p>
         </div>
         {/* h-3! 대신 h-3으로 수정하거나, 높이 유틸리티 클래스가 정의되어 있어야 합니다. */}

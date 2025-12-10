@@ -9,6 +9,7 @@ import { MainBanner } from "@/components/MainBanner";
 import { ImageCard } from "@/components/ImageCard"; // ImageCard 사용
 import { StickyMenu } from "@/components/StickyMenu"; // 🚨 StickyMenu 임포트
 import { ProjectDetailModal } from "@/components/ProjectDetailModal"; // 🚨 ProjectDetailModal 임포트
+import { supabase } from "@/lib/supabase/client";
 
 // 🚨 임시 ImageCard Props 타입 정의 (StickyMenu와의 연결을 위해 value를 추가)
 interface ImageDialogProps {
@@ -94,7 +95,7 @@ const DUMMY_IMAGES: ImageDialogProps[] = [
   },
 
   // 나머지 데이터는 'video' 카테고리에 할당
-  ...Array(9)
+  ...Array(12) // 15개로 증가 (3 + 12)
     .fill(0)
     .map((_, i) => ({
       id: String(i + 4),
@@ -126,6 +127,24 @@ export default function Home() {
   const [selectedProject, setSelectedProject] = useState<ImageDialogProps | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [banners, setBanners] = useState<number[]>([1, 2, 3, 4, 5, 6]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Auth 상태 확인
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // API에서 프로젝트 불러오기
   useEffect(() => {
@@ -229,7 +248,7 @@ export default function Home() {
 
         {/* 2. Sticky Menu - TopHeader + Header 아래 고정 */}
         <div className="w-full bg-white border-b border-gray-200 sticky top-[124px] md:top-[124px] z-30">
-          <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-[88%] mx-auto px-6">
             <StickyMenu
               props={currentCategory}
               onSetCategory={handleSetCategory}
@@ -238,7 +257,7 @@ export default function Home() {
         </div>
 
         {/* 3. 프로젝트 그리드 - Masonry 레이아웃 */}
-        <section className="w-full max-w-7xl px-6 mt-8">
+        <section className="w-full max-w-[88%] px-6 mt-8">
           <div className="masonry-grid">
             {filteredImages.map((image, index) => (
               <ImageCard 
@@ -258,34 +277,36 @@ export default function Home() {
         />
 
         {/* 5. 회원가입 및 로그인 유도 영역 */}
-        <div className="w-full max-w-7xl px-6 py-20">
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-            <h2 className="text-2xl font-bold text-primary mb-4">
-              당신의 작품을 공유하세요
-            </h2>
-            <p className="text-secondary mb-8">
-              바이브폴리오에서 포트폴리오를 만들고 전 세계와 연결되세요
-            </p>
-            <div className="flex items-center justify-center gap-4">
-              <Link href="/signup">
-                <Button
-                  variant={"default"}
-                  className="btn-primary"
-                >
-                  회원가입
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button
-                  variant={"outline"}
-                  className="btn-secondary"
-                >
-                  로그인
-                </Button>
-              </Link>
+        {!isLoggedIn && (
+          <div className="w-full max-w-[88%] px-6 py-20">
+            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+              <h2 className="text-2xl font-bold text-primary mb-4">
+                당신의 작품을 공유하세요
+              </h2>
+              <p className="text-secondary mb-8">
+                바이브폴리오에서 포트폴리오를 만들고 전 세계와 연결되세요
+              </p>
+              <div className="flex items-center justify-center gap-4">
+                <Link href="/signup">
+                  <Button
+                    variant={"default"}
+                    className="btn-primary"
+                  >
+                    회원가입
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button
+                    variant={"outline"}
+                    className="btn-secondary"
+                  >
+                    로그인
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </main>
 
       {/* 플로팅 프로젝트 등록 버튼 - 비핸스 스타일 */}
