@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('프로젝트 생성 실패:', error);
       return NextResponse.json(
-        { error: '프로젝트 생성에 실패했습니다.' },
+        { error: `프로젝트 생성 실패 DB Error: ${error.message || JSON.stringify(error)}` },
         { status: 500 }
       );
     }
