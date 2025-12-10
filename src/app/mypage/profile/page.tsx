@@ -27,8 +27,13 @@ interface UserProfile {
   };
 }
 
+import { supabase } from "@/lib/supabase/client";
+
+// ... (interface 유지)
+
 export default function ProfileSettingsPage() {
   const [profile, setProfile] = useState<UserProfile>({
+    // ... 초기값 유지
     username: "",
     email: "",
     phone: "",
@@ -46,17 +51,17 @@ export default function ProfileSettingsPage() {
   // 프로필 불러오기
   useEffect(() => {
     const loadProfile = async () => {
-      const storedUserId = localStorage.getItem('userId');
-      if (!storedUserId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
         alert('로그인이 필요합니다.');
         window.location.href = '/login';
         return;
       }
 
-      setUserId(storedUserId);
+      setUserId(user.id);
 
       try {
-        const response = await fetch(`/api/users/${storedUserId}`);
+        const response = await fetch(`/api/users/${user.id}`);
         const data = await response.json();
 
         if (response.ok && data.user) {
@@ -81,6 +86,7 @@ export default function ProfileSettingsPage() {
 
     loadProfile();
   }, []);
+
 
   // 프로필 저장
   const handleSave = async () => {
@@ -152,7 +158,7 @@ export default function ProfileSettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-gray-50 py-12 pt-24">
       <div className="max-w-4xl mx-auto px-6">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">

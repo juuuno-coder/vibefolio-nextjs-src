@@ -34,29 +34,92 @@ interface Project {
   tags?: string[];
 }
 
+import { supabase } from "@/lib/supabase/client";
+
+// ... (interface는 그대로 사용하거나 필요시 수정, 여기서는 매핑 로직으로 해결)
+
 export default function BookmarkedProjectsPage() {
   const router = useRouter();
   const [bookmarkedProjects, setBookmarkedProjects] = useState<Project[]>([]);
   const [totalBookmarks, setTotalBookmarks] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 북마크한 프로젝트 로드
-    const loadBookmarkedProjects = () => {
-      const projects = getBookmarkedProjects();
-      const count = getTotalBookmarksCount();
-      setBookmarkedProjects(projects);
-      setTotalBookmarks(count);
+    const fetchBookmarkedProjects = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/login');
+          return;
+        }
+
+        const { data, count, error } = await supabase
+          .from('Wishlist')
+          .select(`
+            created_at,
+            Project (
+              project_id,
+              title,
+              content_text,
+              thumbnail_url,
+              views,
+              likes,
+              created_at,
+              category_id,
+              users (
+                nickname,
+                profile_image_url
+              )
+            )
+          `, { count: 'exact' })
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // 데이터 매핑
+        const projects = data?.map((item: any) => {
+          const p = item.Project;
+          return {
+            id: p.project_id,
+            title: p.title,
+            urls: {
+              full: p.thumbnail_url || "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=2000",
+              regular: p.thumbnail_url || "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=800"
+            },
+            user: {
+              username: p.users?.nickname || "Unknown",
+              profile_image: {
+                small: p.users?.profile_image_url || "https://images.unsplash.com/placeholder-avatars/extra-large.jpg?auto=format&fit=crop&w=32&h=32&q=60",
+                large: p.users?.profile_image_url || "https://images.unsplash.com/placeholder-avatars/extra-large.jpg?auto=format&fit=crop&w=150&h=150&q=60"
+              }
+            },
+            likes: p.likes || 0,
+            views: p.views || 0,
+            description: p.content_text,
+            alt_description: p.title,
+            created_at: p.created_at,
+            width: 800, // 임시 값
+            height: 600, // 임시 값
+            category: "general", // 카테고리 매핑 필요 시 추가 로직
+            tags: [] 
+          };
+        }) || [];
+
+        setBookmarkedProjects(projects);
+        setTotalBookmarks(count || 0);
+      } catch (error) {
+        console.error("북마크 목록 조회 실패:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    loadBookmarkedProjects();
-
-    // 북마크 변경 감지
-    const interval = setInterval(loadBookmarkedProjects, 1000);
-    return () => clearInterval(interval);
-  }, []);
+    fetchBookmarkedProjects();
+  }, [router]);
 
   return (
-    <div className="w-full min-h-screen bg-gray-50">
+    <div className="w-full min-h-screen bg-gray-50 pt-24">
       {/* 헤더 */}
       <div className="w-full bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-8">
@@ -83,7 +146,11 @@ export default function BookmarkedProjectsPage() {
 
       {/* 프로젝트 그리드 */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {bookmarkedProjects.length > 0 ? (
+        {loading ? (
+             <div className="flex justify-center py-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+             </div>
+        ) : bookmarkedProjects.length > 0 ? (
           <div className="masonry-grid">
             {bookmarkedProjects.map((project) => (
               <ImageCard key={project.id} props={project} />

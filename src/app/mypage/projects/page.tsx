@@ -34,48 +34,93 @@ interface Project {
   tags?: string[];
 }
 
+import { supabase } from "@/lib/supabase/client";
+
 export default function MyProjectsPage() {
   const router = useRouter();
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [totalProjects, setTotalProjects] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 내 프로젝트 로드
-    const loadMyProjects = () => {
+    const fetchMyProjects = async () => {
       try {
-        const savedProjects = localStorage.getItem("projects");
-        if (savedProjects) {
-          const projects = JSON.parse(savedProjects);
-          setMyProjects(projects);
-          setTotalProjects(projects.length);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/login');
+          return;
         }
+
+        const { data, count, error } = await supabase
+          .from('Project')
+          .select(`
+            *,
+            users (
+              nickname,
+              profile_image_url
+            )
+          `, { count: 'exact' })
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // 데이터 매핑
+        const projects = data?.map((p: any) => ({
+          id: p.project_id,
+          title: p.title,
+          urls: {
+            full: p.thumbnail_url || "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=2000",
+            regular: p.thumbnail_url || "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=800"
+          },
+          user: {
+            username: p.users?.nickname || "Unknown",
+            profile_image: {
+              small: p.users?.profile_image_url || "https://images.unsplash.com/placeholder-avatars/extra-large.jpg?auto=format&fit=crop&w=32&h=32&q=60",
+              large: p.users?.profile_image_url || "https://images.unsplash.com/placeholder-avatars/extra-large.jpg?auto=format&fit=crop&w=150&h=150&q=60"
+            }
+          },
+          likes: p.likes || 0,
+          views: p.views || 0,
+          description: p.content_text,
+          alt_description: p.title,
+          created_at: p.created_at,
+          width: 800,
+          height: 600,
+          category: "general",
+          tags: []
+        })) || [];
+
+        setMyProjects(projects);
+        setTotalProjects(count || 0);
       } catch (error) {
-        console.error("프로젝트 로딩 실패:", error);
+        console.error("내 프로젝트 로딩 실패:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadMyProjects();
+    fetchMyProjects();
+  }, [router]);
 
-    // 프로젝트 변경 감지
-    const interval = setInterval(loadMyProjects, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleDelete = (projectId: string) => {
+  const handleDelete = async (projectId: string) => {
     if (!confirm("정말로 이 프로젝트를 삭제하시겠습니까?")) {
       return;
     }
 
     try {
-      const savedProjects = localStorage.getItem("projects");
-      if (savedProjects) {
-        const projects = JSON.parse(savedProjects);
-        const filteredProjects = projects.filter((p: Project) => p.id !== projectId);
-        localStorage.setItem("projects", JSON.stringify(filteredProjects));
-        setMyProjects(filteredProjects);
-        setTotalProjects(filteredProjects.length);
-        alert("프로젝트가 삭제되었습니다.");
-      }
+      // API를 통해 삭제 (Supabase 직접 호출도 가능하지만 로직 일관성 위해 API 사용)
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('삭제 실패');
+
+      // 로컬 상태 업데이트
+      const filteredProjects = myProjects.filter((p) => p.id !== projectId);
+      setMyProjects(filteredProjects);
+      setTotalProjects(filteredProjects.length);
+      alert("프로젝트가 삭제되었습니다.");
     } catch (error) {
       console.error("프로젝트 삭제 실패:", error);
       alert("프로젝트 삭제에 실패했습니다.");
@@ -83,7 +128,7 @@ export default function MyProjectsPage() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-gray-50">
+    <div className="w-full min-h-screen bg-gray-50 pt-24">
       {/* 헤더 */}
       <div className="w-full bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-8">
@@ -121,7 +166,11 @@ export default function MyProjectsPage() {
 
       {/* 프로젝트 목록 */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {myProjects.length > 0 ? (
+        {loading ? (
+             <div className="flex justify-center py-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+             </div>
+        ) : myProjects.length > 0 ? (
           <div className="space-y-6">
             {myProjects.map((project) => (
               <div
