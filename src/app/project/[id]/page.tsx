@@ -112,14 +112,43 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
     loadProject();
   }, [params.id]);
 
-  const handleLike = () => {
-    // 좋아요 토글 (로컬 스토리지에 저장)
-    const newLikedState = toggleLike(params.id);
-    setIsLiked(newLikedState);
+  const handleLike = async () => {
+    const userId = localStorage.getItem('userId');
     
-    // 좋아요 수 업데이트
-    const newCount = getProjectLikeCount(params.id);
-    setLikeCount(newCount);
+    if (!userId) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/likes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: parseInt(userId),
+          project_id: parseInt(params.id),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsLiked(data.liked);
+        // 좋아요 수 다시 조회
+        const countResponse = await fetch(`/api/likes?projectId=${params.id}`);
+        const countData = await countResponse.json();
+        if (countResponse.ok) {
+          setLikeCount(countData.count);
+        }
+      } else {
+        alert(data.error || '좋아요 처리에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('좋아요 오류:', error);
+      alert('좋아요 처리 중 오류가 발생했습니다.');
+    }
   };
 
   const handleBookmark = () => {
@@ -128,35 +157,81 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
     setIsBookmarked(newBookmarkedState);
   };
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (!newComment.trim()) {
       alert("댓글 내용을 입력해주세요.");
       return;
     }
 
-    try {
-      addComment(params.id, newComment);
-      const updatedComments = getProjectComments(params.id);
-      setComments(updatedComments);
-      setNewComment("");
-    } catch (error) {
-      console.error("댓글 추가 실패:", error);
-      alert("댓글 추가에 실패했습니다.");
-    }
-  };
-
-  const handleDeleteComment = (commentId: string) => {
-    if (!confirm("댓글을 삭제하시겠습니까?")) {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      alert('로그인이 필요합니다.');
       return;
     }
 
     try {
-      deleteComment(commentId);
-      const updatedComments = getProjectComments(params.id);
-      setComments(updatedComments);
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: parseInt(userId),
+          project_id: parseInt(params.id),
+          content: newComment,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // 댓글 목록 다시 조회
+        const commentsResponse = await fetch(`/api/comments?projectId=${params.id}`);
+        const commentsData = await commentsResponse.json();
+        if (commentsResponse.ok) {
+          setComments(commentsData.comments);
+        }
+        setNewComment("");
+      } else {
+        alert(data.error || '댓글 추가에 실패했습니다.');
+      }
     } catch (error) {
-      console.error("댓글 삭제 실패:", error);
-      alert("댓글 삭제에 실패했습니다.");
+      console.error('댓글 추가 실패:', error);
+      alert('댓글 추가에 실패했습니다.');
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm("댓글을 삭제하시겠습니까?")) {
+      return;
+    }
+
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/comments?commentId=${commentId}&userId=${userId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // 댓글 목록 다시 조회
+        const commentsResponse = await fetch(`/api/comments?projectId=${params.id}`);
+        const commentsData = await commentsResponse.json();
+        if (commentsResponse.ok) {
+          setComments(commentsData.comments);
+        }
+      } else {
+        alert(data.error || '댓글 삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('댓글 삭제 실패:', error);
+      alert('댓글 삭제에 실패했습니다.');
     }
   };
 

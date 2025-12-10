@@ -2,7 +2,7 @@
 // 좋아요 추가/제거 API
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 이미 좋아요가 있는지 확인
-    const { data: existingLike } = await supabase
+    const { data: existingLike } = await supabaseAdmin
       .from('Like')
       .select()
       .eq('user_id', user_id)
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     if (existingLike) {
       // 좋아요 제거
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('Like')
         .delete()
         .eq('user_id', user_id)
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ liked: false, message: '좋아요가 취소되었습니다.' });
     } else {
       // 좋아요 추가
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('Like')
         .insert([{ user_id, project_id }]);
 
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
 
     if (userId && projectId) {
       // 특정 프로젝트에 대한 좋아요 여부 확인
-      const { data } = await supabase
+      const { data } = await supabaseAdmin
         .from('Like')
         .select()
         .eq('user_id', userId)
@@ -84,13 +84,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ liked: !!data });
     } else if (userId) {
       // 사용자가 좋아요한 모든 프로젝트 조회
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('Like')
         .select(`
           *,
-          Project (
+          Project!inner (
             *,
-            User (
+            User!Project_user_id_fkey (
               user_id,
               nickname,
               profile_image_url
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ likes: data });
     } else if (projectId) {
       // 프로젝트의 좋아요 수 조회
-      const { count, error } = await supabase
+      const { count, error } = await supabaseAdmin
         .from('Like')
         .select('*', { count: 'exact', head: true })
         .eq('project_id', projectId);

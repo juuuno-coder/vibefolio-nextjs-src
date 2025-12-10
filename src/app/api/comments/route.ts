@@ -1,9 +1,10 @@
 // src/app/api/comments/route.ts
-// 댓글 조회 및 작성 API
+// 댓글 CRUD API
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/client';
 
+// 댓글 조회
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -16,11 +17,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('Comment')
       .select(`
         *,
-        User (
+        User!Comment_user_id_fkey (
           user_id,
           nickname,
           profile_image_url
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
       `)
       .eq('project_id', projectId)
       .eq('is_deleted', false)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('댓글 조회 실패:', error);
@@ -48,10 +49,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// 댓글 작성
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { user_id, project_id, content, parent_comment_id } = body;
+    const { user_id, project_id, content } = body;
 
     if (!user_id || !project_id || !content) {
       return NextResponse.json(
@@ -60,19 +62,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('Comment')
       .insert([
         {
           user_id,
           project_id,
           content,
-          parent_comment_id: parent_comment_id || null,
         },
       ])
       .select(`
         *,
-        User (
+        User!Comment_user_id_fkey (
           user_id,
           nickname,
           profile_image_url
@@ -88,7 +89,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ comment: data }, { status: 201 });
+    return NextResponse.json(
+      {
+        message: '댓글이 작성되었습니다.',
+        comment: data,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('서버 오류:', error);
     return NextResponse.json(
@@ -98,20 +105,43 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// 댓글 삭제 (소프트 삭제)
 export async function DELETE(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const commentId = searchParams.get('commentId');
+    const userId = searchParams.get('userId');
 
-    if (!commentId) {
+    if (!commentId || !userId) {
       return NextResponse.json(
-        { error: 'commentId가 필요합니다.' },
+        { error: 'commentId와 userId가 필요합니다.' },
         { status: 400 }
       );
     }
 
-    // 소프트 삭제 (is_deleted = true)
-    const { error } = await supabase
+    // 댓글 소유자 확인
+    const { data: comment } = await supabaseAdmin
+      .from('Comment')
+      .select('user_id')
+      .eq('comment_id', commentId)
+      .single();
+
+    if (!comment) {
+      return NextResponse.json(
+        { error: '댓글을 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    if (comment.user_id.toString() !== userId) {
+      return NextResponse.json(
+        { error: '댓글을 삭제할 권한이 없습니다.' },
+        { status: 403 }
+      );
+    }
+
+    // 소프트 삭제
+    const { error } = await supabaseAdmin
       .from('Comment')
       .update({ is_deleted: true })
       .eq('comment_id', commentId);
