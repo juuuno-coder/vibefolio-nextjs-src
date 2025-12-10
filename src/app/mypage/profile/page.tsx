@@ -40,19 +40,84 @@ export default function ProfileSettingsPage() {
     socialLinks: {},
   });
   const [newSkill, setNewSkill] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // 로컬 스토리지에서 프로필 불러오기
+  // 프로필 불러오기
   useEffect(() => {
-    const savedProfile = localStorage.getItem("userProfile");
-    if (savedProfile) {
-      setProfile(JSON.parse(savedProfile));
-    }
+    const loadProfile = async () => {
+      const storedUserId = localStorage.getItem('userId');
+      if (!storedUserId) {
+        alert('로그인이 필요합니다.');
+        window.location.href = '/login';
+        return;
+      }
+
+      setUserId(storedUserId);
+
+      try {
+        const response = await fetch(`/api/users/${storedUserId}`);
+        const data = await response.json();
+
+        if (response.ok && data.user) {
+          setProfile({
+            username: data.user.nickname || '',
+            email: data.user.email || '',
+            phone: '',
+            bio: data.user.bio || '',
+            location: '',
+            website: '',
+            profileImage: data.user.profile_image_url || '/globe.svg',
+            skills: [],
+            socialLinks: {},
+          });
+        }
+      } catch (error) {
+        console.error('프로필 로딩 실패:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfile();
   }, []);
 
   // 프로필 저장
-  const handleSave = () => {
-    localStorage.setItem("userProfile", JSON.stringify(profile));
-    alert("프로필이 저장되었습니다!");
+  const handleSave = async () => {
+    if (!userId) return;
+
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nickname: profile.username,
+          bio: profile.bio,
+          profile_image_url: profile.profileImage,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // localStorage도 업데이트
+        localStorage.setItem('userProfile', JSON.stringify({
+          user_id: userId,
+          email: data.user.email,
+          nickname: data.user.nickname,
+          profile_image_url: data.user.profile_image_url,
+          role: data.user.role,
+        }));
+        alert('프로필이 저장되었습니다!');
+      } else {
+        alert(data.error || '프로필 저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('프로필 저장 실패:', error);
+      alert('프로필 저장 중 오류가 발생했습니다.');
+    }
   };
 
   // 프로필 이미지 업로드
