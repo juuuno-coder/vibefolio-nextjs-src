@@ -40,7 +40,7 @@ export default function LoginPage() {
         .from('users') // 'User' -> 'users'
         .select('*')
         .eq('id', authData.user.id) // email 대신 id(UUID)로 조회 권장
-        .single();
+        .single() as { data: any, error: any };
 
       if (userError) {
         console.error("사용자 프로필 조회 실패:", userError);
