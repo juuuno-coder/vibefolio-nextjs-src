@@ -11,7 +11,7 @@ import { supabase } from './client';
  */
 export async function uploadImage(
   file: File,
-  bucket: string = 'project-images'
+  bucket: string = 'projects'
 ): Promise<string> {
   try {
     // 파일 확장자 추출
@@ -52,7 +52,7 @@ export async function uploadImage(
  */
 export async function deleteImage(
   imageUrl: string,
-  bucket: string = 'project-images'
+  bucket: string = 'projects'
 ): Promise<void> {
   try {
     // URL에서 파일 경로 추출

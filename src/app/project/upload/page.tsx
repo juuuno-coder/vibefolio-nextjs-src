@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/supabase/storage";
+
+// ...
 
 export default function ProjectUploadPage() {
   const router = useRouter();
@@ -21,24 +24,21 @@ export default function ProjectUploadPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // 프로필 정보 불러오기 및 로그인 체크
+  // 세션 체크
   useEffect(() => {
-    const savedProfile = localStorage.getItem("userProfile");
-    if (savedProfile) {
-      const profile = JSON.parse(savedProfile);
-      // 프로필에 user_id가 있는지 확인
-      if (profile.user_id) {
-        setUserProfile(profile);
-      } else {
+    const checkSession = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
         alert("프로젝트를 등록하려면 먼저 로그인해주세요.");
         router.push("/login");
+        return;
       }
-    } else {
-      alert("프로젝트를 등록하려면 먼저 로그인해주세요.");
-      router.push("/login");
-    }
+      setUserId(user.id);
+    };
+    
+    checkSession();
   }, [router]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,7 +71,7 @@ export default function ProjectUploadPage() {
     setIsSubmitting(true);
 
     try {
-      if (!userProfile?.user_id) {
+      if (!userId) {
         alert('로그인 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
         router.push('/login');
         return;
@@ -101,7 +101,7 @@ export default function ProjectUploadPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: userProfile.user_id,
+          user_id: userId,
           category_id: category_id,
           title: formData.title,
           content_text: formData.description,
