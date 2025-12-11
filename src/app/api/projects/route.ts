@@ -18,11 +18,6 @@ export async function GET(request: NextRequest) {
       .from('Project')
       .select(`
         *,
-        users!user_id (
-          id,
-          nickname,
-          profile_image_url
-        ),
         Category (
           category_id,
           name

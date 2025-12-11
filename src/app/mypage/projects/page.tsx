@@ -55,9 +55,9 @@ export default function MyProjectsPage() {
           .from('Project')
           .select(`
             *,
-            users (
-              nickname,
-              profile_image_url
+            Category (
+              category_id,
+              name
             )
           `, { count: 'exact' })
           .eq('user_id', user.id)

@@ -1,31 +1,39 @@
 // src/app/api/users/[id]/route.ts
-// 사용자 프로필 조회 및 수정 API
+// Supabase Auth만 사용하는 사용자 프로필 API
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
-import bcrypt from 'bcryptjs';
 
-// 사용자 프로필 조회
-// 사용자 프로필 조회
+// 사용자 프로필 조회 (Auth user_metadata 사용)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   try {
-    const { data: user, error } = await supabaseAdmin
-      .from('users') // User -> users
-      .select('id, email, nickname, bio, profile_image_url, role, created_at')
-      .eq('id', id) // user_id -> id
-      // .eq('is_active', true) // users 테이블에 is_active가 없으면 제거, 있으면 유지. 스키마 확인 필요. 일단 제거 ( Auth user의 status를 따라가는게 보통이나, public.users에는 없을 수 있음)
-      .single();
-
-    if (error || !user) {
+    // Auth에서 사용자 정보 가져오기
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.getUserById(id);
+    
+    if (authError || !authData.user) {
+      console.error('Auth 사용자 조회 실패:', authError);
       return NextResponse.json(
         { error: '사용자를 찾을 수 없습니다.' },
         { status: 404 }
       );
     }
+
+    const authUser = authData.user;
+
+    // user_metadata에서 프로필 정보 추출
+    const user = {
+      id: authUser.id,
+      email: authUser.email,
+      nickname: authUser.user_metadata?.nickname || authUser.email?.split('@')[0] || 'User',
+      bio: authUser.user_metadata?.bio || '',
+      profile_image_url: authUser.user_metadata?.profile_image_url || '/globe.svg',
+      role: authUser.user_metadata?.role || 'user',
+      created_at: authUser.created_at,
+    };
 
     return NextResponse.json({ user });
   } catch (error) {
@@ -37,7 +45,7 @@ export async function GET(
   }
 }
 
-// 사용자 프로필 수정
+// 사용자 프로필 수정 (Auth user_metadata 업데이트)
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -47,39 +55,61 @@ export async function PUT(
     const body = await request.json();
     const { nickname, bio, profile_image_url } = body;
 
-    // Supabase Auth를 사용하므로 비밀번호 변경 로직은 Auth API(클라이언트 측)에서 처리해야 함.
-    // 여기서는 프로필 정보(public.users)만 수정합니다.
-
-    // 업데이트할 데이터 준비
-    const updateData: any = {};
-    if (nickname) updateData.nickname = nickname;
-    if (bio !== undefined) updateData.bio = bio;
-    if (profile_image_url) updateData.profile_image_url = profile_image_url;
-
-    // 프로필 업데이트
-    const { data, error } = await (supabaseAdmin as any)
-      .from('users')
-      .update(updateData)
-      .eq('id', id)
-      .select('id, email, nickname, bio, profile_image_url, role, created_at')
-      .single();
-
-    if (error) {
-      console.error('프로필 수정 실패:', error);
+    // 현재 user_metadata 가져오기
+    const { data: authData, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(id);
+    
+    if (getUserError || !authData.user) {
       return NextResponse.json(
-        { error: '프로필 수정에 실패했습니다.' },
+        { error: '사용자를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    // user_metadata 업데이트
+    const updatedMetadata = {
+      ...authData.user.user_metadata,
+      ...(nickname && { nickname }),
+      ...(bio !== undefined && { bio }),
+      ...(profile_image_url && { profile_image_url }),
+    };
+
+    console.log('user_metadata 업데이트:', updatedMetadata);
+
+    // Auth 사용자 업데이트
+    const { data: updateData, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+      id,
+      { user_metadata: updatedMetadata }
+    );
+
+    if (updateError) {
+      console.error('프로필 수정 실패:', updateError);
+      return NextResponse.json(
+        { error: `프로필 수정에 실패했습니다: ${updateError.message}` },
         { status: 500 }
       );
     }
 
+    const updatedUser = updateData.user;
+    const user = {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      nickname: updatedUser.user_metadata?.nickname,
+      bio: updatedUser.user_metadata?.bio,
+      profile_image_url: updatedUser.user_metadata?.profile_image_url,
+      role: updatedUser.user_metadata?.role || 'user',
+      created_at: updatedUser.created_at,
+    };
+
+    console.log('프로필 수정 성공:', user);
+
     return NextResponse.json({
       message: '프로필이 수정되었습니다.',
-      user: data,
+      user,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('서버 오류:', error);
     return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.' },
+      { error: `서버 오류가 발생했습니다: ${error.message}` },
       { status: 500 }
     );
   }
