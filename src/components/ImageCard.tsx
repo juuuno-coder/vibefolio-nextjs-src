@@ -70,13 +70,21 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
               <img
                 src={props.user.profile_image.large}
                 alt="@PROFILE_IMAGE"
-                className="w-8 h-8 rounded-full avatar"
+                className="w-8 h-8 rounded-full avatar object-cover"
               />
               <p className="text-sm font-medium text-primary">{props.user.username}</p>
             </div>
-            <div className="flex items-center gap-1 text-secondary">
-              <Heart size={14} className="text-gray-400" />
-              <span className="text-xs">{addCommas(props.likes)}</span>
+            <div className="flex items-center gap-3 text-secondary">
+              <div className="flex items-center gap-1">
+                <Heart size={14} className="text-gray-400" />
+                <span className="text-xs">{addCommas(props.likes)}</span>
+              </div>
+              {props.views !== undefined && (
+                <div className="flex items-center gap-1">
+                  <Eye size={14} className="text-gray-400" />
+                  <span className="text-xs">{addCommas(props.views)}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -86,3 +94,4 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
 );
 
 ImageCard.displayName = "ImageCard";
+```
