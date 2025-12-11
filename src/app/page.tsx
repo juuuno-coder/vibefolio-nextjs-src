@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { MainBanner } from "@/components/MainBanner";
 import { ImageCard } from "@/components/ImageCard"; // ImageCard 사용
 import { StickyMenu } from "@/components/StickyMenu"; // 🚨 StickyMenu 임포트
-import { ProjectDetailModal } from "@/components/ProjectDetailModal"; // 🚨 ProjectDetailModal 임포트
+import { ProjectDetailModalV2 } from "@/components/ProjectDetailModalV2"; // 🚨 새로운 모달 사용
 import { supabase } from "@/lib/supabase/client";
 
 // 🚨 임시 ImageCard Props 타입 정의 (StickyMenu와의 연결을 위해 value를 추가)
@@ -271,7 +271,7 @@ export default function Home() {
         </section>
 
         {/* 프로젝트 상세 모달 */}
-        <ProjectDetailModal
+        <ProjectDetailModalV2
           open={modalOpen}
           onOpenChange={setModalOpen}
           project={selectedProject}
