@@ -198,7 +198,7 @@ export default function Home() {
       <main className="w-full">
         {/* 1. 메인 배너 */}
         <section className="w-full">
-          <MainBanner />
+          <MainBanner loading={loading} gallery={[]} />
         </section>
 
         {/* 2. Sticky 카테고리 메뉴 */}
