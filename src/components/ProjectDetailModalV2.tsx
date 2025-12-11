@@ -259,7 +259,7 @@ export function ProjectDetailModalV2({
             </div>
 
             {/* 액션바 - 48px */}
-            <div className="w-[48px] bg-white border-l border-r border-gray-100 flex flex-col items-center py-8 gap-6">
+            <div className="w-[48px] bg-transparent flex flex-col items-center py-8 gap-6">
               <div className="flex flex-col items-center gap-1 group cursor-pointer">
                 <Avatar className="w-10 h-10 border-2 border-gray-200">
                   <AvatarImage src={project.user.profile_image.large} />
@@ -284,7 +284,6 @@ export function ProjectDetailModalV2({
                   <Heart size={18} fill={liked ? "currentColor" : "none"} />
                 )}
               </button>
-              <span className="text-[10px] text-gray-600 font-medium">{addCommas(likesCount)}</span>
 
               <button 
                 onClick={handleBookmark}
@@ -315,11 +314,6 @@ export function ProjectDetailModalV2({
               >
                 <MessageCircle size={18} />
               </button>
-
-              <div className="flex flex-col items-center gap-1 mt-4">
-                <BarChart3 size={18} className="text-gray-400" />
-                <span className="text-[10px] text-gray-600 font-medium">{addCommas(viewsCount)}</span>
-              </div>
             </div>
 
             {/* 댓글 패널 - 18% (고정, 슬라이드 없음) */}

@@ -40,14 +40,14 @@ export function MainBanner({ loading, gallery }: MainBannerProps) {
               <Skeleton className="min-w-[90vw] md:min-w-[600px] w-[90vw] md:w-[600px] h-[300px] md:h-[400px]" />
             </>
           ) : (
-            gallery.map((_, index) => (
+            (gallery.length > 0 ? gallery : [1, 2, 3]).map((_, index) => (
               <CarouselItem
                 key={index}
                 className="basis-[90vw] md:basis-[600px] pl-4"
               >
                 <Card className="w-full h-[300px] md:h-[400px] overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                  <CardContent className="flex items-center justify-center h-full bg-gradient-to-br from-gray-100 to-gray-200 relative">
-                    <span className="text-6xl md:text-8xl font-bold text-gray-400">{index + 1}</span>
+                  <CardContent className="flex items-center justify-center h-full bg-gradient-to-br from-[#4ACAD4] to-[#05BCC6] relative">
+                    <span className="text-6xl md:text-8xl font-bold text-white/30">{index + 1}</span>
                     <div className="absolute bottom-4 right-4 bg-white/90 px-4 py-2 rounded-lg">
                       <p className="text-sm text-gray-600">배너 {index + 1}</p>
                     </div>
