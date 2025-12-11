@@ -258,7 +258,7 @@ export default function Home() {
         </div>
 
         {/* 3. 프로젝트 그리드 - Masonry 레이아웃 */}
-        <section className="w-full max-w-[88%] px-6 mt-8">
+        <section className="w-full max-w-[88%] px-6 mt-4">
           <div className="masonry-grid">
             {filteredImages.map((image, index) => (
               <ImageCard 

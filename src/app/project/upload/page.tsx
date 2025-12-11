@@ -39,9 +39,9 @@ export default function ProjectUploadPage() {
       const { data: catData, error } = await supabase
         .from('Category')
         .select('*')
-        .order('category_id', { ascending: true });
+        .order('category_id', { ascending: true }) as { data: { category_id: number, name: string }[] | null, error: any };
 
-      if (error) {
+      if (error || !catData) {
         console.error('카테고리 로딩 실패:', error);
         // 실패 시 비상용 하드코딩 (혹시 모를 상황 대비)
         setCategories([
@@ -49,7 +49,7 @@ export default function ProjectUploadPage() {
             { category_id: 2, name: 'AI' },
             { category_id: 3, name: '영상/모션그래픽' },
         ]);
-      } else if (catData && catData.length > 0) {
+      } else if (catData.length > 0) {
         setCategories(catData);
         // 첫 번째 카테고리를 기본 선택
         setFormData(prev => ({ ...prev, category: catData[0].category_id.toString() }));

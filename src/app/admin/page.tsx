@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Image as ImageIcon,
   Users,
@@ -17,11 +18,16 @@ import {
   Shield,
   Eye,
   Trash2,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { useAdmin } from "@/hooks/useAdmin";
+import { supabase } from "@/lib/supabase/client";
 
 export default function AdminPage() {
   const router = useRouter();
+  const { isAdmin, isLoading: isAdminLoading, userId } = useAdmin();
   const [stats, setStats] = useState({
     totalProjects: 0,
     totalUsers: 0,
@@ -29,30 +35,69 @@ export default function AdminPage() {
     totalRecruitItems: 0,
     totalBanners: 0,
   });
-
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [recentProjects, setRecentProjects] = useState<any[]>([]);
   const [recentInquiries, setRecentInquiries] = useState<any[]>([]);
 
+  // 관리자가 아니면 접근 차단
+  useEffect(() => {
+    if (!isAdminLoading && !isAdmin) {
+      alert('관리자 권한이 필요합니다.');
+      router.push('/');
+    }
+  }, [isAdmin, isAdminLoading, router]);
+
   // 통계 및 최근 데이터 로드
   useEffect(() => {
-    const projects = JSON.parse(localStorage.getItem("projects") || "[]");
-    const inquiries = JSON.parse(localStorage.getItem("inquiries") || "[]");
-    const recruitItems = JSON.parse(localStorage.getItem("recruitItems") || "[]");
-    const banners = JSON.parse(localStorage.getItem("banners") || "[]");
+    const loadStats = async () => {
+      if (!isAdmin) return;
 
-    setStats({
-      totalProjects: projects.length,
-      totalUsers: 1, // 임시
-      totalInquiries: inquiries.length,
-      totalRecruitItems: recruitItems.length,
-      totalBanners: banners.length,
-    });
+      setIsLoadingStats(true);
+      try {
+        // 프로젝트 수
+        const { count: projectCount } = await supabase
+          .from('Project')
+          .select('*', { count: 'exact', head: true });
 
-    // 최근 프로젝트 (최신 5개)
-    setRecentProjects(projects.slice(-5).reverse());
-    // 최근 문의 (최신 5개)
-    setRecentInquiries(inquiries.slice(-5).reverse());
-  }, []);
+        // 사용자 수
+        const { count: userCount } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true });
+
+        // 최근 프로젝트
+        const { data: projects } = await supabase
+          .from('Project')
+          .select(`
+            *,
+            users (nickname, profile_image_url)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        // 로컬스토리지 데이터 (문의, 채용, 배너)
+        const inquiries = JSON.parse(localStorage.getItem("inquiries") || "[]");
+        const recruitItems = JSON.parse(localStorage.getItem("recruitItems") || "[]");
+        const banners = JSON.parse(localStorage.getItem("banners") || "[]");
+
+        setStats({
+          totalProjects: projectCount || 0,
+          totalUsers: userCount || 0,
+          totalInquiries: inquiries.length,
+          totalRecruitItems: recruitItems.length,
+          totalBanners: banners.length,
+        });
+
+        setRecentProjects(projects || []);
+        setRecentInquiries(inquiries.slice(-5).reverse());
+      } catch (error) {
+        console.error('통계 로드 실패:', error);
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+
+    loadStats();
+  }, [isAdmin]);
 
   const adminMenus = [
     {
@@ -110,6 +155,34 @@ export default function AdminPage() {
       count: null,
     },
   ];
+
+  // 로딩 중일 때
+  if (isAdminLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={48} className="animate-spin text-[#4ACAD4] mx-auto mb-4" />
+          <p className="text-gray-600">권한 확인 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 관리자가 아닐 때
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">접근 권한이 없습니다</h1>
+          <p className="text-gray-600 mb-4">관리자만 접근할 수 있는 페이지입니다.</p>
+          <Link href="/">
+            <Button>홈으로 돌아가기</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">

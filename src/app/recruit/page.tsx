@@ -21,7 +21,9 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Plus, Trash2, Edit, Calendar, MapPin, Award, Briefcase, DollarSign, Clock } from "lucide-react";
+import { MainBanner } from "@/components/MainBanner";
+import { Plus, Trash2, Edit, Calendar, MapPin, Award, Briefcase, DollarSign, ExternalLink, Clock } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
 
 interface Item {
   id: number;
@@ -35,12 +37,15 @@ interface Item {
   company?: string;
   employmentType?: string;
   link?: string;
+  thumbnail?: string;
 }
 
 export default function RecruitPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [banners, setBanners] = useState<number[]>([1, 2, 3]);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -52,7 +57,28 @@ export default function RecruitPage() {
     company: "",
     employmentType: "정규직",
     link: "",
+    thumbnail: "",
   });
+
+  // 관리자 권한 확인
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // users 테이블에서 role 확인
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single() as { data: { role: string } | null };
+        
+        if (userData?.role === 'admin') {
+          setIsAdmin(true);
+        }
+      }
+    };
+    checkAdmin();
+  }, []);
 
   // 로컬 스토리지에서 항목 불러오기
   useEffect(() => {
@@ -169,6 +195,7 @@ export default function RecruitPage() {
       company: "",
       employmentType: "정규직",
       link: "",
+      thumbnail: "",
     });
     setEditingItem(null);
     setIsDialogOpen(false);
@@ -197,6 +224,7 @@ export default function RecruitPage() {
       company: item.company || "",
       employmentType: item.employmentType || "정규직",
       link: item.link || "",
+      thumbnail: item.thumbnail || "",
     });
     setIsDialogOpen(true);
   };
@@ -216,7 +244,29 @@ export default function RecruitPage() {
       company: "",
       employmentType: "정규직",
       link: "",
+      thumbnail: "",
     });
+  };
+
+  // 자세히 보기 클릭 핸들러
+  const handleViewDetail = (item: Item) => {
+    if (item.link && item.link.startsWith('http')) {
+      window.open(item.link, '_blank', 'noopener,noreferrer');
+    } else {
+      alert('링크가 등록되지 않았습니다. 관리자에게 문의해주세요.');
+    }
+  };
+
+  // D-day 계산
+  const getDday = (dateStr: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const targetDate = new Date(dateStr);
+    targetDate.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (diff < 0) return '마감';
+    if (diff === 0) return 'D-Day';
+    return `D-${diff}`;
   };
 
   const jobs = items.filter((e) => e.type === "job");
@@ -224,202 +274,214 @@ export default function RecruitPage() {
   const events = items.filter((e) => e.type === "event");
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-7xl mx-auto px-6">
+    <div className="min-h-screen bg-gray-50">
+      {/* 배너 섹션 */}
+      <div className="w-full px-0 py-3 bg-white">
+        <MainBanner loading={false} gallery={banners} />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* 헤더 */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
               연결 - 채용 · 공모전 · 이벤트
             </h1>
             <p className="text-gray-600">
               크리에이터들을 위한 채용 정보, 공모전, 이벤트를 확인하세요
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                className="bg-[#4ACAD4] hover:bg-[#41a3aa]"
-                onClick={() => handleDialogClose()}
-              >
-                <Plus size={18} className="mr-2" />
-                새 항목 추가
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingItem ? "항목 수정" : "새 항목 추가"}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    유형
-                  </label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        type: e.target.value as "job" | "contest" | "event",
-                      })
-                    }
-                    className="w-full border rounded-md px-3 py-2"
-                  >
-                    <option value="job">채용</option>
-                    <option value="contest">공모전</option>
-                    <option value="event">이벤트</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    제목 *
-                  </label>
-                  <Input
-                    placeholder="제목을 입력하세요"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    설명 *
-                  </label>
-                  <Textarea
-                    placeholder="설명을 입력하세요"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    rows={4}
-                  />
-                </div>
+          
+          {/* 관리자만 새 항목 추가 버튼 표시 */}
+          {isAdmin && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  className="bg-[#4ACAD4] hover:bg-[#41a3aa]"
+                  onClick={() => handleDialogClose()}
+                >
+                  <Plus size={18} className="mr-2" />
+                  새 항목 추가
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingItem ? "항목 수정" : "새 항목 추가"}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      유형
+                    </label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          type: e.target.value as "job" | "contest" | "event",
+                        })
+                      }
+                      className="w-full border rounded-md px-3 py-2"
+                    >
+                      <option value="job">채용</option>
+                      <option value="contest">공모전</option>
+                      <option value="event">이벤트</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      제목 *
+                    </label>
+                    <Input
+                      placeholder="제목을 입력하세요"
+                      value={formData.title}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      설명 *
+                    </label>
+                    <Textarea
+                      placeholder="설명을 입력하세요"
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({ ...formData, description: e.target.value })
+                      }
+                      rows={4}
+                    />
+                  </div>
 
-                {/* 채용 전용 필드 */}
-                {formData.type === "job" && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        회사명
-                      </label>
-                      <Input
-                        placeholder="회사명을 입력하세요"
-                        value={formData.company}
-                        onChange={(e) =>
-                          setFormData({ ...formData, company: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+                  {/* 채용 전용 필드 */}
+                  {formData.type === "job" && (
+                    <>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          고용 형태
-                        </label>
-                        <select
-                          value={formData.employmentType}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              employmentType: e.target.value,
-                            })
-                          }
-                          className="w-full border rounded-md px-3 py-2"
-                        >
-                          <option value="정규직">정규직</option>
-                          <option value="계약직">계약직</option>
-                          <option value="프리랜서">프리랜서</option>
-                          <option value="인턴">인턴</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          급여
+                          회사명
                         </label>
                         <Input
-                          placeholder="예: 연봉 3,500~4,500만원"
-                          value={formData.salary}
+                          placeholder="회사명을 입력하세요"
+                          value={formData.company}
                           onChange={(e) =>
-                            setFormData({ ...formData, salary: e.target.value })
+                            setFormData({ ...formData, company: e.target.value })
                           }
                         />
                       </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            고용 형태
+                          </label>
+                          <select
+                            value={formData.employmentType}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                employmentType: e.target.value,
+                              })
+                            }
+                            className="w-full border rounded-md px-3 py-2"
+                          >
+                            <option value="정규직">정규직</option>
+                            <option value="계약직">계약직</option>
+                            <option value="프리랜서">프리랜서</option>
+                            <option value="인턴">인턴</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            급여
+                          </label>
+                          <Input
+                            placeholder="예: 연봉 3,500~4,500만원"
+                            value={formData.salary}
+                            onChange={(e) =>
+                              setFormData({ ...formData, salary: e.target.value })
+                            }
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* 공모전 전용 필드 */}
+                  {formData.type === "contest" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        상금/혜택
+                      </label>
+                      <Input
+                        placeholder="예: 대상 500만원"
+                        value={formData.prize}
+                        onChange={(e) =>
+                          setFormData({ ...formData, prize: e.target.value })
+                        }
+                      />
                     </div>
-                  </>
-                )}
+                  )}
 
-                {/* 공모전 전용 필드 */}
-                {formData.type === "contest" && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        마감일/날짜 *
+                      </label>
+                      <Input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) =>
+                          setFormData({ ...formData, date: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        장소
+                      </label>
+                      <Input
+                        placeholder="장소를 입력하세요"
+                        value={formData.location}
+                        onChange={(e) =>
+                          setFormData({ ...formData, location: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      상금/혜택
+                      바로가기 링크 (필수)
                     </label>
                     <Input
-                      placeholder="예: 대상 500만원"
-                      value={formData.prize}
+                      placeholder="https://example.com"
+                      value={formData.link}
                       onChange={(e) =>
-                        setFormData({ ...formData, prize: e.target.value })
+                        setFormData({ ...formData, link: e.target.value })
                       }
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      채용/공모전/이벤트 상세 페이지 URL을 입력해주세요
+                    </p>
                   </div>
-                )}
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      마감일/날짜 *
-                    </label>
-                    <Input
-                      type="date"
-                      value={formData.date}
-                      onChange={(e) =>
-                        setFormData({ ...formData, date: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      장소
-                    </label>
-                    <Input
-                      placeholder="장소를 입력하세요"
-                      value={formData.location}
-                      onChange={(e) =>
-                        setFormData({ ...formData, location: e.target.value })
-                      }
-                    />
+                  <div className="flex gap-2 justify-end pt-4">
+                    <Button variant="outline" onClick={handleDialogClose}>
+                      취소
+                    </Button>
+                    <Button
+                      onClick={handleSubmit}
+                      className="bg-[#4ACAD4] hover:bg-[#41a3aa]"
+                    >
+                      {editingItem ? "수정" : "추가"}
+                    </Button>
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    링크
-                  </label>
-                  <Input
-                    placeholder="https://example.com"
-                    value={formData.link}
-                    onChange={(e) =>
-                      setFormData({ ...formData, link: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="flex gap-2 justify-end pt-4">
-                  <Button variant="outline" onClick={handleDialogClose}>
-                    취소
-                  </Button>
-                  <Button
-                    onClick={handleSubmit}
-                    className="bg-[#4ACAD4] hover:bg-[#41a3aa]"
-                  >
-                    {editingItem ? "수정" : "추가"}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         {/* 탭 */}
@@ -440,6 +502,9 @@ export default function RecruitPage() {
                   item={item}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  onViewDetail={handleViewDetail}
+                  isAdmin={isAdmin}
+                  getDday={getDday}
                 />
               ))}
             </div>
@@ -455,6 +520,9 @@ export default function RecruitPage() {
                   item={item}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  onViewDetail={handleViewDetail}
+                  isAdmin={isAdmin}
+                  getDday={getDday}
                 />
               ))}
             </div>
@@ -470,6 +538,9 @@ export default function RecruitPage() {
                   item={item}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  onViewDetail={handleViewDetail}
+                  isAdmin={isAdmin}
+                  getDday={getDday}
                 />
               ))}
             </div>
@@ -485,6 +556,9 @@ export default function RecruitPage() {
                   item={item}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  onViewDetail={handleViewDetail}
+                  isAdmin={isAdmin}
+                  getDday={getDday}
                 />
               ))}
             </div>
@@ -501,32 +575,40 @@ function ItemCard({
   item,
   onEdit,
   onDelete,
+  onViewDetail,
+  isAdmin,
+  getDday,
 }: {
   item: Item;
   onEdit: (item: Item) => void;
   onDelete: (id: number) => void;
+  onViewDetail: (item: Item) => void;
+  isAdmin: boolean;
+  getDday: (date: string) => string;
 }) {
   const getTypeInfo = (type: string) => {
     switch (type) {
       case "job":
-        return { label: "채용", color: "bg-blue-100 text-blue-700" };
+        return { label: "채용", color: "bg-blue-100 text-blue-700", icon: Briefcase };
       case "contest":
-        return { label: "공모전", color: "bg-purple-100 text-purple-700" };
+        return { label: "공모전", color: "bg-purple-100 text-purple-700", icon: Award };
       case "event":
-        return { label: "이벤트", color: "bg-green-100 text-green-700" };
+        return { label: "이벤트", color: "bg-green-100 text-green-700", icon: Calendar };
       default:
-        return { label: "기타", color: "bg-gray-100 text-gray-700" };
+        return { label: "기타", color: "bg-gray-100 text-gray-700", icon: Calendar };
     }
   };
 
   const typeInfo = getTypeInfo(item.type);
+  const dday = getDday(item.date);
+  const isExpired = dday === '마감';
 
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300">
-      <CardHeader>
+    <Card className={`hover:shadow-lg transition-shadow duration-300 ${isExpired ? 'opacity-60' : ''}`}>
+      <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className={`px-2 py-1 rounded text-xs font-medium ${typeInfo.color}`}>
                 {typeInfo.label}
               </span>
@@ -535,8 +617,17 @@ function ItemCard({
                   {item.employmentType}
                 </span>
               )}
+              <span className={`px-2 py-1 rounded text-xs font-bold ${
+                isExpired 
+                  ? 'bg-gray-200 text-gray-500' 
+                  : dday === 'D-Day' 
+                    ? 'bg-red-500 text-white' 
+                    : 'bg-[#4ACAD4]/20 text-[#4ACAD4]'
+              }`}>
+                {dday}
+              </span>
             </div>
-            <CardTitle className="text-lg">{item.title}</CardTitle>
+            <CardTitle className="text-lg line-clamp-2">{item.title}</CardTitle>
             {item.company && (
               <p className="text-sm text-gray-600 mt-1">{item.company}</p>
             )}
@@ -550,7 +641,7 @@ function ItemCard({
         <Separator className="my-4" />
         <div className="space-y-2 text-sm text-gray-600">
           <div className="flex items-center gap-2">
-            <Calendar size={16} className="text-gray-400" />
+            <Clock size={16} className="text-gray-400" />
             <span>{new Date(item.date).toLocaleDateString("ko-KR")}</span>
           </div>
           {item.location && (
@@ -573,27 +664,32 @@ function ItemCard({
           )}
         </div>
         <div className="flex gap-2 mt-4">
-          {item.link && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={() => window.open(item.link, "_blank")}
-            >
-              자세히 보기
-            </Button>
-          )}
-          <Button variant="ghost" size="sm" onClick={() => onEdit(item)}>
-            <Edit size={16} />
-          </Button>
           <Button
-            variant="ghost"
+            variant="default"
             size="sm"
-            onClick={() => onDelete(item.id)}
-            className="text-red-500 hover:text-red-700"
+            className="flex-1 bg-[#4ACAD4] hover:bg-[#41a3aa]"
+            onClick={() => onViewDetail(item)}
+            disabled={isExpired}
           >
-            <Trash2 size={16} />
+            <ExternalLink size={16} className="mr-1" />
+            자세히 보기
           </Button>
+          {/* 관리자만 수정/삭제 버튼 표시 */}
+          {isAdmin && (
+            <>
+              <Button variant="ghost" size="sm" onClick={() => onEdit(item)}>
+                <Edit size={16} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDelete(item.id)}
+                className="text-red-500 hover:text-red-700"
+              >
+                <Trash2 size={16} />
+              </Button>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -605,7 +701,7 @@ function EmptyState() {
   return (
     <div className="text-center py-12 text-gray-500">
       <p className="text-lg">등록된 항목이 없습니다.</p>
-      <p className="text-sm mt-2">새 항목 추가 버튼을 눌러 추가해보세요.</p>
+      <p className="text-sm mt-2">관리자가 새 항목을 추가하면 여기에 표시됩니다.</p>
     </div>
   );
 }
