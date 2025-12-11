@@ -1,14 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Bookmark, Upload, Settings, Grid } from "lucide-react";
+import { Heart, Bookmark, Upload, Settings, Grid, MessageSquare, Send, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
 import { supabase } from "@/lib/supabase/client";
 
 export default function MyPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'projects' | 'likes' | 'bookmarks'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'likes' | 'bookmarks' | 'inquiries' | 'proposals' | 'comments'>('projects');
   
   // Data States
   const [projects, setProjects] = useState<any[]>([]);
