@@ -20,7 +20,7 @@ export async function POST(
       .from('Project')
       .select('views')
       .eq('project_id', projectId)
-      .single();
+      .single() as any;
 
     if (fetchError) {
       return NextResponse.json(handleApiError(fetchError, '조회수 조회 실패', 500));
