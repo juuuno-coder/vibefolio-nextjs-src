@@ -28,13 +28,13 @@ export async function POST(
 
     const newViews = (current?.views ?? 0) + 1;
 
-    // 조회수 업데이트
-    const { data, error } = await supabase
-      .from('Project')
-      .update({ views: newViews } as Partial<ProjectRow>)
-      .eq('project_id', projectId)
-      .select('views')
-      .single();
+// 조회수 업데이트 (type‑unsafe cast to avoid Supabase generic issues)
+const { data, error } = await (supabase as any)
+  .from('Project')
+  .update({ views: newViews })
+  .eq('project_id', projectId)
+  .select('views')
+  .single();
 
     if (error) {
       return NextResponse.json(handleApiError(error, '조회수 증가 실패', 500));
