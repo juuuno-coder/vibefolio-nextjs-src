@@ -63,22 +63,36 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // User 정보를 별도로 가져오기
+    // Supabase Auth에서 사용자 정보 가져오기
     if (data && data.length > 0) {
-      const userIds = [...new Set(data.map((p: any) => p.user_id).filter(Boolean))];
+      const userIds: string[] = [...new Set(data.map((p: any) => p.user_id).filter(Boolean))];
       
       if (userIds.length > 0) {
-        const { data: users, error: userError } = await (supabase as any)
-          .from('User')
-          .select('user_id, username, profile_image_url')
-          .in('user_id', userIds);
+        // 각 사용자 정보를 Auth에서 가져오기
+        const userPromises = userIds.map(async (uid: string): Promise<[string, any]> => {
+          try {
+            const response = await fetch(`${request.nextUrl.origin}/api/users/${uid}`);
+            if (response.ok) {
+              const userData = await response.json();
+              return [uid, userData.user];
+            }
+          } catch (e) {
+            console.error(`사용자 ${uid} 정보 조회 실패:`, e);
+          }
+          return [uid, null];
+        });
 
-        if (!userError && users) {
-          const userMap = new Map(users.map((u: any) => [u.user_id, u]));
-          data.forEach((project: any) => {
-            project.User = userMap.get(project.user_id) || null;
-          });
-        }
+        const userResults = await Promise.all(userPromises);
+        const userMap = new Map<string, any>(userResults.filter(([_, user]) => user !== null));
+
+        data.forEach((project: any) => {
+          const user = userMap.get(project.user_id);
+          project.User = user ? {
+            user_id: user.id || '',
+            username: user.nickname || 'Unknown',
+            profile_image_url: user.profile_image_url || '/globe.svg'
+          } : null;
+        });
       }
     }
 

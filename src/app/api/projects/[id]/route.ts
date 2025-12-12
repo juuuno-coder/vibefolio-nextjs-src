@@ -31,16 +31,21 @@ export async function GET(
       );
     }
 
-    // User 정보를 별도로 가져오기
+    // Supabase Auth에서 사용자 정보 가져오기
     if (data && data.user_id) {
-      const { data: user, error: userError } = await (supabase as any)
-        .from('User')
-        .select('user_id, username, profile_image_url')
-        .eq('user_id', data.user_id)
-        .single();
-
-      if (!userError && user) {
-        data.User = user;
+      try {
+        const userResponse = await fetch(`${request.nextUrl.origin}/api/users/${data.user_id}`);
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          data.User = {
+            user_id: userData.user.id,
+            username: userData.user.nickname,
+            profile_image_url: userData.user.profile_image_url
+          };
+        }
+      } catch (e) {
+        console.error('사용자 정보 조회 실패:', e);
+        data.User = null;
       }
     }
 
@@ -97,16 +102,21 @@ export async function PUT(
       );
     }
 
-    // User 정보를 별도로 가져오기
+    // Supabase Auth에서 사용자 정보 가져오기
     if (data && data.user_id) {
-      const { data: user, error: userError } = await (supabase as any)
-        .from('User')
-        .select('user_id, username, profile_image_url')
-        .eq('user_id', data.user_id)
-        .single();
-
-      if (!userError && user) {
-        data.User = user;
+      try {
+        const userResponse = await fetch(`${request.nextUrl.origin}/api/users/${data.user_id}`);
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          data.User = {
+            user_id: userData.user.id,
+            username: userData.user.nickname,
+            profile_image_url: userData.user.profile_image_url
+          };
+        }
+      } catch (e) {
+        console.error('사용자 정보 조회 실패:', e);
+        data.User = null;
       }
     }
 
