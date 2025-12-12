@@ -52,10 +52,29 @@ export async function GET(request: NextRequest) {
 // 댓글 작성
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { user_id, project_id, content } = body;
+    // Authorization 헤더에서 토큰 추출
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
+    }
 
-    if (!user_id || !project_id || !content) {
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: '인증에 실패했습니다.' },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { projectId, content } = body;
+
+    if (!projectId || !content) {
       return NextResponse.json(
         { error: '필수 필드가 누락되었습니다.' },
         { status: 400 }
@@ -66,8 +85,8 @@ export async function POST(request: NextRequest) {
       .from('Comment')
       .insert([
         {
-          user_id,
-          project_id,
+          user_id: user.id,
+          project_id: projectId,
           content,
         },
       ] as any)

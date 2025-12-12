@@ -211,9 +211,18 @@ export function ProjectDetailModalV2({
     
     setLoading(prev => ({ ...prev, comment: true }));
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
       const res = await fetch('/api/comments', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
           projectId: parseInt(project.id),
           content: newComment,
@@ -231,9 +240,12 @@ export function ProjectDetailModalV2({
         };
         setComments(prev => [comment, ...prev]);
         setNewComment('');
+      } else {
+        alert(data.error || '댓글 작성에 실패했습니다.');
       }
     } catch (error) {
       console.error('댓글 작성 실패:', error);
+      alert('댓글 작성에 실패했습니다.');
     } finally {
       setLoading(prev => ({ ...prev, comment: false }));
     }
@@ -262,9 +274,9 @@ export function ProjectDetailModalV2({
           }}
         >
 
-          <div className={`flex h-full ${commentsPanelOpen ? 'w-full' : 'w-auto'} items-center justify-center`}>
-            {/* 메인 이미지 영역 */}
-            <div className={`${commentsPanelOpen ? 'w-[70%]' : 'w-[800px]'} h-full bg-gray-50 flex flex-col`}>
+          <div className="flex h-full items-center justify-center">
+            {/* 메인 이미지 영역 - 고정 너비 */}
+            <div className="w-[900px] h-full bg-gray-50 flex flex-col">
               {/* 프로젝트 정보 헤더 */}
               <div className="p-6 bg-white border-b border-gray-100">
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">
