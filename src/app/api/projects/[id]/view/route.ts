@@ -30,7 +30,7 @@ export async function POST(
 
     // 조회수 업데이트
     const { data, error } = await supabase
-      .from<ProjectRow>('Project')
+      .from('Project')
       .update({ views: newViews } as Partial<ProjectRow>)
       .eq('project_id', projectId)
       .select('views')
