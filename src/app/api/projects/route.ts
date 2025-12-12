@@ -21,6 +21,11 @@ export async function GET(request: NextRequest) {
         Category (
           category_id,
           name
+        ),
+        User (
+          user_id,
+          username,
+          profile_image_url
         )
       `)
       .order('created_at', { ascending: false });

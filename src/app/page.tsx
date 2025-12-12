@@ -1,19 +1,20 @@
+// src/app/page.tsx
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import Link from "next/link";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton"; // skeleton for cards
 import { MainBanner } from "@/components/MainBanner";
 import { ImageCard } from "@/components/ImageCard";
 import { StickyMenu } from "@/components/StickyMenu";
 import { ProjectDetailModalV2 } from "@/components/ProjectDetailModalV2";
 import { supabase } from "@/lib/supabase/client";
-import { getUserInfo } from "@/lib/getUserInfo";
 import { getCategoryName } from "@/lib/categoryMap";
 
 interface ImageDialogProps {
   id: string;
+  title?: string;
   urls: { full: string; regular: string };
   user: { username: string; profile_image: { small: string; large: string } };
   likes: number;
@@ -32,13 +33,10 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("korea");
   const [sortBy, setSortBy] = useState("latest");
   const [projects, setProjects] = useState<ImageDialogProps[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<ImageDialogProps | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const observerTarget = useRef(null);
 
   // Auth 상태 확인
   useEffect(() => {
@@ -47,163 +45,110 @@ export default function Home() {
       setIsLoggedIn(!!session);
     };
     checkUser();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session);
     });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
-  // 프로젝트 정렬 함수
-  const sortProjects = useCallback((projectList: ImageDialogProps[], sortType: string) => {
-    const sorted = [...projectList];
-    switch (sortType) {
-      case 'latest':
+  // 정렬 함수
+  const sortProjects = useCallback((list: ImageDialogProps[], type: string) => {
+    const sorted = [...list];
+    switch (type) {
+      case "latest":
         return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      case 'popular':
-      case 'views':
+      case "popular":
+      case "views":
         return sorted.sort((a, b) => (b.views || 0) - (a.views || 0));
-      case 'likes':
+      case "likes":
         return sorted.sort((a, b) => (b.likes || 0) - (a.likes || 0));
       default:
         return sorted;
     }
   }, []);
 
-  // 프로젝트 로딩
-  const loadProjects = useCallback(async (pageNum: number, reset: boolean = false) => {
-    if (loading) return;
-    setLoading(true);
+  // 프로젝트 로드 (API에서 User 정보 포함하여 반환)
+  const loadProjects = useCallback(
+    async (pageNum = 1, reset = false) => {
+      if (loading) return;
+      setLoading(true);
+      try {
+        const limit = pageNum === 1 ? 10 : 20;
+        const res = await fetch(`/api/projects?page=${pageNum}&limit=${limit}`);
+        const data = await res.json();
 
-    try {
-      const response = await fetch(`/api/projects?page=${pageNum}&limit=20`);
-      const data = await response.json();
-
-      if (response.ok && data.projects && data.projects.length > 0) {
-        // 각 프로젝트의 작성자 정보를 병렬로 가져오기
-        const projectsWithUsers = await Promise.all(
-          data.projects.map(async (project: any) => {
-            let userInfo = {
-              username: 'Unknown',
-              profile_image_url: '/globe.svg',
-            };
-
-            if (project.user_id) {
-              userInfo = await getUserInfo(project.user_id);
-            }
-
+        if (res.ok && data.projects?.length) {
+          const enriched = data.projects.map((proj: any) => {
+            // API에서 User 정보를 함께 받아오므로 getUserInfo 호출 불필요
+            const userInfo = proj.User || { username: 'Unknown', profile_image_url: '/globe.svg' };
+            
             return {
-              id: project.project_id.toString(),
-              title: project.title,
-              urls: {
-                full: project.thumbnail_url || '/placeholder.jpg',
-                regular: project.thumbnail_url || '/placeholder.jpg',
+              id: proj.project_id.toString(),
+              title: proj.title,
+              urls: { 
+                full: proj.thumbnail_url || "/placeholder.jpg", 
+                regular: proj.thumbnail_url || "/placeholder.jpg" 
               },
-              user: {
-                username: userInfo.username,
-                profile_image: {
-                  small: userInfo.profile_image_url,
-                  large: userInfo.profile_image_url,
-                },
+              user: { 
+                username: userInfo.username, 
+                profile_image: { 
+                  small: userInfo.profile_image_url, 
+                  large: userInfo.profile_image_url 
+                } 
               },
               likes: 0,
-              views: project.views || 0,
-              description: project.content_text,
-              alt_description: project.title,
-              created_at: project.created_at,
+              views: proj.views || 0,
+              description: proj.content_text,
+              alt_description: proj.title,
+              created_at: proj.created_at,
               width: 400,
               height: 300,
-              category: project.Category?.name || 'korea',
-              userId: project.user_id,
-            };
-          })
-        );
-
-        if (reset) {
-          setProjects(projectsWithUsers);
-        } else {
-          setProjects(prev => [...prev, ...projectsWithUsers]);
+              category: proj.Category?.name || "korea",
+              userId: proj.user_id,
+            } as ImageDialogProps;
+          });
+          
+          reset ? setProjects(enriched) : setProjects(prev => [...prev, ...enriched]);
         }
-
-        setHasMore(data.projects.length === 20);
-      } else {
-        setHasMore(false);
+      } catch (e) {
+        console.error("프로젝트 로딩 실패:", e);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('프로젝트 로딩 실패:', error);
-      setHasMore(false);
-    } finally {
-      setLoading(false);
-    }
-  }, [loading]);
+    },
+    [loading]
+  );
 
-  // 초기 로드
+  // 최초 로드
   useEffect(() => {
     loadProjects(1, true);
   }, []);
 
-  // 무한 스크롤
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          const nextPage = page + 1;
-          setPage(nextPage);
-          loadProjects(nextPage);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
-    }
-
-    return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
-      }
-    };
-  }, [hasMore, loading, page, loadProjects]);
-
-  // 카테고리 필터링 (DB 이름 기반)
+  // 카테고리 필터링
   const categoryName = getCategoryName(selectedCategory);
-  const filteredProjects = categoryName === "전체"
-    ? projects
-    : projects.filter(project => project.category === categoryName);
+  const filtered = categoryName === "전체" ? projects : projects.filter(p => p.category === categoryName);
+  const sortedProjects = sortProjects(filtered, sortBy);
 
-  // 정렬 적용
-  const sortedProjects = sortProjects(filteredProjects, sortBy);
-
-  // 프로젝트 클릭 핸들러
-  const handleProjectClick = (project: ImageDialogProps) => {
-    setSelectedProject(project);
+  const handleProjectClick = (proj: ImageDialogProps) => {
+    setSelectedProject(proj);
     setModalOpen(true);
   };
 
-  // 프로젝트 업로드 핸들러
   const handleUploadClick = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      alert('프로젝트 등록을 위해 로그인이 필요합니다.');
-      router.push('/login');
-    } else {
-      router.push('/project/upload');
-    }
+    if (!user) { alert('프로젝트 등록을 위해 로그인이 필요합니다.'); router.push('/login'); }
+    else { router.push('/project/upload'); }
   };
 
   return (
     <div className="min-h-screen bg-white">
       <main className="w-full">
-        {/* 1. 메인 배너 */}
+        {/* 메인 배너 */}
         <section className="w-full">
           <MainBanner loading={loading} gallery={[]} />
         </section>
 
-        {/* 2. Sticky 카테고리 메뉴 */}
+        {/* 카테고리 메뉴 */}
         <StickyMenu
           props={selectedCategory}
           onSetCategory={setSelectedCategory}
@@ -211,96 +156,34 @@ export default function Home() {
           currentSort={sortBy}
         />
 
-        {/* 3. 프로젝트 그리드 */}
+        {/* 프로젝트 그리드 */}
         <section className="w-full px-4 md:px-20 py-12">
           <div className="masonry-grid">
-            {sortedProjects.map((project) => (
-              <ImageCard
-                key={project.id}
-                props={project}
-                onClick={() => handleProjectClick(project)}
-              />
-            ))}
+            {loading ? (
+              // 스켈레톤 카드 6개 표시
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="p-2">
+                  <Skeleton className="h-[300px] w-full rounded" />
+                </div>
+              ))
+            ) : (
+              sortedProjects.map(project => (
+                <ImageCard key={project.id} props={project} onClick={() => handleProjectClick(project)} />
+              ))
+            )}
           </div>
-
-          {/* 무한 스크롤 트리거 */}
-          {hasMore && (
-            <div ref={observerTarget} className="h-20 flex items-center justify-center">
-              {loading && (
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4ACAD4]"></div>
-              )}
-            </div>
-          )}
 
           {/* 프로젝트가 없을 때 */}
           {!loading && sortedProjects.length === 0 && (
             <div className="text-center py-20">
               <p className="text-gray-500 text-lg mb-4">프로젝트가 없습니다.</p>
-              <Button onClick={handleUploadClick} className="bg-[#4ACAD4] hover:bg-[#3db8c0]">
-                첫 프로젝트 등록하기
-              </Button>
+              <Button onClick={handleUploadClick} className="bg-[#4ACAD4] hover:bg-[#3db8c0]">첫 프로젝트 등록하기</Button>
             </div>
           )}
         </section>
 
-        {/* 프로젝트 상세 모달 */}
-        <ProjectDetailModalV2
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-          project={selectedProject}
-        />
-
-        {/* 4. 회원가입 및 로그인 유도 영역 */}
-        {!isLoggedIn && (
-          <section className="w-full bg-gradient-to-r from-[#4ACAD4] to-[#3db8c0] py-16 px-4 md:px-20">
-            <div className="max-w-4xl mx-auto text-center text-white">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                크리에이터와 함께하세요
-              </h2>
-              <p className="text-lg md:text-xl mb-8 opacity-90">
-                프로젝트를 공유하고, 영감을 받고, 함께 성장하세요
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/signup">
-                  <Button
-                    size="lg"
-                    className="bg-white text-[#4ACAD4] hover:bg-gray-100 font-semibold px-8"
-                  >
-                    회원가입
-                  </Button>
-                </Link>
-                <Link href="/login">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="border-2 border-white text-white hover:bg-white/10 font-semibold px-8"
-                  >
-                    로그인
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* 5. 프로젝트 업로드 CTA */}
-        <section className="w-full py-16 px-4 md:px-20 bg-gray-50">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
-              당신의 작품을 공유하세요
-            </h2>
-            <p className="text-lg text-gray-600 mb-8">
-              전 세계 크리에이터들과 당신의 프로젝트를 공유하고 피드백을 받아보세요
-            </p>
-            <Button
-              onClick={handleUploadClick}
-              size="lg"
-              className="bg-[#4ACAD4] hover:bg-[#3db8c0] font-semibold px-8"
-            >
-              프로젝트 등록하기
-            </Button>
-          </div>
-        </section>
+        {/* 상세 모달 */}
+        <ProjectDetailModalV2 open={modalOpen} onOpenChange={setModalOpen} project={selectedProject} />
       </main>
     </div>
   );
