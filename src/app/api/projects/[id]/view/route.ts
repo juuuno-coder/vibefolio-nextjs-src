@@ -16,10 +16,23 @@ export async function POST(
       );
     }
 
-    // 조회수 증가
+    // 조회수 증가 (safe)
+    const { data: current, error: fetchError } = await supabase
+      .from('Project')
+      .select('views')
+      .eq('project_id', projectId)
+      .single();
+
+    if (fetchError) {
+      console.error('조회수 조회 실패:', fetchError);
+      return NextResponse.json({ error: fetchError.message }, { status: 500 });
+    }
+
+    const newViews = ((current as any)?.views ?? 0) + 1;
+
     const { data, error } = await supabase
       .from('Project')
-      .update({ views: supabase.raw('views + 1') })
+      .update({ views: newViews } as any)
       .eq('project_id', projectId)
       .select('views')
       .single();

@@ -10,20 +10,13 @@ export async function DELETE(
     const commentId = parseInt(id);
 
     if (isNaN(commentId)) {
-      return NextResponse.json(
-        { error: 'Invalid comment ID' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid comment ID' }, { status: 400 });
     }
 
     // 현재 사용자 확인
     const { data: { user } } = await supabase.auth.getUser();
-    
     if (!user) {
-      return NextResponse.json(
-        { error: '로그인이 필요합니다.' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
     // 댓글 소유자 확인
@@ -34,28 +27,11 @@ export async function DELETE(
       .single();
 
     if (fetchError || !comment) {
-      return NextResponse.json(
-        { error: '댓글을 찾을 수 없습니다.' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: '댓글을 찾을 수 없습니다.' }, { status: 404 });
     }
 
     if ((comment as any).user_id !== user.id) {
-      return NextResponse.json(
-        { error: '본인의 댓글만 삭제할 수 있습니다.' },
-        { status: 403 }
-      );
-    }
-
-  return NextResponse.json(
-    { error: '본인의 댓글만 삭제할 수 있습니다.' },
-    { status: 403 }
-  );
-}
-      return NextResponse.json(
-        { error: '본인의 댓글만 삭제할 수 있습니다.' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: '본인의 댓글만 삭제할 수 있습니다.' }, { status: 403 });
     }
 
     // 댓글 삭제
@@ -66,10 +42,7 @@ export async function DELETE(
 
     if (deleteError) {
       console.error('댓글 삭제 실패:', deleteError);
-      return NextResponse.json(
-        { error: deleteError.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: deleteError.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
