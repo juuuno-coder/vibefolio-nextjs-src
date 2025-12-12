@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/client';
+import type { ProjectRow } from '@/types/supabase';
+import { handleApiError } from '@/lib/apiError';
 
 export async function POST(
   request: NextRequest,
@@ -10,47 +12,36 @@ export async function POST(
     const projectId = parseInt(id);
 
     if (isNaN(projectId)) {
-      return NextResponse.json(
-        { error: 'Invalid project ID' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
     }
 
-    // 조회수 증가 (safe)
+    // 현재 조회수 가져오기 (안전)
     const { data: current, error: fetchError } = await supabase
-      .from('Project')
+      .from<ProjectRow>('Project')
       .select('views')
       .eq('project_id', projectId)
       .single();
 
     if (fetchError) {
-      console.error('조회수 조회 실패:', fetchError);
-      return NextResponse.json({ error: fetchError.message }, { status: 500 });
+      return NextResponse.json(handleApiError(fetchError, '조회수 조회 실패', 500));
     }
 
-    const newViews = ((current as any)?.views ?? 0) + 1;
+    const newViews = (current?.views ?? 0) + 1;
 
+    // 조회수 업데이트
     const { data, error } = await supabase
-      .from('Project')
-      .update({ views: newViews } as any)
+      .from<ProjectRow>('Project')
+      .update({ views: newViews } as Partial<ProjectRow>)
       .eq('project_id', projectId)
       .select('views')
       .single();
 
     if (error) {
-      console.error('조회수 증가 실패:', error);
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
+      return NextResponse.json(handleApiError(error, '조회수 증가 실패', 500));
     }
 
     return NextResponse.json({ views: data.views });
-  } catch (error: any) {
-    console.error('조회수 API 오류:', error);
-    return NextResponse.json(
-      { error: error.message || '조회수 증가 중 오류가 발생했습니다.' },
-      { status: 500 }
-    );
+  } catch (err: any) {
+    return NextResponse.json(handleApiError(err, '조회수 API 오류'));
   }
 }
