@@ -21,11 +21,6 @@ export async function GET(request: NextRequest) {
         Category (
           category_id,
           name
-        ),
-        User (
-          user_id,
-          username,
-          profile_image_url
         )
       `)
       .order('created_at', { ascending: false });
@@ -63,16 +58,35 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('프로젝트 조회 실패:', error);
       return NextResponse.json(
-        { error: '프로젝트 조회에 실패했습니다.' },
+        { error: '프로젝트 조회에 실패했습니다.', details: error.message },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ projects: data });
-  } catch (error) {
+    // User 정보를 별도로 가져오기
+    if (data && data.length > 0) {
+      const userIds = [...new Set(data.map((p: any) => p.user_id).filter(Boolean))];
+      
+      if (userIds.length > 0) {
+        const { data: users, error: userError } = await (supabase as any)
+          .from('User')
+          .select('user_id, username, profile_image_url')
+          .in('user_id', userIds);
+
+        if (!userError && users) {
+          const userMap = new Map(users.map((u: any) => [u.user_id, u]));
+          data.forEach((project: any) => {
+            project.User = userMap.get(project.user_id) || null;
+          });
+        }
+      }
+    }
+
+    return NextResponse.json({ projects: data || [] });
+  } catch (error: any) {
     console.error('서버 오류:', error);
     return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.' },
+      { error: '서버 오류가 발생했습니다.', details: error.message },
       { status: 500 }
     );
   }

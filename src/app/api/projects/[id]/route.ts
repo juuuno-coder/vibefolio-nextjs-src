@@ -14,11 +14,6 @@ export async function GET(
       .from('Project')
       .select(`
         *,
-        users (
-          id,
-          nickname,
-          profile_image_url
-        ),
         Category (
           category_id,
           name
@@ -31,9 +26,22 @@ export async function GET(
     if (error) {
       console.error('프로젝트 조회 실패:', error);
       return NextResponse.json(
-        { error: '프로젝트를 찾을 수 없습니다.' },
+        { error: '프로젝트를 찾을 수 없습니다.', details: error.message },
         { status: 404 }
       );
+    }
+
+    // User 정보를 별도로 가져오기
+    if (data && data.user_id) {
+      const { data: user, error: userError } = await (supabase as any)
+        .from('User')
+        .select('user_id, username, profile_image_url')
+        .eq('user_id', data.user_id)
+        .single();
+
+      if (!userError && user) {
+        data.User = user;
+      }
     }
 
     // 조회수 증가
@@ -43,10 +51,10 @@ export async function GET(
       .eq('project_id', id);
 
     return NextResponse.json({ project: data });
-  } catch (error) {
+  } catch (error: any) {
     console.error('서버 오류:', error);
     return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.' },
+      { error: '서버 오류가 발생했습니다.', details: error.message },
       { status: 500 }
     );
   }
@@ -74,11 +82,6 @@ export async function PUT(
       .eq('project_id', id)
       .select(`
         *,
-        users (
-          id,
-          nickname,
-          profile_image_url
-        ),
         Category (
           category_id,
           name
@@ -89,16 +92,29 @@ export async function PUT(
     if (error) {
       console.error('프로젝트 수정 실패:', error);
       return NextResponse.json(
-        { error: '프로젝트 수정에 실패했습니다.' },
+        { error: '프로젝트 수정에 실패했습니다.', details: error.message },
         { status: 500 }
       );
     }
 
+    // User 정보를 별도로 가져오기
+    if (data && data.user_id) {
+      const { data: user, error: userError } = await (supabase as any)
+        .from('User')
+        .select('user_id, username, profile_image_url')
+        .eq('user_id', data.user_id)
+        .single();
+
+      if (!userError && user) {
+        data.User = user;
+      }
+    }
+
     return NextResponse.json({ project: data });
-  } catch (error) {
+  } catch (error: any) {
     console.error('서버 오류:', error);
     return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.' },
+      { error: '서버 오류가 발생했습니다.', details: error.message },
       { status: 500 }
     );
   }
@@ -129,7 +145,7 @@ export async function DELETE(
 
     if (fetchError || !project) {
       return NextResponse.json(
-        { error: '프로젝트를 찾을 수 없습니다.' },
+        { error: '프로젝트를 찾을 수 없습니다.', details: fetchError?.message },
         { status: 404 }
       );
     }
@@ -150,16 +166,16 @@ export async function DELETE(
     if (error) {
       console.error('프로젝트 삭제 실패:', error);
       return NextResponse.json(
-        { error: '프로젝트 삭제에 실패했습니다.' },
+        { error: '프로젝트 삭제에 실패했습니다.', details: error.message },
         { status: 500 }
       );
     }
 
     return NextResponse.json({ message: '프로젝트가 삭제되었습니다.' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('서버 오류:', error);
     return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.' },
+      { error: '서버 오류가 발생했습니다.', details: error.message },
       { status: 500 }
     );
   }
