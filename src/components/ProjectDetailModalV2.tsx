@@ -150,9 +150,18 @@ export function ProjectDetailModalV2({
     
     setLoading(prev => ({ ...prev, like: true }));
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
       const res = await fetch('/api/likes', {
-        method: liked ? 'DELETE' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({ projectId: parseInt(project.id) }),
       });
       
@@ -172,9 +181,18 @@ export function ProjectDetailModalV2({
     
     setLoading(prev => ({ ...prev, bookmark: true }));
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
       const res = await fetch('/api/wishlists', {
-        method: bookmarked ? 'DELETE' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({ projectId: parseInt(project.id) }),
       });
       
@@ -232,7 +250,7 @@ export function ProjectDetailModalV2({
         onOpenChange(newOpen);
       }}>
         <DialogContent 
-          className="!max-w-none !w-[88vw] !h-[88vh] !p-0 !gap-0 bg-white border-none shadow-2xl overflow-hidden"
+          className="!max-w-none !w-[88vw] !h-[88vh] !p-0 !gap-0 bg-transparent border-none shadow-none overflow-hidden"
           showCloseButton={false}
           onEscapeKeyDown={(e) => {
             e.preventDefault();
@@ -243,12 +261,6 @@ export function ProjectDetailModalV2({
             }
           }}
         >
-          <button 
-            onClick={() => onOpenChange(false)}
-            className="absolute top-4 right-4 z-50 p-2 text-gray-600 hover:text-gray-900 transition-colors bg-white/80 rounded-full backdrop-blur-sm"
-          >
-            <X size={24} />
-          </button>
 
           <div className="flex h-full">
             {/* 메인 이미지 영역 - 66% */}
@@ -280,8 +292,8 @@ export function ProjectDetailModalV2({
               </div>
             </div>
 
-            {/* 액션바 - 48px */}
-            <div className="w-[48px] bg-transparent flex flex-col items-center py-8 gap-6">
+            {/* 액션바 - 60px (간격 조정) */}
+            <div className="w-[60px] bg-transparent flex flex-col items-center py-8 gap-4">
               <div className="flex flex-col items-center gap-1 group cursor-pointer">
                 <Avatar className="w-10 h-10 border-2 border-gray-200">
                   <AvatarImage src={project.user.profile_image.large} />
