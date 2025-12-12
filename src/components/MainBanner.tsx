@@ -16,6 +16,8 @@ import {
 
 interface MainBannerProps {
   pageType?: "discover" | "connect";
+  loading?: boolean;
+  gallery?: any[];
 }
 
 export function MainBanner({ pageType = "discover" }: MainBannerProps) {
