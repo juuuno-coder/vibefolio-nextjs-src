@@ -33,10 +33,12 @@ export function CollectionModal({
   const [newCollectionName, setNewCollectionName] = useState("");
   const [showNewForm, setShowNewForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       loadCollections();
+      setSelectedCollectionId(null);
     }
   }, [open]);
 
@@ -61,7 +63,12 @@ export function CollectionModal({
   };
 
   const createCollection = async () => {
-    if (!newCollectionName.trim()) return;
+    const trimmedName = newCollectionName.trim();
+    
+    if (!trimmedName) {
+      alert('컬렉션 이름을 입력해주세요.');
+      return;
+    }
     
     setLoading(true);
     try {
@@ -72,7 +79,7 @@ export function CollectionModal({
         return;
       }
 
-      console.log('컬렉션 생성 시도:', newCollectionName);
+      console.log('컬렉션 생성 시도:', trimmedName);
 
       const res = await fetch('/api/collections', {
         method: 'POST',
@@ -81,7 +88,7 @@ export function CollectionModal({
           'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
-          name: newCollectionName,
+          name: trimmedName,
           description: ''
         })
       });
@@ -94,8 +101,8 @@ export function CollectionModal({
         setNewCollectionName('');
         setShowNewForm(false);
         alert('컬렉션이 생성되었습니다!');
-        // 새로 만든 컬렉션에 바로 추가
-        await addToCollection(data.collection.collection_id);
+        // 새로 만든 컬렉션 선택
+        setSelectedCollectionId(data.collection.collection_id);
       } else {
         alert(data.error || '컬렉션 생성에 실패했습니다.');
       }
@@ -197,11 +204,19 @@ export function CollectionModal({
               collections.map((collection) => (
                 <button
                   key={collection.collection_id}
-                  onClick={() => addToCollection(collection.collection_id)}
-                  className="w-full p-3 text-left border rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  onClick={() => setSelectedCollectionId(collection.collection_id)}
+                  onDoubleClick={() => addToCollection(collection.collection_id)}
+                  className={`w-full p-3 text-left border rounded-lg transition-colors flex items-center gap-2 ${
+                    selectedCollectionId === collection.collection_id
+                      ? 'bg-[#4ACAD4] text-white border-[#4ACAD4]'
+                      : 'hover:bg-gray-50 border-gray-200'
+                  }`}
                 >
-                  <Folder size={18} className="text-gray-600" />
+                  <Folder size={18} className={selectedCollectionId === collection.collection_id ? 'text-white' : 'text-gray-600'} />
                   <span className="flex-1 font-medium">{collection.name}</span>
+                  {selectedCollectionId === collection.collection_id && (
+                    <Check size={18} className="text-white" />
+                  )}
                 </button>
               ))
             ) : (
@@ -211,6 +226,16 @@ export function CollectionModal({
               </p>
             )}
           </div>
+
+          {/* 저장 버튼 */}
+          {selectedCollectionId && (
+            <Button
+              onClick={() => addToCollection(selectedCollectionId)}
+              className="w-full bg-[#4ACAD4] hover:bg-[#3db8c0]"
+            >
+              선택한 컬렉션에 저장
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
