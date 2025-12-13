@@ -330,7 +330,7 @@ export default function MyPage() {
             <h3 className="text-lg font-medium text-gray-900 mb-1">
               {activeTab === 'projects' && "아직 업로드한 프로젝트가 없습니다"}
               {activeTab === 'likes' && "좋아요한 프로젝트가 없습니다"}
-              {activeTab === 'bookmarks' && "북마크한 프로젝트가 없습니다"}
+              {activeTab === 'collections' && "저장된 컬렉션이 없습니다"}
               {activeTab === 'inquiries' && "받은 문의가 없습니다"}
               {activeTab === 'proposals' && "보낸 제안이 없습니다"}
               {activeTab === 'comments' && "작성한 댓글이 없습니다"}
