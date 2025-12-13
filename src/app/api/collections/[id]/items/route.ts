@@ -70,12 +70,12 @@ export async function POST(
     }
 
     // 컬렉션에 추가
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await (supabaseAdmin as any)
       .from('CollectionItem')
       .insert([{
         collection_id: collectionId,
         project_id: projectId
-      }])
+      }] as any)
       .select()
       .single();
 
@@ -148,7 +148,7 @@ export async function DELETE(
     }
 
     // 컬렉션에서 제거
-    const { error } = await supabaseAdmin
+    const { error } = await (supabaseAdmin as any)
       .from('CollectionItem')
       .delete()
       .eq('collection_id', collectionId)

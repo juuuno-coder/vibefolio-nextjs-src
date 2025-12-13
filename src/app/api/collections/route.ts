@@ -80,14 +80,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await (supabaseAdmin as any)
       .from('Collection')
       .insert([{
         user_id: user.id,
         name,
         description: description || '',
         is_public: is_public || false
-      }])
+      }] as any)
       .select()
       .single();
 
