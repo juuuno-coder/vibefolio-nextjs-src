@@ -66,7 +66,13 @@ export function CollectionModal({
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!session) {
+        alert('로그인이 필요합니다.');
+        setLoading(false);
+        return;
+      }
+
+      console.log('컬렉션 생성 시도:', newCollectionName);
 
       const res = await fetch('/api/collections', {
         method: 'POST',
@@ -81,15 +87,21 @@ export function CollectionModal({
       });
 
       const data = await res.json();
+      console.log('API 응답:', res.status, data);
+
       if (res.ok) {
         setCollections(prev => [data.collection, ...prev]);
         setNewCollectionName('');
         setShowNewForm(false);
+        alert('컬렉션이 생성되었습니다!');
         // 새로 만든 컬렉션에 바로 추가
         await addToCollection(data.collection.collection_id);
+      } else {
+        alert(data.error || '컬렉션 생성에 실패했습니다.');
       }
     } catch (error) {
       console.error('컬렉션 생성 실패:', error);
+      alert('컬렉션 생성 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
