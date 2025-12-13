@@ -306,7 +306,7 @@ export function ProjectDetailModalV2({
         onOpenChange(newOpen);
       }}>
         <DialogContent 
-          className="!max-w-none !w-screen !h-[80vh] !p-0 !gap-0 bg-transparent border-none shadow-none overflow-hidden flex items-end justify-center"
+          className="!max-w-none !w-screen !h-[90vh] !p-0 !gap-0 bg-transparent border-none shadow-none overflow-hidden flex items-end justify-center"
           showCloseButton={false}
         >
 
