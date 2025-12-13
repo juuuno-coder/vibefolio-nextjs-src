@@ -110,7 +110,12 @@ export function CollectionModal({
   const addToCollection = async (collectionId: string) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!session) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
+      console.log('컬렉션에 추가 시도:', { collectionId, projectId });
 
       const res = await fetch(`/api/collections/${collectionId}/items`, {
         method: 'POST',
@@ -118,14 +123,19 @@ export function CollectionModal({
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ projectId })
+        body: JSON.stringify({ 
+          projectId: parseInt(projectId) 
+        })
       });
+
+      const data = await res.json();
+      console.log('추가 API 응답:', res.status, data);
 
       if (res.ok) {
         alert('컬렉션에 추가되었습니다!');
         onOpenChange(false);
       } else {
-        const data = await res.json();
+        console.error('추가 실패:', data);
         alert(data.error || '추가에 실패했습니다.');
       }
     } catch (error) {

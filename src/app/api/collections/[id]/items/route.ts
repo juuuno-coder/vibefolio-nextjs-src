@@ -33,6 +33,8 @@ export async function POST(
     const body = await request.json();
     const { projectId } = body;
 
+    console.log('컬렉션 아이템 추가 요청:', { collectionId, projectId, userId: user.id });
+
     if (!projectId) {
       return NextResponse.json(
         { error: '프로젝트 ID가 필요합니다.' },
@@ -41,13 +43,22 @@ export async function POST(
     }
 
     // 컬렉션 소유자 확인
-    const { data: collection } = await supabaseAdmin
+    const { data: collection, error: collectionError } = await supabaseAdmin
       .from('Collection')
       .select('user_id')
       .eq('collection_id', collectionId)
-      .single() as { data: { user_id: string } | null };
+      .single() as { data: { user_id: string } | null; error: any };
 
-    if (!collection || collection.user_id !== user.id) {
+    console.log('컬렉션 조회 결과:', { collection, collectionError });
+
+    if (collectionError || !collection) {
+      return NextResponse.json(
+        { error: '컬렉션을 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    if (collection.user_id !== user.id) {
       return NextResponse.json(
         { error: '권한이 없습니다.' },
         { status: 403 }
@@ -82,11 +93,12 @@ export async function POST(
     if (error) {
       console.error('컬렉션 아이템 추가 실패:', error);
       return NextResponse.json(
-        { error: '컬렉션에 추가하는데 실패했습니다.' },
+        { error: `컬렉션에 추가하는데 실패했습니다: ${error.message}` },
         { status: 500 }
       );
     }
 
+    console.log('컬렉션 아이템 추가 성공:', data);
     return NextResponse.json({ item: data, message: '컬렉션에 추가되었습니다.' });
   } catch (error) {
     console.error('서버 오류:', error);
