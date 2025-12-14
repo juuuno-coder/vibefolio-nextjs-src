@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { Heart, Folder, Upload, Settings, Grid, MessageSquare, Send, MessageCircle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
+import { ProposalCard } from "@/components/ProposalCard";
+import { CommentCard } from "@/components/CommentCard";
 import { supabase } from "@/lib/supabase/client";
 
 export default function MyPage() {
@@ -128,33 +130,43 @@ export default function MyPage() {
         const { data: result, error } = await query;
         if (error) throw error;
 
-        // 데이터 매핑 (일관된 Project 구조로 변환)
-        const mappedData = result?.map((item: any) => {
-          // Like/Wishlist는 Project 객체가 중첩되어 있음
-          const p = activeTab === 'projects' ? item : item.Project;
-          if (!p) return null; // 삭제된 프로젝트일 경우
+        // 데이터 매핑
+        let mappedData;
 
-          return {
-            id: p.project_id,
-            title: p.title,
-            urls: {
-              full: p.thumbnail_url || "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=2000",
-              regular: p.thumbnail_url || "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=800"
-            },
-            user: {
-              username: userProfile?.nickname || "Unknown",
-              profile_image: {
-                small: userProfile?.profile_image_url || "/globe.svg",
-                large: userProfile?.profile_image_url || "/globe.svg"
-              }
-            },
-            likes: p.likes || 0,
-            views: p.views || 0,
-            description: p.content_text,
-            alt_description: p.title,
-            created_at: p.created_at, // 정렬용
-          };
-        }).filter(Boolean) || [];
+        if (activeTab === 'inquiries' || activeTab === 'proposals') {
+          // 제안/문의는 그대로 사용
+          mappedData = result || [];
+        } else if (activeTab === 'comments') {
+          // 댓글도 그대로 사용
+          mappedData = result || [];
+        } else {
+          // 프로젝트/좋아요는 ImageCard 형식으로 변환
+          mappedData = result?.map((item: any) => {
+            const p = activeTab === 'projects' ? item : item.Project;
+            if (!p) return null;
+
+            return {
+              id: p.project_id,
+              title: p.title,
+              urls: {
+                full: p.thumbnail_url || p.image_url || "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=2000",
+                regular: p.thumbnail_url || p.image_url || "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=800"
+              },
+              user: {
+                username: userProfile?.nickname || "Unknown",
+                profile_image: {
+                  small: userProfile?.profile_image_url || "/globe.svg",
+                  large: userProfile?.profile_image_url || "/globe.svg"
+                }
+              },
+              likes: p.likes_count || p.likes || 0,
+              views: p.views_count || p.views || 0,
+              description: p.content_text,
+              alt_description: p.title,
+              created_at: p.created_at,
+            };
+          }).filter(Boolean) || [];
+        }
 
         setProjects(mappedData);
       } catch (e) {
@@ -306,18 +318,63 @@ export default function MyPage() {
           </button>
         </div>
 
+
         {/* 콘텐츠 그리드 */}
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>
-        ) : projects.length > 0 ? (
-          <div className="masonry-grid pb-20">
-            {projects.map((project: any) => (
-              <ImageCard key={project.id} props={project} />
-            ))}
-          </div>
         ) : (
+          <>
+            {/* 프로젝트 & 좋아요 탭 */}
+            {(activeTab === 'projects' || activeTab === 'likes') && projects.length > 0 && (
+              <div className="masonry-grid pb-20">
+                {projects.map((project: any) => (
+                  <ImageCard key={project.id} props={project} />
+                ))}
+              </div>
+            )}
+
+            {/* 1:1 문의 탭 */}
+            {activeTab === 'inquiries' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-20">
+                {projects.map((item: any) => (
+                  <ProposalCard 
+                    key={item.proposal_id} 
+                    proposal={item} 
+                    type="received"
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* 제안하기 탭 */}
+            {activeTab === 'proposals' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-20">
+                {projects.map((item: any) => (
+                  <ProposalCard 
+                    key={item.proposal_id} 
+                    proposal={item} 
+                    type="sent"
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* 내가 쓴 댓글 탭 */}
+            {activeTab === 'comments' && (
+              <div className="grid grid-cols-1 gap-4 pb-20">
+                {projects.map((item: any) => (
+                  <CommentCard 
+                    key={item.comment_id} 
+                    comment={item}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* 빈 상태 */}
+            {projects.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-100 border-dashed">
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
               {activeTab === 'projects' && <Upload className="text-gray-300" />}
