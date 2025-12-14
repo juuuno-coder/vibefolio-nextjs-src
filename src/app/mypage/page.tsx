@@ -351,7 +351,6 @@ export default function MyPage() {
               {activeTab === 'projects' && <Upload className="text-gray-300" />}
               {activeTab === 'likes' && <Heart className="text-gray-300" />}
               {activeTab === 'collections' && <Folder className="text-gray-300" />}
-              {activeTab === 'inquiries' && <MessageSquare className="text-gray-300" />}
               {activeTab === 'proposals' && <Send className="text-gray-300" />}
               {activeTab === 'comments' && <MessageCircle className="text-gray-300" />}
             </div>
@@ -359,15 +358,13 @@ export default function MyPage() {
               {activeTab === 'projects' && "아직 업로드한 프로젝트가 없습니다"}
               {activeTab === 'likes' && "좋아요한 프로젝트가 없습니다"}
               {activeTab === 'collections' && "저장된 컬렉션이 없습니다"}
-              {activeTab === 'inquiries' && "받은 문의가 없습니다"}
-              {activeTab === 'proposals' && "보낸 제안이 없습니다"}
+              {activeTab === 'proposals' && "받은 제안이 없습니다"}
               {activeTab === 'comments' && "작성한 댓글이 없습니다"}
             </h3>
             <p className="text-gray-500 mb-6">
               {activeTab === 'projects' && "멋진 작품을 공유해보세요!"}
               {(activeTab === 'likes' || activeTab === 'collections') && "마음에 드는 작품을 찾아보세요!"}
-              {activeTab === 'inquiries' && "다른 크리에이터들과 소통해보세요!"}
-              {activeTab === 'proposals' && "프로젝트에 제안을 보내보세요!"}
+              {activeTab === 'proposals' && "제안을 확인해보세요!"}
               {activeTab === 'comments' && "프로젝트에 댓글을 남겨보세요!"}
             </p>
             {activeTab === 'projects' ? (
