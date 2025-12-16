@@ -83,8 +83,7 @@ export default function AdminUsersPage() {
 
     setUpdating(userId);
     try {
-      // @ts-ignore - Supabase 타입 이슈
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("users")
         .update({ role: newRole, updated_at: new Date().toISOString() })
         .eq("id", userId);
