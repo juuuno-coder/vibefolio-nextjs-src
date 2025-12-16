@@ -12,7 +12,7 @@ import { ProjectDetailModalV2 } from "@/components/ProjectDetailModalV2";
 import { supabase } from "@/lib/supabase/client";
 import { getCategoryName } from "@/lib/categoryMap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSparkles, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faWandSparkles, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 interface ImageDialogProps {
   id: string;
@@ -207,7 +207,7 @@ export default function Home() {
           <div className="bg-gradient-to-r from-[#4ACAD4]/10 to-indigo-50 border-b border-[#4ACAD4]/20">
             <div className="max-w-screen-xl mx-auto px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faSparkles} className="w-4 h-4 text-[#4ACAD4]" />
+                <FontAwesomeIcon icon={faWandSparkles} className="w-4 h-4 text-[#4ACAD4]" />
                 <span className="text-sm text-gray-700">
                   <span className="font-medium text-[#4ACAD4]">맞춤 피드</span>
                   {userInterests.genres?.length > 0 && (

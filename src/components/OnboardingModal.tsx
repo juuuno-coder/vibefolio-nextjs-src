@@ -19,9 +19,8 @@ import {
   faMobileScreen,
   faGamepad,
   faCheck,
-  faPartyHorn,
   faArrowRight,
-  faSparkles,
+  faStar,
 } from "@fortawesome/free-solid-svg-icons";
 import { supabase } from "@/lib/supabase/client";
 
@@ -168,7 +167,7 @@ export function OnboardingModal({
         {step === 0 && (
           <div className="p-8 text-center">
             <div className="w-20 h-20 bg-gradient-to-br from-[#4ACAD4] to-[#3db8c0] rounded-full flex items-center justify-center mx-auto mb-6">
-              <FontAwesomeIcon icon={faSparkles} className="w-10 h-10 text-white" />
+              <FontAwesomeIcon icon={faStar} className="w-10 h-10 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               환영합니다! 🎉
