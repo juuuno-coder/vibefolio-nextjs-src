@@ -53,8 +53,8 @@ export default function MyPage() {
       };
 
       // public.users 테이블에서 최신 프로필 정보 조회
-      const { data: dbUser } = await supabase
-        .from('users')
+      const { data: dbUser } = await (supabase
+        .from('users') as any)
         .select('*')
         .eq('id', user.id)
         .single();

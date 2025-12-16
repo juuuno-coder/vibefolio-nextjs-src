@@ -271,6 +271,35 @@ export interface Database {
           category_id?: number | null;
         };
       };
+      Banner: {
+        Row: {
+          banner_id: number;
+          page_type: string;
+          title: string;
+          image_url: string;
+          link_url: string | null;
+          display_order: number;
+          created_at: string;
+        };
+        Insert: {
+          banner_id?: number;
+          page_type?: string;
+          title: string;
+          image_url: string;
+          link_url?: string | null;
+          display_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          banner_id?: number;
+          page_type?: string;
+          title?: string;
+          image_url?: string;
+          link_url?: string | null;
+          display_order?: number;
+          created_at?: string;
+        };
+      };
     };
     Views: {};
     Functions: {};

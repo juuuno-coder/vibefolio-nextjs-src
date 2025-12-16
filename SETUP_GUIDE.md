@@ -85,3 +85,21 @@ WHERE routine_type = 'FUNCTION';
 ### 카운트가 0으로 표시됨
 
 → 기존 데이터 동기화 쿼리 재실행
+
+## 4. 배너 관리 시스템
+
+**배너 관리를 위해 다음 설정이 필요합니다.**
+
+### 1. 테이블 생성
+
+**파일**: `supabase/CREATE_BANNER_TABLE.sql`
+
+- `Banner` 테이블 생성 및 RLS 정책 설정
+
+### 2. Storage 버킷 생성
+
+1.  Supabase 메뉴 -> **Storage**
+2.  **New Bucket** 클릭
+3.  Name: **`banners`**
+4.  **Public bucket**: ON (필수!)
+5.  Save

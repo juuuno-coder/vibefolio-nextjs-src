@@ -81,7 +81,7 @@ export default function AdminBannersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!imageFile && !editingId && !previewImage) {
+    if (!imageFile && !previewImage) {
       alert("이미지를 선택해주세요.");
       return;
     }
@@ -107,24 +107,28 @@ export default function AdminBannersPage() {
         imageUrl = publicUrl;
       }
 
+      if (!imageUrl) {
+        throw new Error("이미지 처리에 실패했습니다.");
+      }
+
       const payload = {
         title: formData.title,
         link_url: formData.link_url,
-        display_order: formData.display_order,
+        display_order: formData.display_order || 0,
         page_type: pageType,
         image_url: imageUrl,
       };
 
       let error;
       if (editingId) {
-        const { error: updateError } = await supabase
-          .from('Banner')
+        const { error: updateError } = await (supabase
+          .from('Banner') as any)
           .update(payload)
           .eq('banner_id', editingId);
         error = updateError;
       } else {
-        const { error: insertError } = await supabase
-          .from('Banner')
+        const { error: insertError } = await (supabase
+          .from('Banner') as any)
           .insert([payload]);
         error = insertError;
       }
@@ -159,7 +163,30 @@ export default function AdminBannersPage() {
     }
   };
 
-  // ... (render) ...
+  if (adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin" size={32} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-7xl mx-auto px-6">
+        {/* 헤더 */}
+        <div className="mb-8">
+          <Link href="/admin" className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4">
+            <ArrowLeft size={20} className="mr-2" />
+            관리자 대시보드로 돌아가기
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            배너 관리
+          </h1>
+          <p className="text-gray-600">
+            메인 페이지에 표시될 배너를 관리하세요.
+          </p>
+        </div>
 
         {/* 배너 추가 폼 */}
         <div className="bg-white rounded-lg p-6 mb-8 shadow">
