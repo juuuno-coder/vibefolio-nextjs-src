@@ -29,6 +29,7 @@ import "dayjs/locale/ko";
 import { ShareModal } from "./ShareModal";
 import { ProposalModal } from "./ProposalModal";
 import { CollectionModal } from "./CollectionModal";
+import { LoginRequiredModal } from "./LoginRequiredModal";
 import { supabase } from "@/lib/supabase/client";
 
 dayjs.extend(relativeTime);
@@ -147,6 +148,7 @@ export function ProjectDetailModalV2({
     comment: false,
     follow: false,
   });
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
 
   // ESC 키 핸들러
   useEffect(() => {
@@ -268,7 +270,7 @@ export function ProjectDetailModalV2({
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        alert('로그인이 필요합니다.');
+        setLoginModalOpen(true);
         return;
       }
 
@@ -299,7 +301,7 @@ export function ProjectDetailModalV2({
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        alert('로그인이 필요합니다.');
+        setLoginModalOpen(true);
         return;
       }
 
@@ -356,7 +358,7 @@ export function ProjectDetailModalV2({
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        alert('로그인이 필요합니다.');
+        setLoginModalOpen(true);
         return;
       }
 
@@ -401,7 +403,7 @@ export function ProjectDetailModalV2({
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        alert('로그인이 필요합니다.');
+        setLoginModalOpen(true);
         return;
       }
 
@@ -535,7 +537,7 @@ export function ProjectDetailModalV2({
               <Button
                 onClick={() => {
                   if (!isLoggedIn) {
-                    alert('로그인이 필요합니다.');
+                    setLoginModalOpen(true);
                     return;
                   }
                   setProposalModalOpen(true);
@@ -631,7 +633,7 @@ export function ProjectDetailModalV2({
               <button 
                 onClick={() => {
                   if (!isLoggedIn) {
-                    alert('로그인이 필요합니다.');
+                    setLoginModalOpen(true);
                     return;
                   }
                   if (currentUserId === project.userId) {
@@ -663,7 +665,7 @@ export function ProjectDetailModalV2({
               <button 
                 onClick={() => {
                   if (!isLoggedIn) {
-                    alert('로그인이 필요합니다.');
+                    setLoginModalOpen(true);
                     return;
                   }
                   setCollectionModalOpen(true);
@@ -806,6 +808,11 @@ export function ProjectDetailModalV2({
         open={collectionModalOpen}
         onOpenChange={setCollectionModalOpen}
         projectId={project.id}
+      />
+
+      <LoginRequiredModal
+        open={loginModalOpen}
+        onOpenChange={setLoginModalOpen}
       />
     </>
   );
