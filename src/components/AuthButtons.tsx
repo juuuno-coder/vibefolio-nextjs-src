@@ -92,12 +92,28 @@ export function AuthButtons() {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userProfile");
-    localStorage.removeItem("userId");
-    router.push("/");
-    router.refresh();
+    try {
+      // 1. UI 상태 즉시 초기화 (사용자에게 즉각적인 피드백)
+      setUser(null);
+      setUserProfile(null);
+      setIsAdmin(false);
+
+      // 2. 로컬 스토리지 정리
+      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("userProfile");
+      localStorage.removeItem("userId");
+
+      // 3. Supabase 로그아웃 요청
+      await supabase.auth.signOut();
+
+      // 4. 메인 페이지로 이동 및 새로고침
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("로그아웃 중 오류 발생:", error);
+      // 오류가 발생해도 강제로 클라이언트 상태는 초기화된 상태 유지
+      router.push("/");
+    }
   };
 
   const handleOnboardingComplete = () => {
