@@ -77,20 +77,7 @@ export default function SignupPage() {
     }
   };
 
-  const handleNaverSignup = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'naver',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('Naver 로그인 오류:', error);
-      setError(error.message || 'Naver 로그인에 실패했습니다.');
-    }
-  };
+
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
@@ -112,16 +99,7 @@ export default function SignupPage() {
 
         {/* 소셜 로그인 */}
         <div className="space-y-3">
-          <Button
-            type="button"
-            onClick={handleNaverSignup}
-            className="w-full h-12 flex items-center justify-center gap-3 bg-[#03C75A] hover:bg-[#02b351] text-white border-none"
-          >
-            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-              <path d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z"/>
-            </svg>
-            <span>네이버로 계속하기</span>
-          </Button>
+
 
           <Button
             type="button"

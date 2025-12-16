@@ -56,20 +56,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleNaverLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'naver',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('Naver 로그인 오류:', error);
-      setError(error.message || 'Naver 로그인에 실패했습니다.');
-    }
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,16 +146,7 @@ export default function LoginPage() {
 
         {/* 소셜 로그인 */}
         <div className="mt-8 space-y-3">
-          <Button
-            type="button"
-            onClick={handleNaverLogin}
-            className="w-full h-12 flex items-center justify-center gap-3 bg-[#03C75A] hover:bg-[#02b351] text-white border-none"
-          >
-            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-              <path d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z"/>
-            </svg>
-            <span>네이버로 로그인</span>
-          </Button>
+
 
           <Button
             type="button"
