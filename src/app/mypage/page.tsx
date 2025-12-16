@@ -235,12 +235,12 @@ export default function MyPage() {
 
   return (
     <div className="w-full min-h-screen bg-gray-50 pt-20 pb-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="w-full max-w-[1600px] mx-auto px-4 md:px-8">
         
         {/* 프로필 섹션 */}
         <div className="bg-white rounded-xl mb-6 border border-gray-100 shadow-sm overflow-hidden">
           {/* 커버 이미지 */}
-          <div className="h-48 md:h-64 bg-gray-200 relative group">
+          <div className="h-48 md:h-72 bg-gray-200 relative group">
             {userProfile?.cover_image_url ? (
                <img 
                  src={userProfile.cover_image_url} 
@@ -255,10 +255,10 @@ export default function MyPage() {
           
           {/* 프로필 정보 */}
           <div className="px-6 pb-6 md:px-8 md:pb-8">
-            <div className="flex flex-col md:flex-row md:items-end -mt-12 md:-mt-16 mb-4 gap-4 md:gap-6">
+            <div className="flex flex-col md:flex-row md:items-end -mt-12 md:-mt-20 mb-6 gap-6">
                {/* 아바타 */}
-              <div className="relative">
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white">
+              <div className="relative z-10 shrink-0">
+                <div className="w-24 h-24 md:w-36 md:h-36 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white">
                   <img 
                     src={userProfile?.profile_image_url || "/globe.svg"} 
                     alt="Profile" 
@@ -268,13 +268,15 @@ export default function MyPage() {
               </div>
 
                {/* 텍스트 정보 */}
-               <div className="flex-1 pt-2 md:pt-0 md:pb-4">
-                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{userProfile?.nickname || "사용자"}</h1>
-                 <p className="text-gray-500 text-sm md:text-base">{userProfile?.email}</p>
+               <div className="flex-1 pt-2 md:pt-0 md:pb-2">
+                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
+                    {userProfile?.nickname || "사용자"}
+                 </h1>
+                 <p className="text-gray-500 text-sm md:text-base mt-1">{userProfile?.email}</p>
                </div>
 
                 {/* 설정 버튼 (우측 하단 정렬) */}
-                <div className="md:pb-4">
+                <div className="md:pb-2 flex-shrink-0 w-full md:w-auto mt-4 md:mt-0">
                   <Button variant="outline" onClick={() => router.push('/mypage/profile')} className="w-full md:w-auto">
                     <Settings className="w-4 h-4 mr-2" />
                     프로필 설정
@@ -283,12 +285,12 @@ export default function MyPage() {
             </div>
             
             {/* 자기소개 */}
-            <p className="text-gray-700 text-sm md:text-base max-w-3xl mb-6">
+            <p className="text-gray-700 text-sm md:text-base max-w-3xl mb-8 leading-relaxed">
                {userProfile?.bio || `안녕하세요! 크리에이티브한 작품을 공유하는 ${userProfile?.nickname || "사용자"}입니다.`}
             </p>
             
             {/* 통계 */}
-            <div className="flex gap-6 md:gap-8 pt-4 border-t border-gray-100">
+            <div className="flex gap-8 md:gap-12 pt-6 border-t border-gray-100">
               <div className="text-center md:text-left">
                 <div className="text-xl md:text-2xl font-bold text-gray-900">{stats.projects}</div>
                 <div className="text-xs md:text-sm text-gray-500">Projects</div>
