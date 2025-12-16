@@ -172,7 +172,7 @@ export default function MyPage() {
              
              // 첫 진입 시 첫번째 컬렉션 선택
              if (cols && cols.length > 0 && !activeCollectionId) {
-                setActiveCollectionId(cols[0].collection_id);
+                setActiveCollectionId((cols[0] as any).collection_id);
              }
           }
 
