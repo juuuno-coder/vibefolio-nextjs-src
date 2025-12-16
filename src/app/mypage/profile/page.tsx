@@ -19,6 +19,7 @@ interface UserProfile {
   location: string;
   website: string;
   profileImage: string;
+  coverImage: string;
   skills: string[];
   socialLinks: {
     instagram?: string;
@@ -41,6 +42,7 @@ export default function ProfileSettingsPage() {
     location: "",
     website: "",
     profileImage: "/globe.svg",
+    coverImage: "",
     skills: [],
     socialLinks: {},
   });
@@ -80,11 +82,12 @@ export default function ProfileSettingsPage() {
               location: '',
               website: '',
               profileImage: data.user.profile_image_url || '/globe.svg',
+              coverImage: data.user.cover_image_url || '',
               skills: [],
               socialLinks: {},
             });
           } else {
-            // API 실패 시 기본값 사용
+             // ... default fallback
             setProfile({
               username: defaultUsername,
               email: userEmail,
@@ -93,13 +96,13 @@ export default function ProfileSettingsPage() {
               location: '',
               website: '',
               profileImage: '/globe.svg',
+              coverImage: '',
               skills: [],
               socialLinks: {},
             });
           }
         } catch (error) {
-          console.error('프로필 API 호출 실패:', error);
-          // API 실패 시에도 기본 프로필 표시
+           // ... error fallback
           setProfile({
             username: defaultUsername,
             email: userEmail,
@@ -108,6 +111,7 @@ export default function ProfileSettingsPage() {
             location: '',
             website: '',
             profileImage: '/globe.svg',
+            coverImage: '',
             skills: [],
             socialLinks: {},
           });
@@ -124,6 +128,7 @@ export default function ProfileSettingsPage() {
 
 
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
 
   // ... useEffect (생략)
 
@@ -142,17 +147,27 @@ export default function ProfileSettingsPage() {
 
     try {
       let imageUrl = profile.profileImage;
+      let coverUrl = profile.coverImage;
 
-      // 이미지가 새로 업로드되었다면 Supabase Storage에 업로드
+      // 프로필 이미지가 새로 업로드되었다면
       if (imageFile) {
-        console.log('이미지 업로드 시작...', imageFile.name);
         try {
           const { uploadImage } = await import("@/lib/supabase/storage");
           imageUrl = await uploadImage(imageFile, 'profiles');
-          console.log('이미지 업로드 성공:', imageUrl);
         } catch (uploadError: any) {
-          console.error('이미지 업로드 오류:', uploadError);
-          alert(`이미지 업로드 실패: ${uploadError.message}`);
+          alert(`프로필 이미지 업로드 실패: ${uploadError.message}`);
+          return;
+        }
+      }
+
+      // 커버 이미지가 새로 업로드되었다면
+      if (coverImageFile) {
+        try {
+          const { uploadImage } = await import("@/lib/supabase/storage");
+          // profiles 버킷 사용 (혹은 banners)
+          coverUrl = await uploadImage(coverImageFile, 'profiles'); 
+        } catch (uploadError: any) {
+          alert(`커버 이미지 업로드 실패: ${uploadError.message}`);
           return;
         }
       }
@@ -167,19 +182,18 @@ export default function ProfileSettingsPage() {
           nickname: profile.username,
           bio: profile.bio,
           profile_image_url: imageUrl,
+          cover_image_url: coverUrl,
         }),
       });
 
       const data = await response.json();
-      console.log('API 응답:', data);
 
       if (response.ok) {
         alert('프로필이 저장되었습니다!');
-        // 프로필 이미지 업데이트
-        setProfile(prev => ({ ...prev, profileImage: imageUrl }));
+        setProfile(prev => ({ ...prev, profileImage: imageUrl, coverImage: coverUrl }));
         setImageFile(null);
+        setCoverImageFile(null);
       } else {
-        console.error('API 오류:', data);
         alert(data.error || '프로필 저장에 실패했습니다.');
       }
     } catch (error: any) {
@@ -192,15 +206,11 @@ export default function ProfileSettingsPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // 5MB 제한
       if (file.size > 5 * 1024 * 1024) {
         alert("이미지 크기는 5MB 이하여야 합니다.");
         return;
       }
-      
       setImageFile(file);
-      
-      // 미리보기 생성
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfile({ ...profile, profileImage: reader.result as string });
@@ -208,6 +218,25 @@ export default function ProfileSettingsPage() {
       reader.readAsDataURL(file);
     }
   };
+
+  // 커버 이미지 선택
+  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+       if (file.size > 5 * 1024 * 1024) {
+        alert("이미지 크기는 5MB 이하여야 합니다.");
+        return;
+      }
+      setCoverImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfile({ ...profile, coverImage: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // ... (skills handlers remain same)
 
   // 스킬 추가
   const handleAddSkill = () => {
@@ -239,6 +268,39 @@ export default function ProfileSettingsPage() {
             나의 정보를 관리하고 다른 사용자에게 보여질 프로필을 설정하세요
           </p>
         </div>
+
+        {/* 커버 이미지 설정 */}
+        <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>커버 이미지</CardTitle>
+            </CardHeader>
+            <CardContent>
+               <div className="aspect-[3/1] bg-gray-100 rounded-lg overflow-hidden relative mb-4 group">
+                  {profile.coverImage ? (
+                    <img src={profile.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-r from-[#4ACAD4] to-[#05BCC6] flex items-center justify-center text-white/50">
+                       <p>이미지가 없습니다</p>
+                    </div>
+                  )}
+                  <label className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleCoverImageUpload}
+                        className="hidden" 
+                      />
+                      <div className="bg-white/90 text-gray-800 px-4 py-2 rounded-full flex items-center gap-2 font-medium">
+                        <Upload size={16} />
+                        이미지 변경
+                      </div>
+                  </label>
+               </div>
+               <p className="text-sm text-gray-500">
+                 프로필 페이지 상단 배경으로 사용됩니다. (권장 비율 3:1, 최대 5MB)
+               </p>
+            </CardContent>
+        </Card>
 
         {/* 프로필 이미지 */}
         <Card className="mb-6">

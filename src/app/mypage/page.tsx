@@ -118,6 +118,41 @@ export default function MyPage() {
             `)
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
+        } else if (activeTab === 'collections') {
+          // 컬렉션 - Collection과 CollectionItem(Project) 조회
+          // NOTE: Supabase 조인 쿼리가 복잡하므로, 일단 컬렉션 목록을 가져온 후 각각의 대표 이미지를 가져오는 방식 사용 (혹은 fetch API 활용)
+          const res = await fetch('/api/collections', {
+            headers: {
+              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+            }
+          });
+          if (res.ok) {
+            const result = await res.json();
+             // 각 컬렉션의 프로젝트 미리보기 가져오기 (클라이언트 측에서)
+            const collectionsWithProjects = await Promise.all(
+              (result.collections || []).map(async (collection: any) => {
+                const { data: items } = await supabase
+                  .from('CollectionItem')
+                  .select(`
+                    Project (
+                      thumbnail_url,
+                      image_url
+                    )
+                  `)
+                  .eq('collection_id', collection.collection_id)
+                  .order('added_at', { ascending: false })
+                  .limit(4) as any;
+
+                const previews = items?.map((i: any) => i.Project?.thumbnail_url || i.Project?.image_url).filter(Boolean) || [];
+                return { ...collection, previews };
+              })
+            );
+            setProjects(collectionsWithProjects); // projects state 재활용 (타입이 any[]이므로)
+            setLoading(false);
+            return;
+          } else {
+             throw new Error("Failed to fetch collections");
+          }
         } else if (activeTab === 'proposals') {
           // 받은 제안
           query = supabase
@@ -199,78 +234,90 @@ export default function MyPage() {
   }, [activeTab, userId]);
 
   return (
-    <div className="w-full min-h-screen bg-gray-50 pt-24">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="w-full min-h-screen bg-gray-50 pt-20 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         
         {/* 프로필 섹션 */}
-        <div className="bg-white rounded-xl mb-8 border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl mb-6 border border-gray-100 shadow-sm overflow-hidden">
           {/* 커버 이미지 */}
-          <div className="h-48 bg-gradient-to-r from-[#4ACAD4] to-[#05BCC6] relative">
-            <div className="absolute inset-0 bg-black/10"></div>
+          <div className="h-48 md:h-64 bg-gray-200 relative group">
+            {userProfile?.cover_image_url ? (
+               <img 
+                 src={userProfile.cover_image_url} 
+                 alt="Cover" 
+                 className="w-full h-full object-cover"
+               />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-r from-[#4ACAD4] to-[#05BCC6]"></div>
+            )}
+             <div className="absolute inset-0 bg-black/10"></div>
           </div>
           
           {/* 프로필 정보 */}
-          <div className="px-8 pb-8">
-            {/* 아바타 (커버 이미지와 겹치게) */}
-            <div className="relative -mt-16 mb-4">
-              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white">
-                <img 
-                  src={userProfile?.profile_image_url || "/globe.svg"} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
+          <div className="px-6 pb-6 md:px-8 md:pb-8">
+            <div className="flex flex-col md:flex-row md:items-end -mt-12 md:-mt-16 mb-4 gap-4 md:gap-6">
+               {/* 아바타 */}
+              <div className="relative">
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white">
+                  <img 
+                    src={userProfile?.profile_image_url || "/globe.svg"} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               </div>
+
+               {/* 텍스트 정보 */}
+               <div className="flex-1 pt-2 md:pt-0 md:pb-4">
+                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{userProfile?.nickname || "사용자"}</h1>
+                 <p className="text-gray-500 text-sm md:text-base">{userProfile?.email}</p>
+               </div>
+
+                {/* 설정 버튼 (우측 하단 정렬) */}
+                <div className="md:pb-4">
+                  <Button variant="outline" onClick={() => router.push('/mypage/profile')} className="w-full md:w-auto">
+                    <Settings className="w-4 h-4 mr-2" />
+                    프로필 설정
+                  </Button>
+                </div>
             </div>
             
-            {/* 정보 */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{userProfile?.nickname || "사용자"}</h1>
-                <p className="text-gray-500 mb-4">{userProfile?.email}</p>
-                
-                {/* 자기소개 (추후 추가 가능) */}
-                <p className="text-gray-700 text-sm max-w-2xl">
-                  안녕하세요! 크리에이티브한 작품을 공유하는 {userProfile?.nickname || "사용자"}입니다.
-                </p>
-              </div>
-              
-              <Button variant="outline" onClick={() => router.push('/mypage/profile')}>
-                <Settings className="w-4 h-4 mr-2" />
-                프로필 설정
-              </Button>
-            </div>
+            {/* 자기소개 */}
+            <p className="text-gray-700 text-sm md:text-base max-w-3xl mb-6">
+               {userProfile?.bio || `안녕하세요! 크리에이티브한 작품을 공유하는 ${userProfile?.nickname || "사용자"}입니다.`}
+            </p>
             
             {/* 통계 */}
-            <div className="flex gap-8 pt-6 border-t border-gray-100">
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{stats.projects}</div>
-                <div className="text-sm text-gray-500">Projects</div>
+            <div className="flex gap-6 md:gap-8 pt-4 border-t border-gray-100">
+              <div className="text-center md:text-left">
+                <div className="text-xl md:text-2xl font-bold text-gray-900">{stats.projects}</div>
+                <div className="text-xs md:text-sm text-gray-500">Projects</div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{stats.likes}</div>
-                <div className="text-sm text-gray-500">Likes</div>
+              <div className="text-center md:text-left">
+                <div className="text-xl md:text-2xl font-bold text-gray-900">{stats.likes}</div>
+                <div className="text-xs md:text-sm text-gray-500">Likes</div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{stats.collections}</div>
-                <div className="text-sm text-gray-500">Collections</div>
+              <div className="text-center md:text-left">
+                <div className="text-xl md:text-2xl font-bold text-gray-900">{stats.collections}</div>
+                <div className="text-xs md:text-sm text-gray-500">Collections</div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{stats.followers}</div>
-                <div className="text-sm text-gray-500">Followers</div>
+              <div className="text-center md:text-left">
+                <div className="text-xl md:text-2xl font-bold text-gray-900">{stats.followers}</div>
+                <div className="text-xs md:text-sm text-gray-500">Followers</div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{stats.following}</div>
-                <div className="text-sm text-gray-500">Following</div>
+              <div className="text-center md:text-left">
+                <div className="text-xl md:text-2xl font-bold text-gray-900">{stats.following}</div>
+                <div className="text-xs md:text-sm text-gray-500">Following</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* 탭 네비게이션 */}
-        <div className="flex border-b border-gray-200 mb-8 overflow-x-auto">
+        <div className="flex border-b border-gray-200 mb-6 overflow-x-auto hide-scrollbar">
           <button
             onClick={() => setActiveTab('projects')}
-            className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors relative whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors relative whitespace-nowrap ${
               activeTab === 'projects' ? 'text-primary' : 'text-gray-500 hover:text-gray-900'
             }`}
           >
@@ -282,7 +329,7 @@ export default function MyPage() {
           </button>
           <button
             onClick={() => setActiveTab('likes')}
-            className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors relative whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors relative whitespace-nowrap ${
               activeTab === 'likes' ? 'text-red-500' : 'text-gray-500 hover:text-gray-900'
             }`}
           >
@@ -293,15 +340,20 @@ export default function MyPage() {
             )}
           </button>
           <button
-            onClick={() => router.push('/mypage/collections')}
-            className="flex items-center gap-2 px-6 py-4 font-medium transition-colors relative whitespace-nowrap text-gray-500 hover:text-gray-900"
+            onClick={() => setActiveTab('collections')}
+            className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors relative whitespace-nowrap ${
+              activeTab === 'collections' ? 'text-blue-500' : 'text-gray-500 hover:text-gray-900'
+            }`}
           >
             <Folder size={18} />
             컬렉션
+            {activeTab === 'collections' && (
+               <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500" />
+            )}
           </button>
           <button
             onClick={() => setActiveTab('proposals')}
-            className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors relative whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors relative whitespace-nowrap ${
               activeTab === 'proposals' ? 'text-green-500' : 'text-gray-500 hover:text-gray-900'
             }`}
           >
@@ -313,7 +365,7 @@ export default function MyPage() {
           </button>
           <button
             onClick={() => setActiveTab('comments')}
-            className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors relative whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors relative whitespace-nowrap ${
               activeTab === 'comments' ? 'text-orange-500' : 'text-gray-500 hover:text-gray-900'
             }`}
           >
@@ -334,83 +386,131 @@ export default function MyPage() {
         ) : (
           <>
             {/* 프로젝트 & 좋아요 탭 */}
-            {(activeTab === 'projects' || activeTab === 'likes') && projects.length > 0 && (
-              <div className="masonry-grid pb-20">
-                {projects.map((project: any) => (
-                  <ImageCard 
-                    key={project.id} 
-                    props={project} 
-                    onClick={() => {
-                      setSelectedProject(project);
-                      setModalOpen(true);
-                    }}
-                  />
-                ))}
-              </div>
+            {(activeTab === 'projects' || activeTab === 'likes') && (
+              projects.length > 0 ? (
+                <div className="masonry-grid pb-12">
+                  {projects.map((project: any) => (
+                    <ImageCard 
+                      key={project.id} 
+                      props={project} 
+                      onClick={() => {
+                        setSelectedProject(project);
+                        setModalOpen(true);
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : null
             )}
+
+            {/* 컬렉션 탭 */}
+             {activeTab === 'collections' && (
+               projects.length > 0 ? (
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
+                   {projects.map((collection: any) => (
+                     <div 
+                       key={collection.collection_id} 
+                       className="group bg-white rounded-xl border border-gray-200 overflow-hidden cursor-pointer hover:shadow-lg transition-all"
+                       onClick={() => router.push(`/mypage/collections/${collection.collection_id}`)}
+                     >
+                       <div className="aspect-[4/3] bg-gray-100 p-2 grid grid-cols-2 gap-1 relative">
+                          {collection.previews && collection.previews.length > 0 ? (
+                             <>
+                               {collection.previews.slice(0, 4).map((url: string, idx: number) => (
+                                 <img 
+                                   key={idx} 
+                                   src={url || '/placeholder.jpg'} 
+                                   className={`w-full h-full object-cover rounded-sm ${collection.previews.length === 1 ? 'col-span-2 row-span-2' : ''} ${collection.previews.length === 2 && idx === 0 ? 'col-span-2' : ''} ${collection.previews.length === 3 && idx === 0 ? 'col-span-2' : ''}`}
+                                   alt="preview"
+                                 />
+                               ))}
+                             </>
+                          ) : (
+                             <div className="col-span-2 row-span-2 flex items-center justify-center text-gray-300">
+                               <Folder size={48} />
+                             </div>
+                          )}
+                       </div>
+                       <div className="p-4">
+                         <h3 className="font-bold text-gray-900 group-hover:text-[#4ACAD4] transition-colors">{collection.name}</h3>
+                         <p className="text-sm text-gray-500 mt-1">{collection.description || "설명이 없습니다"}</p>
+                         <div className="flex items-center gap-2 mt-3 text-xs text-gray-400">
+                           <Folder size={12} />
+                           {collection.previews?.length || 0} items
+                         </div>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               ) : null
+             )}
 
             {/* 받은 제안 탭 */}
             {activeTab === 'proposals' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-20">
-                {projects.map((item: any) => (
-                  <ProposalCard 
-                    key={item.proposal_id} 
-                    proposal={item} 
-                    type="received"
-                    onClick={() => {
-                      setSelectedProposal(item);
-                      setProposalModalOpen(true);
-                    }}
-                  />
-                ))}
-              </div>
+              projects.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-12">
+                  {projects.map((item: any) => (
+                    <ProposalCard 
+                      key={item.proposal_id} 
+                      proposal={item} 
+                      type="received"
+                      onClick={() => {
+                        setSelectedProposal(item);
+                        setProposalModalOpen(true);
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : null
             )}
 
             {/* 내가 쓴 댓글 탭 */}
             {activeTab === 'comments' && (
-              <div className="grid grid-cols-1 gap-4 pb-20">
-                {projects.map((item: any) => (
-                  <CommentCard 
-                    key={item.comment_id} 
-                    comment={item}
-                    onClick={async () => {
-                      // 프로젝트 상세 정보 가져와서 모달 열기
-                      if (item.Project) {
-                        const projectData = {
-                          id: item.Project.project_id?.toString(),
-                          title: item.Project.title,
-                          urls: {
-                            full: item.Project.thumbnail_url || '/placeholder.jpg',
-                            regular: item.Project.thumbnail_url || '/placeholder.jpg'
-                          },
-                          user: {
-                            username: userProfile?.nickname || 'Unknown',
-                            profile_image: {
-                              small: userProfile?.profile_image_url || '/globe.svg',
-                              large: userProfile?.profile_image_url || '/globe.svg'
-                            }
-                          },
-                          likes: 0,
-                          views: 0,
-                          description: item.Project.title,
-                          alt_description: item.Project.title,
-                          created_at: new Date().toISOString(),
-                          width: 800,
-                          height: 600,
-                          userId: item.Project.user_id
-                        };
-                        setSelectedProject(projectData);
-                        setModalOpen(true);
-                      }
-                    }}
-                  />
-                ))}
-              </div>
+              projects.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 pb-12">
+                  {projects.map((item: any) => (
+                    <CommentCard 
+                      key={item.comment_id} 
+                      comment={item}
+                      onClick={async () => {
+                         if (item.Project) {
+                           // ... (same as before)
+                            const projectData = {
+                              id: item.Project.project_id?.toString(),
+                              title: item.Project.title,
+                              urls: {
+                                full: item.Project.thumbnail_url || '/placeholder.jpg',
+                                regular: item.Project.thumbnail_url || '/placeholder.jpg'
+                              },
+                              user: {
+                                username: userProfile?.nickname || 'Unknown',
+                                profile_image: {
+                                  small: userProfile?.profile_image_url || "/globe.svg",
+                                  large: userProfile?.profile_image_url || "/globe.svg"
+                                }
+                              },
+                              likes: 0,
+                              views: 0,
+                              description: item.Project.title,
+                              alt_description: item.Project.title,
+                              created_at: new Date().toISOString(),
+                              width: 800,
+                              height: 600,
+                              userId: item.Project.user_id
+                            };
+                            setSelectedProject(projectData);
+                            setModalOpen(true);
+                         }
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : null
             )}
 
             {/* 빈 상태 */}
             {projects.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-100 border-dashed">
+          <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-100 border-dashed">
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
               {activeTab === 'projects' && <Upload className="text-gray-300" />}
               {activeTab === 'likes' && <Heart className="text-gray-300" />}
@@ -434,7 +534,12 @@ export default function MyPage() {
             {activeTab === 'projects' ? (
               <Button onClick={() => router.push('/project/upload')} className="bg-[#4ACAD4] hover:bg-[#3db8c0]">프로젝트 업로드</Button>
             ) : (
-              <Button onClick={() => router.push('/')} variant="outline">둘러보기</Button>
+               activeTab === 'collections' ? (
+                  <Button onClick={() => router.push('/')} variant="outline">둘러보기</Button> 
+                  // TODO: 컬렉션 생성 기능이 필요할 수 있음
+               ) : (
+                  <Button onClick={() => router.push('/')} variant="outline">둘러보기</Button>
+               )
             )}
           </div>
         )}

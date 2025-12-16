@@ -10,6 +10,7 @@ export interface Database {
           email: string;
           nickname: string | null;
           profile_image_url: string | null;
+          cover_image_url: string | null;
           created_at: string;
           updated_at: string;
           role: string;
@@ -19,6 +20,7 @@ export interface Database {
           email: string;
           nickname?: string | null;
           profile_image_url?: string | null;
+          cover_image_url?: string | null;
           created_at?: string;
           updated_at?: string;
           role?: string;
@@ -28,6 +30,7 @@ export interface Database {
           email?: string;
           nickname?: string | null;
           profile_image_url?: string | null;
+          cover_image_url?: string | null;
           created_at?: string;
           updated_at?: string;
           role?: string;
