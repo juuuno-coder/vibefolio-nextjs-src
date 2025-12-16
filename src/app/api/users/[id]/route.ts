@@ -31,6 +31,7 @@ export async function GET(
       nickname: authUser.user_metadata?.nickname || authUser.email?.split('@')[0] || 'User',
       bio: authUser.user_metadata?.bio || '',
       profile_image_url: authUser.user_metadata?.profile_image_url || '/globe.svg',
+      cover_image_url: authUser.user_metadata?.cover_image_url || null,
       role: authUser.user_metadata?.role || 'user',
       created_at: authUser.created_at,
     };
@@ -53,7 +54,7 @@ export async function PUT(
   const { id } = await params;
   try {
     const body = await request.json();
-    const { nickname, bio, profile_image_url } = body;
+    const { nickname, bio, profile_image_url, cover_image_url } = body;
 
     // 현재 user_metadata 가져오기
     const { data: authData, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(id);
@@ -71,6 +72,7 @@ export async function PUT(
       ...(nickname && { nickname }),
       ...(bio !== undefined && { bio }),
       ...(profile_image_url && { profile_image_url }),
+      ...(cover_image_url !== undefined && { cover_image_url }),
     };
 
     console.log('user_metadata 업데이트:', updatedMetadata);
@@ -96,6 +98,7 @@ export async function PUT(
       nickname: updatedUser.user_metadata?.nickname,
       bio: updatedUser.user_metadata?.bio,
       profile_image_url: updatedUser.user_metadata?.profile_image_url,
+      cover_image_url: updatedUser.user_metadata?.cover_image_url,
       role: updatedUser.user_metadata?.role || 'user',
       created_at: updatedUser.created_at,
     };

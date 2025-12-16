@@ -303,6 +303,63 @@ export interface Database {
           created_at?: string;
         };
       };
+      Collection: {
+        Row: {
+          collection_id: string;
+          user_id: string;
+          name: string;
+          description: string | null;
+          created_at: string;
+        };
+        Insert: {
+          collection_id?: string;
+          user_id: string;
+          name: string;
+          description?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          collection_id?: string;
+          user_id?: string;
+          name?: string;
+          description?: string | null;
+          created_at?: string;
+        };
+      };
+      CollectionItem: {
+        Row: {
+          collection_id: string;
+          project_id: number;
+          added_at: string;
+        };
+        Insert: {
+          collection_id: string;
+          project_id: number;
+          added_at?: string;
+        };
+        Update: {
+          collection_id?: string;
+          project_id?: number;
+          added_at?: string;
+        };
+      };
+      Follow: {
+        Row: {
+          follower_id: string;
+          following_id: string;
+          created_at: string;
+        };
+        Insert: {
+          follower_id: string;
+          following_id: string;
+          created_at?: string;
+        };
+        Update: {
+          follower_id?: string;
+          following_id?: string;
+          created_at?: string;
+        };
+      };
     };
     Views: {};
     Functions: {};

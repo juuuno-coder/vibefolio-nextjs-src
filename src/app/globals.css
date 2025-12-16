@@ -178,12 +178,6 @@
 
   @media (max-width: 1536px) {
     .masonry-grid {
-      column-count: 5;
-    }
-  }
-
-  @media (max-width: 1280px) {
-    .masonry-grid {
       column-count: 4;
     }
   }
