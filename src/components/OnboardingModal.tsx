@@ -135,8 +135,7 @@ export function OnboardingModal({
       if (authError) throw authError;
 
       // users 테이블 업데이트
-      // @ts-ignore
-      const { error: dbError } = await supabase
+      const { error: dbError } = await (supabase as any)
         .from('users')
         .update({
           nickname: nickname,

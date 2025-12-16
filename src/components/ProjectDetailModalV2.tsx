@@ -264,7 +264,12 @@ export function ProjectDetailModalV2({
   }, [project, open]);
 
   const handleLike = async () => {
-    if (!isLoggedIn || !project) return;
+    if (!project) return;
+    
+    if (!isLoggedIn) {
+      setLoginModalOpen(true);
+      return;
+    }
     
     setLoading(prev => ({ ...prev, like: true }));
     try {
@@ -453,7 +458,8 @@ export function ProjectDetailModalV2({
               <img
                 src={project.urls.full}
                 alt={project.alt_description || "Project Image"}
-                className="w-full h-auto object-contain"
+                className="w-auto max-w-full h-auto object-contain"
+                style={{ maxWidth: project.width || '100%' }}
               />
               
               {/* 액션 아이콘들 - 이미지 아래 */}
@@ -551,7 +557,7 @@ export function ProjectDetailModalV2({
           </div>
 
           {/* 데스크톱 뷰 - 기존 스타일 유지 */}
-          <div className="hidden md:flex h-full items-end justify-center gap-4">
+          <div className="hidden md:flex flex-row-reverse h-full items-end justify-center gap-4">
             {/* 메인 이미지 영역 */}
             <div className="w-[66vw] h-full bg-white flex flex-col relative rounded-t-xl overflow-hidden shadow-2xl">
               {/* X 버튼 */}
@@ -585,11 +591,12 @@ export function ProjectDetailModalV2({
               </div>
               
               {/* 이미지 */}
-              <div className="flex-1 flex items-start justify-center p-8 overflow-y-auto custom-scrollbar">
+              <div className="flex-1 flex items-start justify-center p-8 overflow-y-auto">
                 <img
                   src={project.urls.full}
                   alt={project.alt_description || "Project Image"}
-                  className="max-w-[60vw] w-full h-auto object-contain object-top"
+                  className="max-w-full h-auto object-contain object-top"
+                  style={{ maxWidth: Math.min(project.width || 1200, 1200) }}
                 />
               </div>
             </div>
