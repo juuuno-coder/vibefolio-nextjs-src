@@ -45,12 +45,29 @@ export default function MyPage() {
       }
       setUserId(user.id);
 
-      // Auth user_metadata에서 프로필 가져오기
-      setUserProfile({
+      // Auth user_metadata 조회 (기본)
+      let profileData = {
         nickname: user.user_metadata?.nickname || user.email?.split('@')[0] || '사용자',
         email: user.email,
         profile_image_url: user.user_metadata?.profile_image_url || '/globe.svg',
-      });
+      };
+
+      // public.users 테이블에서 최신 프로필 정보 조회
+      const { data: dbUser } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (dbUser) {
+        profileData = {
+          nickname: dbUser.nickname || profileData.nickname,
+          email: dbUser.email || profileData.email,
+          profile_image_url: dbUser.profile_image_url || profileData.profile_image_url,
+        };
+      }
+
+      setUserProfile(profileData);
 
       // 통계 카운트 가져오기 (Promise.all로 병렬 처리)
       const [projectsCount, likesCount, collectionsCount, followersCount, followingCount, proposalsCount] = await Promise.all([
