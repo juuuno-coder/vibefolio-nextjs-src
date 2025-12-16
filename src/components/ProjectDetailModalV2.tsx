@@ -591,15 +591,13 @@ export function ProjectDetailModalV2({
               </div>
               
               {/* 이미지 */}
-              <div className="flex-1 overflow-y-auto" style={{ direction: 'rtl' }}>
-                <div className="flex items-start justify-center p-8" style={{ direction: 'ltr' }}>
-                  <img
-                    src={project.urls.full}
-                    alt={project.alt_description || "Project Image"}
-                    className="max-w-full h-auto object-contain object-top"
-                    style={{ maxWidth: Math.min(project.width || 1200, 1200) }}
-                  />
-                </div>
+              <div className="flex-1 overflow-y-auto flex items-start justify-center p-8 custom-scrollbar">
+                <img
+                  src={project.urls.full}
+                  alt={project.alt_description || "Project Image"}
+                  className="max-w-full h-auto object-contain object-top"
+                  style={{ maxWidth: Math.min(project.width || 1200, 1200) }}
+                />
               </div>
             </div>
 
