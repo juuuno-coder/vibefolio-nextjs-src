@@ -77,6 +77,21 @@ export default function SignupPage() {
     }
   };
 
+  const handleKakaoSignup = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'kakao',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Kakao 로그인 오류:', error);
+      setError(error.message || 'Kakao 로그인에 실패했습니다.');
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-xl shadow-lg">
@@ -96,7 +111,18 @@ export default function SignupPage() {
         </div>
 
         {/* 소셜 로그인 */}
-        <div>
+        <div className="space-y-3">
+          <Button
+            type="button"
+            onClick={handleKakaoSignup}
+            className="w-full h-12 flex items-center justify-center gap-3 bg-[#FEE500] hover:bg-[#FDD835] text-black border-none"
+          >
+            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+              <path d="M12 3C7.58 3 4 5.79 4 9.24C4 11.41 5.43 13.33 7.64 14.42L6.76 17.53C6.71 17.74 6.94 17.9 7.11 17.79L11.2 15.34C11.46 15.37 11.73 15.39 12 15.39C16.42 15.39 20 12.6 20 9.15C20 5.7 16.42 3 12 3Z" />
+            </svg>
+            <span>카카오로 계속하기</span>
+          </Button>
+
           <Button
             type="button"
             onClick={handleGoogleSignup}
