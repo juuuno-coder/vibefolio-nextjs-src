@@ -4,15 +4,17 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, X, Edit, Trash2 } from "lucide-react";
+import { Upload, X, Edit, Trash2, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/supabase/storage";
+import { useAdmin } from "@/hooks/useAdmin";
+import Link from "next/link";
 
 export default function AdminBannersPage() {
   const router = useRouter();
+  const { isAdmin, isLoading: adminLoading } = useAdmin();
   const [banners, setBanners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [pageType, setPageType] = useState<"discover" | "connect">("discover");
   const [formData, setFormData] = useState({
     title: "",
@@ -25,33 +27,11 @@ export default function AdminBannersPage() {
 
   // 관리자 확인
   useEffect(() => {
-    const checkAdmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        alert("로그인이 필요합니다.");
-        router.push("/login");
-        return;
-      }
-
-      const { data: admin } = await (supabase as any)
-        .from("Admin")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-
-      if (!admin) {
-        alert("관리자 권한이 필요합니다.");
-        router.push("/");
-        return;
-      }
-
-      setIsAdmin(true);
-      loadBanners();
-    };
-
-    checkAdmin();
-  }, [router]);
+    if (!adminLoading && !isAdmin) {
+      alert("관리자 권한이 필요합니다.");
+      router.push("/");
+    }
+  }, [isAdmin, adminLoading, router]);
 
   // 배너 목록 로드
   const loadBanners = useCallback(async () => {
@@ -150,14 +130,30 @@ export default function AdminBannersPage() {
     }
   };
 
+  if (adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin" size={32} />
+      </div>
+    );
+  }
+
   if (!isAdmin) {
-    return <div className="min-h-screen flex items-center justify-center">로딩 중...</div>;
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+    <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-6">
-        <h1 className="text-3xl font-bold mb-8">배너 관리</h1>
+        {/* 헤더 */}
+        <div className="mb-8">
+          <Link href="/admin" className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4">
+            <ArrowLeft size={20} className="mr-2" />
+            관리자 대시보드로 돌아가기
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">배너 관리</h1>
+          <p className="text-gray-600">메인 페이지 배너를 등록하고 관리하세요</p>
+        </div>
 
         {/* 페이지 타입 선택 */}
         <div className="mb-6 flex gap-4">
