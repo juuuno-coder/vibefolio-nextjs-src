@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { CheckCircle, XCircle, Info, AlertCircle, X } from 'lucide-react';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCircleCheck, faCircleXmark, faCircleInfo, faTriangleExclamation, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -35,10 +36,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const getIcon = (type: ToastType) => {
     switch (type) {
-      case 'success': return <CheckCircle className="w-5 h-5" />;
-      case 'error': return <XCircle className="w-5 h-5" />;
-      case 'warning': return <AlertCircle className="w-5 h-5" />;
-      default: return <Info className="w-5 h-5" />;
+      case 'success': return <FontAwesomeIcon icon={faCircleCheck} className="w-5 h-5" />;
+      case 'error': return <FontAwesomeIcon icon={faCircleXmark} className="w-5 h-5" />;
+      case 'warning': return <FontAwesomeIcon icon={faTriangleExclamation} className="w-5 h-5" />;
+      default: return <FontAwesomeIcon icon={faCircleInfo} className="w-5 h-5" />;
     }
   };
 
@@ -66,7 +67,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               onClick={() => removeToast(toast.id)}
               className="hover:opacity-70 transition-opacity"
             >
-              <X className="w-4 h-4" />
+              <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
             </button>
           </div>
         ))}

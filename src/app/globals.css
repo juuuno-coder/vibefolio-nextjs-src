@@ -273,23 +273,30 @@
     scrollbar-width: none;
   }
 
-  /* 커스텀 스크롤바 */
+  /* 커스텀 스크롤바 - 모던 스타일 */
   .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
+    border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--divider);
-    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    transition: background 0.2s ease;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
   }
 
   /* 텍스트 말줄임 */

@@ -3,7 +3,8 @@
 // 🚨 클라이언트 상호작용(Sheet, Drawer, onClick, useState 등)이 있으므로 필수!
 "use client";
 
-import { ChevronDown, Menu, Search } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronDown, faBars, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 // shadcn/ui 컴포넌트는 프로젝트 구조에 따라 경로를 조정해야 합니다.
 // App Router에서는 일반적으로 @/components/ui/XXX 형태로 사용합니다.
 import {
@@ -68,7 +69,7 @@ export function Header({
           <div className="w-full flex items-center gap-4">
             <Sheet>
               <SheetTrigger>
-                <Menu />
+                <FontAwesomeIcon icon={faBars} className="w-5 h-5" />
               </SheetTrigger>
               <SheetContent
                 side="left"
@@ -88,7 +89,7 @@ export function Header({
                         >
                           {item.label}
                         </p>
-                        {item.dropdown && <ChevronDown size={16} />}
+                        {item.dropdown && <FontAwesomeIcon icon={faChevronDown} className="w-3 h-3" />}
                         {item.newest && (
                           <p className="text-xs text-[#05BCC6] font-medium">
                             NEW
@@ -140,11 +141,11 @@ export function Header({
             </Button>
             <Drawer>
               <DrawerTrigger>
-                <Search size={20} />
+                <FontAwesomeIcon icon={faMagnifyingGlass} className="w-5 h-5" />
               </DrawerTrigger>
               <DrawerContent className="h-full flex flex-col gap-6 px-6">
                 <div className="flex items-center border px-3 rounded-full bg-neutral-50">
-                  <Search size={18} className="text-neutral-400" />
+                  <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4 text-neutral-400" />
                   <Input
                     placeholder="230,000개 이상의 크리에이티브 검색"
                     onChange={handleMobileSearchChange}
@@ -167,7 +168,7 @@ export function Header({
                 <p className={`text-base font-medium ${isActive && "mt-0.5"}`}>
                   {item.label}
                 </p>
-                {item.dropdown && <ChevronDown size={16} />}
+                {item.dropdown && <FontAwesomeIcon icon={faChevronDown} className="w-3 h-3" />}
                 {item.newest && (
                   <p className="text-xs text-[#05BCC6] font-medium">NEW</p>
                 )}
@@ -195,7 +196,7 @@ export function Header({
                   <p className={`text-base font-medium ${isActive && "mt-0.5"}`}>
                     {item.label}
                   </p>
-                  {item.dropdown && <ChevronDown size={16} />}
+                  {item.dropdown && <FontAwesomeIcon icon={faChevronDown} className="w-3 h-3" />}
                   {item.newest && (
                     <p className="text-xs text-[#05BCC6] font-medium">NEW</p>
                   )}
@@ -206,7 +207,7 @@ export function Header({
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center border px-3 rounded-full bg-neutral-50">
-            <Search size={18} className="text-neutral-400" />
+            <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4 text-neutral-400" />
             <Input
               placeholder="230,000개 이상의 크리에이티브 검색"
               onKeyDown={handleSearchKeyDown}

@@ -3,7 +3,8 @@
 "use client";
 
 import React, { forwardRef, useState } from "react";
-import { Heart, BarChart3, ImageOff } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHeart, faChartSimple, faImage } from "@fortawesome/free-solid-svg-icons";
 import { addCommas } from "@/lib/format/comma";
 
 // 기본 폴백 이미지
@@ -49,7 +50,7 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
         <div className="relative overflow-hidden image-hover">
           {imgError ? (
             <div className="w-full aspect-square bg-gray-100 flex items-center justify-center">
-              <ImageOff className="w-12 h-12 text-gray-300" />
+              <FontAwesomeIcon icon={faImage} className="w-12 h-12 text-gray-300" />
             </div>
           ) : (
             <img
@@ -66,12 +67,12 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
             <div className="flex items-center gap-6 text-white">
               <div className="flex items-center gap-2">
-                <Heart size={20} fill="white" />
+                <FontAwesomeIcon icon={faHeart} className="w-5 h-5" />
                 <span className="font-medium">{addCommas(props.likes)}</span>
               </div>
               {props.views !== undefined && (
                 <div className="flex items-center gap-2">
-                  <BarChart3 size={20} />
+                  <FontAwesomeIcon icon={faChartSimple} className="w-5 h-5" />
                   <span className="font-medium text-lg">{addCommas(props.views)}</span>
                 </div>
               )}
@@ -93,12 +94,12 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
             </div>
             <div className="flex items-center gap-3 text-secondary">
               <div className="flex items-center gap-1.5">
-                <Heart size={15} className="text-red-400" />
+                <FontAwesomeIcon icon={faHeart} className="w-4 h-4 text-red-400" />
                 <span className="text-sm font-semibold text-gray-700">{addCommas(props.likes)}</span>
               </div>
               {props.views !== undefined && (
                 <div className="flex items-center gap-1.5">
-                  <BarChart3 size={15} className="text-blue-400" />
+                  <FontAwesomeIcon icon={faChartSimple} className="w-4 h-4 text-blue-400" />
                   <span className="text-sm font-semibold text-gray-700">{addCommas(props.views)}</span>
                 </div>
               )}
@@ -111,4 +112,3 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
 );
 
 ImageCard.displayName = "ImageCard";
-

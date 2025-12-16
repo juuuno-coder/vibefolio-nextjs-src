@@ -13,7 +13,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Upload, Grid, User, LogOut } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUpload, faTableCellsLarge, faUser, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 
 export function AuthButtons() {
   const router = useRouter();
@@ -69,7 +70,7 @@ export function AuthButtons() {
           <Avatar className="w-10 h-10 cursor-pointer border-2 border-gray-200 hover:border-[#4ACAD4] transition-colors">
             <AvatarImage src={userProfile?.profile_image_url} alt={userProfile?.nickname} className="object-cover" />
             <AvatarFallback className="bg-[#4ACAD4] text-white">
-              <User size={20} />
+              <FontAwesomeIcon icon={faUser} className="w-4 h-4" />
             </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
@@ -80,20 +81,20 @@ export function AuthButtons() {
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => router.push('/project/upload')} className="cursor-pointer">
-            <Upload className="mr-2 h-4 w-4" />
+            <FontAwesomeIcon icon={faUpload} className="mr-2 h-4 w-4" />
             프로젝트 등록하기
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => router.push('/mypage/projects')} className="cursor-pointer">
-            <Grid className="mr-2 h-4 w-4" />
+            <FontAwesomeIcon icon={faTableCellsLarge} className="mr-2 h-4 w-4" />
             나의 프로젝트
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => router.push('/mypage')} className="cursor-pointer">
-            <User className="mr-2 h-4 w-4" />
+            <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4" />
             마이페이지
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
-            <LogOut className="mr-2 h-4 w-4" />
+            <FontAwesomeIcon icon={faRightFromBracket} className="mr-2 h-4 w-4" />
             로그아웃
           </DropdownMenuItem>
         </DropdownMenuContent>

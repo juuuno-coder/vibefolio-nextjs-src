@@ -3,7 +3,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
 export function TopHeader() {
   return (
@@ -17,7 +18,7 @@ export function TopHeader() {
           className="flex items-center gap-1 text-sm font-medium text-white hover:text-white/80 transition-colors whitespace-nowrap"
         >
           디자인 템플릿 보기
-          <ArrowRight size={16} />
+          <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
         </Link>
       </div>
     </div>

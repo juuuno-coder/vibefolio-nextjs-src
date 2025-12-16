@@ -9,14 +9,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Copy,
-  Check,
-  MessageCircle,
-  Facebook,
-  Twitter,
-  Link2,
-} from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCopy, faCheck, faLink } from "@fortawesome/free-solid-svg-icons";
+import { faComment } from "@fortawesome/free-solid-svg-icons";
+import { faFacebook, faXTwitter } from "@fortawesome/free-brands-svg-icons";
 
 interface ShareModalProps {
   open: boolean;
@@ -131,19 +127,19 @@ export function ShareModal({
   const shareOptions = [
     {
       name: "카카오톡",
-      icon: MessageCircle,
+      icon: faComment,
       color: "bg-[#FEE500] hover:bg-[#F5DC00] text-[#3C1E1E]",
       onClick: shareKakao,
     },
     {
       name: "트위터(X)",
-      icon: Twitter,
+      icon: faXTwitter,
       color: "bg-black hover:bg-gray-800 text-white",
       onClick: shareTwitter,
     },
     {
       name: "페이스북",
-      icon: Facebook,
+      icon: faFacebook,
       color: "bg-[#1877F2] hover:bg-[#166FE5] text-white",
       onClick: shareFacebook,
     },
@@ -165,7 +161,7 @@ export function ShareModal({
                 onClick={option.onClick}
                 className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all ${option.color}`}
               >
-                <option.icon size={24} />
+                <FontAwesomeIcon icon={option.icon} className="w-6 h-6" />
                 <span className="text-xs font-medium">{option.name}</span>
               </button>
             ))}
@@ -202,12 +198,12 @@ export function ShareModal({
               >
                 {copied ? (
                   <>
-                    <Check size={16} className="mr-1" />
+                    <FontAwesomeIcon icon={faCheck} className="w-4 h-4 mr-1" />
                     복사됨
                   </>
                 ) : (
                   <>
-                    <Copy size={16} className="mr-1" />
+                    <FontAwesomeIcon icon={faCopy} className="w-4 h-4 mr-1" />
                     복사
                   </>
                 )}
@@ -222,7 +218,7 @@ export function ShareModal({
               variant="outline"
               className="w-full"
             >
-              <Link2 size={16} className="mr-2" />
+              <FontAwesomeIcon icon={faLink} className="w-4 h-4 mr-2" />
               더 많은 방법으로 공유
             </Button>
           )}

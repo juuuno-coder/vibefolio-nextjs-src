@@ -7,18 +7,21 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  Heart,
-  Share2,
-  MessageCircle,
-  Bookmark,
-  Send,
-  User,
-  X,
-  BarChart3,
-  Loader2,
-  Folder,
-} from "lucide-react";
+  faHeart,
+  faShareNodes,
+  faComment,
+  faBookmark,
+  faPaperPlane,
+  faUser,
+  faXmark,
+  faChartSimple,
+  faSpinner,
+  faFolder,
+  faEye,
+} from "@fortawesome/free-solid-svg-icons";
+import { faHeart as faHeartRegular, faComment as faCommentRegular, faBookmark as faBookmarkRegular } from "@fortawesome/free-regular-svg-icons";
 import { addCommas } from "@/lib/format/comma";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -52,7 +55,7 @@ function CommentItem({
       <div className="flex gap-2">
         <Avatar className="w-6 h-6 flex-shrink-0 bg-white">
           <AvatarImage src={comment.user?.profile_image_url || '/globe.svg'} />
-          <AvatarFallback className="bg-white"><User size={12} /></AvatarFallback>
+          <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-3 h-3" /></AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <div className="flex items-center gap-1 mb-0.5">
@@ -430,19 +433,131 @@ export function ProjectDetailModalV2({
         onOpenChange(newOpen);
       }}>
         <DialogContent 
-          className="!max-w-none !w-screen !h-screen !p-0 !gap-0 bg-transparent border-none shadow-none overflow-hidden flex items-end justify-center"
+          className="!max-w-none !w-screen !h-[95vh] md:!h-[95vh] !p-0 !m-0 !gap-0 !top-auto !bottom-0 !left-1/2 !-translate-x-1/2 !translate-y-0 bg-transparent border-none shadow-none overflow-hidden flex items-end justify-center"
           showCloseButton={false}
         >
+          {/* 모바일 뷰 - 노트폴리오 스타일 */}
+          <div className="md:hidden w-full h-full bg-white flex flex-col rounded-t-xl overflow-hidden">
+            {/* X 버튼 */}
+            <button
+              onClick={() => onOpenChange(false)}
+              className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg transition-colors"
+            >
+              <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
+            </button>
 
-          <div className="flex h-full items-center justify-center gap-4">
-            {/* 메인 이미지 영역 - 고정 너비 */}
-            <div className="w-[900px] h-full bg-gray-50 flex flex-col relative">
-              {/* X 버튼 - 이미지 영역 내부 우측 상단 */}
+            {/* 이미지 영역 - 스크롤 가능 */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <img
+                src={project.urls.full}
+                alt={project.alt_description || "Project Image"}
+                className="w-full h-auto object-contain"
+              />
+              
+              {/* 액션 아이콘들 - 이미지 아래 */}
+              <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={handleLike}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                      liked ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    <FontAwesomeIcon icon={liked ? faHeart : faHeartRegular} className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => setCollectionModalOpen(true)}
+                    className="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center"
+                  >
+                    <FontAwesomeIcon icon={faFolder} className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => setCommentsPanelOpen(true)}
+                    className="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center"
+                  >
+                    <FontAwesomeIcon icon={faComment} className="w-5 h-5" />
+                  </button>
+                </div>
+                <button 
+                  onClick={() => setShareModalOpen(true)}
+                  className="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center"
+                >
+                  <FontAwesomeIcon icon={faShareNodes} className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* 프로젝트 정보 */}
+              <div className="px-4 py-4">
+                <h1 className="text-lg font-bold text-gray-900 mb-2">
+                  {project.description || project.alt_description || "제목 없음"}
+                </h1>
+                <p className="text-sm text-gray-500 mb-3">
+                  {dayjs(project.created_at).fromNow()} | 크리에이티브
+                </p>
+                <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <span className="flex items-center gap-1">
+                    <FontAwesomeIcon icon={faEye} className="w-4 h-4" />
+                    {project.views || 0}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <FontAwesomeIcon icon={faHeart} className="w-4 h-4" />
+                    {likesCount}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <FontAwesomeIcon icon={faComment} className="w-4 h-4" />
+                    {comments.length}
+                  </span>
+                </div>
+              </div>
+
+              {/* 작성자 정보 */}
+              <div className="px-4 py-4 border-t border-gray-100 flex flex-col items-center">
+                <Avatar className="w-16 h-16 border-2 border-gray-200 mb-2">
+                  <AvatarImage src={project.user.profile_image.large} />
+                  <AvatarFallback><FontAwesomeIcon icon={faUser} className="w-6 h-6" /></AvatarFallback>
+                </Avatar>
+                <p className="font-bold text-base">{project.user.username}</p>
+                <p className="text-sm text-gray-500 mb-4">-</p>
+              </div>
+            </div>
+
+            {/* 하단 고정 버튼들 */}
+            <div className="flex gap-3 p-4 border-t border-gray-100 bg-white">
+              {isLoggedIn && project.userId && currentUserId !== project.userId && (
+                <Button
+                  onClick={handleFollow}
+                  variant="outline"
+                  className="flex-1 h-12 rounded-full border-gray-300"
+                >
+                  {following ? '팔로잉' : '+ 팔로우'}
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    alert('로그인이 필요합니다.');
+                    return;
+                  }
+                  setProposalModalOpen(true);
+                }}
+                className="flex-1 h-12 rounded-full bg-[#4ACAD4] hover:bg-[#3db8c0] text-white"
+              >
+                <FontAwesomeIcon icon={faComment} className="w-4 h-4 mr-2" />
+                제안하기
+              </Button>
+            </div>
+          </div>
+
+          {/* 데스크톱 뷰 - 기존 스타일 유지 */}
+          <div className="hidden md:flex h-full items-end justify-center gap-4">
+            {/* 메인 이미지 영역 */}
+            <div className="w-[66vw] h-full bg-white flex flex-col relative rounded-t-xl overflow-hidden shadow-2xl">
+              {/* X 버튼 */}
               <button
                 onClick={() => onOpenChange(false)}
                 className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg transition-colors"
               >
-                <X size={18} />
+                <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
               </button>
 
               {/* 프로젝트 정보 헤더 */}
@@ -458,7 +573,7 @@ export function ProjectDetailModalV2({
                 >
                   <Avatar className="w-10 h-10 bg-white">
                     <AvatarImage src={project.user.profile_image.large} />
-                    <AvatarFallback className="bg-white"><User size={16} /></AvatarFallback>
+                    <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-4 h-4" /></AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium text-sm">{project.user.username}</p>
@@ -467,17 +582,17 @@ export function ProjectDetailModalV2({
                 </button>
               </div>
               
-              {/* 이미지 - 스크롤 가능 */}
-              <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto">
+              {/* 이미지 */}
+              <div className="flex-1 flex items-start justify-center p-8 overflow-y-auto custom-scrollbar">
                 <img
                   src={project.urls.full}
                   alt={project.alt_description || "Project Image"}
-                  className="max-w-full h-auto object-contain"
+                  className="max-w-[60vw] w-full h-auto object-contain object-top"
                 />
               </div>
             </div>
 
-            {/* 액션바 - 크기 증가 */}
+            {/* 액션바 - 데스크톱 */}
             <div className="h-full bg-transparent flex flex-col items-center py-8 gap-5">
               {/* 프로필 아바타 */}
               <button
@@ -488,11 +603,11 @@ export function ProjectDetailModalV2({
               >
                 <Avatar className={`w-12 h-12 border-2 bg-white transition-colors ${following ? 'border-[#4ACAD4]' : 'border-gray-200 hover:border-[#4ACAD4]'}`}>
                   <AvatarImage src={project.user.profile_image.large} />
-                  <AvatarFallback className="bg-white"><User size={18} /></AvatarFallback>
+                  <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-4 h-4" /></AvatarFallback>
                 </Avatar>
               </button>
 
-              {/* 팔로우 버튼 - 본인이 아닌 경우에만 표시 */}
+              {/* 팔로우 버튼 */}
               {isLoggedIn && project.userId && currentUserId !== project.userId && (
                 <div className="flex flex-col items-center">
                   <Button
@@ -528,7 +643,7 @@ export function ProjectDetailModalV2({
                 className="w-12 h-12 rounded-full bg-gray-100 hover:bg-[#4ACAD4] hover:text-white flex items-center justify-center transition-colors"
                 title="제안하기"
               >
-                <Send size={20} />
+                <FontAwesomeIcon icon={faPaperPlane} className="w-5 h-5" />
               </button>
 
               <button 
@@ -539,9 +654,9 @@ export function ProjectDetailModalV2({
                 }`}
               >
                 {loading.like ? (
-                  <Loader2 size={20} className="animate-spin" />
+                  <FontAwesomeIcon icon={faSpinner} className="w-5 h-5 animate-spin" />
                 ) : (
-                  <Heart size={20} fill={liked ? "currentColor" : "none"} />
+                  <FontAwesomeIcon icon={liked ? faHeart : faHeartRegular} className="w-5 h-5" />
                 )}
               </button>
 
@@ -555,16 +670,16 @@ export function ProjectDetailModalV2({
                 }}
                 disabled={!isLoggedIn}
                 className="w-12 h-12 rounded-full bg-gray-100 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-colors"
-                title="컬렉션에 저장"
+                title="컨렉션에 저장"
               >
-                <Folder size={20} />
+                <FontAwesomeIcon icon={faFolder} className="w-5 h-5" />
               </button>
 
               <button 
                 onClick={() => setShareModalOpen(true)}
                 className="w-12 h-12 rounded-full bg-gray-100 hover:bg-[#4ACAD4] hover:text-white flex items-center justify-center transition-colors"
               >
-                <Share2 size={20} />
+                <FontAwesomeIcon icon={faShareNodes} className="w-5 h-5" />
               </button>
 
               <button 
@@ -573,13 +688,13 @@ export function ProjectDetailModalV2({
                   commentsPanelOpen ? 'bg-[#4ACAD4] text-white' : 'bg-gray-100 hover:bg-[#4ACAD4] hover:text-white'
                 }`}
               >
-                <MessageCircle size={20} />
+                <FontAwesomeIcon icon={faComment} className="w-5 h-5" />
               </button>
             </div>
 
-            {/* 댓글 패널 - 30% */}
+            {/* 댓글 패널 */}
             {commentsPanelOpen && (
-              <div className="w-[30%] h-full bg-white flex flex-col border-l border-gray-200 ml-4">
+              <div className="w-[30%] h-full bg-white flex flex-col border-l border-gray-200 ml-4 rounded-t-xl overflow-hidden">
                 {/* 댓글 헤더 */}
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                   <h3 className="font-bold text-sm">댓글 ({comments.length})</h3>
@@ -587,7 +702,7 @@ export function ProjectDetailModalV2({
                     onClick={() => setCommentsPanelOpen(false)}
                     className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                   >
-                    <X size={18} />
+                    <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -596,7 +711,7 @@ export function ProjectDetailModalV2({
                   <div className="flex items-center gap-2 mb-2">
                     <Avatar className="w-8 h-8 bg-white">
                       <AvatarImage src={project.user.profile_image.large} />
-                      <AvatarFallback className="bg-white"><User size={14} /></AvatarFallback>
+                      <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-3 h-3" /></AvatarFallback>
                     </Avatar>
                     <div>
                       <p className="font-bold text-xs">{project.user.username}</p>
@@ -623,7 +738,7 @@ export function ProjectDetailModalV2({
                     ))
                   ) : (
                     <div className="text-center py-8">
-                      <MessageCircle size={24} className="mx-auto text-gray-300 mb-2" />
+                      <FontAwesomeIcon icon={faComment} className="w-6 h-6 mx-auto text-gray-300 mb-2" />
                       <p className="text-xs text-gray-400">첫 댓글을 남겨보세요!</p>
                     </div>
                   )}
@@ -636,7 +751,7 @@ export function ProjectDetailModalV2({
                       <div className="flex items-center justify-between mb-2 px-2 py-1 bg-gray-50 rounded text-[10px]">
                         <span className="text-gray-600">@{replyingTo.nickname}에게 답글</span>
                         <button onClick={() => setReplyingTo(null)} className="text-gray-400 hover:text-gray-600">
-                          <X size={12} />
+                          <FontAwesomeIcon icon={faXmark} className="w-3 h-3" />
                         </button>
                       </div>
                     )}
@@ -655,7 +770,7 @@ export function ProjectDetailModalV2({
                         size="sm"
                         className="bg-[#4ACAD4] hover:bg-[#3db8c0] text-xs px-3"
                       >
-                        {loading.comment ? <Loader2 size={12} className="animate-spin" /> : '작성'}
+                        {loading.comment ? <FontAwesomeIcon icon={faSpinner} className="w-3 h-3 animate-spin" /> : '작성'}
                       </Button>
                     </div>
                   </div>

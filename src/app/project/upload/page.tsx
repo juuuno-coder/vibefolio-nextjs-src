@@ -5,28 +5,77 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import {
+  faCamera,
+  faWandMagicSparkles,
+  faPalette,
+  faPenRuler,
+  faVideo,
+  faFilm,
+  faHeadphones,
+  faCube,
+  faFileLines,
+  faCode,
+  faMobileScreen,
+  faGamepad,
+  faUpload,
+  faXmark,
+  faImage,
+  faCheck,
+} from "@fortawesome/free-solid-svg-icons";
 import { supabase } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/supabase/storage";
+
+// 장르 카테고리 (메인) - Font Awesome
+const genreCategories: { id: string; label: string; icon: IconDefinition }[] = [
+  { id: "photo", label: "포토", icon: faCamera },
+  { id: "animation", label: "애니메이션", icon: faWandMagicSparkles },
+  { id: "graphic", label: "그래픽", icon: faPalette },
+  { id: "design", label: "디자인", icon: faPenRuler },
+  { id: "video", label: "영상", icon: faVideo },
+  { id: "cinema", label: "영화·드라마", icon: faFilm },
+  { id: "audio", label: "오디오", icon: faHeadphones },
+  { id: "3d", label: "3D", icon: faCube },
+  { id: "text", label: "텍스트", icon: faFileLines },
+  { id: "code", label: "코드", icon: faCode },
+  { id: "webapp", label: "웹/앱", icon: faMobileScreen },
+  { id: "game", label: "게임", icon: faGamepad },
+];
+
+// 산업 분야 카테고리
+const fieldCategories = [
+  { id: "finance", label: "경제/금융" },
+  { id: "healthcare", label: "헬스케어" },
+  { id: "beauty", label: "뷰티/패션" },
+  { id: "pet", label: "반려" },
+  { id: "fnb", label: "F&B" },
+  { id: "travel", label: "여행/레저" },
+  { id: "education", label: "교육" },
+  { id: "it", label: "IT" },
+  { id: "lifestyle", label: "라이프스타일" },
+  { id: "business", label: "비즈니스" },
+  { id: "other", label: "기타" },
+];
 
 export default function ProjectUploadPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category: "", // 초기값은 로딩 후 설정
     imageUrl: "",
   });
-  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // 초기화 (세션 및 카테고리)
+  // 초기화 (세션 확인)
   useEffect(() => {
     const init = async () => {
-      // 1. 유저 확인
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         alert("프로젝트를 등록하려면 먼저 로그인해주세요.");
@@ -34,30 +83,28 @@ export default function ProjectUploadPage() {
         return;
       }
       setUserId(user.id);
-
-      // 2. 카테고리 목록 가져오기
-      const { data: catData, error } = await supabase
-        .from('Category')
-        .select('*')
-        .order('category_id', { ascending: true }) as { data: { category_id: number, name: string }[] | null, error: any };
-
-      if (error || !catData) {
-        console.error('카테고리 로딩 실패:', error);
-        // 실패 시 비상용 하드코딩 (혹시 모를 상황 대비)
-        setCategories([
-            { category_id: 1, name: '전체' },
-            { category_id: 2, name: 'AI' },
-            { category_id: 3, name: '영상/모션그래픽' },
-        ]);
-      } else if (catData.length > 0) {
-        setCategories(catData);
-        // 첫 번째 카테고리를 기본 선택
-        setFormData(prev => ({ ...prev, category: catData[0].category_id.toString() }));
-      }
     };
     
     init();
   }, [router]);
+
+  // 장르 토글
+  const toggleGenre = (id: string) => {
+    setSelectedGenres(prev => 
+      prev.includes(id) 
+        ? prev.filter(g => g !== id)
+        : [...prev, id]
+    );
+  };
+
+  // 분야 토글
+  const toggleField = (id: string) => {
+    setSelectedFields(prev => 
+      prev.includes(id) 
+        ? prev.filter(f => f !== id)
+        : [...prev, id]
+    );
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -83,6 +130,12 @@ export default function ProjectUploadPage() {
     e.preventDefault();
     if (isSubmitting) return;
 
+    // 유효성 검사
+    if (selectedGenres.length === 0) {
+      alert('최소 1개의 장르를 선택해주세요.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -96,8 +149,22 @@ export default function ProjectUploadPage() {
       console.log("이미지 업로드 완료:", imageUrl);
 
       // 2. 프로젝트 생성 API 호출
-      const category_id = parseInt(formData.category);
-      if (isNaN(category_id)) throw new Error('카테고리를 선택해주세요.');
+      // 임시로 첫 번째 장르를 category_id로 매핑 (추후 태그 시스템으로 변경)
+      const genreToCategory: { [key: string]: number } = {
+        photo: 1,
+        animation: 2,
+        graphic: 3,
+        design: 4,
+        video: 5,
+        cinema: 6,
+        audio: 7,
+        "3d": 8,
+        text: 9,
+        code: 10,
+        webapp: 11,
+        game: 12,
+      };
+      const category_id = genreToCategory[selectedGenres[0]] || 1;
 
       console.log("API 호출 시작...");
       const response = await fetch('/api/projects', {
@@ -110,6 +177,11 @@ export default function ProjectUploadPage() {
           content_text: formData.description,
           thumbnail_url: imageUrl,
           rendering_type: 'image',
+          // 추후 태그 저장용 (custom_data에 임시 저장)
+          custom_data: JSON.stringify({
+            genres: selectedGenres,
+            fields: selectedFields,
+          }),
         }),
       });
 
@@ -138,7 +210,7 @@ export default function ProjectUploadPage() {
             프로젝트 등록
           </h1>
           <p className="text-sm md:text-base text-secondary mb-8">
-            당신의 창작물을 세상과 공유하세요
+            당신의 AI 창작물을 세상과 공유하세요
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -161,13 +233,13 @@ export default function ProjectUploadPage() {
                       }}
                       className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-all"
                     >
-                      <X size={20} />
+                      <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
                     </button>
                   </div>
                 ) : (
                   <label className="flex flex-col items-center justify-center w-full aspect-square md:aspect-video border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#4ACAD4] hover:bg-gray-50 transition-all">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <ImageIcon className="w-12 h-12 mb-4 text-gray-400" />
+                      <FontAwesomeIcon icon={faImage} className="w-12 h-12 mb-4 text-gray-400" />
                       <p className="mb-2 text-sm text-gray-500">
                         <span className="font-semibold">클릭하여 업로드</span>{" "}
                         또는 드래그 앤 드롭
@@ -207,7 +279,7 @@ export default function ProjectUploadPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">프로젝트 설명</label>
               <Textarea
-                placeholder="프로젝트에 대해 설명해주세요"
+                placeholder="프로젝트에 대해 설명해주세요. #태그를 추가할 수도 있어요!"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
@@ -218,25 +290,87 @@ export default function ProjectUploadPage() {
               />
             </div>
 
-            {/* 카테고리 */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">카테고리</label>
-              <select
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
-                }
-                required
-                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#4ACAD4] focus:border-transparent text-sm"
-              >
-                <option value="" disabled>카테고리를 선택하세요</option>
-                {categories.map((cat) => (
-                    <option key={cat.category_id} value={cat.category_id}>
-                        {cat.name}
-                    </option>
-                ))}
-              </select>
+            {/* 장르 선택 (필수) */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium">
+                장르 <span className="text-red-500">*</span>
+                <span className="text-xs text-gray-500 ml-2">복수 선택 가능</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {genreCategories.map((genre) => {
+                  const isSelected = selectedGenres.includes(genre.id);
+                  return (
+                    <button
+                      key={genre.id}
+                      type="button"
+                      onClick={() => toggleGenre(genre.id)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-all ${
+                        isSelected
+                          ? "bg-[#4ACAD4] border-[#4ACAD4] text-white"
+                          : "bg-white border-gray-200 text-gray-700 hover:border-[#4ACAD4] hover:text-[#4ACAD4]"
+                      }`}
+                    >
+                      <FontAwesomeIcon icon={genre.icon} className="w-4 h-4" />
+                      <span className="text-sm font-medium">{genre.label}</span>
+                      {isSelected && <FontAwesomeIcon icon={faCheck} className="w-3 h-3" />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+
+            {/* 산업 분야 선택 (선택) */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium">
+                산업 분야
+                <span className="text-xs text-gray-500 ml-2">선택사항, 복수 선택 가능</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {fieldCategories.map((field) => {
+                  const isSelected = selectedFields.includes(field.id);
+                  return (
+                    <button
+                      key={field.id}
+                      type="button"
+                      onClick={() => toggleField(field.id)}
+                      className={`px-4 py-2 rounded-full border-2 transition-all text-sm font-medium ${
+                        isSelected
+                          ? "bg-indigo-500 border-indigo-500 text-white"
+                          : "bg-white border-gray-200 text-gray-700 hover:border-indigo-400 hover:text-indigo-500"
+                      }`}
+                    >
+                      {field.label}
+                      {isSelected && <FontAwesomeIcon icon={faCheck} className="w-3 h-3 ml-1" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 선택된 태그 요약 */}
+            {(selectedGenres.length > 0 || selectedFields.length > 0) && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600 mb-2">선택된 태그:</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedGenres.map(id => {
+                    const genre = genreCategories.find(g => g.id === id);
+                    return genre ? (
+                      <span key={id} className="px-3 py-1 bg-[#4ACAD4]/20 text-[#4ACAD4] rounded-full text-sm font-medium">
+                        #{genre.label}
+                      </span>
+                    ) : null;
+                  })}
+                  {selectedFields.map(id => {
+                    const field = fieldCategories.find(f => f.id === id);
+                    return field ? (
+                      <span key={id} className="px-3 py-1 bg-indigo-100 text-indigo-600 rounded-full text-sm font-medium">
+                        #{field.label}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* 버튼 */}
             <div className="flex flex-col md:flex-row gap-4 pt-4">
@@ -261,7 +395,7 @@ export default function ProjectUploadPage() {
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    <Upload size={20} />
+                    <FontAwesomeIcon icon={faUpload} className="w-5 h-5" />
                     프로젝트 등록
                   </span>
                 )}
