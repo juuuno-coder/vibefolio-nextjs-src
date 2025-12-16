@@ -8,22 +8,23 @@ import { faHeart, faChartSimple, faImage } from "@fortawesome/free-solid-svg-ico
 import { addCommas } from "@/lib/format/comma";
 
 // 기본 폴백 이미지
-const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop";
+const FALLBACK_IMAGE = "/placeholder.jpg";
 const FALLBACK_AVATAR = "/globe.svg";
 
 // Props 인터페이스 정의
 interface ImageCardProps {
   props: {
     id: string;
-    urls: { regular: string; full: string };
-    user: {
-      username: string;
-      profile_image: { large: string; small: string };
+    urls?: { regular?: string; full?: string };
+    user?: {
+      username?: string;
+      profile_image?: { large?: string; small?: string };
     };
-    likes: number;
+    likes?: number;
     views?: number;
     description?: string | null;
     alt_description?: string | null;
+    title?: string;
     created_at?: string;
     width?: number;
     height?: number;
@@ -31,13 +32,21 @@ interface ImageCardProps {
   onClick?: () => void;
 }
 
-// forwardRef를 사용하여 컴포넌트를 래핑하고 ref와 나머지 props를 받습니다.
+// forwardRef를 사용하여 컴포넌트를 래핑
 export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
   ({ props, onClick, ...rest }, ref) => {
     const [imgError, setImgError] = useState(false);
     const [avatarError, setAvatarError] = useState(false);
 
     if (!props) return null;
+
+    // 안전한 데이터 접근
+    const imageUrl = props.urls?.regular || props.urls?.full || FALLBACK_IMAGE;
+    const username = props.user?.username || 'Unknown';
+    const avatarUrl = props.user?.profile_image?.large || props.user?.profile_image?.small || FALLBACK_AVATAR;
+    const likes = props.likes ?? 0;
+    const views = props.views;
+    const altText = props.alt_description || props.title || '@THUMBNAIL';
 
     return (
       <div
@@ -54,8 +63,8 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
             </div>
           ) : (
             <img
-              src={props.urls.regular || FALLBACK_IMAGE}
-              alt={props.alt_description || "@THUMBNAIL"}
+              src={imageUrl}
+              alt={altText}
               className="w-full h-auto object-cover"
               loading="lazy"
               decoding="async"
@@ -68,12 +77,12 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
             <div className="flex items-center gap-6 text-white">
               <div className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faHeart} className="w-5 h-5" />
-                <span className="font-medium">{addCommas(props.likes)}</span>
+                <span className="font-medium">{addCommas(likes)}</span>
               </div>
-              {props.views !== undefined && (
+              {views !== undefined && (
                 <div className="flex items-center gap-2">
                   <FontAwesomeIcon icon={faChartSimple} className="w-5 h-5" />
-                  <span className="font-medium text-lg">{addCommas(props.views)}</span>
+                  <span className="font-medium text-lg">{addCommas(views)}</span>
                 </div>
               )}
             </div>
@@ -85,22 +94,22 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <img
-                src={avatarError ? FALLBACK_AVATAR : (props.user.profile_image.large || FALLBACK_AVATAR)}
+                src={avatarError ? FALLBACK_AVATAR : avatarUrl}
                 alt="@PROFILE_IMAGE"
                 className="w-8 h-8 rounded-full avatar object-cover bg-gray-100"
                 onError={() => setAvatarError(true)}
               />
-              <p className="text-sm font-medium text-primary">{props.user.username}</p>
+              <p className="text-sm font-medium text-primary">{username}</p>
             </div>
             <div className="flex items-center gap-3 text-secondary">
               <div className="flex items-center gap-1.5">
                 <FontAwesomeIcon icon={faHeart} className="w-4 h-4 text-red-400" />
-                <span className="text-sm font-semibold text-gray-700">{addCommas(props.likes)}</span>
+                <span className="text-sm font-semibold text-gray-700">{addCommas(likes)}</span>
               </div>
-              {props.views !== undefined && (
+              {views !== undefined && (
                 <div className="flex items-center gap-1.5">
                   <FontAwesomeIcon icon={faChartSimple} className="w-4 h-4 text-blue-400" />
-                  <span className="text-sm font-semibold text-gray-700">{addCommas(props.views)}</span>
+                  <span className="text-sm font-semibold text-gray-700">{addCommas(views)}</span>
                 </div>
               )}
             </div>
