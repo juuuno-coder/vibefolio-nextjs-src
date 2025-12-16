@@ -266,19 +266,16 @@ export function ProjectDetailModalV2({
   const handleLike = async () => {
     if (!project) return;
     
-    if (!isLoggedIn) {
+    // isLoggedIn 상태만 믿지 말고 실제 세션 확인
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
       setLoginModalOpen(true);
       return;
     }
     
     setLoading(prev => ({ ...prev, like: true }));
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setLoginModalOpen(true);
-        return;
-      }
-
       const res = await fetch('/api/likes', {
         method: 'POST',
         headers: { 
@@ -297,6 +294,18 @@ export function ProjectDetailModalV2({
     } finally {
       setLoading(prev => ({ ...prev, like: false }));
     }
+  };
+
+  const handleCollectionClick = async () => {
+    // isLoggedIn 상태만 믿지 말고 실제 세션 확인
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      setLoginModalOpen(true);
+      return;
+    }
+    
+    setCollectionModalOpen(true);
   };
 
   const handleBookmark = async () => {
@@ -474,8 +483,8 @@ export function ProjectDetailModalV2({
                     <FontAwesomeIcon icon={liked ? faHeart : faHeartRegular} className="w-5 h-5" />
                   </button>
                   <button 
-                    onClick={() => setCollectionModalOpen(true)}
-                    className="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center"
+                    onClick={handleCollectionClick}
+                    className="w-12 h-12 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 flex items-center justify-center transition-colors"
                   >
                     <FontAwesomeIcon icon={faFolder} className="w-5 h-5" />
                   </button>
@@ -670,16 +679,9 @@ export function ProjectDetailModalV2({
               </button>
 
               <button 
-                onClick={() => {
-                  if (!isLoggedIn) {
-                    setLoginModalOpen(true);
-                    return;
-                  }
-                  setCollectionModalOpen(true);
-                }}
-                disabled={!isLoggedIn}
+                onClick={handleCollectionClick}
                 className="w-12 h-12 rounded-full bg-gray-100 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-colors"
-                title="컨렉션에 저장"
+                title="컬렉션에 저장"
               >
                 <FontAwesomeIcon icon={faFolder} className="w-5 h-5" />
               </button>
