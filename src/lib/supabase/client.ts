@@ -11,13 +11,20 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase 환경 변수가 설정되지 않아 기본값을 사용하거나 비활성화될 수 있습니다.');
 }
 
-// 클라이언트 사이드용 Supabase 클라이언트
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-});
+// 클라이언트 사이드용 Supabase 클라이언트 (싱글톤 패턴 적용)
+const createSupabaseClient = () =>
+  createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  });
+
+export const supabase = (global as any).supabase ?? createSupabaseClient();
+
+if (process.env.NODE_ENV !== "production") {
+  (global as any).supabase = supabase;
+}
 
 // 서버 사이드용 Supabase 클라이언트 (Service Role Key 사용)
 export const supabaseAdmin = createClient<Database>(

@@ -40,50 +40,71 @@ export default function MyPage() {
   useEffect(() => {
     const init = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          console.error("인증 실패:", authError);
           router.push('/login');
           return;
         }
         
         setUserId(user.id);
         
-        // 프로필 정보
-        const { data: dbUser } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', user.id)
-          .single() as any;
+        // 프로필 정보 로드 (실패해도 진행)
+        try {
+          const { data } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+            
+          const dbUser = data as any;
+          
+          setUserProfile({
+            nickname: dbUser?.nickname || user.user_metadata?.nickname || user.email?.split('@')[0] || '사용자',
+            email: user.email,
+            profile_image_url: dbUser?.profile_image_url || user.user_metadata?.profile_image_url || '/globe.svg',
+            cover_image_url: dbUser?.cover_image_url || null,
+            bio: dbUser?.bio || '',
+          });
+        } catch (e) {
+          console.warn("프로필 로드 실패, 기본값 사용:", e);
+          setUserProfile({
+            nickname: user.user_metadata?.nickname || '사용자',
+            email: user.email,
+            profile_image_url: user.user_metadata?.profile_image_url || '/globe.svg',
+            cover_image_url: null,
+            bio: '',
+          });
+        }
         
-        setUserProfile({
-          nickname: dbUser?.nickname || user.user_metadata?.nickname || user.email?.split('@')[0] || '사용자',
-          email: user.email,
-          profile_image_url: dbUser?.profile_image_url || user.user_metadata?.profile_image_url || '/globe.svg',
-          cover_image_url: dbUser?.cover_image_url || null,
-          bio: dbUser?.bio || '',
-        });
+        // 통계 로드 (실패해도 0으로 처리)
+        try {
+          const getCount = async (table: string, query: any) => {
+            const { count, error } = await query;
+            if (error) throw error;
+            return count || 0;
+          };
+
+          const [p, l, c, fr, fg] = await Promise.all([
+            getCount('Project', supabase.from('Project').select('*', { count: 'exact', head: true }).eq('user_id', user.id)),
+            getCount('Like', supabase.from('Like').select('*', { count: 'exact', head: true }).eq('user_id', user.id)),
+            getCount('Collection', supabase.from('Collection').select('*', { count: 'exact', head: true }).eq('user_id', user.id)),
+            getCount('Follow', supabase.from('Follow').select('*', { count: 'exact', head: true }).eq('following_id', user.id)),
+            getCount('Follow', supabase.from('Follow').select('*', { count: 'exact', head: true }).eq('follower_id', user.id)),
+          ]);
+          
+          setStats({ projects: p, likes: l, collections: c, followers: fr, following: fg });
+        } catch (e) {
+          console.warn("통계 로드 실패:", e);
+          // 실패 시 기존 0값 유지
+        }
         
-        // 통계
-        const [p, l, c, fr, fg] = await Promise.all([
-          supabase.from('Project').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-          supabase.from('Like').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-          supabase.from('Collection').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-          supabase.from('Follow').select('*', { count: 'exact', head: true }).eq('following_id', user.id),
-          supabase.from('Follow').select('*', { count: 'exact', head: true }).eq('follower_id', user.id),
-        ]);
-        
-        setStats({
-          projects: p.count || 0,
-          likes: l.count || 0,
-          collections: c.count || 0,
-          followers: fr.count || 0,
-          following: fg.count || 0,
-        });
-        
-        setInitialized(true);
       } catch (err) {
-        console.error('초기화 실패:', err);
-        router.push('/login');
+        console.error('초기화 치명적 실패:', err);
+      } finally {
+        // 성공하든 실패하든 로딩 종료
+        setInitialized(true);
       }
     };
     
@@ -279,7 +300,7 @@ export default function MyPage() {
       // 3. DB 업데이트
       const { error: updateError } = await supabase
         .from('users')
-        .update({ cover_image_url: publicUrl })
+        .update({ cover_image_url: publicUrl } as any)
         .eq('id', userId);
 
       if (updateError) throw updateError;
