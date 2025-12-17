@@ -2,16 +2,22 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import dynamic from 'next/dynamic';
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton"; // skeleton for cards
 import { MainBanner } from "@/components/MainBanner";
 import { ImageCard } from "@/components/ImageCard";
 import { StickyMenu } from "@/components/StickyMenu";
-import { ProjectDetailModalV2 } from "@/components/ProjectDetailModalV2";
 import { getCategoryName } from "@/lib/categoryMap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWandSparkles, faXmark, faCheck } from "@fortawesome/free-solid-svg-icons";
+
+// 모달은 초기에 필요 없으므로 Dynamic Import로 지연 로딩
+const ProjectDetailModalV2 = dynamic(() => 
+  import("@/components/ProjectDetailModalV2").then(mod => mod.ProjectDetailModalV2), 
+  { ssr: false }
+);
 import { useAuth } from "@/lib/auth/AuthContext";
 
 interface ImageDialogProps {

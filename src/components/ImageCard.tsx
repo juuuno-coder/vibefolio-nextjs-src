@@ -3,6 +3,7 @@
 "use client";
 
 import React, { forwardRef, useState } from "react";
+import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart, faChartSimple, faImage } from "@fortawesome/free-solid-svg-icons";
 import { addCommas } from "@/lib/format/comma";
@@ -93,12 +94,16 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
         <div className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <img
-                src={avatarError ? FALLBACK_AVATAR : avatarUrl}
-                alt="@PROFILE_IMAGE"
-                className="w-8 h-8 rounded-full avatar object-cover bg-gray-100"
-                onError={() => setAvatarError(true)}
-              />
+              <div className="relative w-8 h-8 rounded-full overflow-hidden bg-gray-100">
+                <Image
+                  src={avatarError ? FALLBACK_AVATAR : avatarUrl}
+                  alt="@PROFILE_IMAGE"
+                  fill
+                  className="object-cover"
+                  onError={() => setAvatarError(true)}
+                  sizes="32px"
+                />
+              </div>
               <p className="text-sm font-medium text-primary">{username}</p>
             </div>
             <div className="flex items-center gap-3 text-secondary">
