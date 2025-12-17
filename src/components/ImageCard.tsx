@@ -51,13 +51,20 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
 
     return (
       <div
-        className="masonry-item behance-card cursor-pointer group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+        className="masonry-item behance-card cursor-pointer group" // 중복 호버 클래스 제거
         ref={ref}
         onClick={onClick}
         {...rest}
       >
         {/* 이미지 영역 */}
         <div className="relative overflow-hidden image-hover">
+          {/* 인기 프로젝트 뱃지 (좋아요 100개 이상) */}
+          {likes >= 100 && (
+            <div className="absolute top-3 left-3 z-10 bg-yellow-400 text-yellow-950 text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
+               <span>🏆</span> <span>POPULAR</span>
+            </div>
+          )}
+          
           {imgError ? (
             <div className="w-full aspect-square bg-gray-100 flex items-center justify-center">
               <FontAwesomeIcon icon={faImage} className="w-12 h-12 text-gray-300" />

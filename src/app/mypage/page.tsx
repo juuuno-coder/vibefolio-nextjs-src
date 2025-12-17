@@ -490,10 +490,22 @@ export default function MyPage() {
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-200 border-dashed">
-                  <Upload className="w-16 h-16 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">아직 업로드한 프로젝트가 없습니다</h3>
-                  <Button onClick={() => router.push('/project/upload')} className="mt-4 bg-[#4ACAD4] hover:bg-[#3ab8c2]">첫 프로젝트 업로드</Button>
+                <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border border-dashed border-gray-200 relative overflow-hidden group hover:border-[#6A5ACD]/30 transition-colors">
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#6A5ACD]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  
+                  <div className="w-24 h-24 rounded-full bg-gray-50 flex items-center justify-center mb-6 relative z-10 group-hover:scale-110 transition-transform duration-300">
+                    <div className="absolute inset-0 bg-[#6A5ACD] rounded-full animate-ping opacity-10" />
+                    <Upload className="w-10 h-10 text-[#6A5ACD]" />
+                  </div>
+                  
+                  <h3 className="text-xl font-bold text-gray-900 mb-2 z-10">아직 캔버스가 비어있어요</h3>
+                  <p className="text-gray-500 text-sm mb-8 z-10 text-center max-w-sm px-4 leading-relaxed">
+                    첫 번째 프로젝트를 업로드하고<br/>당신의 크리에이티브를 전 세계에 공유해보세요! 🎨
+                  </p>
+                  
+                  <Button onClick={() => router.push('/project/upload')} className="btn-primary z-10 rounded-full px-8 py-6 text-base shadow-lg shadow-[#6A5ACD]/20">
+                    첫 프로젝트 시작하기
+                  </Button>
                 </div>
               )
             )}

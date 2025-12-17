@@ -8,56 +8,75 @@
 
 @layer base {
   :root {
-    /* 화이트톤 심플 디자인 색상 변수 */
+    /* 트렌디한 Vibe 테마 색상 변수 */
     --background: 0 0% 100%;
-    --foreground: 0 0% 13%;
+    --foreground: 240 10% 4%; /* 아주 짙은 네이비 블랙 */
+    
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 13%;
+    --card-foreground: 240 10% 4%;
+    
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 13%;
-    --primary: 0 0% 13%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 13%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 13%;
+    --popover-foreground: 240 10% 4%;
+    
+    /* Primary: Deep Purple (Vibefolio Identity) */
+    --primary: 248 53% 58%; /* #6A5ACD */
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 10%;
+    
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    
+    /* Accent: Electric Mint (Spark) */
+    --accent: 166 100% 50%; /* #00FFC2 */
+    --accent-foreground: 240 10% 4%;
+    
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 0 0% 13%;
-    --radius: 0.5rem;
+    
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 248 53% 58%;
+    
+    --radius: 0.75rem; /* 조금 더 둥근 모서리 */
 
-    /* 비핸스 스타일 색상 */
-    --behance-blue: 0 87% 58%;
-    --behance-hover: 0 0% 96%;
-    --text-primary: 0 0% 13%;
-    --text-secondary: 0 0% 45%;
-    --divider: 0 0% 90%;
+    /* Vibe 전용 변수 */
+    --vibe-purple: 248 53% 58%;
+    --vibe-mint: 166 100% 50%;
+    --vibe-hover: 240 5% 96%;
+    
+    --divider: 240 6% 90%;
   }
 
   .dark {
-    --background: 0 0% 13%;
+    --background: 240 10% 4%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 13%;
+    
+    --card: 240 10% 4%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 13%;
+    
+    --popover: 240 10% 4%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 13%;
-    --secondary: 0 0% 18%;
+    
+    --primary: 248 53% 58%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 240 4% 16%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 0 0% 18%;
-    --accent-foreground: 0 0% 98%;
+    
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+    
+    --accent: 166 100% 50%;
+    --accent-foreground: 240 10% 4%;
+    
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 0 0% 83%;
+    
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 248 53% 58%;
   }
 
   * {
@@ -75,46 +94,52 @@
 }
 
 @layer components {
-  /* 비핸스 스타일 카드 */
+  /* Vibe 카드 (호버 효과) */
   .behance-card {
     background: white;
     border: 1px solid var(--divider);
-    border-radius: 4px;
-    transition: all 0.2s ease;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     overflow: hidden;
+    will-change: transform, box-shadow; /* GPU 가속 힌트 */
   }
 
   .behance-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
+    box-shadow: 0 10px 30px -10px rgba(106, 90, 205, 0.2);
+    transform: translateY(-4px) scale(1.01);
+    border-color: rgba(106, 90, 205, 0.3);
   }
 
-  /* 심플한 버튼 */
+  /* 둥근 버튼 (Pill Shape) */
   .btn-primary {
-    background: var(--text-primary);
+    background: #111;
     color: white;
-    padding: 10px 20px;
-    border-radius: 4px;
+    padding: 10px 24px;
+    border-radius: 9999px; /* Pill Shape */
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
   }
 
   .btn-primary:hover {
-    background: #000;
+    background: #6A5ACD; /* Deep Purple Hover */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(106, 90, 205, 0.3);
   }
 
   .btn-secondary {
     background: transparent;
-    color: var(--text-primary);
+    color: #111;
     border: 1px solid var(--divider);
-    padding: 10px 20px;
-    border-radius: 4px;
+    padding: 10px 24px;
+    border-radius: 9999px; /* Pill Shape */
     font-weight: 500;
     transition: all 0.2s ease;
   }
 
   .btn-secondary:hover {
-    background: var(--behance-hover);
+    background: var(--vibe-hover);
+    border-color: #6A5ACD;
+    color: #6A5ACD;
   }
 
   /* 헤더 스타일 */
@@ -257,6 +282,30 @@
 }
 
 @layer utilities {
+  /* 브랜드 스켈레톤 (Shimmer) */
+  .shimmer-bg {
+    background: #f6f7f8;
+    background-image: linear-gradient(
+      to right,
+      #f6f7f8 0%,
+      #edeef1 20%,
+      #f6f7f8 40%,
+      #f6f7f8 100%
+    );
+    background-repeat: no-repeat;
+    background-size: 800px 100%;
+    animation-duration: 1.25s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: infinite;
+    animation-name: shimmer;
+    animation-timing-function: linear;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -468px 0; }
+    100% { background-position: 468px 0; }
+  }
+
   /* 스크롤바 숨기기 */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -267,7 +316,7 @@
     scrollbar-width: none;
   }
 
-  /* 커스텀 스크롤바 - 모던 스타일 */
+  /* 커스텀 스크롤바 - Vibe 스타일 */
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -275,22 +324,21 @@
 
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
-    border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.15);
-    border-radius: 10px;
+    background: rgba(106, 90, 205, 0.3); /* Purple tint */
+    border-radius: 99px;
     transition: background 0.2s ease;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(106, 90, 205, 0.6);
   }
 
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+    scrollbar-color: rgba(106, 90, 205, 0.3) transparent;
   }
 
   /* 텍스트 말줄임 */
