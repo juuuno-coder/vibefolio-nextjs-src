@@ -1,4 +1,6 @@
 import type { NextConfig } from "next";
+// Restart Trigger 2025-12-18 (Logo Update)
+
 
 const nextConfig: NextConfig = {
   // 이미지 최적화 설정

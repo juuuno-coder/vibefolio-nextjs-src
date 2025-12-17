@@ -28,28 +28,28 @@ const FOOTER_CONTETNS = [
   { icon: "faFacebook", label: "Facebook" },
 ];
 
-// Vibe 로고 컴포넌트 (SVG)
+// Vibe 로고 컴포넌트 (SVG: 말풍선 타입 & 볼드 서체)
 const VibeLogo = ({ className = "h-8" }: { className?: string }) => (
-  <svg viewBox="0 0 200 50" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* 심볼: Vibe Spark */}
-    <path d="M25 5L15 25H25L15 45L35 25H25L35 5H25Z" fill="url(#spark_grad)" />
-    {/* 텍스트: VIBEFOLIO (Syne/Outfit 스타일) */}
-    <path d="M50 15H56L62 35H57L56 30H50L49 35H44L50 15ZM51 26H55L53 19L51 26Z" fill="currentColor" />
-    <path d="M66 15H71V35H66V15Z" fill="currentColor" />
-    <path d="M75 15H82C85 15 87 17 87 20C87 22 86 24 84 25C86 26 88 28 88 31C88 34 86 35 83 35H75V15ZM80 23H82C83 23 83 22 83 21C83 20 82 19 80 19H80V23ZM80 31H83C84 31 84 30 84 29C84 28 83 27 80 27H80V31Z" fill="currentColor" />
-    <path d="M92 15H99V19H97V23H99V27H97V31H100V35H92V15Z" fill="currentColor" />
-    <path d="M104 15H111V19H109V23H111V27H106V35H104V15Z" fill="currentColor" />
-    <path d="M115 15H122C125 15 127 17 127 20V30C127 33 125 35 122 35H115V15ZM120 31H122C123 31 123 30 123 29V21C123 20 122 19 120 19H120V31Z" fill="currentColor" />
-    <path d="M131 15H136V30H142V35H131V15Z" fill="currentColor" />
-    <path d="M146 15H151V35H146V15Z" fill="currentColor" />
-    <path d="M155 15H162C165 15 167 17 167 20V30C167 33 165 35 162 35H155V15ZM160 31H162C163 31 163 30 163 29V21C163 20 162 19 160 19H160V31Z" fill="currentColor" />
-    
+  <svg viewBox="0 0 240 50" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="spark_grad" x1="15" y1="5" x2="35" y2="45" gradientUnits="userSpaceOnUse">
+      <linearGradient id="vibe_gradient" x1="0" y1="0" x2="50" y2="50" gradientUnits="userSpaceOnUse">
         <stop stopColor="#6A5ACD" />
         <stop offset="1" stopColor="#00FFC2" />
       </linearGradient>
     </defs>
+    
+    {/* 심볼: 모던 말풍선 (Squircle Bubble) */}
+    <path 
+      d="M10 5H40C45.5228 5 50 9.47715 50 15V29C50 34.5228 45.5228 39 40 39H30L20 46V39H10C4.47715 39 0 34.5228 0 29V15C0 9.47715 4.47715 5 10 5Z" 
+      fill="url(#vibe_gradient)" 
+    />
+    {/* 심볼 내부: V Mark */}
+    <path d="M16 16L25 30L34 16" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+    
+    {/* 텍스트: VIBEFOLIO (시스템 폰트 활용) */}
+    <text x="62" y="34" fontFamily="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" fontWeight="900" fontSize="28" fill="currentColor" letterSpacing="-0.5">
+      VIBE<tspan fontWeight="400" dx="0">FOLIO</tspan>
+    </text>
   </svg>
 );
 
