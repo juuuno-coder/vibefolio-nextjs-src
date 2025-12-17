@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-// Restart Trigger 2025-12-18 (Logo Update)
+// Restart Trigger 2025-12-18 (Green Theme Update)
 
 
 const nextConfig: NextConfig = {

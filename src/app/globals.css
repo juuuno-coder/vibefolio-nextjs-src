@@ -8,75 +8,75 @@
 
 @layer base {
   :root {
-    /* 트렌디한 Vibe 테마 색상 변수 */
+    /* 트렌디한 Vibe 테마 (새싹 Ver.) */
     --background: 0 0% 100%;
-    --foreground: 240 10% 4%; /* 아주 짙은 네이비 블랙 */
+    --foreground: 144 10% 4%; /* 아주 짙은 딥 그린 블랙 */
     
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 4%;
+    --card-foreground: 144 10% 4%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 4%;
+    --popover-foreground: 144 10% 4%;
     
-    /* Primary: Deep Purple (Vibefolio Identity) */
-    --primary: 248 53% 58%; /* #6A5ACD */
+    /* Primary: Fresh Green (Sprout) */
+    --primary: 142 71% 45%; /* #22C55E */
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 6% 10%;
+    --secondary: 144 10% 96%;
+    --secondary-foreground: 144 10% 10%;
     
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
+    --muted: 144 10% 96%;
+    --muted-foreground: 144 5% 45%;
     
-    /* Accent: Electric Mint (Spark) */
-    --accent: 166 100% 50%; /* #00FFC2 */
-    --accent-foreground: 240 10% 4%;
+    /* Accent: Sunny Lime */
+    --accent: 84 81% 44%; /* #84CC16 */
+    --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 248 53% 58%;
+    --border: 144 10% 90%;
+    --input: 144 10% 90%;
+    --ring: 142 71% 45%;
     
-    --radius: 0.75rem; /* 조금 더 둥근 모서리 */
+    --radius: 0.75rem;
 
-    /* Vibe 전용 변수 */
-    --vibe-purple: 248 53% 58%;
-    --vibe-mint: 166 100% 50%;
-    --vibe-hover: 240 5% 96%;
+    /* Vibe 전용 변수 (Green Theme) */
+    --vibe-purple: 142 71% 45%; /* 기존 보라색 변수를 메인 그린으로 매핑 */
+    --vibe-mint: 84 81% 44%;   /* 기존 민트색 변수를 라임으로 매핑 */
+    --vibe-hover: 144 10% 96%;
     
-    --divider: 240 6% 90%;
+    --divider: 144 10% 90%;
   }
 
   .dark {
-    --background: 240 10% 4%;
+    --background: 144 10% 4%;
     --foreground: 0 0% 98%;
     
-    --card: 240 10% 4%;
+    --card: 144 10% 4%;
     --card-foreground: 0 0% 98%;
     
-    --popover: 240 10% 4%;
+    --popover: 144 10% 4%;
     --popover-foreground: 0 0% 98%;
     
-    --primary: 248 53% 58%;
+    --primary: 142 71% 45%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 240 4% 16%;
+    --secondary: 144 4% 16%;
     --secondary-foreground: 0 0% 98%;
     
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 65%;
+    --muted: 144 4% 16%;
+    --muted-foreground: 144 5% 65%;
     
-    --accent: 166 100% 50%;
-    --accent-foreground: 240 10% 4%;
+    --accent: 84 81% 44%;
+    --accent-foreground: 144 10% 4%;
     
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 248 53% 58%;
+    --border: 144 4% 16%;
+    --input: 144 4% 16%;
+    --ring: 142 71% 45%;
   }
 
   * {
