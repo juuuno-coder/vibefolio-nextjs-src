@@ -33,6 +33,7 @@ interface ImageDialogProps {
   width: number;
   height: number;
   category: string;
+  field?: string; // 분야 정보 추가
   userId?: string;
 }
 
@@ -119,6 +120,7 @@ export default function Home() {
               width: 400,
               height: 300,
               category: proj.Category?.name || "korea",
+              field: proj.field || "IT", // 임시: 분야 정보가 없으면 IT로 설정 (추후 DB 연동 필요)
               userId: proj.user_id,
             } as ImageDialogProps;
           });
@@ -151,9 +153,19 @@ export default function Home() {
     ? selectedCategory.map(c => getCategoryName(c))
     : [getCategoryName(selectedCategory)];
   
-  const filtered = categoryNames.includes("전체") || selectedCategory === "all"
-    ? projects 
-    : projects.filter(p => categoryNames.includes(p.category));
+  // 필터링 로직 강화 (카테고리 + 분야)
+  const filtered = projects.filter(p => {
+    const catName = p.category; // DB에서 가져온 카테고리명 (예: "포토", "그래픽")
+    
+    // 카테고리 매칭
+    const matchCategory = selectedCategory === "all" || categoryNames.includes(catName);
+    
+    // 분야 매칭 (selectedFields가 비어있으면 전체 허용)
+    // 데이터에 field 정보가 없으면 일단 통과시키거나, 임시 field 값과 비교
+    const matchField = selectedFields.length === 0 || (p.field && selectedFields.includes(p.field.toLowerCase()));
+    
+    return matchCategory && matchField;
+  });
   
   const sortedProjects = sortProjects(filtered, sortBy);
 
@@ -224,12 +236,12 @@ export default function Home() {
 
         {/* 개인화 필터 적용 됨 */}
         {usePersonalized && userInterests && (
-          <div className="bg-gradient-to-r from-[#4ACAD4]/10 to-indigo-50 border-b border-[#4ACAD4]/20 fade-in">
+          <div className="bg-gradient-to-r from-green-50 to-indigo-50 border-b border-green-100 fade-in">
             <div className="max-w-screen-xl mx-auto px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faWandSparkles} className="w-4 h-4 text-[#4ACAD4]" />
+                <FontAwesomeIcon icon={faWandSparkles} className="w-4 h-4 text-green-600" />
                 <span className="text-sm text-gray-700">
-                  <span className="font-medium text-[#4ACAD4]">맞춤 피드</span>
+                  <span className="font-medium text-green-600">맞춤 피드</span>
                   {userInterests.genres?.length > 0 && (
                     <span className="ml-1">
                       관심 장르 기반으로 보여드리고 있어요
@@ -279,7 +291,7 @@ export default function Home() {
           {!loading && sortedProjects.length === 0 && (
             <div className="text-center py-20">
               <p className="text-gray-500 text-lg mb-4">프로젝트가 없습니다.</p>
-              <Button onClick={handleUploadClick} className="bg-[#4ACAD4] hover:bg-[#3db8c0]">첫 프로젝트 등록하기</Button>
+              <Button onClick={handleUploadClick} className="btn-primary">첫 프로젝트 등록하기</Button>
             </div>
           )}
 

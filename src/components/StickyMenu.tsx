@@ -177,13 +177,13 @@ export function StickyMenu({
                     icon={category.iconSolid} 
                     className={`w-5 h-5 md:w-7 md:h-7 transition-colors duration-200 ${
                       showActive
-                        ? "text-[#4ACAD4]"
-                        : "text-gray-400 group-hover:text-[#4ACAD4]"
+                        ? "text-[#16A34A]"
+                        : "text-gray-400 group-hover:text-[#16A34A]"
                     }`}
                   />
                   {/* 복수 선택 시 체크 표시 - 오른쪽 상단 */}
                   {isActive && category.value !== "all" && (
-                    <div className="absolute top-0 -right-1 w-3 h-3 bg-[#4ACAD4] rounded-full flex items-center justify-center">
+                    <div className="absolute top-0 -right-1 w-3 h-3 bg-[#16A34A] rounded-full flex items-center justify-center">
                       <FontAwesomeIcon icon={faCheck} className="w-2 h-2 text-white" />
                     </div>
                   )}
@@ -192,8 +192,8 @@ export function StickyMenu({
                 <p
                   className={`hidden md:block text-xs md:text-sm whitespace-nowrap font-medium transition-colors ${
                     isActive 
-                      ? "text-[#4ACAD4] font-semibold" 
-                      : "text-gray-500 group-hover:text-[#4ACAD4]"
+                      ? "text-[#16A34A] font-semibold" 
+                      : "text-gray-500 group-hover:text-[#16A34A]"
                   }`}
                 >
                   {category.label}
@@ -201,7 +201,7 @@ export function StickyMenu({
                 {/* 활성화 시 밑줄 표시 */}
                 <div 
                   className={`h-0.5 w-full rounded-full transition-all duration-200 ${
-                    isActive ? "bg-[#4ACAD4]" : "bg-transparent"
+                    isActive ? "bg-[#16A34A]" : "bg-transparent"
                   }`} 
                 />
               </div>
@@ -227,7 +227,7 @@ export function StickyMenu({
                   key={option.value}
                   onClick={() => handleSortChange(option.value)}
                   className={`flex items-center gap-2 cursor-pointer ${
-                    selectedSort === option.value ? "bg-[#4ACAD4]/10 text-[#4ACAD4]" : ""
+                    selectedSort === option.value ? "bg-green-50 text-[#16A34A]" : ""
                   }`}
                 >
                   <FontAwesomeIcon icon={option.icon} className="w-4 h-4" />
@@ -242,7 +242,7 @@ export function StickyMenu({
             onClick={() => setIsFieldPanelOpen(!isFieldPanelOpen)}
             className={`flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 rounded-lg transition-colors ${
               isFieldPanelOpen || selectedFields.length > 0
-                ? "bg-indigo-50 text-indigo-600"
+                ? "bg-green-50 text-green-600"
                 : "hover:bg-gray-100 text-neutral-700"
             }`}
           >
@@ -274,8 +274,8 @@ export function StickyMenu({
                   onClick={() => handleFieldToggle(field.id)}
                   className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
                     isSelected
-                      ? "bg-indigo-500 border-indigo-500 text-white"
-                      : "bg-white border-gray-200 text-gray-600 hover:border-indigo-400 hover:text-indigo-500"
+                      ? "bg-[#16A34A] border-[#16A34A] text-white"
+                      : "bg-white border-gray-200 text-gray-600 hover:border-green-400 hover:text-green-600"
                   }`}
                 >
                   {field.label}
@@ -321,7 +321,7 @@ export function StickyMenu({
             return field ? (
               <span 
                 key={fieldId}
-                className="px-2 py-1 bg-indigo-100 text-indigo-600 rounded-full text-xs font-medium flex items-center gap-1"
+                className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1"
               >
                 {field.label}
                 <button onClick={() => handleFieldToggle(fieldId)}>
