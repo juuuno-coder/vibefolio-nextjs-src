@@ -52,7 +52,7 @@ export function Footer() {
 
   return (
     // 🚨 className의 h-3! 같은 tailwind 확장자는 정의되어 있어야 합니다.
-    <footer className="fixed bottom-0 left-0 hidden w-full h-9 lg:flex items-center justify-between bg-white border-t px-8">
+    <footer className="fixed bottom-0 left-0 hidden w-full h-9 lg:flex items-center justify-between bg-white border-t px-8 z-[100]">
       {/* 텍스트 묶음 영역 */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
