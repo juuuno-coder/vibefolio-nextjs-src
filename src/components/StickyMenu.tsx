@@ -163,9 +163,9 @@ export function StickyMenu({
   const hasActiveFilters = selectedCategories.length > 0 || selectedFields.length > 0;
 
   return (
-    <div className={`sticky top-16 z-20 w-full bg-white/95 backdrop-blur-sm border-b border-gray-100 transition-all duration-300 ${isScrolled ? "h-11 shadow-md" : "h-16 md:h-18"}`}>
+    <div className={`sticky top-16 z-20 w-full bg-white/95 backdrop-blur-sm border-b border-gray-100 transition-all duration-300 ${isScrolled ? "h-12 shadow-sm" : "h-16 md:h-20"}`}>
       {/* 메인 카테고리 바 */}
-      <section className={`flex items-center justify-between px-2 md:px-4 lg:px-6 h-full gap-4`}>
+      <section className={`flex items-center justify-between px-3 md:px-6 h-full w-full gap-2`}>
         {/* 카테고리 목록 */}
         <div className="flex items-center gap-1 md:gap-2 overflow-x-auto no-scrollbar h-full flex-1">
           {categories.map((category) => {
