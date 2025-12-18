@@ -49,11 +49,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white min-h-screen custom-scrollbar`}
       >
         <ClientProviders>
-          {/* TopHeader - 최상단 광고 배너 */}
-          <TopHeader />
-          
-          {/* Header 컴포넌트 */}
-          <Header />
+            
+            {/* Header 컴포넌트 (TopHeader 제거됨) */}
+            <Header />
 
           {/* 메인 콘텐츠 영역 - TopHeader와 Header 높이만큼 padding */}
           <div className="min-h-screen fade-in">

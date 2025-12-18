@@ -79,13 +79,13 @@ export function AuthButtons() {
       <>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Avatar className="w-10 h-10 cursor-pointer border-2 border-gray-200 hover:border-[#4ACAD4] transition-colors">
+            <Avatar className="w-10 h-10 cursor-pointer border-2 border-gray-200 hover:border-primary transition-colors">
               <AvatarImage 
                 src={userProfile?.profile_image_url} 
                 alt={userProfile?.nickname} 
                 className="object-cover" 
               />
-              <AvatarFallback className="bg-[#4ACAD4] text-white">
+              <AvatarFallback className="bg-primary text-white">
                 <FontAwesomeIcon icon={faUser} className="w-4 h-4" />
               </AvatarFallback>
             </Avatar>
@@ -136,12 +136,12 @@ export function AuthButtons() {
   // 로그인되지 않은 상태
   return (
     <>
-      <Button asChild variant="ghost" className="text-black hover:bg-gray-100">
+      <Button asChild variant="ghost" className="text-black hover:bg-gray-100 rounded-full px-5">
         <Link href="/login">
           <span>로그인</span>
         </Link>
       </Button>
-      <Button asChild className="bg-[#4ACAD4] hover:bg-[#41a3aa] text-white">
+      <Button asChild className="btn-primary rounded-full px-6">
         <Link href="/signup">
           <span>회원가입</span>
         </Link>

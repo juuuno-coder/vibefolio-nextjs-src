@@ -91,7 +91,7 @@ export function Header({
   return (
     <>
       {/* 모바일 헤더 */}
-      <header className="sticky top-[44px] z-40 w-full flex flex-col items-center justify-between py-4 px-4 border-b simple-header bg-white xl:hidden">
+      <header className="sticky top-0 z-40 w-full flex flex-col items-center justify-between py-4 px-4 border-b simple-header bg-white xl:hidden">
         <div className="w-full h-full flex items-center justify-between">
           <div className="w-full flex items-center gap-4">
             <Sheet>
@@ -204,7 +204,7 @@ export function Header({
       </header>
 
       {/* 데스크탑 헤더 */}
-      <header className="sticky top-[44px] z-40 w-full h-20 hidden xl:flex items-center justify-between px-10 border-b simple-header bg-white/80 blur-bg transition-colors">
+      <header className="sticky top-0 z-40 w-full h-20 hidden xl:flex items-center justify-between px-10 border-b simple-header bg-white/80 blur-bg transition-colors">
         <div className="h-full flex items-center gap-10">
           <Link href="/" className="flex items-center text-foreground hover:text-primary transition-colors">
             <VibeLogo className="h-9 w-auto" />
