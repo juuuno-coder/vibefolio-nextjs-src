@@ -78,7 +78,7 @@ export default function OperationPolicyPage() {
       </section>
 
       {/* Main Content Area */}
-      <section className="max-w-6xl mx-auto px-6 -mt-24 pb-32">
+      <section className="max-w-6xl mx-auto px-6 -mt-24 pb-32 pt-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sticky Quick Nav */}
           <aside className="lg:w-1/4 hidden lg:block">
