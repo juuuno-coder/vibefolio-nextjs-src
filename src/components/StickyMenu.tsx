@@ -167,7 +167,7 @@ export function StickyMenu({
       {/* 메인 카테고리 바 */}
       <section className={`flex items-center justify-between px-3 md:px-6 h-full w-full gap-2`}>
         {/* 카테고리 목록 */}
-        <div className="flex items-center gap-1 md:gap-2 overflow-x-auto no-scrollbar h-full flex-1">
+        <div className="flex items-center justify-start md:justify-center gap-1 md:gap-2 overflow-x-auto no-scrollbar h-full flex-1">
           {categories.map((category) => {
             const isActive = category.value === "all" 
               ? selectedCategories.length === 0 
