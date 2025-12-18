@@ -109,7 +109,7 @@ export default function AdminInquiriesPage() {
     const target = inquiries.find(i => i.id === id);
     if (!target) return;
 
-    const newStatus = target.status === "pending" ? "answered" : "pending";
+    const newStatus: "pending" | "answered" = target.status === "pending" ? "answered" : "pending";
 
     try {
       const { error } = await supabase
@@ -149,7 +149,7 @@ export default function AdminInquiriesPage() {
 
       const updatedIds = new Set(ids);
       const updated = inquiries.map((inq) =>
-        updatedIds.has(inq.id) ? { ...inq, status } : inq
+        updatedIds.has(inq.id) ? { ...inq, status: status as "pending" | "answered" } : inq
       );
       setInquiries(updated);
     } catch (e) {
