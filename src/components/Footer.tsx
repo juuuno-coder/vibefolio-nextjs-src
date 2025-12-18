@@ -3,6 +3,7 @@
 "use client"; // 🚨 FontAwesomeIcon, AppTooltip 등 클라이언트 상호작용 컴포넌트 사용을 위해 지정
 import React from "react";
 import { Separator } from "@/components/ui/separator"; // 🚨 Alias 경로 수정
+import Link from "next/link";
 import {
   Tooltip,
   TooltipContent,
@@ -67,7 +68,7 @@ export function Footer() {
           <p className="text-xs">개인정보처리방침</p>
           <p className="text-xs">자주묻는 질문</p>
           <p className="text-xs">광고상품</p>
-          <p className="text-xs">문의하기</p>
+          <Link href="/contact" className="text-xs hover:text-gray-900 transition-colors">문의하기</Link>
         </div>
       </div>
 

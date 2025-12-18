@@ -25,16 +25,20 @@ import {
 import Link from "next/link";
 import { useAdmin } from "@/hooks/useAdmin";
 
+import { supabase } from "@/lib/supabase/client";
+
 interface Inquiry {
   id: number;
-  projectId: string;
-  projectTitle: string;
-  creator: string;
+  // projectId, projectTitle, creator 등은 현재 폼에 없으므로 optional 처리
+  projectId?: string;
+  projectTitle?: string;
+  creator?: string;
   name?: string;
   email?: string;
   phone?: string;
   message: string;
-  date: string;
+  created_at: string; // DB 컬럼명
+  date?: string; // 호환성 유지용 (UI 렌더링 시 created_at 사용)
   status: "pending" | "answered";
 }
 
@@ -47,15 +51,29 @@ export default function AdminInquiriesPage() {
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "answered">("all");
 
   // 문의 목록 로드
-  const loadInquiries = () => {
+  const loadInquiries = async () => {
     setLoading(true);
     try {
-      const savedInquiries = localStorage.getItem("inquiries");
-      if (savedInquiries) {
-        setInquiries(JSON.parse(savedInquiries));
+      const { data, error } = await supabase
+        .from('inquiries')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      if (data) {
+        // DB 데이터 매핑
+        const mappedData = data.map((item: any) => ({
+          ...item,
+          date: item.created_at, // date 필드를 created_at으로 매핑
+          status: (item.status === "answered" ? "answered" : "pending") as "pending" | "answered" 
+        }));
+        setInquiries(mappedData);
       }
     } catch (error) {
       console.error("문의 로드 실패:", error);
+      // 로컬 스토리지 백업 데이터라도 보여줄지 고민되지만, DB 마이그레이션이 목표이므로 에러 표시
+      // alert("데이터를 불러오는 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -72,30 +90,46 @@ export default function AdminInquiriesPage() {
     }
   }, [isAdmin, adminLoading, router]);
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (confirm("이 문의를 삭제하시겠습니까?")) {
-      const updated = inquiries.filter((inq) => inq.id !== id);
-      setInquiries(updated);
-      localStorage.setItem("inquiries", JSON.stringify(updated));
+      try {
+        const { error } = await supabase.from('inquiries').delete().eq('id', id);
+        if (error) throw error;
+
+        const updated = inquiries.filter((inq) => inq.id !== id);
+        setInquiries(updated);
+      } catch (e) {
+        console.error("삭제 실패:", e);
+        alert("삭제 중 오류가 발생했습니다.");
+      }
     }
   };
 
-  const handleToggleStatus = (id: number) => {
-    const updated = inquiries.map((inq) =>
-      inq.id === id
-        ? {
-            ...inq,
-            status: (inq.status === "pending" ? "answered" : "pending") as
-              | "pending"
-              | "answered",
-          }
-        : inq
-    );
-    setInquiries(updated);
-    localStorage.setItem("inquiries", JSON.stringify(updated));
+  const handleToggleStatus = async (id: number) => {
+    const target = inquiries.find(i => i.id === id);
+    if (!target) return;
+
+    const newStatus = target.status === "pending" ? "answered" : "pending";
+
+    try {
+      const { error } = await supabase
+        .from('inquiries')
+        .update({ status: newStatus })
+        .eq('id', id);
+        
+      if (error) throw error;
+
+      const updated = inquiries.map((inq) =>
+        inq.id === id ? { ...inq, status: newStatus } : inq
+      );
+      setInquiries(updated);
+    } catch (e) {
+      console.error("상태 변경 실패:", e);
+      alert("상태 변경 중 오류가 발생했습니다.");
+    }
   };
 
-  const handleBatchStatusChange = (status: "answered" | "pending") => {
+  const handleBatchStatusChange = async (status: "answered" | "pending") => {
     const filtered = filteredInquiries.filter((inq) => inq.status !== status);
     if (filtered.length === 0) {
       alert("변경할 문의가 없습니다.");
@@ -103,12 +137,25 @@ export default function AdminInquiriesPage() {
     }
     if (!confirm(`${filtered.length}개 문의를 "${status === "answered" ? "답변 완료" : "대기 중"}"으로 변경하시겠습니까?`)) return;
 
-    const updatedIds = new Set(filtered.map((inq) => inq.id));
-    const updated = inquiries.map((inq) =>
-      updatedIds.has(inq.id) ? { ...inq, status } : inq
-    );
-    setInquiries(updated);
-    localStorage.setItem("inquiries", JSON.stringify(updated));
+    const ids = filtered.map(inq => inq.id);
+
+    try {
+      const { error } = await supabase
+        .from('inquiries')
+        .update({ status })
+        .in('id', ids);
+      
+      if (error) throw error;
+
+      const updatedIds = new Set(ids);
+      const updated = inquiries.map((inq) =>
+        updatedIds.has(inq.id) ? { ...inq, status } : inq
+      );
+      setInquiries(updated);
+    } catch (e) {
+      console.error("일괄 변경 실패:", e);
+      alert("일괄 변경 중 오류가 발생했습니다.");
+    }
   };
 
   // 필터링된 문의 목록
@@ -280,7 +327,7 @@ export default function AdminInquiriesPage() {
             </Card>
           ) : (
             filteredInquiries
-              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .sort((a, b) => new Date(b.created_at || b.date || "").getTime() - new Date(a.created_at || a.date || "").getTime())
               .map((inquiry) => (
                 <Card key={inquiry.id} className="overflow-hidden">
                   <CardHeader className="bg-gray-50">
@@ -318,7 +365,7 @@ export default function AdminInquiriesPage() {
                           <div className="flex items-center gap-1">
                             <Calendar size={14} />
                             <span>
-                              {new Date(inquiry.date).toLocaleDateString("ko-KR", {
+                              {new Date(inquiry.date || inquiry.created_at).toLocaleDateString("ko-KR", {
                                 year: "numeric",
                                 month: "long",
                                 day: "numeric",
