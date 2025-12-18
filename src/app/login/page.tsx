@@ -237,12 +237,12 @@ export default function LoginPage() {
             </div>
 
             <div className="text-sm">
-              <a
-                href="#"
+              <Link
+                href="/forgot-password"
                 className="font-medium text-primary hover:underline"
               >
                 비밀번호 찾기
-              </a>
+              </Link>
             </div>
           </div>
 

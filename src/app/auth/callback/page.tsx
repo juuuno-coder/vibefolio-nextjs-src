@@ -144,6 +144,10 @@ export default function AuthCallbackPage() {
           setStatus("success");
           clearTimeout(timeout);
           router.push("/");
+        } else if (event === "PASSWORD_RECOVERY") {
+          setStatus("success");
+          clearTimeout(timeout);
+          router.push("/reset-password");
         }
       }
     );
