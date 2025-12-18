@@ -197,7 +197,8 @@ export default function TemplatesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 히어로 섹션 */}
-      <section className="bg-gradient-to-br from-[#4ACAD4] to-[#05BCC6] text-white py-20">
+      {/* 히어로 섹션 */}
+      <section className="bg-gradient-to-br from-[#16A34A] to-[#84CC16] text-white py-20">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             프리미엄 디자인 템플릿
@@ -222,8 +223,8 @@ export default function TemplatesPage() {
         </div>
       </section>
 
-      {/* 카테고리 필터 */}
-      <section className="bg-white border-b sticky top-[44px] z-40">
+      {/* 카테고리 필터 (헤더 높이 80px 고려하여 top-20) */}
+      <section className="bg-white border-b sticky top-20 z-30 transition-all">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex gap-3 overflow-x-auto pb-2">
             {TEMPLATE_CATEGORIES.map((cat) => (
@@ -232,7 +233,7 @@ export default function TemplatesPage() {
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                   selectedCategory === cat.id
-                    ? "bg-[#4ACAD4] text-white"
+                    ? "bg-[#16A34A] text-white shadow-md shadow-green-500/20"
                     : `${cat.color} text-gray-700 hover:bg-gray-200`
                 }`}
               >
@@ -284,7 +285,7 @@ export default function TemplatesPage() {
                       <Eye size={16} className="mr-2" />
                       미리보기
                     </Button>
-                    <Button size="sm" className="bg-[#4ACAD4] hover:bg-[#3db8c0]">
+                    <Button size="sm" className="bg-[#16A34A] hover:bg-[#15803D] text-white border-0">
                       <ExternalLink size={16} className="mr-2" />
                       사용하기
                     </Button>
@@ -341,7 +342,7 @@ export default function TemplatesPage() {
           </p>
           <Button 
             size="lg" 
-            className="bg-[#4ACAD4] hover:bg-[#3db8c0] text-white"
+            className="bg-[#16A34A] hover:bg-[#15803D] text-white shadow-xl shadow-green-500/20"
             onClick={() => router.push("/submission")}
           >
             템플릿 등록하기
