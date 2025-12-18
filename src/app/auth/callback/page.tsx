@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -134,7 +135,7 @@ export default function AuthCallbackPage() {
 
     // onAuthStateChange로 세션 변경 감지
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event: AuthChangeEvent, session: Session | null) => {
         if (!isMounted) return;
         
         console.log("Auth state changed:", event);
