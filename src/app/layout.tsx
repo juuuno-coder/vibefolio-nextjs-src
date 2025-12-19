@@ -6,7 +6,7 @@ import { Header } from "@/components/Header";
 // 🚨 Footer 컴포넌트를 임포트합니다. (Footer 파일명 확인)
 import { Footer } from "@/components/Footer";
 // 기존 폰트 임포트를 유지합니다.
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { ClientProviders } from "@/components/ClientProviders";
 import { ScrollToTop } from "@/components/ScrollToTop";
@@ -23,7 +23,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const notoSansKr = Noto_Sans_KR({
+  weight: ["100", "300", "400", "500", "700", "900"],
+  subsets: ["latin"],
+  variable: "--font-noto-sans-kr",
+});
+
 export const metadata: Metadata = {
+// ...
   title: "바이브폴리오 | AI 창작자를 위한 포트폴리오 플랫폼",
   description: "바이브코더, AI 창작물을 등록하고 공유하는 포트폴리오 플랫폼",
   keywords: ["AI", "포트폴리오", "바이브코딩", "창작물", "디자인", "일러스트", "3D"],
@@ -55,7 +62,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white min-h-screen custom-scrollbar overscroll-none`}
+        className={`${geistSans.variable} ${geistMono.variable} ${notoSansKr.variable} font-sans antialiased bg-white min-h-screen custom-scrollbar overscroll-none`}
       >
         <ClientProviders>
             <NextTopLoader 

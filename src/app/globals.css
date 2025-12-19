@@ -105,9 +105,9 @@
   }
 
   .behance-card:hover {
-    box-shadow: 0 10px 30px -10px rgba(106, 90, 205, 0.2);
+    box-shadow: 0 10px 30px -10px rgba(22, 163, 74, 0.2);
     transform: translateY(-4px) scale(1.01);
-    border-color: rgba(106, 90, 205, 0.3);
+    border-color: rgba(22, 163, 74, 0.3);
   }
 
   /* 둥근 버튼 (Pill Shape) */
@@ -121,9 +121,9 @@
   }
 
   .btn-primary:hover {
-    background: #6A5ACD; /* Deep Purple Hover */
+    background: #15803d; /* Green-700 Hover */
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(106, 90, 205, 0.3);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
   }
 
   .btn-secondary {
@@ -138,8 +138,8 @@
 
   .btn-secondary:hover {
     background: var(--vibe-hover);
-    border-color: #6A5ACD;
-    color: #6A5ACD;
+    border-color: #16A34A;
+    color: #16A34A;
   }
 
   /* 헤더 스타일 */
@@ -327,18 +327,18 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(106, 90, 205, 0.3); /* Purple tint */
+    background: rgba(22, 163, 74, 0.3); /* Green tint */
     border-radius: 99px;
     transition: background 0.2s ease;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(106, 90, 205, 0.6);
+    background: rgba(22, 163, 74, 0.6);
   }
 
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgba(106, 90, 205, 0.3) transparent;
+    scrollbar-color: rgba(22, 163, 74, 0.3) transparent;
   }
 
   /* 텍스트 말줄임 */
