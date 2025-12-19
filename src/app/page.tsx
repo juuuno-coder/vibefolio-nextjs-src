@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ interface ImageDialogProps {
   userId?: string;
 }
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q"); // 검색어 가져오기
@@ -335,5 +335,13 @@ export default function Home() {
       {/* 관심사 설정 모달 */}
       {/* ... (관심사 모달 구현 생략 - 필요하다면 추가) */}
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <HomeContent />
+    </Suspense>
   );
 }
