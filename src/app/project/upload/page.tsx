@@ -28,6 +28,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { supabase } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/supabase/storage";
+import { GENRE_TO_CATEGORY_ID } from '@/lib/constants';
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
 // 장르 카테고리
@@ -201,12 +202,7 @@ export default function TiptapUploadPage() {
       const coverUrl = await uploadImage(coverImage);
 
       // 프로젝트 생성
-      const genreToCategory: { [key: string]: number } = {
-        photo: 1, animation: 2, graphic: 3, design: 4,
-        video: 5, cinema: 6, audio: 7, "3d": 8,
-        text: 9, code: 10, webapp: 11, game: 12,
-      };
-      const category_id = genreToCategory[selectedGenres[0]] || 1;
+      const category_id = GENRE_TO_CATEGORY_ID[selectedGenres[0]] || 1;
 
       const response = await fetch('/api/projects', {
         method: 'POST',

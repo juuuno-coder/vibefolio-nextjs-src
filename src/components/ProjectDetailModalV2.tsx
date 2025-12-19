@@ -119,6 +119,7 @@ interface ProjectDetailModalV2Props {
     width: number;
     height: number;
     userId?: string;
+    rendering_type?: string;
   } | null;
 }
 
@@ -463,15 +464,22 @@ export function ProjectDetailModalV2({
               <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
             </button>
 
-            {/* 이미지 영역 - 스크롤 가능 */}
+            {/* 이미지 또는 리치 텍스트 영역 - 스크롤 가능 */}
             <div className="flex-1 overflow-y-auto custom-scrollbar">
-              <img
-                src={project.urls.full}
-                alt={project.alt_description || "Project Image"}
-                className="w-auto max-w-full h-auto object-contain cursor-zoom-in"
-                style={{ maxWidth: '90%' }}
-                onClick={() => setLightboxOpen(true)}
-              />
+              {project.rendering_type === 'rich_text' ? (
+                <div 
+                  className="prose prose-sm max-w-full p-6 mx-auto"
+                  dangerouslySetInnerHTML={{ __html: project.description || '' }}
+                />
+              ) : (
+                <img
+                  src={project.urls.full}
+                  alt={project.alt_description || "Project Image"}
+                  className="w-auto max-w-full h-auto object-contain cursor-zoom-in mx-auto"
+                  style={{ maxWidth: '90%' }}
+                  onClick={() => setLightboxOpen(true)}
+                />
+              )}
               
               {/* 액션 아이콘들 - 이미지 아래 */}
               <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100">
@@ -601,15 +609,22 @@ export function ProjectDetailModalV2({
                 </button>
               </div>
               
-              {/* 이미지 */}
+              {/* 이미지 또는 리치 텍스트 */}
               <div className="flex-1 overflow-y-auto flex items-start justify-center p-8 custom-scrollbar">
-                <img
-                  src={project.urls.full}
-                  alt={project.alt_description || "Project Image"}
-                  className="max-w-full h-auto object-contain object-top cursor-zoom-in"
-                  style={{ maxWidth: '90%' }}
-                  onClick={() => setLightboxOpen(true)}
-                />
+                {project.rendering_type === 'rich_text' ? (
+                  <div 
+                    className="prose prose-lg max-w-4xl w-full bg-white p-10 rounded-xl"
+                    dangerouslySetInnerHTML={{ __html: project.description || '' }}
+                  />
+                ) : (
+                  <img
+                    src={project.urls.full}
+                    alt={project.alt_description || "Project Image"}
+                    className="max-w-full h-auto object-contain object-top cursor-zoom-in"
+                    style={{ maxWidth: '90%' }}
+                    onClick={() => setLightboxOpen(true)}
+                  />
+                )}
               </div>
             </div>
 

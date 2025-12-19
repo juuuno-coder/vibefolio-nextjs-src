@@ -22,11 +22,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AuthButtons } from "./AuthButtons";
 
-// 임시 FOOTER_CONTETNS 정의
-const FOOTER_CONTETNS = [
-  { icon: "faInstagram", label: "Instagram" },
-  { icon: "faFacebook", label: "Facebook" },
-];
+import { SOCIAL_LINKS } from "@/lib/constants";
 
 // Vibe 로고 컴포넌트 (SVG: 말풍선 타입 & 볼드 서체, Green Theme)
 const VibeLogo = ({ className = "h-8" }: { className?: string }) => (
@@ -158,13 +154,11 @@ export function Header() {
                 <Separator />
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col gap-6">
-                    <div className="flex flex-col gap-4">
-                      {FOOTER_CONTETNS.map((item, index) => (
-                        <div className="flex items-center gap-4" key={index}>
-                          <p className="text-sm">{item.label}</p>
-                        </div>
-                      ))}
-                    </div>
+                      <div className="flex flex-col gap-4">
+                        <a href={SOCIAL_LINKS.INSTAGRAM} target="_blank" rel="noopener noreferrer" className="text-sm">Instagram</a>
+                        <a href={SOCIAL_LINKS.FACEBOOK} target="_blank" rel="noopener noreferrer" className="text-sm">Facebook</a>
+                        <a href={SOCIAL_LINKS.TWITTER} target="_blank" rel="noopener noreferrer" className="text-sm">Twitter</a>
+                      </div>
                   </div>
                 </div>
               </SheetContent>

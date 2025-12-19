@@ -38,6 +38,7 @@ interface ImageDialogProps {
   category: string;
   field?: string; // 분야 정보 추가
   userId?: string;
+  rendering_type?: string;
 }
 
 function HomeContent() {
@@ -127,6 +128,7 @@ function HomeContent() {
               category: proj.Category?.name || "korea",
               field: proj.field || "IT", // 임시: 분야 정보가 없으면 IT로 설정 (추후 DB 연동 필요)
               userId: proj.user_id,
+              rendering_type: proj.rendering_type,
             } as ImageDialogProps;
           });
           

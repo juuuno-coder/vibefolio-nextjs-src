@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
@@ -21,8 +21,12 @@ import {
   Undo,
   Redo,
   Code,
+  Upload,
 } from 'lucide-react';
-import { useCallback } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { uploadImage } from '@/lib/supabase/storage';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 interface TiptapEditorProps {
   content?: string;
@@ -35,6 +39,9 @@ export function TiptapEditor({
   onChange,
   placeholder = '여기에 프로젝트 내용을 작성하세요...'
 }: TiptapEditorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -81,6 +88,27 @@ export function TiptapEditor({
       editor.chain().focus().setImage({ src: url }).run();
     }
   }, [editor]);
+
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editor) {
+      setUploading(true);
+      try {
+        const url = await uploadImage(file);
+        editor.chain().focus().setImage({ src: url }).run();
+      } catch (error) {
+        console.error('Image upload failed:', error);
+        alert('이미지 업로드에 실패했습니다.');
+      } finally {
+        setUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    }
+  }, [editor]);
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
 
   const addYoutube = useCallback(() => {
     const url = window.prompt('YouTube URL을 입력하세요:');
@@ -190,11 +218,33 @@ export function TiptapEditor({
 
         {/* Media */}
         <div className="flex gap-1 pr-2 border-r border-gray-300">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept="image/*"
+            className="hidden"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={triggerFileUpload}
+            disabled={uploading}
+            title="이미지 업로드"
+          >
+            {uploading ? (
+              <FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin" />
+            ) : (
+              <Upload className="w-4 h-4" />
+            )}
+          </Button>
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={addImage}
+            title="이미지 URL 추가"
           >
             <ImageIcon className="w-4 h-4" />
           </Button>
@@ -239,6 +289,43 @@ export function TiptapEditor({
           </Button>
         </div>
       </div>
+
+      {/* Bubble Menu for quick formatting */}
+      {editor && (
+        <BubbleMenu 
+          editor={editor} 
+          tippyOptions={{ duration: 100 }}
+          className="flex items-center gap-1 p-1 bg-gray-900 border border-gray-700 rounded-lg shadow-xl overflow-hidden"
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            className={`h-8 w-8 text-white hover:bg-gray-800 ${editor.isActive('bold') ? 'bg-gray-700' : ''}`}
+          >
+            <Bold className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={`h-8 w-8 text-white hover:bg-gray-800 ${editor.isActive('italic') ? 'bg-gray-700' : ''}`}
+          >
+            <Italic className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={addLink}
+            className={`h-8 w-8 text-white hover:bg-gray-800 ${editor.isActive('link') ? 'bg-gray-700' : ''}`}
+          >
+            <LinkIcon className="w-3.5 h-3.5" />
+          </Button>
+        </BubbleMenu>
+      )}
 
       {/* Editor Content */}
       <EditorContent editor={editor} />

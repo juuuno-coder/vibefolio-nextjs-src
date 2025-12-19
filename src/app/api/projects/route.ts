@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase/client';
+import { GENRE_TO_CATEGORY_ID } from '@/lib/constants';
 
 // 캐시 설정 추가
 export const revalidate = 60; // 60초마다 재검증
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
         content_text,
         likes_count,
         views_count,
+        rendering_type,
         created_at,
         Category (
           category_id,
@@ -45,11 +47,7 @@ export async function GET(request: NextRequest) {
 
     // 카테고리 필터
     if (category && category !== 'korea' && category !== 'all') {
-      const categoryNameMap: Record<string, number> = {
-        "video": 3, "graphic": 4, "brand": 5, "illust": 6, "3d": 7,
-        "photo": 8, "ui": 9, "ai": 2, "product": 10, "typo": 11, "craft": 12, "art": 13,
-      };
-      const categoryId = categoryNameMap[category];
+      const categoryId = GENRE_TO_CATEGORY_ID[category];
       if (categoryId) query = query.eq('category_id', categoryId);
     }
 

@@ -4,6 +4,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faInstagram, faFacebook, faTwitter, faYoutube } from "@fortawesome/free-brands-svg-icons";
+import { SOCIAL_LINKS } from "@/lib/constants";
 
 export function Footer({ className }: { className?: string }) {
   return (
@@ -29,7 +30,7 @@ export function Footer({ className }: { className?: string }) {
         {/* 소셜 아이콘 */}
         <div className="flex items-center gap-6">
           <a 
-            href="https://instagram.com" 
+            href={SOCIAL_LINKS.INSTAGRAM} 
             target="_blank" 
             rel="noopener noreferrer" 
             className="text-gray-400 hover:text-pink-500 transition-colors"
@@ -37,7 +38,7 @@ export function Footer({ className }: { className?: string }) {
             <FontAwesomeIcon icon={faInstagram} className="w-5 h-5" />
           </a>
           <a 
-            href="https://facebook.com" 
+            href={SOCIAL_LINKS.FACEBOOK} 
             target="_blank" 
             rel="noopener noreferrer" 
             className="text-gray-400 hover:text-blue-600 transition-colors"
@@ -45,7 +46,7 @@ export function Footer({ className }: { className?: string }) {
             <FontAwesomeIcon icon={faFacebook} className="w-5 h-5" />
           </a>
           <a 
-            href="https://twitter.com" 
+            href={SOCIAL_LINKS.TWITTER} 
             target="_blank" 
             rel="noopener noreferrer" 
             className="text-gray-400 hover:text-sky-500 transition-colors"
@@ -53,7 +54,7 @@ export function Footer({ className }: { className?: string }) {
             <FontAwesomeIcon icon={faTwitter} className="w-5 h-5" />
           </a>
           <a 
-            href="https://youtube.com" 
+            href={SOCIAL_LINKS.YOUTUBE} 
             target="_blank" 
             rel="noopener noreferrer" 
             className="text-gray-400 hover:text-red-500 transition-colors"
