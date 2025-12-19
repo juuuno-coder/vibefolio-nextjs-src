@@ -12,14 +12,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { getCategoryName } from "@/lib/categoryMap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWandSparkles, faXmark, faCheck } from "@fortawesome/free-solid-svg-icons";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+
 
 // 모달은 초기에 필요 없으므로 Dynamic Import로 지연 로딩
 const ProjectDetailModalV2 = dynamic(() => 
@@ -330,16 +323,14 @@ export default function Home() {
       </main>
 
       {/* 프로젝트 상세 모달 */}
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-5xl h-[90vh] p-0 overflow-hidden bg-white/95 backdrop-blur-xl border-none shadow-2xl">
-           {selectedProject && (
-             <ProjectDetailModalV2 
-               project={selectedProject} 
-               onClose={() => setModalOpen(false)}
-             />
-           )}
-        </DialogContent>
-      </Dialog>
+      {/* 프로젝트 상세 모달 */}
+      {selectedProject && (
+        <ProjectDetailModalV2
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          project={selectedProject}
+        />
+      )}
       
       {/* 관심사 설정 모달 */}
       {/* ... (관심사 모달 구현 생략 - 필요하다면 추가) */}
