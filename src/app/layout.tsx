@@ -1,4 +1,4 @@
-
+import { Suspense } from "react";
 import type { Metadata } from "next";
 // 🚨 Header 컴포넌트를 임포트합니다. 경로가 정확한지 확인해주세요.
 import { TopHeader } from "@/components/TopHeader";
@@ -30,7 +30,6 @@ const notoSansKr = Noto_Sans_KR({
 });
 
 export const metadata: Metadata = {
-// ...
   title: "바이브폴리오 | AI 창작자를 위한 포트폴리오 플랫폼",
   description: "바이브코더, AI 창작물을 등록하고 공유하는 포트폴리오 플랫폼",
   keywords: ["AI", "포트폴리오", "바이브코딩", "창작물", "디자인", "일러스트", "3D"],
@@ -79,8 +78,10 @@ export default function RootLayout({
             {/* TopHeader - 최상단 배너 */}
             <TopHeader />
             
-            {/* Header 컴포넌트 */}
-            <Header />
+            {/* Header 컴포넌트 - Suspense로 감싸서 useSearchParams 에러 방지 */}
+            <Suspense fallback={<div className="h-16 bg-white" />}>
+              <Header />
+            </Suspense>
 
           {/* 메인 콘텐츠 영역 - TopHeader와 Header 높이만큼 padding */}
           <div className="min-h-screen">
