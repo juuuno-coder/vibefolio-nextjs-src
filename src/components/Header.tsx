@@ -22,7 +22,48 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AuthButtons } from "./AuthButtons";
 
-// ... (FOOTER_CONTETNS, VibeLogo, menu 유지)
+// 임시 FOOTER_CONTETNS 정의
+const FOOTER_CONTETNS = [
+  { icon: "faInstagram", label: "Instagram" },
+  { icon: "faFacebook", label: "Facebook" },
+];
+
+// Vibe 로고 컴포넌트 (SVG: 말풍선 타입 & 볼드 서체, Green Theme)
+const VibeLogo = ({ className = "h-8" }: { className?: string }) => (
+  <svg viewBox="0 0 250 50" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="vibe_gradient" x1="0" y1="0" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#16A34A" /> 
+        <stop offset="1" stopColor="#84CC16" />
+      </linearGradient>
+    </defs>
+    
+    {/* 심볼: 모던 말풍선 (크기: 기존 대비 1.15배 확대) */}
+    <g transform="translate(0, -3) scale(1.15)">
+      <path 
+        d="M10 5H40C45.5228 5 50 9.47715 50 15V29C50 34.5228 45.5228 39 40 39H30L20 46V39H10C4.47715 39 0 34.5228 0 29V15C0 9.47715 4.47715 5 10 5Z" 
+        fill="url(#vibe_gradient)" 
+      />
+      {/* 심볼 내부: V Mark */}
+      <path d="M16 16L25 30L34 16" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+    </g>
+    
+    {/* 텍스트: VIBEFOLIO (간격 조정 x=70) */}
+    <text x="70" y="35" fontFamily="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" fontWeight="900" fontSize="28" fill="currentColor" letterSpacing="-0.5">
+      VIBE<tspan fontWeight="400" dx="0">FOLIO</tspan>
+    </text>
+  </svg>
+);
+
+const menu = [
+  { label: "발견", newest: false, dropdown: false, path: "/" },
+  {
+    label: "연결",
+    newest: true,
+    dropdown: false,
+    path: "/recruit",
+  },
+];
 
 export function Header() {
   const pathname = usePathname();
