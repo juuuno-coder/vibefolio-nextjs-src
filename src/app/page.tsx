@@ -296,14 +296,7 @@ export default function Home() {
                   <div key={project.id} className="break-inside-avoid mb-4">
                     <ImageCard
                       onClick={() => handleProjectClick(project)}
-                      image={project.urls.regular}
-                      title={project.title || "무제"}
-                      author={project.user.username}
-                      likes={project.likes}
-                      isLiked={false}
-                      views={project.views}
-                      category={project.category}
-                      profileImage={project.user.profile_image.small}
+                      props={project}
                     />
                   </div>
                 ))}
