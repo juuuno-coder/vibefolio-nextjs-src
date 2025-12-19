@@ -103,6 +103,15 @@ export default function AdminPage() {
         const recruitItems = JSON.parse(localStorage.getItem("recruitItems") || "[]");
         const banners = JSON.parse(localStorage.getItem("banners") || "[]");
 
+        // 최근 문의
+        const { data: recentInqs } = await supabase
+          .from('inquiries')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        setRecentInquiries(recentInqs || []);
+
         setStats({
           totalProjects: projectCount || 0,
           totalUsers: userCount || 0,
@@ -271,7 +280,9 @@ export default function AdminPage() {
                     {stats.totalProjects}
                   </p>
                 </div>
-                <FileText className="text-blue-500" size={40} />
+                <div className="bg-blue-100 p-3 rounded-xl">
+                  <FileText className="text-blue-600" size={24} />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -285,7 +296,9 @@ export default function AdminPage() {
                     {stats.totalInquiries}
                   </p>
                 </div>
-                <MessageCircle className="text-orange-500" size={40} />
+                <div className="bg-orange-100 p-3 rounded-xl">
+                  <MessageCircle className="text-orange-600" size={24} />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -299,7 +312,9 @@ export default function AdminPage() {
                     {stats.totalRecruitItems}
                   </p>
                 </div>
-                <Briefcase className="text-green-500" size={40} />
+                <div className="bg-green-100 p-3 rounded-xl">
+                  <Briefcase className="text-green-600" size={24} />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -313,7 +328,9 @@ export default function AdminPage() {
                     {stats.totalBanners}
                   </p>
                 </div>
-                <ImageIcon className="text-purple-500" size={40} />
+                <div className="bg-purple-100 p-3 rounded-xl">
+                  <ImageIcon className="text-purple-600" size={24} />
+                </div>
               </div>
             </CardContent>
           </Card>
