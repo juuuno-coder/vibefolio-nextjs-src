@@ -6,6 +6,8 @@ import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import Youtube from '@tiptap/extension-youtube';
 import Placeholder from '@tiptap/extension-placeholder';
+import BubbleMenuExtension from '@tiptap/extension-bubble-menu';
+import FloatingMenuExtension from '@tiptap/extension-floating-menu';
 import { Button } from '@/components/ui/button';
 import {
   Bold,
@@ -70,6 +72,8 @@ export function TiptapEditor({
       Placeholder.configure({
         placeholder,
       }),
+      BubbleMenuExtension,
+      FloatingMenuExtension,
     ],
     content,
     editorProps: {
