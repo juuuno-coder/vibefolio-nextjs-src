@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { FontAwesomeIcon } from "./FaIcon";
 import { faLock, faRightToBracket } from "@fortawesome/free-solid-svg-icons";
 import { useRouter } from "next/navigation";
 

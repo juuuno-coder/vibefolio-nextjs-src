@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { FontAwesomeIcon } from "./FaIcon";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
   faCamera,

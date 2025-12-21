@@ -20,6 +20,7 @@ import {
   UserCheck,
   Loader2,
 } from "lucide-react";
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { addCommas } from "@/lib/format/comma";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -333,11 +334,13 @@ export function ProjectDetailModal({
 
                 {/* 메인 이미지 */}
                 <div className="w-full mb-10 flex justify-center bg-gray-50/50">
-                    <img
-                        src={project.urls.full}
-                        alt={project.alt_description || "Project Image"}
-                        className="w-auto max-w-full h-auto object-contain shadow-sm"
-                    />
+                  <OptimizedImage
+                    src={project.urls.full}
+                    alt={project.alt_description || "Project Image"}
+                    className="w-auto max-w-full h-auto object-contain shadow-sm"
+                    width={1200}
+                    height={800}
+                  />
                 </div>
 
                 {/* 설명 텍스트 */}
@@ -359,7 +362,7 @@ export function ProjectDetailModal({
                 {/* 프로필 */}
                 <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={() => window.open(`/creator/${project.user.username}`, '_blank')}>
                     <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-white transition-all ring-1 ring-white/20">
-                        <img src={project.user.profile_image.large} alt="profile" className="w-full h-full object-cover" />
+                      <OptimizedImage src={project.user.profile_image.large} alt="profile" className="w-full h-full object-cover" width={48} height={48} />
                     </div>
                     <span className="text-[10px] text-white/80 font-medium opacity-0 group-hover:opacity-100 transition-opacity">프로필</span>
                 </div>

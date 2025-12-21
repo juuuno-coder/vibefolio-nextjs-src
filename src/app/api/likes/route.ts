@@ -35,10 +35,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 이미 좋아요가 있는지 확인
+    // 이미 좋아요가 있는지 확인 (필요한 필드만 조회)
     const { data: existingLike } = await supabaseAdmin
       .from('Like')
-      .select()
+      .select('user_id, project_id, created_at')
       .eq('user_id', user.id)
       .eq('project_id', projectId)
       .single();
@@ -92,10 +92,10 @@ export async function GET(request: NextRequest) {
     const projectId = searchParams.get('projectId');
 
     if (userId && projectId) {
-      // 특정 프로젝트에 대한 좋아요 여부 확인
+      // 특정 프로젝트에 대한 좋아요 여부 확인 (필드 최소화)
       const { data } = await supabaseAdmin
         .from('Like')
-        .select()
+        .select('user_id')
         .eq('user_id', userId)
         .eq('project_id', projectId)
         .single();
@@ -106,9 +106,12 @@ export async function GET(request: NextRequest) {
       const { data, error } = await supabaseAdmin
         .from('Like')
         .select(`
-          *,
+          project_id,
+          created_at,
           Project!inner (
-            *,
+            project_id,
+            title,
+            thumbnail_url,
             users (
               id,
               nickname,
@@ -132,7 +135,7 @@ export async function GET(request: NextRequest) {
       // 프로젝트의 좋아요 수 조회
       const { count, error } = await supabaseAdmin
         .from('Like')
-        .select('*', { count: 'exact', head: true })
+        .select('project_id', { count: 'exact', head: true })
         .eq('project_id', projectId);
 
       if (error) {

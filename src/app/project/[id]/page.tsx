@@ -15,6 +15,7 @@ dayjs.extend(relativeTime);
 dayjs.locale("ko");
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface Project {
   project_id: number;
@@ -47,7 +48,8 @@ interface CommentData {
   };
 }
 
-export default function ProjectDetailPage({ params }: { params: { id: string } }) {
+export default function ProjectDetailPage(props: any) {
+  const { params } = props;
   const router = useRouter();
   const [projectId, setProjectId] = useState<string>('');
   const [project, setProject] = useState<Project | null>(null);
@@ -264,11 +266,13 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
         <main className="flex-1 min-h-screen flex flex-col items-center py-20 px-4 md:px-0">
             {/* 프로젝트 이미지 (중앙 정렬, 큰 사이즈) */}
             <div className="w-full max-w-5xl mb-12">
-                <img 
-                    src={project.thumbnail_url} 
-                    alt={project.title} 
-                    className="w-full h-auto shadow-2xl rounded-sm"
-                />
+              <OptimizedImage
+                src={project.thumbnail_url}
+                alt={project.title}
+                className="w-full h-auto shadow-2xl rounded-sm"
+                width={1600}
+                height={900}
+              />
             </div>
 
             {/* 프로젝트 설명 및 정보 */}
@@ -323,9 +327,9 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                     {comments.map(comment => (
                         <div key={comment.comment_id} className="flex gap-4 group">
                             <Avatar className="w-10 h-10 border border-gray-700">
-                                <AvatarImage src={comment.users.profile_image_url || '/globe.svg'} />
+                                <OptimizedImage src={comment.users.profile_image_url || '/globe.svg'} alt={comment.users.nickname || 'avatar'} width={40} height={40} className="rounded-full" />
                                 <AvatarFallback>{comment.users.nickname?.[0]}</AvatarFallback>
-                            </Avatar>
+                              </Avatar>
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className="font-medium text-gray-200">{comment.users.nickname}</span>
@@ -352,8 +356,8 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                 {/* 1. 프로필 (작성자) */}
                 <div className="group relative">
                     <button className="w-10 h-10 rounded-full overflow-hidden border-2 border-transparent hover:border-primary transition-all">
-                        <img src={project.users.profile_image_url || '/globe.svg'} alt="Author" className="w-full h-full object-cover" />
-                    </button>
+                    <OptimizedImage src={project.users.profile_image_url || '/globe.svg'} alt="Author" className="w-full h-full object-cover" width={40} height={40} />
+                  </button>
                     {/* Tooltip */}
                     <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity">
                         {project.users.nickname}

@@ -1,39 +1,54 @@
 // lib/supabase/client.ts
 // Supabase 클라이언트 초기화
 
-import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ddnebvjjkxigxbmkqvzr.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkbmVidmpqa3hpZ3hibWtrcXZ6ciIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzMzODM2MTgwLCJleHAiOjIwNDk0MTIxODB9.d5S7p7XyZc3lX6Zc3lX6Zc3lX6Zc3lX6Zc3lX6Zc3lX6'; // 실제 키 값은 너무 길어서 생략되었을 수 있으니 .env.local 값 확인 필요
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase 환경 변수가 설정되지 않아 기본값을 사용하거나 비활성화될 수 있습니다.');
+  throw new Error(
+    'Missing Supabase env variables: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your environment.'
+  );
 }
 
-// 클라이언트 사이드용 Supabase 클라이언트 (싱글톤 패턴 적용)
-const createSupabaseClient = () =>
-  createClient<Database>(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
+// 지연 초기화를 위한 내부 Promise
+let _clientPromise: Promise<any> | null = null;
+const initClient = async () => {
+  if (_clientPromise) return _clientPromise;
+  _clientPromise = import('@supabase/supabase-js').then((m) =>
+    m.createClient<Database>(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: true, autoRefreshToken: true },
+    })
+  );
+  return _clientPromise;
+};
+
+// 다단계 속성 접근(예: supabase.auth.getUser()) 및 함수 호출을 지원하는 프록시 생성
+const makeLazyProxy = (path: Array<string | number> = []): any => {
+  const proxyTarget = () => {}; // function so apply trap works
+  return new Proxy(proxyTarget, {
+    get(_, prop: string) {
+      return makeLazyProxy([...path, prop]);
+    },
+    apply(_, thisArg, args) {
+      return initClient().then((client) => {
+        let target: any = client;
+        for (const p of path) {
+          target = target[p as any];
+          if (target == null) break;
+        }
+        if (typeof target === 'function') return target.apply(client, args);
+        // if target is a value, just return it (no args expected)
+        return target;
+      });
     },
   });
+};
 
-export const supabase = (global as any).supabase ?? createSupabaseClient();
+// 기존 코드와의 호환을 위해 `supabase`를 프록시로 내보냄 — 실제 `@supabase/supabase-js` 모듈은
+// 위 initClient()가 호출될 때까지 로드되지 않습니다.
+export const supabase: any = makeLazyProxy();
 
-if (process.env.NODE_ENV !== "production") {
-  (global as any).supabase = supabase;
-}
-
-// 서버 사이드용 Supabase 클라이언트 (Service Role Key 사용)
-export const supabaseAdmin = createClient<Database>(
-  supabaseUrl,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
+// 서버 전용 admin 클라이언트는 별도 모듈에서 재수출합니다.
+export { supabaseAdmin } from './admin';

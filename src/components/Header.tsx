@@ -3,8 +3,7 @@
 // 🚨 클라이언트 상호작용(Sheet, Drawer, onClick, useState 등)이 있으므로 필수!
 "use client";
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faBars, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { Menu, ChevronDown, Search } from "lucide-react";
 // shadcn/ui 컴포넌트는 프로젝트 구조에 따라 경로를 조정해야 합니다.
 // App Router에서는 일반적으로 @/components/ui/XXX 형태로 사용합니다.
 import {
@@ -107,7 +106,7 @@ export function Header() {
           <div className="w-full flex items-center gap-4">
             <Sheet>
               <SheetTrigger>
-                <FontAwesomeIcon icon={faBars} className="w-5 h-5" />
+                <Menu className="w-5 h-5" />
               </SheetTrigger>
               <SheetContent
                 side="left"
@@ -127,7 +126,7 @@ export function Header() {
                         >
                           {item.label}
                         </p>
-                        {item.dropdown && <FontAwesomeIcon icon={faChevronDown} className="w-3 h-3" />}
+                        {item.dropdown && <ChevronDown className="w-3 h-3" />}
                         {item.newest && (
                           <p className="text-xs text-[#05BCC6] font-medium">
                             NEW
@@ -175,11 +174,11 @@ export function Header() {
             </Button>
             <Drawer>
               <DrawerTrigger>
-                <FontAwesomeIcon icon={faMagnifyingGlass} className="w-5 h-5" />
+                <Search className="w-5 h-5" />
               </DrawerTrigger>
               <DrawerContent className="h-full flex flex-col gap-6 px-6">
-                <div className="flex items-center border px-3 rounded-full bg-neutral-50">
-                  <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4 text-neutral-400" />
+                  <div className="flex items-center border px-3 rounded-full bg-neutral-50">
+                  <Search className="w-4 h-4 text-neutral-400" />
                   <Input
                     placeholder="크리에이티브 프로젝트 검색"
                     onChange={handleMobileSearchChange}
@@ -202,7 +201,7 @@ export function Header() {
                 <p className={`text-base font-medium ${isActive && "mt-0.5"}`}>
                   {item.label}
                 </p>
-                {item.dropdown && <FontAwesomeIcon icon={faChevronDown} className="w-3 h-3" />}
+                {item.dropdown && <ChevronDown className="w-3 h-3" />}
                 {item.newest && (
                   <p className="text-xs text-[#05BCC6] font-medium">NEW</p>
                 )}
@@ -230,7 +229,7 @@ export function Header() {
                   <p className={`text-[15px] font-medium tracking-wide ${isActive && "mt-0.5 text-primary"}`}>
                     {item.label}
                   </p>
-                  {item.dropdown && <FontAwesomeIcon icon={faChevronDown} className="w-2.5 h-2.5 opacity-50" />}
+                  {item.dropdown && <ChevronDown className="w-2.5 h-2.5 opacity-50" />}
                   {item.newest && (
                     <span className="text-[10px] bg-accent text-accent-foreground px-1.5 py-0.5 rounded-full font-bold ml-1">NEW</span>
                   )}
@@ -241,7 +240,7 @@ export function Header() {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center border px-3 rounded-full bg-neutral-50">
-            <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4 text-neutral-400" />
+            <Search className="w-4 h-4 text-neutral-400" />
             <Input
               placeholder="크리에이티브 프로젝트 검색"
               onKeyDown={handleSearchKeyDown}

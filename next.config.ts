@@ -1,16 +1,33 @@
 import type { NextConfig } from "next";
 // Restart Trigger 2025-12-18 (Force Update for TopHeader)
 
+// Bundle analyzer wrapper
+const withBundleAnalyzer = require('@next/bundle-analyzer')({ enabled: process.env.ANALYZE === 'true' });
 
 const nextConfig: NextConfig = {
   // 이미지 최적화 설정
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
+    remotePatterns: (() => {
+      const patterns: any[] = [
+        { protocol: 'https', hostname: 'images.unsplash.com' },
+        { protocol: 'https', hostname: 'vibefolio.com' },
+        { protocol: 'https', hostname: 'localhost' },
+      ];
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        if (supabaseUrl) {
+          const host = new URL(supabaseUrl).hostname;
+          patterns.push({ protocol: 'https', hostname: host });
+        } else if (process.env.NEXT_PUBLIC_SUPABASE_HOST) {
+          patterns.push({ protocol: 'https', hostname: process.env.NEXT_PUBLIC_SUPABASE_HOST });
+        } else {
+          patterns.push({ protocol: 'https', hostname: '*.supabase.co' });
+        }
+      } catch (e) {
+        patterns.push({ protocol: 'https', hostname: '*.supabase.co' });
+      }
+      return patterns;
+    })(),
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 7, // 7일 캐시
   },
@@ -61,4 +78,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

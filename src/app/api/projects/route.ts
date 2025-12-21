@@ -64,29 +64,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 사용자 정보 병렬 조회 (최적화)
+    // 사용자 정보 병합: auth.admin 호출을 반복하지 않고 public.users 테이블에서 한 번에 조회합니다.
     if (data && data.length > 0) {
       const userIds = [...new Set(data.map((p: any) => p.user_id).filter(Boolean))] as string[];
-      
-      if (userIds.length > 0) {
-        const userPromises = userIds.map(async (uid: string) => {
-          try {
-            const { data: authData } = await supabaseAdmin.auth.admin.getUserById(uid);
-            if (authData?.user) {
-              return {
-                user_id: authData.user.id,
-                username: authData.user.user_metadata?.nickname || authData.user.email?.split('@')[0] || 'Unknown',
-                profile_image_url: authData.user.user_metadata?.profile_image_url || '/globe.svg'
-              };
-            }
-          } catch {}
-          return null;
-        });
 
-        const users = await Promise.all(userPromises);
-        const userMap = new Map(
-          users.filter((u): u is NonNullable<typeof u> => u !== null).map(u => [u.user_id, u])
-        );
+      if (userIds.length > 0) {
+        const { data: usersData, error: usersError } = await supabaseAdmin
+          .from('users')
+          .select('id, nickname, profile_image_url')
+          .in('id', userIds);
+
+        const userMap = new Map<string, { user_id: string; username: string; profile_image_url: string }>();
+
+        if (!usersError && Array.isArray(usersData)) {
+          usersData.forEach((u: any) => {
+            userMap.set(u.id, {
+              user_id: u.id,
+              username: u.nickname || 'Unknown',
+              profile_image_url: u.profile_image_url || '/globe.svg',
+            });
+          });
+        }
 
         data.forEach((project: any) => {
           project.User = userMap.get(project.user_id) || { username: 'Unknown', profile_image_url: '/globe.svg' };

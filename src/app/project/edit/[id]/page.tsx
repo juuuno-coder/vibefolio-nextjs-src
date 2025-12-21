@@ -16,7 +16,8 @@ interface FormData {
   imageUrl: string;
 }
 
-export default function EditProjectPage({ params }: { params: { id: string } }) {
+export default function EditProjectPage(props: any) {
+  const { params } = props;
   const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
     title: "",

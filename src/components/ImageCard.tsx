@@ -4,8 +4,8 @@
 
 import React, { forwardRef, useState } from "react";
 import Image from "next/image";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHeart, faChartSimple, faImage } from "@fortawesome/free-solid-svg-icons";
+import { OptimizedImage } from '@/components/OptimizedImage';
+import { Heart, BarChart3, Image as ImageIcon } from 'lucide-react';
 import { addCommas } from "@/lib/format/comma";
 
 // 기본 폴백 이미지
@@ -65,18 +65,17 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
             </div>
           )}
           
-          {imgError ? (
+            {imgError ? (
             <div className="w-full aspect-square bg-gray-100 flex items-center justify-center">
-              <FontAwesomeIcon icon={faImage} className="w-12 h-12 text-gray-300" />
+              <ImageIcon className="w-12 h-12 text-gray-300" />
             </div>
           ) : (
-            <img
+            <OptimizedImage
               src={imageUrl}
               alt={altText}
               className="w-full h-auto object-cover"
-              loading="lazy"
-              decoding="async"
-              onError={() => setImgError(true)}
+              width={800}
+              height={800}
             />
           )}
           
@@ -84,12 +83,12 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
             <div className="flex items-center gap-6 text-white">
               <div className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faHeart} className="w-5 h-5" />
+                <Heart className="w-5 h-5" />
                 <span className="font-medium">{addCommas(likes)}</span>
               </div>
               {views !== undefined && (
-                <div className="flex items-center gap-2">
-                  <FontAwesomeIcon icon={faChartSimple} className="w-5 h-5" />
+                  <div className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5" />
                   <span className="font-medium text-lg">{addCommas(views)}</span>
                 </div>
               )}
@@ -102,25 +101,25 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="relative w-8 h-8 rounded-full overflow-hidden bg-gray-100">
-                <Image
+                <OptimizedImage
                   src={avatarError ? FALLBACK_AVATAR : avatarUrl}
                   alt="@PROFILE_IMAGE"
                   fill
                   className="object-cover"
-                  onError={() => setAvatarError(true)}
-                  sizes="32px"
+                  width={32}
+                  height={32}
                 />
               </div>
               <p className="text-sm font-medium text-primary">{username}</p>
             </div>
             <div className="flex items-center gap-3 text-secondary">
               <div className="flex items-center gap-1.5">
-                <FontAwesomeIcon icon={faHeart} className="w-4 h-4 text-red-400" />
+                <Heart className="w-4 h-4 text-red-400" />
                 <span className="text-sm font-semibold text-gray-700">{addCommas(likes)}</span>
               </div>
               {views !== undefined && (
-                <div className="flex items-center gap-1.5">
-                  <FontAwesomeIcon icon={faChartSimple} className="w-4 h-4 text-blue-400" />
+                  <div className="flex items-center gap-1.5">
+                  <BarChart3 className="w-4 h-4 text-blue-400" />
                   <span className="text-sm font-semibold text-gray-700">{addCommas(views)}</span>
                 </div>
               )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Folder, MoreVertical, Trash2, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,8 +43,21 @@ export default function CollectionDetailPage({ params }: { params: Promise<{ id:
   // params is a Promise in Next.js 15+, need to unwrap it or use use()
   // Since we're in a client component and assuming Next.js 13/14 convention where params is passed as prop
   // However, specifically in newer Next.js or if treating params as promise:
-  const resolvedParams = use(params);
-  const collectionId = resolvedParams.id;
+  const [collectionId, setCollectionId] = useState<string>("");
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const resolved = await params;
+        if (mounted && resolved?.id) setCollectionId(resolved.id);
+      } catch (e) {
+        // fallback when params is not a promise
+        if (mounted && (params as any)?.id) setCollectionId((params as any).id);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [params]);
 
   const [collection, setCollection] = useState<CollectionDetail | null>(null);
   const [projects, setProjects] = useState<CollectionProject[]>([]);

@@ -1,6 +1,7 @@
 "use client";
 
 import { MessageCircle, Calendar, ExternalLink } from 'lucide-react';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { useRouter } from 'next/navigation';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -47,10 +48,12 @@ export function CommentCard({ comment, onClick }: CommentCardProps) {
         {/* 프로젝트 썸네일 */}
         {project && (
           <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-            <img
+            <OptimizedImage
               src={project.thumbnail_url || project.image_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200'}
               alt={project.title}
               className="w-full h-full object-cover"
+              width={200}
+              height={200}
             />
           </div>
         )}
