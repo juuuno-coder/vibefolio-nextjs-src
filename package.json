@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "analyze": "cross-env ANALYZE=true next build --webpack"
+    "analyze": "cross-env ANALYZE=true next build --webpack",
+    "crawl:test": "tsx scripts/test-crawl.ts"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
@@ -64,6 +65,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.0.6",
     "tailwindcss": "^3.4.4",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }
