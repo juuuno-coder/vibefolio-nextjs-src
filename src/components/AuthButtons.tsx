@@ -41,17 +41,51 @@ export function AuthButtons() {
       setShowOnboarding(false);
     }
 
-    // 관리자 여부 확인
+    // 관리자 여부 확인 함수
     const checkAdminStatus = async () => {
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single() as { data: { role?: string } | null };
-      
-      setIsAdmin(userData?.role === 'admin');
+      try {
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single() as { data: { role?: string } | null, error: any };
+        
+        if (error) {
+          console.error('Failed to check admin status:', error);
+          setIsAdmin(false);
+          return;
+        }
+        
+        const isAdminUser = userData?.role === 'admin';
+        setIsAdmin(isAdminUser);
+        
+        // 디버깅용 로그
+        console.log('Admin status:', { userId: user.id, email: user.email, role: userData?.role, isAdmin: isAdminUser });
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      }
     };
+    
+    // 즉시 확인
     checkAdminStatus();
+
+    // 5초마다 관리자 권한 재확인 (실시간 반영)
+    const intervalId = setInterval(checkAdminStatus, 5000);
+
+    // 인증 상태 변경 감지
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        checkAdminStatus();
+      } else if (event === 'SIGNED_OUT') {
+        setIsAdmin(false);
+      }
+    });
+
+    return () => {
+      clearInterval(intervalId);
+      subscription.unsubscribe();
+    };
   }, [user]);
 
   const handleLogout = async () => {
