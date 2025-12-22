@@ -6,7 +6,15 @@ import type { Database } from './types';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
+// 환경 변수 검증 (클라이언트에서는 경고만 출력)
+if (typeof window !== 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
+  console.error(
+    'Missing Supabase env variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required.'
+  );
+}
+
+// 서버에서는 에러 던지기
+if (typeof window === 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
   throw new Error(
     'Missing Supabase env variables: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your environment.'
   );
@@ -16,6 +24,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 let _clientPromise: Promise<any> | null = null;
 const initClient = async () => {
   if (_clientPromise) return _clientPromise;
+  
+  // 환경 변수가 없으면 null 반환
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Cannot initialize Supabase: missing environment variables');
+    return null;
+  }
+  
   _clientPromise = import('@supabase/supabase-js').then((m) =>
     m.createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: { persistSession: true, autoRefreshToken: true },
@@ -33,6 +48,12 @@ const makeLazyProxy = (path: Array<string | number> = []): any => {
     },
     apply(_, thisArg, args) {
       return initClient().then((client) => {
+        // 클라이언트가 null이면 에러 대신 undefined 반환
+        if (!client) {
+          console.warn('Supabase client not initialized');
+          return undefined;
+        }
+        
         let target: any = client;
         for (const p of path) {
           target = target[p as any];
