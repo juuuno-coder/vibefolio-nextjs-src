@@ -39,11 +39,29 @@ export default function TiptapEditor({
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3],
+          HTMLAttributes: {
+            class: 'block-indicator block-heading',
+          },
+        },
+        paragraph: {
+          HTMLAttributes: {
+            class: 'block-indicator block-paragraph',
+          },
+        },
+        codeBlock: {
+          HTMLAttributes: {
+            class: 'block-indicator block-code',
+          },
+        },
+        blockquote: {
+          HTMLAttributes: {
+            class: 'block-indicator block-quote',
+          },
         },
       }),
       ImageExtension.configure({
         HTMLAttributes: {
-          class: 'rounded-xl max-w-full h-auto my-4',
+          class: 'block-indicator block-image rounded-xl max-w-full h-auto my-4',
         },
       }),
       LinkExtension.configure({
@@ -56,7 +74,7 @@ export default function TiptapEditor({
         width: 640,
         height: 360,
         HTMLAttributes: {
-          class: 'rounded-xl my-4',
+          class: 'block-indicator block-video rounded-xl my-4',
         },
       }),
       Placeholder.configure({
@@ -68,7 +86,7 @@ export default function TiptapEditor({
     content,
     editorProps: {
       attributes: {
-        class: 'prose prose-lg max-w-none focus:outline-none min-h-[500px] px-8 py-6',
+        class: 'prose prose-lg max-w-none focus:outline-none min-h-[500px] px-8 py-6 editor-blocks',
       },
     },
     onUpdate: ({ editor }) => {
