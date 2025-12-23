@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import TiptapEditor from "@/components/editor/TiptapEditor";
+import { EditorSidebar } from "@/components/editor/EditorSidebar"; // Import Sidebar
 import '@/components/editor/tiptap.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -23,13 +24,12 @@ import {
   faUpload,
   faCheck,
   faArrowLeft,
-  faEye,
-  faSave,
 } from "@fortawesome/free-solid-svg-icons";
 import { supabase } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/supabase/storage";
 import { GENRE_TO_CATEGORY_ID } from '@/lib/constants';
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import { Editor } from "@tiptap/react"; // Import Editor type
 
 // 장르 카테고리
 const genreCategories: { id: string; label: string; icon: IconDefinition }[] = [
@@ -73,6 +73,10 @@ export default function TiptapUploadPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  // Editor Instance State
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const sidebarFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -129,7 +133,7 @@ export default function TiptapUploadPage() {
       const interval = setInterval(() => {
         const draft = {
           title,
-          content,
+          content, // Content is updated via onChange from TiptapEditor
           genres: selectedGenres,
           fields: selectedFields,
           savedAt: new Date().toISOString(),
@@ -188,7 +192,11 @@ export default function TiptapUploadPage() {
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
-    if (!content.trim()) {
+    
+    // Get latest content from editor if available, otherwise use state content
+    const finalContent = editor ? editor.getHTML() : content;
+
+    if (!finalContent || finalContent === '<p></p>') {
       alert('프로젝트 내용을 작성해주세요.');
       return;
     }
@@ -211,7 +219,7 @@ export default function TiptapUploadPage() {
           user_id: userId,
           category_id,
           title,
-          content_text: content, // Tiptap HTML content
+          content_text: finalContent, // Tiptap HTML content
           thumbnail_url: coverUrl,
           rendering_type: 'rich_text', // Tiptap 렌더링 타입
           custom_data: JSON.stringify({
@@ -237,9 +245,51 @@ export default function TiptapUploadPage() {
     }
   };
 
+  // --- Sidebar Handlers ---
+  const handleAddText = () => {
+    editor?.chain().focus().insertContent('<p>새로운 텍스트를 입력하세요...</p>').run();
+  };
+
+  const handleSidebarImageClick = () => {
+    sidebarFileInputRef.current?.click();
+  };
+
+  const handleSidebarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editor) {
+      try {
+        const url = await uploadImage(file);
+        editor.chain().focus().setImage({ src: url }).run();
+      } catch (error) {
+        console.error('Image upload failed:', error);
+        alert('이미지 업로드에 실패했습니다.');
+      } finally {
+        if (sidebarFileInputRef.current) sidebarFileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleAddVideo = () => {
+    const url = window.prompt('YouTube URL을 입력하세요:');
+    if (url && editor) {
+      editor.commands.setYoutubeVideo({ src: url });
+    }
+  };
+
+  const handleAddGrid = () => {
+    // Placeholder for grid
+    editor?.chain().focus().insertContent('<p>[Photo Grid Placeholder]</p>').run();
+  };
+
+  const handleAddCode = () => {
+     editor?.chain().focus().toggleCodeBlock().run();
+  };
+
+
   if (step === 'info') {
     return (
       <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-white to-green-50 py-12 px-4">
+        {/* Info Step Content (Same as before) */}
         <div className="max-w-5xl mx-auto">
           <div className="mb-8">
             <button
@@ -383,55 +433,81 @@ export default function TiptapUploadPage() {
     );
   }
 
-  // Content Step with Tiptap
+  // Content Step with Behance-style Layout
   return (
-    <div className="w-full min-h-screen bg-white">
+    <div className="w-full min-h-screen bg-gray-50/50">
       {/* Fixed Header */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm backdrop-blur-sm bg-white/95">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setStep('info')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
             >
               <FontAwesomeIcon icon={faArrowLeft} className="w-5 h-5" />
             </button>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+              <h2 className="text-lg font-bold text-gray-900">{title}</h2>
               <p className="text-xs text-gray-500">
-                {lastSaved && `마지막 저장: ${lastSaved.toLocaleTimeString('ko-KR')}`}
+                {lastSaved && `저장됨: ${lastSaved.toLocaleTimeString('ko-KR')}`}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
+             <Button
+              variant="ghost"
+              className="text-gray-500 hover:text-gray-900"
+              onClick={() => {
+                const draft = { title, content, genres: selectedGenres, fields: selectedFields, savedAt: new Date().toISOString() };
+                localStorage.setItem('project_draft', JSON.stringify(draft));
+                alert('임시 저장되었습니다.');
+              }}
+             >
+               저장
+             </Button>
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 shadow-lg"
+              className="bg-green-600 hover:bg-green-700 text-white px-8 h-10 rounded-full font-bold shadow-md transition-all hover:scale-105"
             >
-              {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  발행 중...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <FontAwesomeIcon icon={faUpload} className="w-4 h-4" />
-                  발행하기
-                </span>
-              )}
+              {isSubmitting ? '발행 중...' : '계속'}
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Tiptap Editor */}
-      <div className="max-w-5xl mx-auto py-12 px-4">
-        <TiptapEditor
-          content={content}
-          onChange={setContent}
-          placeholder="여기에 프로젝트 내용을 작성하세요. 이미지, 영상, 링크 등을 자유롭게 추가할 수 있습니다..."
-        />
+      {/* Main Layout: Editor + Sidebar */}
+      <div className="max-w-[1600px] mx-auto flex pt-8 pb-20 justify-center">
+        
+        {/* Editor Area (Center) */}
+        <div className="flex-1 max-w-[900px] min-h-[800px]">
+          <TiptapEditor
+            content={content}
+            onChange={setContent}
+            onEditorReady={setEditor}
+            placeholder="여기에 내용을 입력하세요..."
+          />
+        </div>
+
+        {/* Right Sidebar (Fixed) */}
+        <div className="hidden lg:block">
+           <EditorSidebar 
+             onAddText={handleAddText}
+             onAddImage={handleSidebarImageClick}
+             onAddVideo={handleAddVideo}
+             onAddGrid={handleAddGrid}
+             onAddCode={handleAddCode}
+           />
+           {/* Hidden File Input for Sidebar */}
+           <input 
+             type="file"
+             ref={sidebarFileInputRef}
+             className="hidden"
+             accept="image/*"
+             onChange={handleSidebarFileChange}
+           />
+        </div>
+
       </div>
     </div>
   );
