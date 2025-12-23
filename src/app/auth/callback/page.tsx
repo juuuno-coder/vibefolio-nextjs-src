@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { AuthChangeEvent, Session } from "@supabase/supabase-js";
@@ -10,10 +10,16 @@ export default function AuthCallbackPage() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
+  const processedRef = useRef(false);
+
   useEffect(() => {
-    let isMounted = true;
+    // 이미 처리했으면 스킵
+    if (processedRef.current) return;
     
-    // 타임아웃 설정 - 10초 후에도 완료되지 않으면 에러 처리
+    let isMounted = true;
+    processedRef.current = true; // Mark as processing
+    
+    // 타임아웃 설정 - 15초로 연장
     const timeout = setTimeout(() => {
       if (isMounted && status === "loading") {
         console.error("Auth callback 타임아웃");
@@ -27,29 +33,29 @@ export default function AuthCallbackPage() {
           }
         }, 3000);
       }
-    }, 10000);
+    }, 15000);
 
     const handleAuth = async () => {
       try {
-        // URL 해시에서 인증 정보 확인 (OAuth 콜백)
+        console.log("Auth callback handling started..."); // Debug log
+
+        // URL 해시에서 인증 정보 확인 (OAuth 콜백 - Implicit)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get("access_token");
         const refreshToken = hashParams.get("refresh_token");
 
         if (accessToken && refreshToken) {
+          console.log("Access token found in hash");
           // OAuth 토큰으로 세션 설정
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
 
-          if (error) {
-            throw error;
-          }
+          if (error) throw error;
 
           if (data.session && isMounted) {
             setStatus("success");
-            // 세션 설정 완료 후 메인 페이지로 리다이렉트
             router.push("/");
             return;
           }
@@ -66,53 +72,67 @@ export default function AuthCallbackPage() {
         }
 
         if (code) {
-          // PKCE 코드 교환은 supabase-js가 자동으로 처리
-          // 세션이 설정될 때까지 대기
-          const { data: { session }, error } = await supabase.auth.getSession();
+          console.log("Auth code found, attempting exchange...");
           
-          if (error) {
-            throw error;
-          }
+          // 1. 먼저 세션이 이미 있는지 확인 (Supabase가 자동 처리했을 수 있음)
+          const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError) throw sessionError;
 
-          if (session && isMounted) {
-            setStatus("success");
-            router.push("/");
+          if (existingSession) {
+            console.log("Session already exists");
+            if (isMounted) {
+               setStatus("success");
+               router.push("/");
+            }
             return;
           }
 
-          // 세션이 아직 없으면 exchangeCodeForSession 시도
+          // 2. 세션이 없으면 명시적으로 코드 교환 시도
           const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           
           if (exchangeError) {
-            throw exchangeError;
+             // 만약 코드가 이미 사용되었다면(invalid_grant), 그리고 세션이 존재한다면 성공으로 처리
+             // 하지만 여기서 세션 체크는 위에서 했음.
+             // 단, Race condition으로 인해 그 사이 세션이 생겼을 수 있음.
+             const { data: { session: retrySession } } = await supabase.auth.getSession();
+             if (retrySession) {
+                console.log("Exchange failed but session found (Race condition solved)");
+                if (isMounted) {
+                  setStatus("success");
+                  router.push("/");
+                }
+                return;
+             }
+             throw exchangeError;
           }
 
-          if (exchangeData.session && isMounted) {
-            setStatus("success");
-            router.push("/");
-            return;
+          if (exchangeData.session) {
+             console.log("Code exchange successful");
+             if (isMounted) {
+                setStatus("success");
+                router.push("/");
+             }
+             return;
           }
         }
 
-        // 토큰도 코드도 없으면 기존 세션 확인
+        // 토큰도 코드도 없으면 기존 세션 확인 (마지막 보루)
         const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (error) {
-          throw error;
-        }
+        if (error) throw error;
 
         if (session && isMounted) {
           setStatus("success");
           router.push("/");
         } else if (isMounted) {
           // 세션도 없고 인증 파라미터도 없는 경우
+          console.log("No session or auth params found");
           setStatus("error");
           setErrorMessage("인증 정보를 찾을 수 없습니다.");
           
           setTimeout(() => {
-            if (isMounted) {
-              router.push("/login");
-            }
+            if (isMounted) router.push("/login");
           }, 2000);
         }
       } catch (error: any) {
@@ -123,9 +143,7 @@ export default function AuthCallbackPage() {
           setErrorMessage(error.message || "인증 처리 중 오류가 발생했습니다.");
           
           setTimeout(() => {
-            if (isMounted) {
-              router.push("/login?error=auth_callback_failed");
-            }
+            if (isMounted) router.push("/login?error=auth_callback_failed");
           }, 3000);
         }
       }
@@ -133,31 +151,13 @@ export default function AuthCallbackPage() {
 
     handleAuth();
 
-    // onAuthStateChange로 세션 변경 감지
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event: AuthChangeEvent, session: Session | null) => {
-        if (!isMounted) return;
-        
-        console.log("Auth state changed:", event);
-        
-        if (event === "SIGNED_IN" && session) {
-          setStatus("success");
-          clearTimeout(timeout);
-          router.push("/");
-        } else if (event === "PASSWORD_RECOVERY") {
-          setStatus("success");
-          clearTimeout(timeout);
-          router.push("/reset-password");
-        }
-      }
-    );
-
+    // Cleanup
     return () => {
       isMounted = false;
       clearTimeout(timeout);
-      subscription.unsubscribe();
     };
-  }, [router, status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
