@@ -93,7 +93,7 @@ export default function AdminInquiriesPage() {
   const handleDelete = async (id: number) => {
     if (confirm("이 문의를 삭제하시겠습니까?")) {
       try {
-        const { error } = await supabase.from('inquiries').delete().eq('id', id);
+        const { error } = await (supabase.from('inquiries') as any).delete().eq('id', id);
         if (error) throw error;
 
         const updated = inquiries.filter((inq) => inq.id !== id);
@@ -112,8 +112,8 @@ export default function AdminInquiriesPage() {
     const newStatus: "pending" | "answered" = target.status === "pending" ? "answered" : "pending";
 
     try {
-      const { error } = await supabase
-        .from('inquiries')
+      const { error } = await (supabase
+        .from('inquiries') as any)
         .update({ status: newStatus })
         .eq('id', id);
         
@@ -140,8 +140,8 @@ export default function AdminInquiriesPage() {
     const ids = filtered.map(inq => inq.id);
 
     try {
-      const { error } = await supabase
-        .from('inquiries')
+      const { error } = await (supabase
+        .from('inquiries') as any)
         .update({ status })
         .in('id', ids);
       

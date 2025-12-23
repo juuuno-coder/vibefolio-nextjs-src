@@ -110,13 +110,13 @@ export default function AdminNoticesPage() {
 
     try {
       if (editingNotice) {
-        const { error } = await supabase
-          .from("notices")
+        const { error } = await (supabase
+          .from("notices") as any)
           .update(formData)
           .eq("id", editingNotice.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("notices").insert([formData]);
+        const { error } = await (supabase.from("notices") as any).insert([formData]);
         if (error) throw error;
       }
       
@@ -133,7 +133,7 @@ export default function AdminNoticesPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
     try {
-      const { error } = await supabase.from("notices").delete().eq("id", id);
+      const { error } = await (supabase.from("notices") as any).delete().eq("id", id);
       if (error) throw error;
       loadNotices();
     } catch (err) {

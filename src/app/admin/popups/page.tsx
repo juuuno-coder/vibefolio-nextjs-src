@@ -143,13 +143,13 @@ export default function AdminPopupsPage() {
       };
 
       if (editingPopup) {
-        const { error } = await supabase
-          .from("popups")
+        const { error } = await (supabase
+          .from("popups") as any)
           .update(submitData)
           .eq("id", editingPopup.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("popups").insert([submitData]);
+        const { error } = await (supabase.from("popups") as any).insert([submitData]);
         if (error) throw error;
       }
       
@@ -166,7 +166,7 @@ export default function AdminPopupsPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
     try {
-      const { error } = await supabase.from("popups").delete().eq("id", id);
+      const { error } = await (supabase.from("popups") as any).delete().eq("id", id);
       if (error) throw error;
       loadPopups();
     } catch (err) {
@@ -177,8 +177,8 @@ export default function AdminPopupsPage() {
 
   const toggleActive = async (popup: Popup) => {
     try {
-      const { error } = await supabase
-        .from("popups")
+      const { error } = await (supabase
+        .from("popups") as any)
         .update({ is_active: !popup.is_active })
         .eq("id", popup.id);
       if (error) throw error;

@@ -125,13 +125,13 @@ export default function AdminFAQsPage() {
 
     try {
       if (editingFaq) {
-        const { error } = await supabase
-          .from("faqs")
+        const { error } = await (supabase
+          .from("faqs") as any)
           .update(formData)
           .eq("id", editingFaq.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("faqs").insert([formData]);
+        const { error } = await (supabase.from("faqs") as any).insert([formData]);
         if (error) throw error;
       }
       
@@ -148,7 +148,7 @@ export default function AdminFAQsPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
     try {
-      const { error } = await supabase.from("faqs").delete().eq("id", id);
+      const { error } = await (supabase.from("faqs") as any).delete().eq("id", id);
       if (error) throw error;
       loadFaqs();
     } catch (err) {
@@ -159,8 +159,8 @@ export default function AdminFAQsPage() {
 
   const toggleVisibility = async (faq: FAQ) => {
     try {
-      const { error } = await supabase
-        .from("faqs")
+      const { error } = await (supabase
+        .from("faqs") as any)
         .update({ is_visible: !faq.is_visible })
         .eq("id", faq.id);
       if (error) throw error;

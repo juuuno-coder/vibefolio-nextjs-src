@@ -157,7 +157,7 @@ export default function AdminBannersPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
     try {
-      const { error } = await supabase.from("banners").delete().eq("id", id);
+      const { error } = await (supabase.from("banners") as any).delete().eq("id", id);
       if (error) throw error;
       loadBanners();
     } catch (err) {
