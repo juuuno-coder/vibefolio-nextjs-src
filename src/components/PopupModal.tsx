@@ -34,8 +34,8 @@ export function PopupModal() {
   const loadPopup = async () => {
     try {
       // 활성화되고 기간 내인 팝업 중 첫 번째 가져오기
-      const { data, error } = await supabase
-        .from("popups")
+      const { data, error } = await (supabase
+        .from("popups") as any)
         .select("*")
         .eq("is_active", true)
         .order("display_order", { ascending: true })
@@ -57,7 +57,7 @@ export function PopupModal() {
           }
         }
 
-        setPopup(data);
+        setPopup(data as Popup);
         setIsOpen(true);
       }
     } catch (err) {
