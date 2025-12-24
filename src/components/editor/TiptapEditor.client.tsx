@@ -2,7 +2,7 @@
 
 import { useEditor, EditorContent, BubbleMenu, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import ImageExtension from '@tiptap/extension-image';
+import { CustomImageExtension } from './CustomImageExtension';
 import LinkExtension from '@tiptap/extension-link';
 import YoutubeExtension from '@tiptap/extension-youtube';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -59,9 +59,9 @@ export default function TiptapEditor({
           },
         },
       }),
-      ImageExtension.configure({
+      CustomImageExtension.configure({
         HTMLAttributes: {
-          class: 'block-indicator block-image rounded-xl max-w-full h-auto my-4',
+          class: 'custom-image',
         },
       }),
       LinkExtension.configure({
@@ -100,6 +100,36 @@ export default function TiptapEditor({
       onEditorReady(editor);
     }
   }, [editor, onEditorReady]);
+
+  // Handle image replacement from CustomImageExtension
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleReplaceImage = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { file, pos } = customEvent.detail;
+      
+      if (file && typeof pos === 'number') {
+        setUploading(true);
+        try {
+          const url = await uploadImage(file, 'projects');
+          editor.commands.updateAttributes('customImage', { src: url });
+        } catch (error) {
+          console.error('Image replacement failed:', error);
+          alert('이미지 교체에 실패했습니다.');
+        } finally {
+          setUploading(false);
+        }
+      }
+    };
+
+    const editorElement = editor.view.dom;
+    editorElement.addEventListener('replaceImage', handleReplaceImage as EventListener);
+
+    return () => {
+      editorElement.removeEventListener('replaceImage', handleReplaceImage as EventListener);
+    };
+  }, [editor]);
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

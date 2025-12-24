@@ -122,3 +122,195 @@
 .ProseMirror:focus {
   outline: none;
 }
+
+/* Custom Image Container */
+.custom-image-container {
+  margin: 1.5rem 0;
+  position: relative;
+  display: block;
+  max-width: 100%;
+}
+
+.custom-image-wrapper {
+  position: relative; /* 이 부분이 중요! 자식 absolute 요소의 기준점 */
+  display: inline-block;
+  max-width: 100%;
+  border-radius: 0.75rem;
+  overflow: visible; /* hidden에서 visible로 변경하여 메뉴가 잘리지 않도록 */
+  transition: all 0.2s ease;
+}
+
+.custom-image-wrapper:hover {
+  box-shadow: 0 0 0 1px #10b981;
+}
+
+.custom-image-wrapper.selected {
+  box-shadow: 0 0 0 1px #10b981;
+}
+
+.custom-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+}
+
+.image-edit-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.custom-image-wrapper:hover .image-edit-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.image-edit-button {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.95);
+  border: 2px solid white;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.image-edit-button:hover {
+  background: rgba(5, 150, 105, 0.95);
+  transform: scale(1.1);
+}
+
+.image-edit-menu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  min-width: 220px;
+  z-index: 10;
+}
+
+.image-edit-menu .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.image-edit-menu .menu-item:hover {
+  background: #f3f4f6;
+}
+
+.image-edit-menu .menu-item span {
+  font-size: 18px;
+}
+
+.image-edit-menu .menu-item:last-child {
+  color: #dc2626;
+}
+
+.image-edit-menu .menu-item:last-child:hover {
+  background: #fee2e2;
+}
+
+/* Image Layout Toolbar (top-right corner) */
+.image-layout-toolbar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.custom-image-wrapper:hover .image-layout-toolbar {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.layout-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.layout-btn:hover {
+  background: white;
+  border-color: #10b981;
+  color: #10b981;
+  transform: scale(1.05);
+}
+
+.layout-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Layout Variants */
+.custom-image-wrapper.layout-normal {
+  max-width: 100%;
+}
+
+.custom-image-wrapper.layout-normal .custom-image {
+  border-radius: 0.75rem;
+}
+
+.custom-image-wrapper.layout-full-width {
+  width: 100%;
+  max-width: 100%;
+}
+
+.custom-image-wrapper.layout-full-width .custom-image {
+  width: 100%;
+  border-radius: 0.75rem;
+}
+
+.custom-image-wrapper.layout-padded {
+  padding: 24px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+}
+
+.custom-image-wrapper.layout-padded .custom-image {
+  border-radius: 0.5rem;
+}
