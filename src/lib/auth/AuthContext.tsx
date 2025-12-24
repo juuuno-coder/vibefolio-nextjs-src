@@ -150,12 +150,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         console.log("[Auth] 초기화 체크 시작");
         
-        // 1. getSession으로 현재 세션 확인
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        // 5초 타임아웃 안전장치
+        const timeoutPromise = new Promise<{ data: { session: Session | null }; error: any }>((_, reject) => 
+          setTimeout(() => reject(new Error("Auth Initialization Timeout")), 5000)
+        );
+
+        // 1. getSession으로 현재 세션 확인 (타임아웃 적용)
+        const { data: { session: currentSession }, error } = await Promise.race([
+          supabase.auth.getSession(),
+          timeoutPromise
+        ]);
         
         if (error) {
           console.error("[Auth] 세션 확인 오류:", error);
-          if (isMounted) setLoading(false);
+          // 에러 발생 시에도 로딩 해제를 위해 finally로 넘어감
           return;
         }
 
@@ -165,7 +173,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(currentSession.user);
           // 프로필 로드는 비동기로 진행하되, 로딩 상태는 프로필 로드 완료 후 해제하거나
           // 사용자 경험을 위해 일단 로그인은 된 상태로 두고 백그라운드에서 로드할 수도 있음.
-          // 여기서는 안전하게 await 합니다.
           await loadUserProfile(currentSession.user);
           localStorage.setItem("isLoggedIn", "true");
         } else {
@@ -175,6 +182,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       } catch (error) {
         console.error("[Auth] 초기화 예외 발생:", error);
+        // 타임아웃 등의 에러 발생 시 비로그인 상태로 간주
+        if (error instanceof Error && error.message === "Auth Initialization Timeout") {
+           console.warn("[Auth] 초기화 시간 초과 - 강제 로딩 해제");
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
