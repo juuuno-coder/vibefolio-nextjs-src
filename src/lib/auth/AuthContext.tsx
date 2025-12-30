@@ -51,16 +51,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const checkSessionTimeout = useCallback((): boolean => {
     if (typeof window === 'undefined') return false;
     
-    const loginTimestamp = localStorage.getItem('loginTimestamp');
-    if (!loginTimestamp) return false;
-    
-    const loginTime = parseInt(loginTimestamp, 10);
-    const now = Date.now();
-    const elapsed = now - loginTime;
-    
-    if (elapsed > SESSION_TIMEOUT_MS) {
-      console.log("[Auth] 30분 세션 타임아웃 - 자동 로그아웃");
-      return true; // 타임아웃됨
+    try {
+      const loginTimestamp = localStorage.getItem('loginTimestamp');
+      if (!loginTimestamp) return false;
+      
+      const loginTime = parseInt(loginTimestamp, 10);
+      const now = Date.now();
+      const elapsed = now - loginTime;
+      
+      if (elapsed > SESSION_TIMEOUT_MS) {
+        console.log("[Auth] 30분 세션 타임아웃 - 자동 로그아웃");
+        return true; // 타임아웃됨
+      }
+    } catch (e) {
+      console.warn("[Auth] 세션 타임아웃 체크 중 오류:", e);
+      return true; // 오류 시 안전하게 로그아웃 처리
     }
     
     return false; // 아직 유효

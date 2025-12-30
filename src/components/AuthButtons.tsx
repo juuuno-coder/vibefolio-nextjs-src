@@ -21,11 +21,22 @@ export function AuthButtons() {
   const { user, userProfile, loading, signOut, isAuthenticated, isAdmin } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [forceShow, setForceShow] = useState(false);
 
   // 클라이언트 마운트 상태 추적 (하이드레이션 안전)
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 로딩이 너무 길어지면 강제로 버튼 표시 (안전장치)
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        setForceShow(true);
+      }, 3000); // 3초 타임아웃
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   // 온보딩 상태 확인 - mounted 상태에서만 localStorage 접근
   useEffect(() => {
@@ -54,11 +65,11 @@ export function AuthButtons() {
     router.refresh();
   };
 
-  // 로딩 중이거나 마운트되지 않았을 때 스켈레톤 표시
-  if (!mounted || loading) {
+  // 로딩 중이거나 마운트되지 않았을 때 스켈레톤 표시 (forceShow가 아닐 때만)
+  if (!mounted || (loading && !forceShow)) {
     return (
       <div className="flex items-center gap-2">
-        <div className="w-10 h-10 rounded-full bg-gray-100/50 animate-pulse border border-gray-200/30" />
+        <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse border border-gray-300" />
       </div>
     );
   }
