@@ -92,41 +92,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // 프로필 정보 로드
+  // 프로필 정보 로드 (ONLY DB)
   const loadUserProfile = useCallback(async (currentUser: User): Promise<UserProfile> => {
     try {
-      console.log("[Auth] Loading profile for:", currentUser.email);
+      // console.log("[Auth] DB Fetching profile for:", currentUser.email);
       
-      // DB에서 역할 조회
+      // DB에서 역할 조회 (무조건 DB 기준)
       const { data: userData, error: userError } = await supabase
         .from("users")
         .select("role, nickname, profile_image_url")
         .eq("id", currentUser.id)
         .single();
 
-      const metadata = currentUser.user_metadata;
-      
-      // 기본값 설정
-      let newRole = "user";
-      let newNickname = metadata?.nickname || currentUser.email?.split("@")[0] || "사용자";
-      let newImage = metadata?.profile_image_url || metadata?.avatar_url || "/globe.svg";
-
-      if (!userError && userData) {
-        const typedData = userData as { role?: string; nickname?: string; profile_image_url?: string };
-        newRole = typedData.role || "user";
-        if (typedData.nickname) newNickname = typedData.nickname;
-        if (typedData.profile_image_url) newImage = typedData.profile_image_url;
-      } else if (userError) {
-        console.warn("[Auth] DB 조회 실패 (기본값 사용):", userError.message);
-        // 캐시된 역할 사용
-        const cachedRole = getCachedRole();
-        if (cachedRole) {
-          newRole = cachedRole;
-          console.log("[Auth] 캐시된 역할 사용:", cachedRole);
-        }
+      if (userError) {
+        // DB에 정보가 없다면 -> 
+        // 마이그레이션(자동 생성)을 하지 않고, 
+        // 깡통 프로필(혹은 DB에 없음을 알리는 상태)을 리턴하거나 에러로 처리.
+        console.warn("[Auth] DB에 유저 정보가 없습니다. (NO MIGRATION MODE)", userError.message);
+        
+        // 사용자의 요청: "무조건 DB에 있는 계정 정보"
+        // DB에 없으면 -> 그냥 없는 것. 기본값으로 처리하되 메타데이터에서 가져오지 않음.
+        const emptyProfile: UserProfile = {
+          nickname: "알 수 없음", // 메타데이터 사용 X
+          profile_image_url: "/globe.svg",
+          role: "user",
+        };
+        setCachedRole("user");
+        return emptyProfile;
       }
-      
-      // 역할 캐시 저장 (관리자 메뉴 안정화)
+
+      // DB 데이터가 있는 경우
+      const typedData = userData as { role?: string; nickname?: string; profile_image_url?: string };
+      const newRole = typedData.role || "user";
+      const newNickname = typedData.nickname || "이름 없음";
+      const newImage = typedData.profile_image_url || "/globe.svg";
+
+      // 역할 캐시 저장
       setCachedRole(newRole);
       
       const newProfile: UserProfile = {
@@ -135,25 +136,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: newRole,
       };
 
-      console.log("[Auth] Profile loaded:", { 
-        email: currentUser.email, 
-        role: newRole, 
-        isAdmin: newRole === 'admin' 
-      });
-
+      // console.log("[Auth] DB Profile loaded:", newProfile);
       return newProfile;
 
     } catch (error) {
-      console.error("[Auth] 프로필 로드 치명적 오류:", error);
-      // 캐시된 역할 확인
-      const cachedRole = getCachedRole();
+      console.error("[Auth] 프로필 로드 실패:", error);
       return {
-        nickname: currentUser.email?.split("@")[0] || "사용자",
+        nickname: "오류 발생",
         profile_image_url: "/globe.svg",
-        role: cachedRole || "user",
+        role: "user",
       };
     }
-  }, [getCachedRole, setCachedRole]);
+  }, [setCachedRole]);
 
   // 상태 업데이트 함수 (동기화 보장)
   const updateAuthState = useCallback((
