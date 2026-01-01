@@ -250,40 +250,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        console.log("[Auth] 초기화 시작");
-        
-        // ====== 30분 타임아웃 체크 ======
-        if (checkSessionTimeout()) {
-          console.log("[Auth] 세션 만료 - 로그아웃 처리");
-          localStorage.removeItem("isLoggedIn");
-          localStorage.removeItem("loginTimestamp");
-          localStorage.removeItem("userRole");
-          await supabase.auth.signOut();
-          updateAuthState(null, null, null);
-          return;
-        }
-        
-        // 타임아웃 설정 (5초)
-        const timeoutId = setTimeout(() => {
-          if (isActive) {
-            console.warn("[Auth] 초기화 타임아웃 - loading 강제 해제");
-            setLoading(false);
-          }
-        }, 5000);
+        // 페이지 경로 확인 (trailing slash 고려)
+        const path = window.location.pathname.replace(/\/$/, '');
+        const isCallbackPage = path === '/auth/callback';
 
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        clearTimeout(timeoutId);
         
         if (!isActive) return;
 
         if (error) {
-          console.error("[Auth] 세션 확인 오류:", error);
-          updateAuthState(null, null, null);
-          return;
+          console.error("[Auth] 세션 에러 (무시):", error.message);
+          // 에러가 나도 바로 로그아웃 시키지 말고, 재시도하거나 사용자에게 맡김
+          // updateAuthState(null, null, null); // 이 경우에도 상태를 초기화하지 않고 기존 상태 유지 시도
+          // return;
         }
 
         if (currentSession) {
-          console.log("[Auth] 세션 존재함:", currentSession.user.email);
+          // 타임아웃 체크 로직 제거됨 - 항상 로그인 유지 시도
+          // console.log("[Auth] 세션 복구:", currentSession.user.email);
           
           // 캐시된 역할로 먼저 isAdmin 설정 (관리자 메뉴 빠른 표시)
           const cachedRole = getCachedRole();

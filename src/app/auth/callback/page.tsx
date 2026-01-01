@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
@@ -10,102 +10,84 @@ export default function AuthCallbackPage() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [debug, setDebug] = useState<string>("시작...");
 
-  const processedRef = useRef(false);
-
   useEffect(() => {
-    if (processedRef.current) return;
-    processedRef.current = true;
-
     let isMounted = true;
+    console.log("[Callback] Mounting callback page...");
 
-    // 타임아웃 15초
+    // 타임아웃 20초 (충분히 대기)
     const timeout = setTimeout(() => {
       if (isMounted && status === "loading") {
+        console.warn("[Callback] Authentication timeout reached");
         setStatus("error");
-        setErrorMessage("인증 시간이 초과되었습니다.");
-        setTimeout(() => router.push("/login"), 2000);
+        setErrorMessage("인증 시간이 초과되었습니다. 다시 시도해주세요.");
+        setTimeout(() => router.push("/login"), 3000);
       }
-    }, 15000);
+    }, 20000);
 
-    // URL에 에러가 있는지 먼저 확인
+    // URL 에러 확인
     const urlParams = new URLSearchParams(window.location.search);
-    const urlError = urlParams.get("error");
-    const urlErrorDesc = urlParams.get("error_description");
-    
-    if (urlError) {
+    if (urlParams.get("error")) {
       setStatus("error");
-      setErrorMessage(urlErrorDesc || urlError);
-      setTimeout(() => router.push("/login"), 2000);
+      setErrorMessage(urlParams.get("error_description") || urlParams.get("error") || "인증 오류");
+      setTimeout(() => router.push("/login"), 3000);
       return;
     }
 
-    setDebug("인증 처리 중...");
-
-    // onAuthStateChange 리스너 - INITIAL_SESSION도 처리
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: string, session: any) => {
-        if (!isMounted) return;
-
-        console.log("[Callback] Auth event:", event, session?.user?.email);
-        setDebug(`이벤트: ${event}`);
-
-        // INITIAL_SESSION, SIGNED_IN 모두 처리
-        if ((event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") && session) {
-          setStatus("success");
-          localStorage.setItem("isLoggedIn", "true");
-          
-          setTimeout(() => {
-            if (isMounted) {
-              console.log("[Callback] Redirecting to home...");
-              router.replace("/");
-            }
-          }, 500);
-        } else if (event === "SIGNED_OUT") {
-          setStatus("error");
-          setErrorMessage("로그아웃 상태입니다.");
-          setTimeout(() => router.push("/login"), 2000);
-        }
-      }
-    );
-
-    // 초기 세션 확인
-    const checkInitialSession = async () => {
-      setDebug("세션 확인 중...");
+    // 세션 처리 로직
+    const handleSession = (session: any, source: string) => {
+      if (!isMounted || !session) return;
       
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("[Callback] Session error:", error);
-          setDebug(`에러: ${error.message}`);
-          return;
-        }
-
-        if (session) {
-          console.log("[Callback] Session found:", session.user.email);
-          setDebug("세션 발견!");
-          setStatus("success");
-          localStorage.setItem("isLoggedIn", "true");
-          
-          setTimeout(() => {
-            if (isMounted) router.replace("/");
-          }, 500);
-        } else {
-          setDebug("세션 대기중...");
-          console.log("[Callback] Waiting for session...");
-        }
-      } catch (e) {
-        console.error("[Callback] Check error:", e);
-        setDebug("세션 확인 실패");
-      }
+      console.log(`[Callback] Session confirmed via ${source}:`, session.user.email);
+      setStatus("success");
+      localStorage.setItem("isLoggedIn", "true");
+      // 로그인 시점 기록 (30분 타임아웃 방지용)
+      localStorage.setItem("loginTimestamp", Date.now().toString());
+      
+      // 즉시 이동 시도
+      console.log("[Callback] Redirecting to home...");
+      router.replace("/");
     };
 
-    // 500ms 후 세션 확인
-    setTimeout(checkInitialSession, 500);
+    // 1. 초기 세션 즉시 확인
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        handleSession(session, "getSession");
+      } else {
+        setDebug("세션 대기 중...");
+      }
+    });
+
+    // 2. 상태 변경 이벤트 감지
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`[Callback] Auth event: ${event}`);
+      setDebug(`이벤트: ${event}`);
+      if (session) {
+        handleSession(session, `onAuthStateChange(${event})`);
+      }
+    });
+
+    // 3. 마지막 수단: 7초 후에도 로딩 중이면 강제 이동 (세션이 이미 설정되었을 확률 높음)
+    const forcedRedirect = setTimeout(() => {
+      if (isMounted && status === "loading") {
+        console.log("[Callback] 7 seconds passed, trying forced redirection");
+        // 세션이 정말 없는지 한 번 더 확인
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (isMounted) {
+            if (session) {
+              handleSession(session, "forcedRedirectWithSession");
+            } else {
+              console.log("[Callback] Forced redirect - sending to home anyway");
+              router.replace("/");
+            }
+          }
+        });
+      }
+    }, 7000);
 
     return () => {
       isMounted = false;
       clearTimeout(timeout);
+      clearTimeout(forcedRedirect);
       subscription.unsubscribe();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps

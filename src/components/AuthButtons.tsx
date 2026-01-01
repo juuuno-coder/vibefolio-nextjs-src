@@ -33,7 +33,7 @@ export function AuthButtons() {
     if (loading) {
       const timer = setTimeout(() => {
         setForceShow(true);
-      }, 3000); // 3초 타임아웃
+      }, 10000); // 10초 타임아웃 (네트워크 지연 고려)
       return () => clearTimeout(timer);
     }
   }, [loading]);
@@ -82,8 +82,8 @@ export function AuthButtons() {
           <DropdownMenuTrigger asChild>
             <Avatar className="w-10 h-10 cursor-pointer border-2 border-gray-200 hover:border-primary transition-colors">
               <AvatarImage 
-                src={userProfile?.profile_image_url} 
-                alt={userProfile?.nickname} 
+                src={userProfile?.profile_image_url || user.user_metadata?.avatar_url || user.user_metadata?.profile_image_url} 
+                alt={userProfile?.nickname || user.email || "User"} 
                 className="object-cover" 
               />
               <AvatarFallback className="bg-primary text-white">
@@ -93,7 +93,9 @@ export function AuthButtons() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <div className="px-2 py-1.5">
-              <p className="text-sm font-medium">{userProfile?.nickname}</p>
+              <p className="text-sm font-medium">
+                {userProfile?.nickname || user.user_metadata?.nickname || user.email?.split('@')[0]}
+              </p>
               <p className="text-xs text-gray-500">{user.email}</p>
             </div>
             <DropdownMenuSeparator />
