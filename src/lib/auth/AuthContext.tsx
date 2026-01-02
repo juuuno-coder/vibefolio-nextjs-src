@@ -225,7 +225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        const timeoutMs = isCallbackPage ? 10000 : 2000; // 콜백 페이지는 충분히(10초) 기다림
+        const timeoutMs = isCallbackPage ? 15000 : 5000; // 콜백 페이지 15초, 일반 5초
         console.log(`${logPrefix} 2. Fetching session (Timeout: ${timeoutMs}ms)...`);
         
         // 4. 세션 가져오기

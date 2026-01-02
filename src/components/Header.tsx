@@ -25,6 +25,7 @@ import { AuthButtons } from "./AuthButtons";
 
 import { SOCIAL_LINKS } from "@/lib/constants";
 import { useAuth } from "@/lib/auth/AuthContext";
+import React from "react";
 
 // Vibe 로고 컴포넌트 (SVG: 말풍선 타입 & 볼드 서체, Green Theme)
 const VibeLogo = ({ className = "h-8" }: { className?: string }) => (
@@ -47,7 +48,7 @@ const VibeLogo = ({ className = "h-8" }: { className?: string }) => (
     </g>
     
     {/* 텍스트: VIBEFOLIO (간격 조정 x=70) */}
-    <text x="70" y="35" fontFamily="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" fontWeight="900" fontSize="28" fill="currentColor" letterSpacing="-0.5">
+    <text x="70" y="35" fontFamily="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" fontWeight="900" fontSize="28" fill="#111827" letterSpacing="-0.5">
       VIBE<tspan fontWeight="400" dx="0">FOLIO</tspan>
     </text>
   </svg>
@@ -89,10 +90,6 @@ export function Header() {
   const handleMobileSearchChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    // 모바일에서는 디바운싱이 필요할 수 있지만, 일단 엔터 없이도 검색하려면 여기서 라우팅 조작은 너무 빈번함.
-    // 모바일도 엔터/검색 버튼 방식이나 디바운스가 나음. 
-    // 여기서는 일단 기존 prop 호출 로직을 제거하고, 상태 관리가 필요함.
-    // 하지만 간편하게 하기 위해 Enter 키 이벤트 핸들러를 Drawer Input에도 추가하는 게 좋음.
   };
 
   const handleMobileSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -104,8 +101,8 @@ export function Header() {
 
   return (
     <>
-      {/* 모바일 헤더 */}
-      <header className="sticky top-0 z-40 w-full flex flex-col items-center justify-between py-4 px-4 border-b simple-header bg-white xl:hidden">
+      {/* 모바일 헤더 (1024px 미만) */}
+      <header className="sticky top-0 z-40 w-full flex flex-col items-center justify-between py-4 px-4 border-b simple-header bg-white lg:hidden">
         <div className="w-full h-full flex items-center justify-between">
           <div className="w-full flex items-center gap-4">
             <Sheet>
@@ -186,6 +183,7 @@ export function Header() {
                   <Input
                     placeholder="크리에이티브 프로젝트 검색"
                     onChange={handleMobileSearchChange}
+                    onKeyDown={handleMobileSearchKeyDown}
                     className="w-full placeholder:text-neutral-400 outline-0 border-none focus-visible:ring-0"
                   />
                 </div>
@@ -215,8 +213,8 @@ export function Header() {
         </nav>
       </header>
 
-      {/* 데스크탑 헤더 */}
-      <header className="sticky top-0 z-40 w-full h-16 hidden xl:flex items-center justify-between px-10 border-b simple-header bg-white transition-colors">
+      {/* 데스크탑 헤더 (1024px 이상) */}
+      <header className="sticky top-0 z-40 w-full h-16 hidden lg:flex items-center justify-between px-10 border-b simple-header bg-white transition-colors">
         <div className="h-full flex items-center gap-10">
           <Link href="/" className="flex items-center text-foreground hover:text-primary transition-colors">
             <VibeLogo className="h-9 w-auto" />

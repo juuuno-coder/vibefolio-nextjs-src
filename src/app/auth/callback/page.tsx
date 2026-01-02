@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
@@ -8,142 +8,123 @@ export default function AuthCallbackPage() {
   const router = useRouter();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [debug, setDebug] = useState<string>("시작...");
+  const processingRef = useRef(false);
 
   useEffect(() => {
-    let isMounted = true;
-    console.log("[Callback] Mounting callback page...");
+    if (processingRef.current) return;
+    processingRef.current = true;
 
-    // 타임아웃 20초 (충분히 대기)
+    let isMounted = true;
+    console.log("[Callback] Processing authentication...");
+
+    // 15초 후 강제 종료 (안전장치)
     const timeout = setTimeout(() => {
       if (isMounted && status === "loading") {
-        console.warn("[Callback] Authentication timeout reached");
-        setStatus("error");
-        setErrorMessage("인증 시간이 초과되었습니다. 다시 시도해주세요.");
-        setTimeout(() => router.push("/login"), 3000);
+        console.warn("[Callback] Authentication forced timeout");
+        // 세션이 이미 잡혔을 수도 있으니 한번 더 확인
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            handleSuccess(session, "Final-Check");
+          } else {
+            setStatus("error");
+            setErrorMessage("인증 시간이 초과되었습니다. 다시 로그인해주세요.");
+            setTimeout(() => router.push("/login"), 3000);
+          }
+        });
       }
-    }, 20000);
+    }, 15000);
 
-    // URL 파라미터 확인
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get("code");
-    const error = urlParams.get("error");
-    const errorDescription = urlParams.get("error_description");
+    const handleSuccess = (session: any, source: string) => {
+      if (!isMounted || !session) return;
+      console.log(`[Callback] Success via ${source}`);
+      
+      clearTimeout(timeout);
+      setStatus("success");
+      
+      // 즉시 로컬 플래그 설정 (AuthContext의 빠른 판단을 도움)
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("lastActivity", Date.now().toString());
+      
+      // 메인으로 리다이렉트
+      router.replace("/");
+    };
+
+    // URL 파라미터 추출
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get("code");
+    const error = url.searchParams.get("error");
 
     if (error) {
+      console.error("[Callback] URL Error:", error);
       setStatus("error");
-      setErrorMessage(errorDescription || error || "인증 오류");
+      setErrorMessage(url.searchParams.get("error_description") || "인증 오류가 발생했습니다.");
       setTimeout(() => router.push("/login"), 3000);
       return;
     }
 
-    // 세션 처리 성공 핸들러
-    const handleSuccess = async (session: any, source: string) => {
-      if (!isMounted || !session) return;
-      console.log(`[Callback] Session confirmed via ${source}:`, session.user.email);
-      
-      // 1. 성공했으므로 상단의 20초 타임아웃 타이머를 즉시 해제
-      clearTimeout(timeout);
-      
-      setStatus("success");
-      localStorage.setItem("isLoggedIn", "true");
-      // 메인 페이지 AuthContext의 30분 타임아웃 체크를 통과하기 위해 마지막 활동 시간을 현재로 갱신
-      localStorage.setItem("lastActivity", Date.now().toString());
-      
-      // 2. 즉시 이동
-      console.log("[Callback] Redirecting to home immediately...");
-      router.replace("/");
-    };
-
-    // 1. Code Exchange (PKCE) 수동 시도
-    // detectSessionInUrl: true 설정이 있어도, 명시적으로 처리하는 것이 안전함
+    // PKCE Exchange
     if (code) {
-      console.log("[Callback] Auth code detected, exchanging...");
-      supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
-        if (!isMounted) return;
-        if (error) {
-          console.error("[Callback] Code exchange failed:", error);
-          // 실패해도 일단 getSession 시도는 계속 진행
-        } else if (data.session) {
-          handleSuccess(data.session, "exchangeCodeForSession");
-          return; // 성공했으면 아래 로직 중단 안함 (이중 체크 무방)
-        }
-      });
+      supabase.auth.exchangeCodeForSession(code)
+        .then(({ data, error }) => {
+          if (error) {
+            console.error("[Callback] Exchange error:", error.message);
+            // 에러가 나더라도 세션이 이미 있을 수 있으므로 getSession 시도
+          } else if (data.session) {
+            handleSuccess(data.session, "exchangeCode");
+          }
+        });
     }
 
-    // 2. getSession 확인
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        handleSuccess(session, "getSession");
-      } else {
-        setDebug("세션 정보 수신 중...");
-      }
-    });
-
-    // 3. Auth State Change 구독
+    // Auth State Change 감지 (가장 확실함)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log(`[Callback] Auth event: ${event}`);
-      if (session) {
-        handleSuccess(session, `onAuthStateChange(${event})`);
+      console.log("[Callback] Auth Event:", event);
+      if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
+        handleSuccess(session, `onAuthStateChange-${event}`);
       }
     });
-
-    // 4. (제거됨) 강제 탈출 로직 삭제: 이벤트 기반으로만 동작
-    // const forcedRedirect = setTimeout(...) 
 
     return () => {
       isMounted = false;
       clearTimeout(timeout);
-      // clearTimeout(forcedRedirect); // 삭제
       subscription.unsubscribe();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <div className="flex flex-col items-center gap-6 p-8 bg-white rounded-2xl shadow-lg max-w-md w-full mx-4">
         {status === "loading" && (
           <>
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-gray-200 rounded-full"></div>
-              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-green-500 rounded-full animate-spin border-t-transparent"></div>
-            </div>
+            <div className="w-16 h-16 border-4 border-gray-200 border-t-green-500 rounded-full animate-spin"></div>
             <div className="text-center">
               <p className="text-lg font-medium text-gray-800">인증을 완료하는 중입니다...</p>
               <p className="text-sm text-gray-500 mt-2">잠시만 기다려주세요</p>
-              <p className="text-xs text-gray-400 mt-4">{debug}</p>
             </div>
           </>
         )}
 
         {status === "success" && (
-          <>
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <div className="text-center">
-              <p className="text-lg font-medium text-gray-800">로그인 성공!</p>
-              <p className="text-sm text-gray-500 mt-2">메인 페이지로 이동합니다...</p>
-            </div>
-          </>
+            <p className="text-lg font-medium text-gray-800">로그인 성공!</p>
+            <p className="text-sm text-gray-500 mt-2">이동 중...</p>
+          </div>
         )}
 
         {status === "error" && (
-          <>
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <div className="text-center">
-              <p className="text-lg font-medium text-gray-800">인증 오류</p>
-              <p className="text-sm text-red-500 mt-2">{errorMessage}</p>
-              <p className="text-sm text-gray-500 mt-2">로그인 페이지로 이동합니다...</p>
-            </div>
-          </>
+            <p className="text-lg font-medium text-gray-800">인증 패스워드 오류</p>
+            <p className="text-sm text-red-500 mt-2">{errorMessage}</p>
+          </div>
         )}
       </div>
     </div>
