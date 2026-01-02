@@ -201,8 +201,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
+        console.log("[Auth] Starting initialization...");
         // 1. 세션 가져오기 (DB/Local 확인)
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        console.log("[Auth] Session fetch complete", currentSession ? "Session exists" : "No session");
         
         if (!isActive) return;
 
@@ -214,21 +216,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (currentSession) {
           // 2. 타임아웃 체크
+          console.log("[Auth] Checking timeout...");
           if (checkSessionTimeout()) {
-            // 시간 초과 -> 가차없이 로그아웃
+            console.warn("[Auth] Session timeout trigger");
             await supabase.auth.signOut();
             updateAuthState(null, null, null);
             return;
           }
 
           // 3. 프로필 로드 (DB Only)
+          console.log("[Auth] Loading profile for", currentSession.user.id);
           const profile = await loadUserProfile(currentSession.user);
+          console.log("[Auth] Profile loaded", profile.nickname);
           
           if (!isActive) return;
           updateAuthState(currentSession, currentSession.user, profile);
           
         } else {
           // 세션 없음
+          console.log("[Auth] Finalizing - No session");
           updateAuthState(null, null, null);
         }
 

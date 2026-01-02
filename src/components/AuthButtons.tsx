@@ -21,11 +21,25 @@ export function AuthButtons() {
   const { user, userProfile, loading, signOut, isAuthenticated, isAdmin } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [longLoading, setLongLoading] = useState(false);
 
   // 클라이언트 마운트 상태 추적
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 무한 로딩 방지 안전장치 (3초)
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        if (loading) {
+          console.warn("[AuthButtons] Loading took too long, forcing UI display");
+          setLongLoading(true);
+        }
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   // 온보딩 상태 확인
   useEffect(() => {
@@ -34,7 +48,6 @@ export function AuthButtons() {
       return;
     }
 
-    const metadata = user.user_metadata;
     // 온보딩 스킵 플래그 확인
     const skippedOnboarding = localStorage.getItem(`onboarding_skipped_${user.id}`);
     
@@ -53,8 +66,8 @@ export function AuthButtons() {
     router.refresh();
   };
 
-  // 로딩 중이거나 마운트되지 않았을 때 스켈레톤 표시
-  if (!mounted || loading) {
+  // 로딩 중이거나 마운트되지 않았을 때 스켈레톤 표시 (3초 이후에는 강제 표시)
+  if (!mounted || (loading && !longLoading)) {
     return (
       <div className="flex items-center gap-2">
         <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse border border-gray-300" />
