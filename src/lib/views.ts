@@ -1,0 +1,60 @@
+// src/lib/views.ts
+import { supabase } from "./supabase";
+
+/**
+ * Get the current user.
+ */
+async function getUser() {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+}
+
+/**
+ * Add a view to a project.
+ * Does not count multiple views from the same user.
+ */
+export async function addView(projectId: string): Promise<void> {
+  const user = await getUser();
+  if (!user) return;
+
+  // Check if the user has already viewed this project
+  const { data, error: selectError } = await supabase
+    .from("views")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .eq("project_id", projectId)
+    .single();
+
+  if (selectError && selectError.code !== "PGRST116") { // PGRST116 = no rows found
+    console.error("Error checking for existing view:", selectError);
+    return;
+  }
+
+  // If the user has not viewed the project, add a new view
+  if (!data) {
+    const { error: insertError } = await supabase
+      .from("views")
+      .insert({ user_id: user.id, project_id: projectId });
+
+    if (insertError) {
+      console.error("Error adding view:", insertError);
+    }
+  }
+}
+
+/**
+ * Get the view count for a project.
+ */
+export async function getProjectViewCount(projectId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("views")
+    .select("*", { count: "exact", head: true })
+    .eq("project_id", projectId);
+
+  if (error) {
+    console.error("Error getting project view count:", error);
+    return 0;
+  }
+
+  return count || 0;
+}

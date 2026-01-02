@@ -69,3 +69,21 @@ export {
   CarouselPrevious,
   CarouselNext,
 } from "./carousel";
+
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuGroup,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuRadioGroup,
+} from "./dropdown-menu";

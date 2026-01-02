@@ -1,118 +1,94 @@
 // src/lib/bookmarks.ts
+import { supabase } from "./supabase";
 
 /**
- * 북마크 관리 유틸리티
- * 로컬 스토리지를 사용하여 북마크 상태를 영구 저장
+ * Get the current user.
  */
-
-export interface BookmarkData {
-  projectId: string;
-  bookmarkedAt: string;
+async function getUser() {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
 }
 
-const BOOKMARKS_KEY = "user_bookmarks";
-const PROJECTS_KEY = "projects";
-
 /**
- * 사용자가 북마크한 프로젝트 목록 가져오기
+ * Get the list of projects a user has bookmarked.
  */
-export function getUserBookmarks(): BookmarkData[] {
-  try {
-    const bookmarks = localStorage.getItem(BOOKMARKS_KEY);
-    return bookmarks ? JSON.parse(bookmarks) : [];
-  } catch (error) {
-    console.error("북마크 목록 로드 실패:", error);
+export async function getUserBookmarks(userId: string) {
+  const { data, error } = await supabase
+    .from("bookmarks")
+    .select("project_id")
+    .eq("user_id", userId);
+  if (error) {
+    console.error("Error fetching user bookmarks:", error);
     return [];
   }
+  return data.map((bookmark) => bookmark.project_id);
 }
 
 /**
- * 프로젝트 북마크 여부 확인
+ * Check if a user has bookmarked a specific project.
  */
-export function isProjectBookmarked(projectId: string): boolean {
-  const bookmarks = getUserBookmarks();
-  return bookmarks.some((bookmark) => bookmark.projectId === projectId);
+export async function isProjectBookmarked(projectId: string): Promise<boolean> {
+  const user = await getUser();
+  if (!user) return false;
+
+  const { data, error } = await supabase
+    .from("bookmarks")
+    .select("project_id")
+    .eq("user_id", user.id)
+    .eq("project_id", projectId)
+    .single();
+
+  if (error && error.code !== "PGRST116") { // PGRST116 = no rows found
+    console.error("Error checking if project is bookmarked:", error);
+  }
+
+  return !!data;
 }
 
 /**
- * 프로젝트 북마크 추가
+ * Add a bookmark to a project.
  */
-export function addBookmark(projectId: string): void {
-  try {
-    const bookmarks = getUserBookmarks();
-    
-    // 이미 북마크한 경우 중복 방지
-    if (isProjectBookmarked(projectId)) {
-      return;
-    }
+export async function addBookmark(projectId: string): Promise<void> {
+  const user = await getUser();
+  if (!user) return;
 
-    // 북마크 추가
-    const newBookmark: BookmarkData = {
-      projectId,
-      bookmarkedAt: new Date().toISOString(),
-    };
-    bookmarks.push(newBookmark);
-    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));
-  } catch (error) {
-    console.error("북마크 추가 실패:", error);
+  const { error } = await supabase
+    .from("bookmarks")
+    .insert({ user_id: user.id, project_id: projectId });
+
+  if (error) {
+    console.error("Error adding bookmark:", error);
   }
 }
 
 /**
- * 프로젝트 북마크 제거
+ * Remove a bookmark from a project.
  */
-export function removeBookmark(projectId: string): void {
-  try {
-    const bookmarks = getUserBookmarks();
-    const filteredBookmarks = bookmarks.filter(
-      (bookmark) => bookmark.projectId !== projectId
-    );
-    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(filteredBookmarks));
-  } catch (error) {
-    console.error("북마크 제거 실패:", error);
+export async function removeBookmark(projectId: string): Promise<void> {
+  const user = await getUser();
+  if (!user) return;
+
+  const { error } = await supabase
+    .from("bookmarks")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("project_id", projectId);
+
+  if (error) {
+    console.error("Error removing bookmark:", error);
   }
 }
 
 /**
- * 프로젝트 북마크 토글
+ * Toggle a bookmark on a project.
  */
-export function toggleBookmark(projectId: string): boolean {
-  const isBookmarked = isProjectBookmarked(projectId);
-  
-  if (isBookmarked) {
-    removeBookmark(projectId);
+export async function toggleBookmark(projectId: string): Promise<boolean> {
+  const bookmarked = await isProjectBookmarked(projectId);
+  if (bookmarked) {
+    await removeBookmark(projectId);
     return false;
   } else {
-    addBookmark(projectId);
+    await addBookmark(projectId);
     return true;
   }
-}
-
-/**
- * 사용자가 북마크한 프로젝트 목록 가져오기
- */
-export function getBookmarkedProjects(): any[] {
-  try {
-    const bookmarks = getUserBookmarks();
-    const projectsData = localStorage.getItem(PROJECTS_KEY);
-    if (!projectsData) return [];
-
-    const projects = JSON.parse(projectsData);
-    const bookmarkedProjectIds = bookmarks.map((bookmark) => bookmark.projectId);
-    
-    return projects.filter((project: any) => 
-      bookmarkedProjectIds.includes(project.id)
-    );
-  } catch (error) {
-    console.error("북마크한 프로젝트 조회 실패:", error);
-    return [];
-  }
-}
-
-/**
- * 전체 북마크 수 가져오기
- */
-export function getTotalBookmarksCount(): number {
-  const bookmarks = getUserBookmarks();
-  return bookmarks.length;
 }

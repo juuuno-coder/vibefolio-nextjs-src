@@ -24,7 +24,6 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // Supabase 로그인
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
@@ -33,9 +32,8 @@ export default function LoginPage() {
       if (signInError) throw signInError;
 
       if (data.user) {
-        // 사용자 정보를 로컬 스토리지에 저장
         const username = data.user.user_metadata?.username || data.user.email?.split("@")[0];
-        
+
         const userProfile = {
           username: username,
           email: data.user.email,
@@ -46,7 +44,7 @@ export default function LoginPage() {
           skills: [],
           socialLinks: {},
         };
-        
+
         localStorage.setItem("userProfile", JSON.stringify(userProfile));
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("userId", data.user.id);
@@ -59,6 +57,18 @@ export default function LoginPage() {
       setError(error.message || "로그인 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      console.error("Google 로그인 오류:", error);
+      setError(error.message || "Google 로그인 중 오류가 발생했습니다.");
     }
   };
 
@@ -167,6 +177,25 @@ export default function LoginPage() {
             </Button>
           </div>
         </form>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-white px-2 text-gray-500">또는</span>
+          </div>
+        </div>
+
+        <div>
+          <Button
+            onClick={handleGoogleLogin}
+            className="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            <img src="/google.svg" alt="Google" className="h-5 w-5 mr-2" />
+            Google 계정으로 로그인
+          </Button>
+        </div>
       </div>
     </div>
   );

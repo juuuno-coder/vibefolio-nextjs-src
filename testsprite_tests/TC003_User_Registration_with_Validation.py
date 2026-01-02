@@ -1,6 +1,12 @@
 import asyncio
 from playwright import async_api
 from playwright.async_api import expect
+import random
+import string
+
+def random_string(length=8):
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(length))
 
 async def run_test():
     pw = None
@@ -8,58 +14,41 @@ async def run_test():
     context = None
     
     try:
-        # Start a Playwright session in asynchronous mode
         pw = await async_api.async_playwright().start()
-        
-        # Launch a Chromium browser in headless mode with custom arguments
         browser = await pw.chromium.launch(
             headless=True,
-            args=[
-                "--window-size=1280,720",         # Set the browser window size
-                "--disable-dev-shm-usage",        # Avoid using /dev/shm which can cause issues in containers
-                "--ipc=host",                     # Use host-level IPC for better stability
-                "--single-process"                # Run the browser in a single process mode
-            ],
+            args=["--window-size=1280,720"],
         )
-        
-        # Create a new browser context (like an incognito window)
         context = await browser.new_context()
-        context.set_default_timeout(5000)
-        
-        # Open a new page in the browser context
         page = await context.new_page()
         
-        # Navigate to your target URL and wait until the network request is committed
-        await page.goto("http://localhost:3000", wait_until="commit", timeout=10000)
+        await page.goto("http://localhost:3000/signup", wait_until="domcontentloaded")
         
-        # Wait for the main page to reach DOMContentLoaded state (optional for stability)
-        try:
-            await page.wait_for_load_state("domcontentloaded", timeout=3000)
-        except async_api.Error:
-            pass
-        
-        # Iterate through all iframes and wait for them to load as well
-        for frame in page.frames:
-            try:
-                await frame.wait_for_load_state("domcontentloaded", timeout=3000)
-            except async_api.Error:
-                pass
-        
-        # Interact with the page elements to simulate user flow
-        # -> Click on the 회원가입 (Sign Up) button to navigate to the registration page.
-        frame = context.pages[-1]
-        # Click on the 회원가입 (Sign Up) button to go to the registration page
-        elem = frame.locator('xpath=html/body/header[2]/div[2]/span[2]').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
+        await expect(page.get_by_role("heading", name="회원가입")).to_be_visible()
 
-        # --> Assertions to verify final state
-        frame = context.pages[-1]
-        try:
-            await expect(frame.locator('text=Registration Successful! Welcome to Your New Account').first).to_be_visible(timeout=1000)
-        except AssertionError:
-            raise AssertionError('Test case failed: Registration process did not complete successfully as expected. The test plan requires verifying that user registration succeeds with valid inputs and appropriate validation errors are shown for invalid inputs, but this was not observed.')
-        await asyncio.sleep(5)
+        username = f"testuser_{random_string()}"
+        email = f"{username}@example.com"
+        password = "password123"
+
+        await page.get_by_label("사용자 이름").fill(username)
+        await page.get_by_label("이메일").fill(email)
+        await page.get_by_label("비밀번호", exact=True).fill(password)
+        await page.get_by_label("비밀번호 확인").fill(password)
+        
+        page.on("dialog", lambda dialog: dialog.accept())
+
+        await page.get_by_role("button", name="가입하기").click()
+
+        await page.wait_for_url("**/mypage/profile", timeout=10000)
+        
+        print(f"Test passed: Successfully registered user {email} and redirected to profile page.")
+        
+        with open("testsprite_tests/test_credentials.txt", "w") as f:
+            f.write(f"{email}\n{password}")
+
+    except Exception as e:
+        print(f"Test case failed: {e}")
+        raise
     
     finally:
         if context:
@@ -70,4 +59,3 @@ async def run_test():
             await pw.stop()
             
 asyncio.run(run_test())
-    
