@@ -189,58 +189,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [loadUserProfile]);
 
+  // 초기화 완료 여부 (중복 실행 방지)
+  const initializedRef = React.useRef(false);
+
   // 초기화 로직
   useEffect(() => {
     let isActive = true;
 
     const initializeAuth = async () => {
-      // 클라이언트에서만 실행 (SSR 안전)
-      if (typeof window === 'undefined') {
-        setLoading(false);
+      if (typeof window === 'undefined' || initializedRef.current) {
+        if (!initializedRef.current) setLoading(false);
         return;
       }
 
       try {
-        console.log("[Auth] Starting initialization...");
-        // 1. 세션 가져오기 (DB/Local 확인)
+        console.log("[Auth] 1. Initialization started...");
+        
+        // 0. 타임아웃 사전 체크 (DB 가기 전에 로컬에서 먼저 판단)
+        if (checkSessionTimeout()) {
+          console.warn("[Auth] 1.1 Pre-check: Session expired by 30min rule");
+          // UI 먼저 해제
+          updateAuthState(null, null, null);
+          // 서버 세션은 배경에서 정리
+          supabase.auth.signOut().catch(() => {});
+          initializedRef.current = true;
+          return;
+        }
+
+        console.log("[Auth] 2. Fetching session from Supabase...");
+        const startTime = Date.now();
+        
+        // 1. 세션 가져오기 (이 구간이 병목일 가능성 높음)
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        console.log("[Auth] Session fetch complete", currentSession ? "Session exists" : "No session");
+        
+        console.log(`[Auth] 3. Session fetch complete (${Date.now() - startTime}ms)`, currentSession ? "Session exists" : "No session");
         
         if (!isActive) return;
 
         if (error) {
           console.error("[Auth] Session Error:", error.message);
           updateAuthState(null, null, null);
+          initializedRef.current = true;
           return;
         }
 
         if (currentSession) {
-          // 2. 타임아웃 체크
-          console.log("[Auth] Checking timeout...");
-          if (checkSessionTimeout()) {
-            console.warn("[Auth] Session timeout trigger");
-            await supabase.auth.signOut();
-            updateAuthState(null, null, null);
-            return;
-          }
-
-          // 3. 프로필 로드 (DB Only)
-          console.log("[Auth] Loading profile for", currentSession.user.id);
+          // 2. 프로필 로드 (DB Only)
+          console.log("[Auth] 4. Loading profile for", currentSession.user.id);
           const profile = await loadUserProfile(currentSession.user);
-          console.log("[Auth] Profile loaded", profile.nickname);
+          console.log("[Auth] 5. Profile loaded:", profile.nickname);
           
           if (!isActive) return;
           updateAuthState(currentSession, currentSession.user, profile);
           
         } else {
           // 세션 없음
-          console.log("[Auth] Finalizing - No session");
+          console.log("[Auth] 6. No session found");
           updateAuthState(null, null, null);
         }
 
+        initializedRef.current = true;
+
       } catch (error) {
-        console.error("[Auth] Init Error:", error);
+        console.error("[Auth] Fatal Init Error:", error);
         if (isActive) updateAuthState(null, null, null);
+        initializedRef.current = true;
       }
     };
 
@@ -251,8 +264,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (event: AuthChangeEvent, newSession: Session | null) => {
         if (!isActive) return;
 
-        // 상태 변경 로깅 최소화
-        // console.log(`[Auth] State Change: ${event}`);
+        console.log(`[Auth] Event Triggered: ${event}`);
 
         switch (event) {
           case "SIGNED_IN":
