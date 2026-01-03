@@ -185,12 +185,12 @@ export function Header() {
 
         <div className="flex items-center gap-3 ml-auto">
           {/* 검색 영역 */}
-          <div className="flex items-center bg-gray-100/60 px-4 py-2 rounded-full w-60 focus-within:bg-white focus-within:ring-2 focus-within:ring-green-500/20 transition-all">
-            <Search className="w-4 h-4 text-gray-400" />
+          <div className="flex items-center bg-[#F3F4F6] border border-transparent focus-within:border-green-500/20 px-4 py-2 rounded-full w-64 focus-within:bg-white focus-within:shadow-md focus-within:ring-2 focus-within:ring-green-500/10 transition-all duration-300">
+            <Search className="w-4 h-4 text-gray-400 group-focus-within:text-green-500 transition-colors" />
             <Input
               placeholder="프로젝트 검색"
               onKeyDown={handleSearchKeyDown}
-              className="border-none bg-transparent focus-visible:ring-0 text-sm p-0 h-auto ml-2 placeholder:text-gray-400 w-full"
+              className="border-none bg-transparent focus-visible:ring-0 text-sm p-0 h-auto ml-2 placeholder:text-gray-400 w-full text-gray-700 font-medium"
             />
           </div>
           

@@ -8,45 +8,45 @@
 
 @layer base {
   :root {
-    /* 트렌디한 Vibe 테마 (새싹 Ver.) */
-    --background: 0 0% 100%;
-    --foreground: 144 10% 4%; /* 아주 짙은 딥 그린 블랙 */
+    /* 트렌디한 Vibe 테마 (Clean & Modern Ver.) */
+    --background: 0 0% 100%;       /* Pure White */
+    --foreground: 222 47% 11%;     /* Dark Navy Black (#0F172A) */
     
     --card: 0 0% 100%;
-    --card-foreground: 144 10% 4%;
+    --card-foreground: 222 47% 11%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 144 10% 4%;
+    --popover-foreground: 222 47% 11%;
     
-    /* Primary: Fresh Green (Sprout) */
-    --primary: 142 71% 45%; /* #22C55E */
+    /* Primary: Vibrant Green (#16A34A) */
+    --primary: 142 76% 36%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 144 10% 96%;
-    --secondary-foreground: 144 10% 10%;
+    --secondary: 210 40% 96.1%;    /* Cool Gray (#F1F5F9) */
+    --secondary-foreground: 222 47% 11%;
     
-    --muted: 144 10% 96%;
-    --muted-foreground: 144 5% 45%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%;
     
-    /* Accent: Sunny Lime */
-    --accent: 84 81% 44%; /* #84CC16 */
+    /* Accent: Lime Green (#84CC16) */
+    --accent: 84 81% 44%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 144 10% 90%;
-    --input: 144 10% 90%;
-    --ring: 142 71% 45%;
+    --border: 214 32% 91%;         /* Light Gray (#E2E8F0) */
+    --input: 214 32% 91%;
+    --ring: 142 76% 36%;
     
     --radius: 0.75rem;
 
     /* Vibe 전용 변수 (Green Theme) */
-    --vibe-purple: 142 71% 45%; /* 기존 보라색 변수를 메인 그린으로 매핑 */
-    --vibe-mint: 84 81% 44%;   /* 기존 민트색 변수를 라임으로 매핑 */
-    --vibe-hover: 144 10% 96%;
+    --vibe-green: 142 76% 36%;
+    --vibe-mint: 84 81% 44%;
+    --vibe-hover: 210 40% 96.1%;
     
-    --divider: 144 10% 90%;
+    --divider: 214 32% 91%;
   }
 
   .dark {

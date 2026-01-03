@@ -32,36 +32,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const initializedRef = useRef(false);
   const router = useRouter();
 
-  // ====== DB에서 프로필 로드 (1초 타임아웃 적용) ======
-  const loadProfileFromDB = useCallback(async (currentUser: User): Promise<UserProfile> => {
-    const defaultProfile: UserProfile = {
-      nickname: currentUser.user_metadata?.nickname || currentUser.email?.split("@")[0] || "User",
-      profile_image_url: currentUser.user_metadata?.avatar_url || "/globe.svg",
-      role: "user",
+  // ====== Supabase Metadata에서 프로필 로드 (DB 연결 X) ======
+  const loadProfileFromMetadata = useCallback((currentUser: User): UserProfile => {
+    // Supabase Auth 자체 메타데이터 우선 사용
+    const metadata = currentUser.user_metadata || {};
+    
+    return {
+      nickname: metadata.full_name || metadata.name || metadata.nickname || currentUser.email?.split("@")[0] || "User",
+      profile_image_url: metadata.avatar_url || metadata.picture || "/globe.svg",
+      role: currentUser.app_metadata?.role || metadata.role || "user",
     };
-
-    try {
-      const dbPromise = supabase
-        .from("users")
-        .select("nickname, profile_image_url, role")
-        .eq("id", currentUser.id)
-        .single();
-
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("DB_TIMEOUT")), 1000));
-
-      const { data, error } = (await Promise.race([dbPromise, timeoutPromise])) as any;
-
-      if (!error && data) {
-        console.log("[Auth] Profile loaded from DB:", data.nickname);
-        return data as UserProfile;
-      }
-      
-      console.warn("[Auth] Using fallback profile");
-      return defaultProfile;
-    } catch (e) {
-      console.warn("[Auth] Profile fetch timeout/error, using fallback");
-      return defaultProfile;
-    }
   }, []);
 
   // ====== 상태 업데이트 통합 관리 ======
@@ -69,13 +49,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(s);
     setUser(u);
     if (u) {
-      const profile = await loadProfileFromDB(u);
+      // DB 조회 없이 즉시 메타데이터로 설정
+      const profile = loadProfileFromMetadata(u);
+      console.log("[Auth] Profile loaded from Metadata:", profile.nickname);
       setUserProfile(profile);
     } else {
       setUserProfile(null);
     }
     setLoading(false);
-  }, [loadProfileFromDB]);
+  }, [loadProfileFromMetadata]);
 
   useEffect(() => {
     if (initializedRef.current) return;
@@ -83,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const init = async () => {
       try {
-        console.log("[Auth] Initializing...");
+        console.log("[Auth] Initializing (Auth-Only Mode)...");
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         if (currentSession?.user) {
@@ -139,9 +121,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin: userProfile?.role === "admin",
     signOut,
     refreshUserProfile: async () => {
+      // DB 조회가 아니므로 비동기일 필요는 없으나 인터페이스 유지를 위해 async 유지
       const { data: { user: u } } = await supabase.auth.getUser();
       if (u) {
-        const p = await loadProfileFromDB(u);
+        const p = loadProfileFromMetadata(u);
         setUserProfile(p);
       }
     }

@@ -106,42 +106,42 @@ export function PopupModal() {
         )}
 
         {/* Content */}
-        <div className="p-8">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-slate-900 mb-4">
+        <div className="p-7">
+          <DialogHeader className="mb-6 text-left">
+            <div className="text-sm font-semibold text-blue-600 mb-2">🎉 NOTICE</div>
+            <DialogTitle className="text-2xl font-bold text-gray-900 leading-tight">
               {popup.title}
             </DialogTitle>
           </DialogHeader>
 
           {popup.content && (
-            <p className="text-slate-600 leading-relaxed mb-6 whitespace-pre-wrap">
+            <p className="text-gray-600 leading-relaxed mb-8 whitespace-pre-wrap text-[15px]">
               {popup.content}
             </p>
           )}
 
           <DialogFooter className="flex-col sm:flex-col gap-3">
             {popup.link_url && (
-              <Link href={popup.link_url} className="w-full" onClick={handleClose}>
-                <Button className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold rounded-xl shadow-lg">
-                  {popup.link_text}
-                </Button>
-              </Link>
-            )}
-            <div className="flex gap-2 w-full">
-              <Button
-                variant="outline"
-                onClick={handleHideToday}
-                className="flex-1 h-11 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50"
-              >
-                오늘 하루 보지 않기
+              <Button asChild className="w-full h-12 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-blue-100 transition-all hover:scale-[1.02] text-base">
+                <Link href={popup.link_url} onClick={handleClose}>
+                  {popup.link_text || '자세히 보기'}
+                </Link>
               </Button>
-              <Button
-                variant="ghost"
+            )}
+            
+            <div className="flex items-center justify-between w-full mt-2 px-1">
+              <button
+                onClick={handleHideToday}
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors py-2"
+              >
+                다시 보지 않기
+              </button>
+              <button
                 onClick={handleClose}
-                className="flex-1 h-11 rounded-xl text-slate-500 hover:bg-slate-50"
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors py-2 px-2"
               >
                 닫기
-              </Button>
+              </button>
             </div>
           </DialogFooter>
         </div>
