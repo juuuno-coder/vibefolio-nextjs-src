@@ -305,35 +305,31 @@ export function Header({
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full" aria-label="Open user menu">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={userProfile?.avatar_url || ''} alt={userProfile?.username} />
-                    <AvatarFallback>
-                      <UserIcon />
-                    </AvatarFallback>
+                    <AvatarFallback><UserIcon /></AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 z-[100] bg-white border shadow-md" align="end" sideOffset={8}>
+              <DropdownMenuContent className="w-56 z-[100] bg-white text-black border shadow-lg" align="end" sideOffset={5}>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{userProfile?.username}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
-                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/mypage">마이페이지</Link>
+                  <Link href="/mypage" className="cursor-pointer">마이페이지</Link>
                 </DropdownMenuItem>
                 {userProfile?.role === 'admin' && (
                   <DropdownMenuItem asChild>
-                    <Link href="/admin">어드민 메뉴</Link>
+                    <Link href="/admin" className="cursor-pointer">어드민 메뉴</Link>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-700 cursor-pointer">
+                <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-700 cursor-pointer font-bold">
                   로그아웃
                 </DropdownMenuItem>
               </DropdownMenuContent>
