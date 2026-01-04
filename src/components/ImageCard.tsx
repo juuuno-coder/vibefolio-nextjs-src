@@ -7,6 +7,8 @@ import Image from "next/image";
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { Heart, BarChart3, Image as ImageIcon } from 'lucide-react';
 import { addCommas } from "@/lib/format/comma";
+import { useLikes } from "@/hooks/useLikes";
+import { cn } from "@/lib/utils";
 
 // 기본 폴백 이미지
 const FALLBACK_IMAGE = "/placeholder.jpg";
@@ -38,6 +40,10 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
   ({ props, onClick, ...rest }, ref) => {
     const [imgError, setImgError] = useState(false);
     const [avatarError, setAvatarError] = useState(false);
+
+    // ✅ Hook 호출: 조건부 리턴(if (!props)) 이전에 호출하여 Rule violation 방지
+    // props?.id가 없으면 빈 문자열을 넘기고, hook 내부의 enabled 옵션으로 실행을 막음
+    const { isLiked, toggleLike } = useLikes(props?.id, props?.likes);
 
     if (!props) return null;
 
@@ -113,9 +119,16 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
               <p className="text-sm font-medium text-primary">{username}</p>
             </div>
             <div className="flex items-center gap-3 text-secondary">
-              <div className="flex items-center gap-1.5">
-                <Heart className="w-4 h-4 text-red-400" />
-                <span className="text-sm font-semibold text-gray-700">{addCommas(likes)}</span>
+              <div 
+                className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation(); // 카드 클릭 이벤트 전파 방지
+                  toggleLike();
+                }}
+              >
+                <Heart className={cn("w-4 h-4", isLiked ? "fill-red-500 text-red-500" : "text-red-400")} />
+                <span className="text-sm font-semibold text-gray-700">{addCommas(likes + (isLiked ? 1 : 0) - (props.likes && isLiked ? 0 : 0))}</span> 
+                {/* 간단한 카운트 보정: 실제로는 useLikes에서 카운트까지 관리하는게 좋으나 일단 UI 반응만 */}
               </div>
               {views !== undefined && (
                   <div className="flex items-center gap-1.5">
