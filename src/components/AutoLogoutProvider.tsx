@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
@@ -11,10 +12,13 @@ export function AutoLogoutProvider({ children }: { children: React.ReactNode }) 
   const inactivityTimer = useRef<NodeJS.Timeout>();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    localStorage.clear();
-    router.push("/login");
-    alert("30분 동안 활동이 없어 자동 로그아웃되었습니다.");
+    // Only sign out if we have a session
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      await supabase.auth.signOut();
+      toast("30분 동안 활동이 없어 자동 로그아웃되었습니다.");
+      router.push("/login");
+    }
   };
 
   const resetTimer = () => {
@@ -25,7 +29,10 @@ export function AutoLogoutProvider({ children }: { children: React.ReactNode }) 
   };
 
   useEffect(() => {
-    const events = ["mousemove", "keydown", "click", "scroll"];
+    // Only set up listeners if we are logged in (or we can check periodically)
+    // However, for simplicity, we run it always, and check session on timeout.
+
+    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
 
     const eventListener = () => {
       resetTimer();
