@@ -4,7 +4,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useSupabase } from "@/app/supabase-provider";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { Heart, Eye, Share2, Bookmark, ArrowLeft, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
@@ -57,7 +57,7 @@ interface Project {
 }
 
 export default function ProjectDetailPage({ params }: { params: { id: string } }) {
-  const { session } = useSupabase();
+  const { session } = useAuth();
   const user = session?.user;
   const router = useRouter();
 
@@ -77,26 +77,26 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
   const fetchProjectData = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Fetch project details from Supabase 'projects' table
+      // Fetch project details from Supabase 'Project' table
       const { data: projectData, error: projectError } = await supabase
-        .from("projects")
+        .from("Project") // projects -> Project
         .select("*")
-        .eq("id", projectId)
-        .single();
+        .eq("project_id", projectId) // id -> project_id
+        .single() as any;
 
       if (projectError || !projectData) {
         throw new Error("Project not found.");
       }
-      setProject(projectData);
+      setProject({ ...projectData, id: projectData.project_id, category: projectData.category_id });
 
       // Fetch related projects
       const { data: relatedData } = await supabase
-        .from("projects")
+        .from("Project") // projects -> Project
         .select("*")
-        .eq("category", projectData.category)
-        .neq("id", projectId)
+        .eq("category_id", projectData.category_id) // category -> category_id
+        .neq("project_id", projectId) // id -> project_id
         .limit(4);
-      setRelatedProjects(relatedData || []);
+      setRelatedProjects((relatedData || []).map((p: any) => ({ ...p, id: p.project_id })));
 
       // Record the view
       if (user) {
@@ -116,8 +116,8 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
       // Check like and bookmark status if user is logged in
       if (user) {
         const [liked, bookmarked] = await Promise.all([
-          isProjectLiked(projectId, user.id),
-          isProjectBookmarked(projectId, user.id),
+          isProjectLiked(projectId),
+          isProjectBookmarked(projectId),
         ]);
         setIsLiked(liked);
         setIsBookmarked(bookmarked);
@@ -141,10 +141,10 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
     }
     try {
       if (isLiked) {
-        await removeLike(projectId, user.id);
+        await removeLike(projectId);
         setLikeCount((prev) => prev - 1);
       } else {
-        await addLike(projectId, user.id);
+        await addLike(projectId);
         setLikeCount((prev) => prev + 1);
       }
       setIsLiked(!isLiked);
@@ -160,9 +160,9 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
     }
     try {
       if (isBookmarked) {
-        await removeBookmark(projectId, user.id);
+        await removeBookmark(projectId);
       } else {
-        await addBookmark(projectId, user.id);
+        await addBookmark(projectId);
       }
       setIsBookmarked(!isBookmarked);
     } catch (error) {

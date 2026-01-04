@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSupabase } from "@/app/supabase-provider";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -12,7 +12,7 @@ import { getUserInquiries, deleteInquiry, Inquiry } from "@/lib/inquiries";
 import dayjs from "dayjs";
 
 export default function InquiriesPage() {
-  const { session } = useSupabase();
+  const { session } = useAuth();
   const user = session?.user;
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
