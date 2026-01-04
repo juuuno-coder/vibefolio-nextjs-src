@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Heart, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
-import { getLikedProjects, getTotalLikesCount } from "@/lib/likes";
+
 
 interface Project {
   id: string;
