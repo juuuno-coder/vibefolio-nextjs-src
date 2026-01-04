@@ -1,6 +1,8 @@
 // src/components/Header.tsx
 "use client";
 
+import { VibeLogo } from "./Logo";
+
 import { useEffect, useState } from "react";
 import { ChevronDown, Menu, Search, User as UserIcon } from "lucide-react";
 import {
@@ -150,7 +152,7 @@ export function Header({
                   ))}
                 </div>
                 <div className="flex flex-col gap-6 mt-16">
-                  <img src="/logo.svg" alt="Vibefolio Logo" className="w-24" />
+                  <VibeLogo className="h-10" />
                   <div className="flex flex-col">
                     <p className="text-sm">
                       회원가입 또는 로그인을 통해 AI 창작자의
@@ -180,7 +182,7 @@ export function Header({
               </SheetContent>
             </Sheet>
             <Link href="/" className="flex items-center">
-              <img src="/logo.svg" alt="@LOGO" className="h-10" />
+              <VibeLogo />
             </Link>
           </div>
           <div className="flex items-center gap-4">
@@ -268,7 +270,7 @@ export function Header({
       <header className="sticky top-[44px] z-40 w-full h-20 hidden xl:flex items-center justify-between px-8 border-b simple-header bg-white">
         <div className="h-full flex items-center gap-10">
           <Link href="/" className="flex items-center">
-            <img src="/logo.svg" alt="@LOGO" className="h-14" />
+            <VibeLogo />
           </Link>
           <nav className="h-full flex items-center gap-8">
             {menu.map((item, index) => (
