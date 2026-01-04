@@ -30,12 +30,8 @@ import { useRouter } from "next/navigation";
 
 // 메뉴 정의
 const menuItems = [
-  { label: "Product", path: "/", dropdown: true },
-  { label: "Solution", path: "/solution", dropdown: true },
-  { label: "Blog", path: "/blog", dropdown: false },
-  { label: "Owners", path: "/owners", dropdown: false },
-  { label: "Demo", path: "/demo", dropdown: true },
-  { label: "Help", path: "/help", dropdown: false },
+  { label: "발견", path: "/", dropdown: false },
+  { label: "연결", path: "/recruit", dropdown: false, newest: true },
 ];
 
 export function Header({
@@ -129,10 +125,13 @@ export function Header({
               <Link 
                 key={item.label} 
                 href={item.path}
-                className="flex items-center gap-1 text-[15px] font-medium text-gray-800 hover:text-black transition-colors font-poppins"
+                className="relative flex items-center gap-1 text-[15px] font-medium text-gray-800 hover:text-black transition-colors"
               >
                 {item.label}
                 {item.dropdown && <span className="text-[10px] text-gray-400">▼</span>}
+                {item.newest && (
+                  <span className="ml-[2px] mb-[2px] text-[10px] font-bold text-[#05BCC6]">N</span>
+                )}
               </Link>
             ))}
           </nav>
