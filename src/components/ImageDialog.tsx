@@ -10,7 +10,7 @@ import { addCommas } from "@/lib/format/comma";
 import { ImageCard } from "@/components/ImageCard";
 import { useLikes } from "@/hooks/useLikes";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { addView } from "@/lib/views";
+import { recordView } from "@/lib/views";
 import { toast } from "sonner";
 import { CommentModal } from "./CommentModal";
 import { CollectionModal } from "./CollectionModal";
@@ -101,7 +101,16 @@ export function ImageDialog({ props }: { props: ImageDialogProps }) {
 
   // Add Comment Mutation
   const { mutate: postComment } = useMutation({
-    mutationFn: (text: string) => addComment(props.id, text),
+    mutationFn: (text: string) => {
+        if (!currentUser || !userProfile) throw new Error("User info missing");
+        return addComment(
+            props.id,
+            currentUser.id,
+            text,
+            userProfile.nickname,
+            userProfile.profile_image_url
+        );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', props.id] });
       toast.success("댓글이 등록되었습니다.");
@@ -134,7 +143,7 @@ export function ImageDialog({ props }: { props: ImageDialogProps }) {
     // Only increment view if modal is open (component mounted)
     if (currentUser) {
        // Optional: Add strict check to avoid dev mode double count
-       addView(props.id);
+       recordView(props.id);
     }
   }, [props.id, currentUser]);
 
@@ -263,11 +272,11 @@ export function ImageDialog({ props }: { props: ImageDialogProps }) {
       <CommentModal
         open={isCommentModalOpen}
         onOpenChange={setIsCommentModalOpen}
-        comments={comments.map((c: Comment) => ({
-            id: c.comment_id,
-            user: c.users?.nickname || 'Unknown',
+        comments={comments.map((c: any) => ({
+            id: c.id,
+            user: c.username || 'Unknown',
             text: c.content,
-            created_at: c.created_at
+            created_at: c.createdAt
         }))}
         onAddComment={handleAddComment}
         isLoggedIn={!!currentUser}
