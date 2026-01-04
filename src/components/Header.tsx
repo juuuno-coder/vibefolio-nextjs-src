@@ -167,12 +167,14 @@ export function Header({
                 // 로그인 상태
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Avatar className="w-9 h-9 cursor-pointer border border-gray-200 hover:border-black transition-colors">
-                      <AvatarImage src={userProfile?.avatar_url} />
-                      <AvatarFallback className="bg-gray-100">
-                        <UserIcon className="w-5 h-5 text-gray-500" />
-                      </AvatarFallback>
-                    </Avatar>
+                    <button className="outline-none rounded-full">
+                      <Avatar className="w-9 h-9 cursor-pointer border border-gray-200 hover:border-black transition-colors">
+                        <AvatarImage src={userProfile?.avatar_url} />
+                        <AvatarFallback className="bg-gray-100">
+                          <UserIcon className="w-5 h-5 text-gray-500" />
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56 mt-2 rounded-xl border border-gray-100 shadow-xl bg-white p-2">
                      <div className="px-3 py-3 border-b border-gray-50 mb-1">
