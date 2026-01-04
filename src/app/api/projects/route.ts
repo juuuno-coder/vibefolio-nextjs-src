@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     
     const offset = (page - 1) * limit;
 
-    // 필요한 필드만 선택 (최적화)
+    // 필요한 필드만 선택 (최적화) - users 조인 제거하여 쿼리 실패 방지
     let query = (supabase as any)
       .from('Project')
       .select(`
@@ -36,12 +36,9 @@ export async function GET(request: NextRequest) {
         thumbnail_url,
         content_text,
         likes_count,
+        views_count,
         rendering_type,
         created_at,
-        users!user_id (
-          username,
-          avatar_url
-        ),
         Category (
           category_id,
           name
@@ -64,7 +61,7 @@ export async function GET(request: NextRequest) {
     // 사용자 필터
     if (userId) query = query.eq('user_id', userId);
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
       console.error('프로젝트 조회 실패:', error);
@@ -74,43 +71,47 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 사용자 정보 병합: auth.admin 호출을 반복하지 않고 public.users 테이블에서 한 번에 조회합니다.
+    // 사용자 정보 병합 (Dual Fetching)
     if (data && data.length > 0) {
       const userIds = [...new Set(data.map((p: any) => p.user_id).filter(Boolean))] as string[];
 
       if (userIds.length > 0) {
+        // users 테이블 조회 (모든 필드 가져와서 안전하게 매핑)
         const { data: usersData, error: usersError } = await supabaseAdmin
           .from('users')
-          .select('id, nickname, profile_image_url')
+          .select('*') 
           .in('id', userIds);
 
-        const userMap = new Map<string, { user_id: string; username: string; profile_image_url: string }>();
+        const userMap = new Map();
 
-        if (!usersError && Array.isArray(usersData)) {
+        if (!usersError && usersData) {
           usersData.forEach((u: any) => {
+            // 프론트엔드가 기대하는 필드명으로 매핑 (username, avatar_url 등 다양한 케이스 대응)
             userMap.set(u.id, {
-              user_id: u.id,
-              username: u.nickname || 'Unknown',
-              profile_image_url: u.profile_image_url || '/globe.svg',
+              username: u.username || u.nickname || u.email?.split('@')[0] || 'Unknown',
+              avatar_url: u.avatar_url || u.profile_image_url || u.profileImage || '/globe.svg',
             });
           });
         }
 
         data.forEach((project: any) => {
-          project.User = userMap.get(project.user_id) || { username: 'Unknown', profile_image_url: '/globe.svg' };
+          // 프론트엔드가 users 객체를 기대한다면 users 키에 할당
+          project.users = userMap.get(project.user_id) || { username: 'Unknown', avatar_url: '/globe.svg' };
+          // 호환성을 위해 User 키에도 할당 (혹시 모를 구형 코드 대응)
+          project.User = project.users; 
         });
       }
     }
 
-    // 캐시 헤더 추가
-    return NextResponse.json(
-      { projects: data || [], page, limit, hasMore: data?.length === limit },
-      {
-        headers: {
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
-        },
+    return NextResponse.json({
+      data: data, // data 키로 감싸서 반환 (프론트엔드 페이지네이션 로직과 맞춤)
+      metadata: {
+        total: count || 0,
+        page: page,
+        limit: limit,
+        hasMore: data?.length === limit // 간단한 hasMore 계산
       }
-    );
+    });
   } catch (error: any) {
     console.error('서버 오류:', error);
     return NextResponse.json(
