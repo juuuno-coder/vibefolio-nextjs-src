@@ -1,5 +1,5 @@
 // src/app/api/projects/route.ts
-// 프로젝트 목록 조회 및 생성 API - 최적화 버전
+// 프로젝트 목록 조회 및 생성 API - 최적화 버전 (JOIN 적용)
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase/client';
@@ -19,7 +19,9 @@ export async function GET(request: NextRequest) {
     
     const offset = (page - 1) * limit;
 
-    // 필요한 필드만 선택 (최적화)
+    // Supabase JOIN 쿼리: Project 테이블을 기준으로 users와 Category를 조인
+    // users 테이블의 외래키 관계 이름이 'users'라고 가정 (보통 테이블명)
+    // 만약 관계 이름이 다르면 (e.g., 'user_id_fkey') 에러가 날 수 있음 -> Introspection 필요하지만 일단 표준으로 시도
     let query = (supabase as any)
       .from('Project')
       .select(`
@@ -28,14 +30,19 @@ export async function GET(request: NextRequest) {
         title,
         thumbnail_url,
         content_text,
-        likes: Like(count),
         views,
         rendering_type,
         created_at,
+        users (
+          id,
+          nickname,
+          profile_image_url
+        ),
         Category (
           category_id,
           name
-        )
+        ),
+        likes: Like(count)
       `)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
@@ -64,39 +71,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 사용자 정보 병합: auth.admin 호출을 반복하지 않고 public.users 테이블에서 한 번에 조회합니다.
-    if (data && data.length > 0) {
-      const userIds = [...new Set(data.map((p: any) => p.user_id).filter(Boolean))] as string[];
+    // 데이터 가공 (Frontend 호환성 유지)
+    const formattedData = data?.map((project: any) => ({
+      ...project,
+      // Frontend expects 'User' object, Supabase returns 'users' object/array
+      User: Array.isArray(project.users) ? project.users[0] : project.users || {
+        username: 'Unknown',
+        profile_image_url: '/globe.svg'
+      },
+      // Map likes count
+      likes: project.likes?.[0]?.count || 0,
+    }));
 
-      if (userIds.length > 0) {
-        const { data: usersData, error: usersError } = await supabaseAdmin
-          .from('users')
-          .select('id, nickname, profile_image_url')
-          .in('id', userIds);
-
-        const userMap = new Map<string, { user_id: string; username: string; profile_image_url: string }>();
-
-        if (!usersError && Array.isArray(usersData)) {
-          usersData.forEach((u: any) => {
-            userMap.set(u.id, {
-              user_id: u.id,
-              username: u.nickname || 'Unknown',
-              profile_image_url: u.profile_image_url || '/globe.svg',
-            });
-          });
-        }
-
-        data.forEach((project: any) => {
-          project.User = userMap.get(project.user_id) || { username: 'Unknown', profile_image_url: '/globe.svg' };
-          // Map likes: Like(count) to simple count if needed, or frontend handles it
-          project.likes = project.likes?.[0]?.count || 0;
-        });
-      }
-    }
-
-    // 캐시 헤더 추가
     return NextResponse.json(
-      { projects: data || [], page, limit, hasMore: data?.length === limit },
+      { projects: formattedData || [], page, limit, hasMore: data?.length === limit },
       {
         headers: {
           'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
