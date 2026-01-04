@@ -65,21 +65,39 @@ export async function GET(request: NextRequest) {
         // users 테이블 조회 (일반 클라이언트 사용 - Admin 키 없을 때 대비)
         const targetClient = process.env.SUPABASE_SERVICE_ROLE_KEY ? supabaseAdmin : supabase;
         
-        const { data: usersData, error: usersError } = await targetClient
-          .from('users')
-          .select('*') 
-          .in('id', userIds);
+        // 가능한 테이블 이름들 (프로젝트마다 다를 수 있음)
+        const possibleTables = ['users', 'profiles', 'User'];
+        let usersData: any[] | null = null;
+        let usersError: any = null;
+
+        for (const tableName of possibleTables) {
+          const result = await targetClient
+            .from(tableName)
+            .select('*') 
+            .in('id', userIds);
+          
+          if (!result.error && result.data && result.data.length > 0) {
+            usersData = result.data;
+            console.log(`[API] Successfully fetched users from table: ${tableName}`);
+            break;
+          } else {
+            console.log(`[API] Failed to fetch from ${tableName}:`, result.error?.message || 'No data');
+            usersError = result.error;
+          }
+        }
 
         const userMap = new Map();
 
-        if (!usersError && usersData) {
+        if (usersData && usersData.length > 0) {
           usersData.forEach((u: any) => {
             // 프론트엔드가 기대하는 필드명으로 매핑 (username, avatar_url 등 다양한 케이스 대응)
             userMap.set(u.id, {
-              username: u.username || u.nickname || u.email?.split('@')[0] || 'Unknown',
-              avatar_url: u.avatar_url || u.profile_image_url || u.profileImage || '/globe.svg',
+              username: u.username || u.nickname || u.name || u.display_name || u.email?.split('@')[0] || 'Unknown',
+              avatar_url: u.avatar_url || u.profile_image_url || u.profileImage || u.image || '/globe.svg',
             });
           });
+        } else {
+          console.warn('[API] No user data found from any table. Users will show as Unknown.');
         }
 
         data.forEach((project: any) => {
