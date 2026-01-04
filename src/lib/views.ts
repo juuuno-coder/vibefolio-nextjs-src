@@ -19,7 +19,7 @@ export async function recordView(projectId: string): Promise<void> {
 
   // Check if the user has already viewed this project
   const { data, error: selectError } = await supabase
-    .from("views")
+    .from("View")
     .select("user_id")
     .eq("user_id", user.id)
     .eq("project_id", projectId)
@@ -33,7 +33,7 @@ export async function recordView(projectId: string): Promise<void> {
   // If the user has not viewed the project, add a new view
   if (!data) {
     const { error: insertError } = await supabase
-      .from("views")
+      .from("View")
       .insert({ user_id: user.id, project_id: projectId });
 
     if (insertError) {
@@ -47,7 +47,7 @@ export async function recordView(projectId: string): Promise<void> {
  */
 export async function getProjectViewCount(projectId: string): Promise<number> {
   const { count, error } = await supabase
-    .from("views")
+    .from("View")
     .select("*", { count: "exact", head: true })
     .eq("project_id", projectId);
 

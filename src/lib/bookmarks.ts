@@ -14,7 +14,7 @@ async function getUser() {
  */
 export async function getUserBookmarks(userId: string) {
   const { data, error } = await supabase
-    .from("bookmarks")
+    .from("Bookmark")
     .select("project_id")
     .eq("user_id", userId);
   if (error) {
@@ -32,7 +32,7 @@ export async function isProjectBookmarked(projectId: string): Promise<boolean> {
   if (!user) return false;
 
   const { data, error } = await supabase
-    .from("bookmarks")
+    .from("Bookmark")
     .select("project_id")
     .eq("user_id", user.id)
     .eq("project_id", projectId)
@@ -53,7 +53,7 @@ export async function addBookmark(projectId: string): Promise<void> {
   if (!user) return;
 
   const { error } = await supabase
-    .from("bookmarks")
+    .from("Bookmark")
     .insert({ user_id: user.id, project_id: projectId });
 
   if (error) {
@@ -69,7 +69,7 @@ export async function removeBookmark(projectId: string): Promise<void> {
   if (!user) return;
 
   const { error } = await supabase
-    .from("bookmarks")
+    .from("Bookmark")
     .delete()
     .eq("user_id", user.id)
     .eq("project_id", projectId);
