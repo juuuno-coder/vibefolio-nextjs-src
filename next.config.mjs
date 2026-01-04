@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // 패키지 트랜스파일 설정 (undici 관련 에러 방지)
+  transpilePackages: ['cheerio', 'undici'],
+
   // 이미지 최적화 설정
   images: {
     remotePatterns: [
@@ -41,7 +44,7 @@ const nextConfig = {
     ];
   },
 
-  // 리다이렉트 (불필요한 중복 페이지 정리)
+  // 리다이렉트
   async redirects() {
     return [
       {
