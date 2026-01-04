@@ -32,7 +32,7 @@ export async function getUserInquiries(userId: string): Promise<Inquiry[]> {
       message,
       created_at,
       status,
-      projects (
+      Project (
         title,
         users (
           username
@@ -46,7 +46,12 @@ export async function getUserInquiries(userId: string): Promise<Inquiry[]> {
     console.error("Error fetching inquiries:", error);
     return [];
   }
-  return data as Inquiry[];
+  
+  // Map 'Project' from DB to 'projects' in Interface
+  return (data || []).map((item: any) => ({
+    ...item,
+    projects: Array.isArray(item.Project) ? item.Project[0] : item.Project
+  })) as unknown as Inquiry[];
 }
 
 /**
@@ -105,7 +110,7 @@ export async function getAllInquiries(): Promise<Inquiry[]> {
       message,
       created_at,
       status,
-      projects (
+      Project (
         title,
         users (
           username
@@ -118,7 +123,12 @@ export async function getAllInquiries(): Promise<Inquiry[]> {
     console.error("Error fetching all inquiries:", error);
     return [];
   }
-  return data as Inquiry[];
+  
+  // Map 'Project' from DB to 'projects' in Interface
+  return (data || []).map((item: any) => ({
+    ...item,
+    projects: Array.isArray(item.Project) ? item.Project[0] : item.Project
+  })) as unknown as Inquiry[];
 }
 
 /**
