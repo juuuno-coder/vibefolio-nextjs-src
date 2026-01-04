@@ -1,91 +1,108 @@
 // src/lib/comments.ts
-
-/**
- * 댓글 관리 유틸리티
- * 로컬 스토리지를 사용하여 댓글을 영구 저장
- */
+import { supabase } from "./supabase";
 
 export interface Comment {
   id: string;
-  projectId: string;
-  username: string;
-  userAvatar: string;
+  project_id: string;
+  user_id: string;
   content: string;
-  createdAt: string;
+  created_at: string;
+  profiles: {
+    username: string;
+    avatar_url: string;
+  };
 }
 
-const COMMENTS_KEY = "project_comments";
-
 /**
- * 프로젝트의 모든 댓글 가져오기
+ * Get all comments for a project.
  */
-export function getProjectComments(projectId: string): Comment[] {
-  try {
-    const commentsData = localStorage.getItem(COMMENTS_KEY);
-    if (!commentsData) return [];
+export async function getProjectComments(projectId: string): Promise<Comment[]> {
+  const { data, error } = await supabase
+    .from("comments")
+    .select(`
+      id,
+      project_id,
+      user_id,
+      content,
+      created_at,
+      profiles (
+        username,
+        avatar_url
+      )
+    `)
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false });
 
-    const allComments: Comment[] = JSON.parse(commentsData);
-    return allComments
-      .filter((comment) => comment.projectId === projectId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  } catch (error) {
-    console.error("댓글 로드 실패:", error);
+  if (error) {
+    console.error("Error fetching comments:", error);
     return [];
   }
+
+  return data as Comment[];
 }
 
 /**
- * 댓글 추가
+ * Add a comment to a project.
  */
-export function addComment(
-  projectId: string,
-  content: string,
-  username: string = "현재 사용자",
-  userAvatar: string = "/globe.svg"
-): Comment {
-  try {
-    const commentsData = localStorage.getItem(COMMENTS_KEY);
-    const allComments: Comment[] = commentsData ? JSON.parse(commentsData) : [];
+export async function addComment(projectId: string, content: string): Promise<Comment | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
 
-    const newComment: Comment = {
-      id: Date.now().toString(),
-      projectId,
-      username,
-      userAvatar,
+  const { data, error } = await supabase
+    .from("comments")
+    .insert({
+      project_id: projectId,
+      user_id: user.id,
       content,
-      createdAt: new Date().toISOString(),
-    };
+    })
+    .select(`
+      id,
+      project_id,
+      user_id,
+      content,
+      created_at,
+      profiles (
+        username,
+        avatar_url
+      )
+    `)
+    .single();
 
-    allComments.push(newComment);
-    localStorage.setItem(COMMENTS_KEY, JSON.stringify(allComments));
+  if (error) {
+    console.error("Error adding comment:", error);
+    return null;
+  }
 
-    return newComment;
-  } catch (error) {
-    console.error("댓글 추가 실패:", error);
-    throw error;
+  return data as Comment;
+}
+
+/**
+ * Delete a comment.
+ */
+export async function deleteComment(commentId: string): Promise<void> {
+  const { error } = await supabase
+    .from("comments")
+    .delete()
+    .eq("id", commentId);
+
+  if (error) {
+    console.error("Error deleting comment:", error);
   }
 }
 
 /**
- * 댓글 삭제
+ * Get the comment count for a project.
  */
-export function deleteComment(commentId: string): void {
-  try {
-    const commentsData = localStorage.getItem(COMMENTS_KEY);
-    if (!commentsData) return;
+export async function getCommentCount(projectId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("comments")
+    .select("*", { count: "exact", head: true })
+    .eq("project_id", projectId);
 
-    const allComments: Comment[] = JSON.parse(commentsData);
-    const filteredComments = allComments.filter((comment) => comment.id !== commentId);
-    localStorage.setItem(COMMENTS_KEY, JSON.stringify(filteredComments));
-  } catch (error) {
-    console.error("댓글 삭제 실패:", error);
+  if (error) {
+    console.error("Error getting comment count:", error);
+    return 0;
   }
-}
 
-/**
- * 프로젝트의 댓글 수 가져오기
- */
-export function getCommentCount(projectId: string): number {
-  const comments = getProjectComments(projectId);
-  return comments.length;
+  return count || 0;
 }

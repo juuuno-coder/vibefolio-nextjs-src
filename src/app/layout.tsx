@@ -1,17 +1,16 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-// 🚨 Header 컴포넌트를 임포트합니다. 경로가 정확한지 확인해주세요.
 import { TopHeader } from "@/components/TopHeader";
 import { Header } from "@/components/Header";
-// 🚨 Footer 컴포넌트를 임포트합니다. (Footer 파일명 확인)
 import { Footer } from "@/components/Footer";
-// 기존 폰트 임포트를 유지합니다.
 import { Geist, Geist_Mono, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { ClientProviders } from "@/components/ClientProviders";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { Toaster } from "@/components/ui/sonner";
 import NextTopLoader from 'nextjs-toploader';
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AutoLogoutProvider } from "@/components/AutoLogoutProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -64,34 +63,38 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${notoSansKr.variable} font-sans antialiased bg-white min-h-screen custom-scrollbar overscroll-none`}
       >
         <ClientProviders>
-            <NextTopLoader 
-              color="#16A34A"
-              initialPosition={0.08}
-              crawlSpeed={200}
-              height={3}
-              crawl={true}
-              showSpinner={false}
-              easing="ease"
-              speed={200}
-              shadow="0 0 10px #16A34A,0 0 5px #16A34A"
-            />
-            {/* TopHeader - 최상단 배너 */}
-            <TopHeader />
-            
-            {/* Header 컴포넌트 - Suspense로 감싸서 useSearchParams 에러 방지 */}
-            <Suspense fallback={<div className="h-16 bg-white" />}>
-              <Header />
-            </Suspense>
+          <AutoLogoutProvider>
+            <TooltipProvider>
+              <NextTopLoader 
+                color="#16A34A"
+                initialPosition={0.08}
+                crawlSpeed={200}
+                height={3}
+                crawl={true}
+                showSpinner={false}
+                easing="ease"
+                speed={200}
+                shadow="0 0 10px #16A34A,0 0 5px #16A34A"
+              />
+              {/* TopHeader - 최상단 배너 */}
+              <TopHeader />
+              
+              {/* Header 컴포넌트 - Suspense로 감싸서 useSearchParams 에러 방지 */}
+              <Suspense fallback={<div className="h-16 bg-white" />}>
+                <Header />
+              </Suspense>
 
-          {/* 메인 콘텐츠 영역 - TopHeader와 Header 높이만큼 padding */}
-          <div className="min-h-screen">
-            {children}
-          </div>
+              {/* 메인 콘텐츠 영역 */}
+              <div className="min-h-screen fade-in">
+                {children}
+              </div>
 
-          {/* Footer 컴포넌트 */}
-          <Footer />
-          <ScrollToTop />
-          <Toaster />
+              {/* Footer 컴포넌트 */}
+              <Footer />
+              <ScrollToTop />
+              <Toaster />
+            </TooltipProvider>
+          </AutoLogoutProvider>
         </ClientProviders>
       </body>
     </html>
