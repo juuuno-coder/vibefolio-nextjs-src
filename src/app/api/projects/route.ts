@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
         title,
         thumbnail_url,
         content_text,
-        likes_count,
-        views_count,
+        likes: Like(count),
+        views,
         rendering_type,
         created_at,
         Category (
@@ -88,6 +88,8 @@ export async function GET(request: NextRequest) {
 
         data.forEach((project: any) => {
           project.User = userMap.get(project.user_id) || { username: 'Unknown', profile_image_url: '/globe.svg' };
+          // Map likes: Like(count) to simple count if needed, or frontend handles it
+          project.likes = project.likes?.[0]?.count || 0;
         });
       }
     }
@@ -119,9 +121,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 });
     }
 
+    // Insert using 'Project' table (Capitalized)
     const { data, error } = await (supabaseAdmin as any)
       .from('Project')
-      .insert([{ user_id, category_id, title, content_text, thumbnail_url, rendering_type, custom_data }] as any)
+      .insert([{
+        user_id,
+        category_id,
+        title,
+        content_text,
+        thumbnail_url,
+        rendering_type,
+        custom_data,
+        views: 0 // Initialize views
+      }] as any)
       .select()
       .single();
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
+import toast from "react-hot-toast"; // Using react-hot-toast for better UI
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import TiptapEditor from "@/components/editor/TiptapEditor";
@@ -28,12 +28,13 @@ import {
   faUpload,
   faCheck,
   faArrowLeft,
+  faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import { supabase } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/supabase/storage";
 import { GENRE_TO_CATEGORY_ID } from '@/lib/constants';
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
-import { Editor } from "@tiptap/react"; // Import Editor type
+import { Editor } from "@tiptap/react";
 
 // 장르 카테고리
 const genreCategories: { id: string; label: string; icon: IconDefinition }[] = [
@@ -99,23 +100,26 @@ export default function TiptapUploadPage() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        alert("프로젝트를 등록하려면 먼저 로그인해주세요.");
+        toast.error("프로젝트를 등록하려면 먼저 로그인해주세요.");
         router.push("/login");
         return;
       }
       setUserId(user.id);
-      // ... (rest of init logic remains same until next hook)
 
       // 로컬스토리지에서 임시 저장된 데이터 복구
       const savedDraft = localStorage.getItem('project_draft');
       if (savedDraft) {
         try {
           const draft = JSON.parse(savedDraft);
+          // confirm -> custom UI or toast? Use window.confirm for simplicity for now
+          // but toast with action is better. Using toast action requires interaction handling.
+          // stick to confirm for restoration as it's standard pattern
           if (confirm('임시 저장된 작업이 있습니다. 불러오시겠습니까?')) {
             setTitle(draft.title || '');
             setContent(draft.content || '');
             setSelectedGenres(draft.genres || []);
             setSelectedFields(draft.fields || []);
+            toast.success("임시 저장된 작업을 불러왔습니다.");
           }
         } catch (e) {
           console.error('Draft load error:', e);
@@ -126,13 +130,14 @@ export default function TiptapUploadPage() {
       try {
         const { data: userData } = await supabase
           .from('users')
-          .select('interests')
+          .select('interests') // Assuming 'interests' is a JSONB column in users table or similar
           .eq('id', user.id)
           .single();
 
-        if (userData) {
+        // Safe access to interests if it exists
+        if (userData && (userData as any).interests) { // Using 'as any' only if needed based on schema types
           const interests = (userData as any).interests;
-          if (interests && !savedDraft) {
+          if (!savedDraft) {
             if (interests.genres) setSelectedGenres(interests.genres);
             if (interests.fields) setSelectedFields(interests.fields);
           }
@@ -147,30 +152,33 @@ export default function TiptapUploadPage() {
 
   // 자동 저장 (30초마다)
   useEffect(() => {
-    if (content) {
+    if (content || title) {
       const interval = setInterval(() => {
         const draft = {
           title,
-          content, 
+          content: editor?.getHTML() || content, // Use current editor content if available
           genres: selectedGenres,
           fields: selectedFields,
           savedAt: new Date().toISOString(),
         };
         localStorage.setItem('project_draft', JSON.stringify(draft));
         setLastSaved(new Date());
-        // 조용한 자동저장 알림 (번거로우지 않게)
-        console.log('[Draft] 자동 저장됨:', new Date().toLocaleTimeString());
       }, 30000); // 30초
 
       return () => clearInterval(interval);
     }
-  }, [title, content, selectedGenres, selectedFields]);
+  }, [title, content, selectedGenres, selectedFields, editor]);
 
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validating file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('이미지 파일만 업로드 가능합니다.');
+        return;
+      }
       if (file.size > 10 * 1024 * 1024) {
-        alert('이미지 크기는 10MB를 초과할 수 없습니다.');
+        toast.error('이미지 크기는 10MB를 초과할 수 없습니다.');
         return;
       }
       setCoverImage(file);
@@ -197,8 +205,13 @@ export default function TiptapUploadPage() {
   // Step 1 -> Step 2
   const handleContinue = () => {
     const currentContent = editor ? editor.getHTML() : content;
-    if (!currentContent || currentContent === '<p></p>') {
-      alert('프로젝트 내용을 작성해주세요.');
+    // Check if content has meaningful text/media
+    // Simple check: strip tags and trim, check length > 0 OR contains <img / <iframe
+    const hasText = currentContent.replace(/<[^>]*>/g, '').trim().length > 0;
+    const hasMedia = currentContent.includes('<img') || currentContent.includes('<iframe');
+
+    if (!hasText && !hasMedia) {
+      toast.error('프로젝트 내용을 작성해주세요.');
       return;
     }
     // Update local content state to match editor
@@ -212,19 +225,20 @@ export default function TiptapUploadPage() {
     if (isSubmitting) return;
 
     if (!title.trim()) {
-      alert('프로젝트 제목을 입력해주세요.');
+      toast.error('프로젝트 제목을 입력해주세요.');
       return;
     }
     if (!coverImage) {
-      alert('커버 이미지를 선택해주세요.');
+      toast.error('커버 이미지를 선택해주세요.');
       return;
     }
     if (selectedGenres.length === 0) {
-      alert('최소 1개의 장르를 선택해주세요.');
+      toast.error('최소 1개의 장르를 선택해주세요.');
       return;
     }
 
     setIsSubmitting(true);
+    const loadingToast = toast.loading('프로젝트를 발행하고 있습니다...');
 
     try {
       if (!userId || !coverImage) throw new Error('필수 정보가 누락되었습니다.');
@@ -258,11 +272,11 @@ export default function TiptapUploadPage() {
       // 임시 저장 데이터 삭제
       localStorage.removeItem('project_draft');
 
-      alert('프로젝트가 성공적으로 발행되었습니다!');
+      toast.success('프로젝트가 성공적으로 발행되었습니다!', { id: loadingToast });
       router.push('/');
     } catch (error: any) {
       console.error('Submit Error:', error);
-      alert(error.message || '알 수 없는 오류가 발생했습니다.');
+      toast.error(error.message || '알 수 없는 오류가 발생했습니다.', { id: loadingToast });
     } finally {
       setIsSubmitting(false);
     }
@@ -280,12 +294,14 @@ export default function TiptapUploadPage() {
   const handleSidebarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && editor) {
+      const loadingToast = toast.loading('이미지를 업로드 중입니다...');
       try {
         const url = await uploadImage(file);
         editor.chain().focus().setImage({ src: url }).run();
+        toast.success('이미지가 추가되었습니다.', { id: loadingToast });
       } catch (error) {
         console.error('Image upload failed:', error);
-        alert('이미지 업로드에 실패했습니다.');
+        toast.error('이미지 업로드에 실패했습니다.', { id: loadingToast });
       } finally {
         if (sidebarFileInputRef.current) sidebarFileInputRef.current.value = '';
       }
@@ -403,7 +419,7 @@ export default function TiptapUploadPage() {
   const handleAssetFileSelect = async (files: FileList) => {
     // TODO: Implement asset upload and management
     console.log('Selected assets:', files);
-    alert(`${files.length}개의 에셋이 선택되었습니다. (기능 준비 중)`);
+    toast(`${files.length}개의 에셋이 선택되었습니다. (기능 준비 중)`, { icon: 'ℹ️' });
   };
 
   const handleCtaSave = (type: "follow" | "none") => {
@@ -610,7 +626,7 @@ export default function TiptapUploadPage() {
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <FontAwesomeIcon icon={faSpinner} className="w-5 h-5 animate-spin" />
                     발행 중...
                   </span>
                 ) : (
@@ -662,7 +678,7 @@ export default function TiptapUploadPage() {
                 const draft = { title, content: editor?.getHTML() || content, genres: selectedGenres, fields: selectedFields, savedAt: new Date().toISOString() };
                 localStorage.setItem('project_draft', JSON.stringify(draft));
                 setLastSaved(new Date());
-                alert('임시 저장되었습니다.');
+                toast.success('임시 저장되었습니다.');
               }}
              >
                임시 저장

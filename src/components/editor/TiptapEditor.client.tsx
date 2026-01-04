@@ -13,6 +13,7 @@ import { FontFamily } from '@tiptap/extension-font-family';
 import { TextAlign } from '@tiptap/extension-text-align';
 import { Underline } from '@tiptap/extension-underline';
 import { Color } from '@tiptap/extension-color';
+import { Dropcursor } from '@tiptap/extension-dropcursor';
 import { Button } from '@/components/ui/button';
 import {
   Bold,
@@ -31,6 +32,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { uploadImage } from '@/lib/supabase/storage';
+import { toast } from 'react-hot-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -139,7 +141,6 @@ export default function TiptapEditor({
       }),
       BubbleMenuExtension,
       FloatingMenuExtension,
-      // 새로 추가된 확장
       TextStyle,
       FontFamily.configure({
         types: ['textStyle'],
@@ -151,11 +152,43 @@ export default function TiptapEditor({
       Color.configure({
         types: ['textStyle'],
       }),
+      Dropcursor.configure({
+        color: '#22C55E', // Green cursor for drops
+        width: 2,
+      }),
     ],
     content,
     editorProps: {
       attributes: {
         class: 'prose prose-lg max-w-none focus:outline-none min-h-[500px] px-8 py-6 editor-blocks',
+      },
+      handleDrop: (view, event, slice, moved) => {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+          const file = event.dataTransfer.files[0]; // Handle first file
+          if (file.type.startsWith('image/')) {
+            const { schema } = view.state;
+            const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
+
+            if (coordinates) {
+               setUploading(true);
+               const toastId = toast.loading('이미지를 업로드 중입니다...');
+
+               uploadImage(file).then((url) => {
+                 const node = schema.nodes.customImage.create({ src: url });
+                 const transaction = view.state.tr.insert(coordinates.pos, node);
+                 view.dispatch(transaction);
+                 toast.success('이미지가 추가되었습니다.', { id: toastId });
+               }).catch((err) => {
+                 console.error(err);
+                 toast.error('이미지 업로드에 실패했습니다.', { id: toastId });
+               }).finally(() => {
+                 setUploading(false);
+               });
+               return true; // Handled
+            }
+          }
+        }
+        return false;
       },
     },
     onUpdate: ({ editor }) => {
@@ -180,12 +213,14 @@ export default function TiptapEditor({
       
       if (file && typeof pos === 'number') {
         setUploading(true);
+        const toastId = toast.loading('이미지를 교체 중입니다...');
         try {
           const url = await uploadImage(file, 'projects');
           editor.commands.updateAttributes('customImage', { src: url });
+          toast.success('이미지가 교체되었습니다.', { id: toastId });
         } catch (error) {
           console.error('Image replacement failed:', error);
-          alert('이미지 교체에 실패했습니다.');
+          toast.error('이미지 교체에 실패했습니다.', { id: toastId });
         } finally {
           setUploading(false);
         }
@@ -204,12 +239,14 @@ export default function TiptapEditor({
     const file = e.target.files?.[0];
     if (file && editor) {
       setUploading(true);
+      const toastId = toast.loading('이미지를 업로드 중입니다...');
       try {
         const url = await uploadImage(file);
         editor.chain().focus().setImage({ src: url }).run();
+        toast.success('이미지가 추가되었습니다.', { id: toastId });
       } catch (error) {
         console.error('Image upload failed:', error);
-        alert('이미지 업로드에 실패했습니다.');
+        toast.error('이미지 업로드에 실패했습니다.', { id: toastId });
       } finally {
         setUploading(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
