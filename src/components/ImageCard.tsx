@@ -1,13 +1,12 @@
-// src/components/ImageCard.tsx
-
 "use client";
 
 import React, { forwardRef, useState } from "react";
-import Image from "next/image";
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { Heart, BarChart3, Image as ImageIcon } from 'lucide-react';
 import { addCommas } from "@/lib/format/comma";
 import { useLikes } from "@/hooks/useLikes";
+import { toast } from "sonner";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
 
 // 기본 폴백 이미지
@@ -40,9 +39,9 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
   ({ props, onClick, ...rest }, ref) => {
     const [imgError, setImgError] = useState(false);
     const [avatarError, setAvatarError] = useState(false);
+    const { user } = useAuth();
 
     // ✅ Hook 호출: 조건부 리턴(if (!props)) 이전에 호출하여 Rule violation 방지
-    // props?.id가 없으면 빈 문자열을 넘기고, hook 내부의 enabled 옵션으로 실행을 막음
     const { isLiked, toggleLike } = useLikes(props?.id, props?.likes);
 
     if (!props) return null;
@@ -55,9 +54,22 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
     const views = props.views;
     const altText = props.alt_description || props.title || '@THUMBNAIL';
 
+    // 화면상의 좋아요 수 계산 (Optimistic UI 보정)
+    const displayLikes = likes + (isLiked ? 1 : 0) - (props.likes && isLiked ? 0 : 0);
+
+    const handleLikeClick = (e: React.MouseEvent) => {
+      e.stopPropagation(); // 카드 클릭(모달 열기) 방지
+      
+      if (!user) {
+        toast.error("로그인이 필요합니다.");
+        return;
+      }
+      toggleLike();
+    };
+
     return (
       <div
-        className="masonry-item behance-card cursor-pointer group" // 중복 호버 클래스 제거
+        className="masonry-item behance-card cursor-pointer group"
         ref={ref}
         onClick={onClick}
         {...rest}
@@ -88,9 +100,13 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
           {/* 호버 시 나타나는 정보 */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
             <div className="flex items-center gap-6 text-white">
-              <div className="flex items-center gap-2">
-                <Heart className="w-5 h-5" />
-                <span className="font-medium">{addCommas(likes)}</span>
+              {/* 하트 버튼 (이미지 오버레이) */}
+              <div
+                className="flex items-center gap-2 cursor-pointer hover:scale-110 transition-transform"
+                onClick={handleLikeClick}
+              >
+                <Heart className={cn("w-5 h-5", isLiked ? 'fill-red-500 text-red-500' : '')} />
+                <span className="font-medium">{addCommas(displayLikes)}</span>
               </div>
               {views !== undefined && (
                   <div className="flex items-center gap-2">
@@ -102,7 +118,7 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
           </div>
         </div>
 
-        {/* 카드 정보 */}
+        {/* 카드 정보 (하단) */}
         <div className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -121,14 +137,10 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
             <div className="flex items-center gap-3 text-secondary">
               <div 
                 className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={(e) => {
-                  e.stopPropagation(); // 카드 클릭 이벤트 전파 방지
-                  toggleLike();
-                }}
+                onClick={handleLikeClick}
               >
                 <Heart className={cn("w-4 h-4", isLiked ? "fill-red-500 text-red-500" : "text-red-400")} />
-                <span className="text-sm font-semibold text-gray-700">{addCommas(likes + (isLiked ? 1 : 0) - (props.likes && isLiked ? 0 : 0))}</span> 
-                {/* 간단한 카운트 보정: 실제로는 useLikes에서 카운트까지 관리하는게 좋으나 일단 UI 반응만 */}
+                <span className="text-sm font-semibold text-gray-700">{addCommas(displayLikes)}</span>
               </div>
               {views !== undefined && (
                   <div className="flex items-center gap-1.5">

@@ -35,11 +35,7 @@ export function useLikes(projectId?: string, initialLikes: number = 0) {
     enabled: !!projectId && !!userId, // projectId와 userId가 있을 때만 실행
   });
 
-  // 2. 좋아요 수 실시간 조회 (선택 사항: 실시간성을 위해 query 사용 가능하지만, 일단 props나 Optimistic update로 처리)
-  // 여기서는 별도 fetch 없이 initialLikes와 mutation 결과를 조합해 관리하거나, 
-  // 리스트 조회 시 가져온 값을 믿습니다.
-
-  // 3. 좋아요 토글 Mutation
+  // 2. 좋아요 토글 Mutation
   const toggleLikeMutation = useMutation({
     mutationFn: async ({ currentIsLiked }: { currentIsLiked: boolean }) => {
       if (!projectId || !userId) throw new Error("로그인이 필요하거나 잘못된 프로젝트입니다.");
@@ -75,17 +71,14 @@ export function useLikes(projectId?: string, initialLikes: number = 0) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["like", projectId, userId] });
-      // 프로젝트 리스트나 상세 정보도 갱신하면 좋음
-      // queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 
   const toggleLike = () => {
+    // Note: ImageCard에서 이미 로그인 체크를 하지만, 훅 자체의 안전성을 위해 남겨둠
     if (!userId) {
-      if (confirm("로그인이 필요한 기능입니다. 로그인하시겠습니까?")) {
-        window.location.href = "/login";
-      }
-      return;
+       // 호출부에서 처리하므로 여기서는 return만 해도 됨
+       return;
     }
     toggleLikeMutation.mutate({ currentIsLiked: isLiked });
   };
