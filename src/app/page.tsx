@@ -102,20 +102,24 @@ function HomeContent() {
         if (res.ok && data.projects) {
           const enriched = data.projects.map((proj: any) => {
             // API에서 User 정보를 함께 받아오므로 getUserInfo 호출 불필요
-            const userInfo = proj.User || { username: 'Unknown', profile_image_url: '/globe.svg' };
+            // users(소문자) 또는 User(대문자) 모두 체크
+            const userInfo = proj.User || proj.users || { username: 'Unknown', profile_image_url: '/globe.svg' };
             
+            // 이미지 URL: thumbnail_url, image_url, url 등 가능한 모든 필드 체크
+            const imgUrl = proj.thumbnail_url || proj.image_url || proj.url || "/placeholder.jpg";
+
             return {
               id: proj.project_id.toString(),
               title: proj.title,
               urls: { 
-                full: proj.thumbnail_url || "/placeholder.jpg", 
-                regular: proj.thumbnail_url || "/placeholder.jpg" 
+                full: imgUrl, 
+                regular: imgUrl 
               },
               user: { 
-                username: userInfo.username, 
+                username: userInfo.username || userInfo.nickname || 'Unknown', 
                 profile_image: { 
-                  small: userInfo.profile_image_url, 
-                  large: userInfo.profile_image_url 
+                  small: userInfo.profile_image_url || userInfo.avatar_url || '/globe.svg', 
+                  large: userInfo.profile_image_url || userInfo.avatar_url || '/globe.svg' 
                 } 
               },
               likes: proj.likes_count || proj.likes || 0,
