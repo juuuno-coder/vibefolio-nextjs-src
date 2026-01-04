@@ -36,10 +36,9 @@ export async function GET(request: NextRequest) {
         thumbnail_url,
         content_text,
         likes_count,
-        views_count,
         rendering_type,
         created_at,
-        users (
+        users!user_id (
           username,
           avatar_url
         ),
