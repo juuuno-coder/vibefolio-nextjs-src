@@ -26,10 +26,10 @@ export async function GET(request: NextRequest) {
     
     const offset = (page - 1) * limit;
 
-    // 필요한 필드만 선택 (최적화) - 안전하게 모든 컬럼 조회
+    // 필요한 필드만 선택 (최적화) - 안전하게 모든 컬럼 조회 (관계 제거)
     let query = (supabase as any)
       .from('Project')
-      .select('*, Category(category_id, name)')
+      .select('*') 
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -62,8 +62,10 @@ export async function GET(request: NextRequest) {
       const userIds = [...new Set(data.map((p: any) => p.user_id).filter(Boolean))] as string[];
 
       if (userIds.length > 0) {
-        // users 테이블 조회 (모든 필드 가져와서 안전하게 매핑)
-        const { data: usersData, error: usersError } = await supabaseAdmin
+        // users 테이블 조회 (일반 클라이언트 사용 - Admin 키 없을 때 대비)
+        const targetClient = process.env.SUPABASE_SERVICE_ROLE_KEY ? supabaseAdmin : supabase;
+        
+        const { data: usersData, error: usersError } = await targetClient
           .from('users')
           .select('*') 
           .in('id', userIds);
