@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const initializedRef = useRef(false);
   const router = useRouter();
 
-  // ====== Supabase Metadata에서 프로필 로드 ======
+  // ====== Supabase Metadata에서 프로필 로드 (DB 연결 X) ======
   const loadProfileFromMetadata = useCallback((currentUser: User): UserProfile => {
     // Supabase Auth 자체 메타데이터 우선 사용
     const metadata = currentUser.user_metadata || {};
@@ -51,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (u) {
       // DB 조회 없이 즉시 메타데이터로 설정
       const profile = loadProfileFromMetadata(u);
+      console.log("[Auth] Profile loaded from Metadata:", profile.nickname);
       setUserProfile(profile);
     } else {
       setUserProfile(null);
@@ -64,11 +65,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const init = async () => {
       try {
+        console.log("[Auth] Initializing (Auth-Only Mode)...");
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         if (currentSession?.user) {
+          console.log("[Auth] Session found:", currentSession.user.email);
           await updateState(currentSession, currentSession.user);
         } else {
+          console.log("[Auth] No session");
           await updateState(null, null);
         }
       } catch (e) {
@@ -81,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // 상태 변경 감시
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      console.log(`[Auth] Event: ${event}`);
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
         if (currentSession?.user) {
           await updateState(currentSession, currentSession.user);
@@ -98,8 +103,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     setLoading(true);
     await supabase.auth.signOut();
-    // 로컬 스토리지 삭제 대신 상태 업데이트에 의존
-    // AuthStateChange 'SIGNED_OUT' 이벤트가 처리함
+    // 로컬 스토리지 강제 청소 (캐시 방지)
+    if (typeof window !== 'undefined') {
+      localStorage.clear();
+      sessionStorage.clear();
+    }
     router.push("/");
     router.refresh();
   };
@@ -113,6 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin: userProfile?.role === "admin",
     signOut,
     refreshUserProfile: async () => {
+      // DB 조회가 아니므로 비동기일 필요는 없으나 인터페이스 유지를 위해 async 유지
       const { data: { user: u } } = await supabase.auth.getUser();
       if (u) {
         const p = loadProfileFromMetadata(u);

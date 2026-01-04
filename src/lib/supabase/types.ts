@@ -128,7 +128,7 @@ export interface Database {
           created_at?: string;
         };
       };
-      comments: {
+      Comment: {
         Row: {
           comment_id: number;
           user_id: string; // UUID

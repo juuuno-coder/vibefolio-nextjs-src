@@ -14,7 +14,7 @@ async function getUser() {
  */
 export async function getUserLikes(userId: string) {
   const { data, error } = await supabase
-    .from("Like")
+    .from("likes")
     .select("project_id")
     .eq("user_id", userId);
   if (error) {
@@ -32,7 +32,7 @@ export async function isProjectLiked(projectId: string): Promise<boolean> {
   if (!user) return false;
 
   const { data, error } = await supabase
-    .from("Like")
+    .from("likes")
     .select("project_id")
     .eq("user_id", user.id)
     .eq("project_id", projectId)
@@ -53,7 +53,7 @@ export async function addLike(projectId: string): Promise<void> {
   if (!user) return;
 
   const { error } = await supabase
-    .from("Like")
+    .from("likes")
     .insert({ user_id: user.id, project_id: projectId });
 
   if (error) {
@@ -69,7 +69,7 @@ export async function removeLike(projectId: string): Promise<void> {
   if (!user) return;
 
   const { error } = await supabase
-    .from("Like")
+    .from("likes")
     .delete()
     .eq("user_id", user.id)
     .eq("project_id", projectId);
@@ -98,7 +98,7 @@ export async function toggleLike(projectId: string): Promise<boolean> {
  */
 export async function getProjectLikeCount(projectId: string): Promise<number> {
   const { count, error } = await supabase
-    .from("Like")
+    .from("likes")
     .select("*", { count: "exact", head: true })
     .eq("project_id", projectId);
 

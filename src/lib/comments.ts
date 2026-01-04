@@ -1,16 +1,16 @@
 // src/lib/comments.ts
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "./supabase";
 
 export interface Comment {
-  comment_id: number;
-  project_id: number;
+  id: string;
+  project_id: string;
   user_id: string;
   content: string;
   created_at: string;
-  users: {
-    nickname: string | null;
-    profile_image_url: string | null;
-  } | null;
+  profiles: {
+    username: string;
+    avatar_url: string;
+  };
 }
 
 /**
@@ -20,14 +20,14 @@ export async function getProjectComments(projectId: string): Promise<Comment[]> 
   const { data, error } = await supabase
     .from("comments")
     .select(`
-      comment_id,
+      id,
       project_id,
       user_id,
       content,
       created_at,
-      users (
-        nickname,
-        profile_image_url
+      profiles (
+        username,
+        avatar_url
       )
     `)
     .eq("project_id", projectId)
@@ -51,19 +51,19 @@ export async function addComment(projectId: string, content: string): Promise<Co
   const { data, error } = await supabase
     .from("comments")
     .insert({
-      project_id: parseInt(projectId),
+      project_id: projectId,
       user_id: user.id,
       content,
-    } as any) // Safe cast to bypass 'never' type inference issue in some supabase-js versions/setups
+    })
     .select(`
-      comment_id,
+      id,
       project_id,
       user_id,
       content,
       created_at,
-      users (
-        nickname,
-        profile_image_url
+      profiles (
+        username,
+        avatar_url
       )
     `)
     .single();
@@ -79,11 +79,11 @@ export async function addComment(projectId: string, content: string): Promise<Co
 /**
  * Delete a comment.
  */
-export async function deleteComment(commentId: number): Promise<void> {
+export async function deleteComment(commentId: string): Promise<void> {
   const { error } = await supabase
     .from("comments")
     .delete()
-    .eq("comment_id", commentId);
+    .eq("id", commentId);
 
   if (error) {
     console.error("Error deleting comment:", error);

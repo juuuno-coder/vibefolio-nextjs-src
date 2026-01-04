@@ -1,7 +1,6 @@
-// src/components/CollectionModal.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Folder, Plus, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Collection {
   collection_id: string;
@@ -32,105 +30,137 @@ export function CollectionModal({
   onOpenChange,
   projectId,
 }: CollectionModalProps) {
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [newCollectionName, setNewCollectionName] = useState("");
   const [showNewForm, setShowNewForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadingCollections, setLoadingCollections] = useState(false);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
-  const queryClient = useQueryClient();
 
-  // Fetch collections
-  const { data: collections = [], isLoading: loadingCollections } = useQuery({
-    queryKey: ['collections'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+  useEffect(() => {
+    if (open) {
+      loadCollections();
+      setSelectedCollectionId(null);
+    }
+  }, [open]);
 
-      const { data, error } = await supabase
-        .from('Collection')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+  const loadCollections = async () => {
+    setLoadingCollections(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
 
-      if (error) throw error;
-      return data as Collection[];
-    },
-    enabled: open, // Fetch when modal opens
-  });
+      const res = await fetch('/api/collections', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        setCollections(data.collections || []);
+      }
+    } catch (error) {
+      console.error('컬렉션 로드 실패:', error);
+    } finally {
+      setLoadingCollections(false);
+    }
+  };
 
-  // Create collection mutation
-  const { mutate: createCollection, isPending: creating } = useMutation({
-    mutationFn: async (name: string) => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Not authenticated");
+  const createCollection = async () => {
+    const trimmedName = newCollectionName.trim();
+    
+    if (!trimmedName) {
+      toast.error('컬렉션 이름을 입력해주세요.');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('로그인이 필요합니다.');
+        setLoading(false);
+        return;
+      }
 
-        // Use 'as any' safely here because type definitions for Insert might be strict about nullable fields
-        // or just ensure strict type conformity.
-        const { data, error } = await supabase
-            .from('Collection')
-            .insert({
-                user_id: user.id,
-                name: name,
-                description: null
-            } as any)
-            .select()
-            .single();
+      console.log('컬렉션 생성 시도:', trimmedName);
 
-        if (error) throw error;
-        // Cast data to Collection to help typescript inference if it failed
-        return data as unknown as Collection;
-    },
-    onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: ['collections'] });
+      const res = await fetch('/api/collections', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          name: trimmedName,
+          description: ''
+        })
+      });
+
+      const data = await res.json();
+      console.log('API 응답:', res.status, data);
+
+      if (res.ok) {
+        setCollections(prev => [data.collection, ...prev]);
         setNewCollectionName('');
         setShowNewForm(false);
-        toast.success(`'${data.name}' 컬렉션이 생성되었습니다.`);
-        setSelectedCollectionId(data.collection_id);
-    },
-    onError: (error) => {
-        console.error(error);
-        toast.error("컬렉션 생성에 실패했습니다.");
+        toast.success('컬렉션이 생성되었습니다!', {
+          description: `'${trimmedName}' 컬렉션을 선택해주세요.`,
+        });
+        // 새로 만든 컬렉션 선택
+        setSelectedCollectionId(data.collection.collection_id);
+      } else {
+        toast.error(data.error || '컬렉션 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('컬렉션 생성 실패:', error);
+      toast.error('컬렉션 생성 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
     }
-  });
+  };
 
-  // Add to collection mutation
-  const { mutate: addToCollection } = useMutation({
-    mutationFn: async (collectionId: string) => {
-        // Check if already added
-        const { data: existing } = await supabase
-            .from('CollectionItem')
-            .select('*')
-            .eq('collection_id', collectionId)
-            .eq('project_id', parseInt(projectId))
-            .maybeSingle(); // Use maybeSingle to avoid error if not found
+  const addToCollection = async (collectionId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('로그인이 필요합니다.');
+        return;
+      }
 
-        if (existing) {
-            // Already added - throw special error or return status
-            throw new Error("ALREADY_EXISTS");
-        }
+      console.log('컬렉션에 추가 시도:', { collectionId, projectId });
 
-        const { error } = await supabase
-            .from('CollectionItem')
-            .insert({
-                collection_id: collectionId,
-                project_id: parseInt(projectId)
-            } as any);
+      const res = await fetch(`/api/collections/${collectionId}/items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          projectId: parseInt(projectId) 
+        })
+      });
 
-        if (error) throw error;
-    },
-    onSuccess: (_, collectionId) => {
+      const data = await res.json();
+      console.log('추가 API 응답:', res.status, data);
+
+      if (res.ok) {
         const collectionName = collections.find(c => c.collection_id === collectionId)?.name || '컬렉션';
-        toast.success(`'${collectionName}'에 저장되었습니다!`);
+        toast.success('컬렉션에 저장되었습니다!', {
+          description: `'${collectionName}'에 추가되었습니다.`,
+          icon: '📁',
+        });
         onOpenChange(false);
-    },
-    onError: (error, collectionId) => {
-        if (error.message === "ALREADY_EXISTS") {
-             const collectionName = collections.find(c => c.collection_id === collectionId)?.name || '이 컬렉션';
-             toast.info(`이미 '${collectionName}'에 저장되어 있습니다.`);
-        } else {
-            console.error(error);
-            toast.error("추가에 실패했습니다.");
-        }
+      } else {
+        console.error('추가 실패:', data);
+        toast.error(data.error || '추가에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('컬렉션 추가 실패:', error);
+      toast.error('추가에 실패했습니다.');
     }
-  });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -147,12 +177,12 @@ export function CollectionModal({
                 placeholder="컬렉션 이름"
                 value={newCollectionName}
                 onChange={(e) => setNewCollectionName(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && createCollection(newCollectionName)}
+                onKeyPress={(e) => e.key === 'Enter' && createCollection()}
               />
               <div className="flex gap-2">
                 <Button
-                  onClick={() => createCollection(newCollectionName)}
-                  disabled={creating || !newCollectionName.trim()}
+                  onClick={createCollection}
+                  disabled={loading || !newCollectionName.trim()}
                   className="flex-1"
                 >
                   생성
