@@ -123,11 +123,23 @@ interface ProjectDetailModalV2Props {
   } | null;
 }
 
+// HTML 엔티티 디코딩 함수
+function unescapeHtml(html: string) {
+  if (!html) return '';
+  return html
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+}
+
 export function ProjectDetailModalV2({
   open,
   onOpenChange,
   project,
 }: ProjectDetailModalV2Props) {
+
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [following, setFollowing] = useState(false);
@@ -469,7 +481,7 @@ export function ProjectDetailModalV2({
               {project.rendering_type === 'rich_text' ? (
                 <div 
                   className="prose prose-sm max-w-full p-6 mx-auto"
-                  dangerouslySetInnerHTML={{ __html: project.description || '' }}
+                  dangerouslySetInnerHTML={{ __html: unescapeHtml(project.description || '') }}
                 />
               ) : (
                 <img
@@ -614,7 +626,7 @@ export function ProjectDetailModalV2({
                 {project.rendering_type === 'rich_text' ? (
                   <div 
                     className="prose prose-lg max-w-4xl w-full bg-white p-10 rounded-xl"
-                    dangerouslySetInnerHTML={{ __html: project.description || '' }}
+                    dangerouslySetInnerHTML={{ __html: unescapeHtml(project.description || '') }}
                   />
                 ) : (
                   <img
