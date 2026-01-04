@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     
     const offset = (page - 1) * limit;
 
-    // 필요한 필드만 선택 (최적화) - 복잡한 조인 모두 제거
+    // 필요한 필드만 선택 (최적화) - 컬럼명 불일치 방지용 최소화
     let query = (supabase as any)
       .from('Project')
       .select(`
@@ -35,10 +35,7 @@ export async function GET(request: NextRequest) {
         title,
         thumbnail_url,
         content_text,
-        likes_count,
-        views_count,
         rendering_type,
-        category_id,
         created_at
       `)
       .order('created_at', { ascending: false })
