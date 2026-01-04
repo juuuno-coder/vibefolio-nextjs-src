@@ -1,9 +1,8 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { TopHeader } from "@/components/TopHeader";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Inter, Noto_Sans_KR } from "next/font/google";
+import { Poppins, Noto_Sans_KR } from "next/font/google"; // Poppins
 import "./globals.css";
 import { ClientProviders } from "@/components/ClientProviders";
 import { ScrollToTop } from "@/components/ScrollToTop";
@@ -12,9 +11,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AutoLogoutProvider } from "@/components/AutoLogoutProvider";
 import NextTopLoader from 'nextjs-toploader';
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
+const poppins = Poppins({ // Poppins
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['latin'],
+  variable: "--font-poppins",
 });
 
 const notoSansKr = Noto_Sans_KR({
@@ -44,14 +44,13 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${notoSansKr.variable} font-sans antialiased bg-white min-h-screen custom-scrollbar overscroll-none`}
+        className={`${poppins.variable} ${notoSansKr.variable} font-sans antialiased bg-white min-h-screen custom-scrollbar overscroll-none`}
       >
-        <NextTopLoader color="#00E5BC" showSpinner={false} />
+        <NextTopLoader color="#000000" showSpinner={false} />
         <ClientProviders>
           <AutoLogoutProvider>
             <TooltipProvider>
               <div className="flex min-h-screen flex-col relative w-full overflow-x-hidden">
-                <TopHeader />
                 <Header />
                 <main className="flex-1 w-full max-w-[1920px] mx-auto pt-[60px] pb-20 fade-in">
                   <Suspense fallback={null}>

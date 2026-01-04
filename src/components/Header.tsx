@@ -2,16 +2,14 @@
 "use client";
 
 import { VibeLogo } from "./Logo";
-
 import { useEffect, useState } from "react";
-import { ChevronDown, Menu, Search, User as UserIcon } from "lucide-react";
+import { Menu, Search, User as UserIcon, X, LogOut, LayoutDashboard, User } from "lucide-react";
 import {
   Button,
   Drawer,
   DrawerContent,
   DrawerTrigger,
   Input,
-  Separator,
   Sheet,
   SheetContent,
   SheetTrigger,
@@ -21,85 +19,68 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuPortal,
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/index";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { User } from "@supabase/supabase-js";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
-const menu = [
-  { label: "발견", newest: false, dropdown: false, underline: true, path: "/" },
-  {
-    label: "연결",
-    newest: true,
-    dropdown: false,
-    underline: false,
-    path: "/recruit",
-  },
+// 메뉴 정의
+const menuItems = [
+  { label: "Product", path: "/", dropdown: true },
+  { label: "Solution", path: "/solution", dropdown: true },
+  { label: "Blog", path: "/blog", dropdown: false },
+  { label: "Owners", path: "/owners", dropdown: false },
+  { label: "Demo", path: "/demo", dropdown: true },
+  { label: "Help", path: "/help", dropdown: false },
 ];
-
-interface UserProfile {
-  username: string;
-  avatar_url: string;
-  role: string;
-}
 
 export function Header({
   onSetCategory = (value: string) => console.log("검색 요청:", value),
 }: {
   onSetCategory?: (value: string) => void;
 }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // 드롭다운 상태 직접 관리
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [userProfile, setUserProfile] = useState<{ username: string; avatar_url: string; role: string } | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const router = useRouter();
 
-  // 드롭다운 닫기 핸들러
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isMenuOpen) setIsMenuOpen(false);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
     };
-    window.addEventListener('click', handleClickOutside);
-    return () => window.removeEventListener('click', handleClickOutside);
-  }, [isMenuOpen]);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
-
     async function initializeAuth() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!mounted) return;
-
-        if (session?.user) {
-          const meta = session.user.user_metadata || {};
-          setUser(session.user);
-          setUserProfile({
-            username: meta.user_name || session.user.email?.split("@")[0] || "User",
-            avatar_url: meta.avatar_url || "",
-            role: session.user.app_metadata?.role || "user",
-          });
-        }
-      } catch (error) {
-        console.error("Auth initialization failed:", error);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!mounted) return;
+      if (session?.user) {
+        setUser(session.user);
+        setUserProfile({
+          username: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
+          avatar_url: session.user.user_metadata?.avatar_url || "",
+          role: session.user.app_metadata?.role || "user",
+        });
       }
     }
-
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
-      
       setUser(session?.user ?? null);
       if (session?.user) {
-        const meta = session.user.user_metadata || {};
         setUserProfile({
-          username: meta.user_name || session.user.email?.split("@")[0] || "User",
-          avatar_url: meta.avatar_url || "",
+          username: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
+          avatar_url: session.user.user_metadata?.avatar_url || "",
           role: session.user.app_metadata?.role || "user",
         });
       } else {
@@ -126,274 +107,166 @@ export function Header({
     }
   };
 
-  const handleMobileSearchChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    onSetCategory(event.target.value);
-  };
-
   return (
-    <>
-      {/* 모바일 헤더 */}
-      <header className="sticky top-[44px] z-40 w-full flex flex-col items-center justify-between py-4 px-4 border-b simple-header bg-white xl:hidden">
-        <div className="w-full h-full flex items-center justify-between">
-          <div className="w-full flex items-center gap-4">
-            <Sheet>
-              <SheetTrigger>
-                <Menu />
-              </SheetTrigger>
-              <SheetContent
-                side="left"
-                className="flex flex-col px-8 pb-8 gap-8 overflow-y-scroll"
-              >
-                <div className="flex flex-col gap-6">
-                  {menu.map((item, index) => (
-                    <Link
-                      href={item.path}
-                      key={index}
-                      className={`h-full flex items-center gap-1 font-medium`}
-                    >
-                      <p
-                        className={`text-[15px] ${item.underline && "mt-0.5"}`}
-                      >
-                        {item.label}
-                      </p>
-                      {item.dropdown && <ChevronDown size={16} />}
-                      {item.newest && (
-                        <p className="text-xs text-[#05BCC6] font-medium">
-                          NEW
-                        </p>
-                      )}
-                    </Link>
-                  ))}
-                </div>
-                <div className="flex flex-col gap-6 mt-16">
-                  <VibeLogo className="h-10" />
-                  <div className="flex flex-col">
-                    <p className="text-sm">
-                      회원가입 또는 로그인을 통해 AI 창작자의
-                    </p>
-                    <p className="text-sm">
-                      크리에이티브를 발견하고 수집해보세요.
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      asChild
-                      className="bg-[#4ACAD4] hover:bg-[#41a3aa]"
-                    >
-                      <Link href="/signup">
-                        <span>회원가입</span>
-                      </Link>
-                    </Button>
-                    <Button asChild variant={"outline"}>
-                      <Link href="/login">
-                        <span>로그인</span>
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-                <Separator />
-                <Separator />
-              </SheetContent>
-            </Sheet>
-            <Link href="/" className="flex items-center">
-              <VibeLogo />
-            </Link>
-          </div>
-          <div className="flex items-center gap-4">
-            {user ? (
-               <DropdownMenu>
-               <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" className="relative h-10 w-10 rounded-full" aria-label="Open user menu">
-                   <Avatar className="h-10 w-10">
-                     <AvatarImage src={userProfile?.avatar_url || ''} alt={userProfile?.username} />
-                     <AvatarFallback>
-                       <UserIcon />
-                     </AvatarFallback>
-                   </Avatar>
-                 </Button>
-               </DropdownMenuTrigger>
-               <DropdownMenuContent className="w-56" align="end" forceMount>
-                 <DropdownMenuLabel className="font-normal">
-                   <div className="flex flex-col space-y-1">
-                     <p className="text-sm font-medium leading-none">{userProfile?.username}</p>
-                     <p className="text-xs leading-none text-muted-foreground">
-                       {user.email}
-                     </p>
-                   </div>
-                 </DropdownMenuLabel>
-                 <DropdownMenuSeparator />
-                 <DropdownMenuItem asChild>
-                   <Link href="/mypage">마이페이지</Link>
-                 </DropdownMenuItem>
-                 {userProfile?.role === 'admin' && (
-                   <DropdownMenuItem asChild>
-                     <Link href="/admin">어드민 메뉴</Link>
-                   </DropdownMenuItem>
-                 )}
-                 <DropdownMenuSeparator />
-                 <DropdownMenuItem onClick={handleLogout}>
-                   로그아웃
-                 </DropdownMenuItem>
-               </DropdownMenuContent>
-             </DropdownMenu>
-            ) : (
-              <Button asChild variant={"outline"}>
-                <Link href="/login">
-                  <span>로그인</span>
-                </Link>
-              </Button>
-            )}
-            <Drawer>
-              <DrawerTrigger>
-                <Search size={20} />
-              </DrawerTrigger>
-              <DrawerContent className="h-full flex flex-col gap-6 px-6">
-                <div className="flex items-center border px-3 rounded-full bg-neutral-50">
-                  <Search size={18} className="text-neutral-400" />
-                  <Input
-                    placeholder="230,000개 이상의 크리에이티브 검색"
-                    onChange={handleMobileSearchChange}
-                    className="w-full placeholder:text-neutral-400 outline-0 border-none focus-visible:ring-0 !bg-transparent !shadow-none"
-                  />
-                </div>
-              </DrawerContent>
-            </Drawer>
-          </div>
-        </div>
-        <nav className="w-full h-16 flex items-center gap-6">
-          {menu.map((item, index) => (
-            <Link
-              href={item.path}
-              key={index}
-              className={`h-full flex items-center gap-1 font-medium ${item.underline && "h-[calc(100%-2px)] border-b-2 border-black"
-                }`}
-            >
-              <p className={`text-base font-medium ${item.underline && "mt-0.5"}`}>
-                {item.label}
-              </p>
-              {item.dropdown && <ChevronDown size={16} />}
-              {item.newest && (
-                <p className="text-xs text-[#05BCC6] font-medium">NEW</p>
-              )}
-            </Link>
-          ))}
-        </nav>
-      </header>
-
-      {/* 데스크탑 헤더 */}
-      <header className="sticky top-[44px] z-40 w-full h-20 hidden xl:flex items-center justify-between px-8 border-b simple-header bg-white">
-        <div className="h-full flex items-center gap-10">
-          <Link href="/" className="flex items-center">
-            <VibeLogo />
+    // 헤더 컨테이너
+    <header 
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? "bg-white/90 backdrop-blur-md border-b border-gray-100 py-3" : "bg-white py-5"
+      }`}
+    >
+      <div className="max-w-[1920px] mx-auto px-6 md:px-12 flex items-center justify-between h-12">
+        
+        {/* 좌측: 로고 + 메뉴 */}
+        <div className="flex items-center gap-12">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 group">
+            <VibeLogo className="h-8 w-auto text-black" />
           </Link>
-          <nav className="h-full flex items-center gap-8">
-            {menu.map((item, index) => (
-              <Link
+
+          {/* Desktop Menu */}
+          <nav className="hidden xl:flex items-center gap-8">
+            {menuItems.map((item) => (
+              <Link 
+                key={item.label} 
                 href={item.path}
-                key={index}
-                className={`h-full flex items-center gap-1 font-medium ${
-                  item.underline && "h-[calc(100%-2px)] border-b-2 border-black"
-                }`}
+                className="flex items-center gap-1 text-[15px] font-medium text-gray-800 hover:text-black transition-colors font-poppins"
               >
-                <p className={`text-base font-medium ${item.underline && "mt-0.5"}`}>
-                  {item.label}
-                </p>
-                {item.dropdown && <ChevronDown size={16} />}
-                {item.newest && (
-                  <p className="text-xs text-[#05BCC6] font-medium">NEW</p>
-                )}
+                {item.label}
+                {item.dropdown && <span className="text-[10px] text-gray-400">▼</span>}
               </Link>
             ))}
           </nav>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center border px-3 rounded-full bg-neutral-50">
-            <Search size={18} className="text-neutral-400" />
-            <Input
-              placeholder="크리에이티브 검색"
-              onKeyDown={handleSearchKeyDown}
-              className="w-60 placeholder:text-neutral-400 outline-0 border-none focus-visible:ring-0 !bg-transparent !shadow-none"
-            />
+
+        {/* 우측: 검색 + 로그인/가입 */}
+        <div className="flex items-center gap-6">
+          
+          {/* 검색 아이콘 (클릭 시 확장되거나 모달) */}
+          <div className="hidden md:flex items-center">
+             <div className={`flex items-center transition-all duration-300 ${isSearchOpen ? "w-64 bg-gray-50 px-4 py-2 rounded-full ring-1 ring-gray-200" : "w-8 justify-end"}`}>
+                <Search 
+                  size={20} 
+                  className={`text-gray-500 cursor-pointer ${isSearchOpen ? "mr-2" : ""}`} 
+                  onClick={() => setIsSearchOpen(!isSearchOpen)}
+                />
+                {isSearchOpen && (
+                   <input 
+                      autoFocus
+                      type="text"
+                      className="bg-transparent border-none outline-none text-sm w-full font-pretendard placeholder:text-gray-400"
+                      placeholder="검색어를 입력하세요"
+                      onKeyDown={handleSearchKeyDown}
+                      onBlur={() => !onSetCategory && setIsSearchOpen(false)} // 값 입력 없으면 닫기 등의 로직 추가 가능
+                   />
+                )}
+             </div>
           </div>
-          {user ? (
-            <div className="relative">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsMenuOpen(!isMenuOpen);
-                }}
-                className="relative h-10 w-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity focus:outline-none ring-2 ring-emerald-500/20"
-              >
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={userProfile?.avatar_url || ''} alt={userProfile?.username} />
-                  <AvatarFallback className="bg-neutral-100 italic font-bold">
-                    {userProfile?.username?.[0]?.toUpperCase() || <UserIcon className="h-5 w-5" />}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
 
-              {isMenuOpen && (
-                <div 
-                  className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] border border-neutral-200 z-[10000] overflow-hidden animate-in fade-in zoom-in duration-200"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="p-3 border-b border-neutral-100">
-                    <p className="text-xs font-semibold text-neutral-400 mb-1">나의 계정</p>
-                    <p className="text-sm font-bold text-neutral-900 truncate">{userProfile?.username}</p>
-                    <p className="text-[11px] text-neutral-500 truncate">{user.email}</p>
-                  </div>
-                  
-                  <div className="p-1">
-                    <Link 
-                      href="/mypage" 
-                      className="flex items-center px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 rounded-lg transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      마이페이지
-                    </Link>
-                    {userProfile?.role === 'admin' && (
-                      <Link 
-                        href="/admin" 
-                        className="flex items-center px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 rounded-lg transition-colors"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        어드민 메뉴
-                      </Link>
-                    )}
-                  </div>
+          {/* Auth Buttons */}
+          <div className="hidden md:flex items-center gap-4 font-poppins text-[15px] font-medium">
+             {user ? (
+                // 로그인 상태
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Avatar className="w-9 h-9 cursor-pointer border border-gray-200 hover:border-black transition-colors">
+                      <AvatarImage src={userProfile?.avatar_url} />
+                      <AvatarFallback className="bg-gray-100">
+                        <UserIcon className="w-5 h-5 text-gray-500" />
+                      </AvatarFallback>
+                    </Avatar>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 mt-2 rounded-xl border border-gray-100 shadow-xl bg-white p-2">
+                     <div className="px-3 py-3 border-b border-gray-50 mb-1">
+                        <p className="font-bold text-sm">{userProfile?.username}</p>
+                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                     </div>
+                     <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+                        <Link href="/mypage">
+                           <User className="mr-2 h-4 w-4" /> 마이페이지
+                        </Link>
+                     </DropdownMenuItem>
+                     {userProfile?.role === 'admin' && (
+                       <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+                          <Link href="/admin">
+                             <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자
+                          </Link>
+                       </DropdownMenuItem>
+                     )}
+                     <DropdownMenuItem onClick={handleLogout} className="rounded-lg cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:bg-red-50 focus:text-red-700">
+                        <LogOut className="mr-2 h-4 w-4" /> 로그아웃
+                     </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+             ) : (
+                // 비로그인 상태
+                <>
+                   <Link href="/login" className="text-gray-600 hover:text-black transition-colors">
+                      Login
+                   </Link>
+                   <div className="flex items-center gap-2">
+                       <span className="text-gray-300">|</span>
+                       <button className="text-gray-600 hover:text-black transition-colors flex items-center gap-1 dropdown-trigger">
+                          Kr <span className="text-[10px]">▼</span>
+                       </button>
+                   </div>
+                   <Link 
+                      href="/signup" 
+                      className="bg-black text-white px-6 py-2.5 rounded-full hover:bg-gray-900 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-black/10"
+                   >
+                      서비스 도입하기
+                   </Link>
+                </>
+             )}
+          </div>
 
-                  <div className="p-1 border-t border-neutral-100">
-                    <button 
-                      onClick={() => {
-                        handleLogout();
-                        setIsMenuOpen(false);
-                      }}
-                      className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors font-bold"
-                    >
-                      로그아웃
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Button asChild variant="link">
-                <Link href="/login">
-                  <span>로그인</span>
-                </Link>
-              </Button>
-              <Button asChild>
-                <Link href="/signup">
-                  <span>회원가입</span>
-                </Link>
-              </Button>
-            </div>
-          )}
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="xl:hidden p-2 text-black"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
-      </header>
-    </>
+      </div>
+
+      {/* Mobile Menu Dropdown */}
+      {isMobileMenuOpen && (
+         <div className="xl:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-100 shadow-xl p-6 flex flex-col gap-6 animate-in slide-in-from-top-2">
+            <nav className="flex flex-col gap-4">
+               {menuItems.map((item) => (
+                  <Link 
+                    key={item.label}
+                    href={item.path}
+                    className="text-lg font-medium text-gray-900 font-poppins"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                     {item.label}
+                  </Link>
+               ))}
+            </nav>
+            <div className="h-px bg-gray-100 w-full" />
+            <div className="flex flex-col gap-4">
+               {user ? (
+                  <>
+                     <Link href="/mypage" className="flex items-center gap-3">
+                        <Avatar className="w-8 h-8">
+                           <AvatarImage src={userProfile?.avatar_url} />
+                           <AvatarFallback>U</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{userProfile?.username}</span>
+                     </Link>
+                     <button onClick={handleLogout} className="text-left text-red-500 text-sm font-medium">로그아웃</button>
+                  </>
+               ) : (
+                  <>
+                     <Link href="/login" className="w-full py-3 text-center border border-gray-200 rounded-lg font-medium text-gray-700">Login</Link>
+                     <Link href="/signup" className="w-full py-3 text-center bg-black text-white rounded-lg font-medium">서비스 도입하기</Link>
+                  </>
+               )}
+            </div>
+         </div>
+      )}
+    </header>
   );
 }
+
