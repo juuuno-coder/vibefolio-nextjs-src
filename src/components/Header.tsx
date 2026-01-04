@@ -58,30 +58,34 @@ export function Header({
   const router = useRouter();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+    let mounted = true;
 
-      if (session?.user) {
-        const meta = session.user.user_metadata || {};
-        setUserProfile({
-          username: meta.user_name || session.user.email?.split("@")[0] || "User",
-          avatar_url: meta.avatar_url || "",
-          role: session.user.app_metadata?.role || "user",
-        });
+    async function initializeAuth() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!mounted) return;
+
+        if (session?.user) {
+          const meta = session.user.user_metadata || {};
+          setUser(session.user);
+          setUserProfile({
+            username: meta.user_name || session.user.email?.split("@")[0] || "User",
+            avatar_url: meta.avatar_url || "",
+            role: session.user.app_metadata?.role || "user",
+          });
+        }
+      } catch (error) {
+        console.error("Auth initialization failed:", error);
       }
-    };
+    }
 
-    fetchUser();
+    initializeAuth();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      
       setUser(session?.user ?? null);
       if (session?.user) {
-        // DB 테이블 대신 Auth 메타데이터 사용
         const meta = session.user.user_metadata || {};
         setUserProfile({
           username: meta.user_name || session.user.email?.split("@")[0] || "User",
@@ -94,6 +98,7 @@ export function Header({
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -314,24 +319,35 @@ export function Header({
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 z-[100] bg-white text-black border shadow-lg" align="end" sideOffset={5}>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{userProfile?.username}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                  </div>
+              <DropdownMenuContent 
+                className="w-56 z-[9999] bg-white text-slate-900 border border-slate-200 shadow-2xl p-1 rounded-xl" 
+                align="end" 
+                sideOffset={8}
+              >
+                <DropdownMenuLabel className="font-semibold px-2 py-1.5 text-slate-500 text-xs">
+                  나의 계정
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                <div className="px-2 py-2 mb-1 border-b border-slate-100">
+                  <p className="text-sm font-bold truncate">{userProfile?.username}</p>
+                  <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                </div>
                 <DropdownMenuItem asChild>
-                  <Link href="/mypage" className="cursor-pointer">마이페이지</Link>
+                  <Link href="/mypage" className="flex w-full items-center px-2 py-2 text-sm rounded-md hover:bg-slate-100 cursor-pointer transition-colors font-medium">
+                    마이페이지
+                  </Link>
                 </DropdownMenuItem>
                 {userProfile?.role === 'admin' && (
                   <DropdownMenuItem asChild>
-                    <Link href="/admin" className="cursor-pointer">어드민 메뉴</Link>
+                    <Link href="/admin" className="flex w-full items-center px-2 py-2 text-sm rounded-md hover:bg-slate-100 cursor-pointer transition-colors font-medium">
+                      어드민 메뉴
+                    </Link>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-700 cursor-pointer font-bold">
+                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                <DropdownMenuItem 
+                  onClick={handleLogout} 
+                  className="flex w-full items-center px-2 py-2 text-sm rounded-md text-red-600 hover:bg-red-50 focus:bg-red-50 cursor-pointer transition-colors font-bold"
+                >
                   로그아웃
                 </DropdownMenuItem>
               </DropdownMenuContent>
