@@ -305,10 +305,12 @@ export function Header({
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 overflow-hidden ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={userProfile?.avatar_url || ''} alt={userProfile?.username} />
-                    <AvatarFallback><UserIcon /></AvatarFallback>
+                    <AvatarFallback className="bg-neutral-100 italic font-bold">
+                      {userProfile?.username?.[0]?.toUpperCase() || <UserIcon className="h-5 w-5" />}
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>

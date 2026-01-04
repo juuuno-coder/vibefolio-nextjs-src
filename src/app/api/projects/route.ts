@@ -1,9 +1,16 @@
-// src/app/api/projects/route.ts
-// 프로젝트 목록 조회 및 생성 API - 최적화 버전
-
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { GENRE_TO_CATEGORY_ID } from '@/lib/constants';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// 서비스 키가 있으면 어드민 클라이언트 사용, 없으면 일반 클라이언트 사용
+const supabaseAdmin = supabaseServiceKey 
+  ? createClient(supabaseUrl, supabaseServiceKey) 
+  : supabase;
 
 // 캐시 설정 추가
 export const revalidate = 60; // 60초마다 재검증
@@ -32,6 +39,10 @@ export async function GET(request: NextRequest) {
         views_count,
         rendering_type,
         created_at,
+        users (
+          username,
+          avatar_url
+        ),
         Category (
           category_id,
           name
