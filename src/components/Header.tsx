@@ -55,7 +55,17 @@ export function Header({
 }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // 드롭다운 상태 직접 관리
   const router = useRouter();
+
+  // 드롭다운 닫기 핸들러
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMenuOpen) setIsMenuOpen(false);
+    };
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, [isMenuOpen]);
 
   useEffect(() => {
     let mounted = true;
@@ -308,50 +318,66 @@ export function Header({
             />
           </div>
           {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 overflow-hidden ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={userProfile?.avatar_url || ''} alt={userProfile?.username} />
-                    <AvatarFallback className="bg-neutral-100 italic font-bold">
-                      {userProfile?.username?.[0]?.toUpperCase() || <UserIcon className="h-5 w-5" />}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                className="w-56 z-[9999] bg-white text-slate-900 border border-slate-200 shadow-2xl p-1 rounded-xl" 
-                align="end" 
-                sideOffset={8}
+            <div className="relative">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(!isMenuOpen);
+                }}
+                className="relative h-10 w-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity focus:outline-none ring-2 ring-emerald-500/20"
               >
-                <DropdownMenuLabel className="font-semibold px-2 py-1.5 text-slate-500 text-xs">
-                  나의 계정
-                </DropdownMenuLabel>
-                <div className="px-2 py-2 mb-1 border-b border-slate-100">
-                  <p className="text-sm font-bold truncate">{userProfile?.username}</p>
-                  <p className="text-xs text-slate-400 truncate">{user.email}</p>
-                </div>
-                <DropdownMenuItem asChild>
-                  <Link href="/mypage" className="flex w-full items-center px-2 py-2 text-sm rounded-md hover:bg-slate-100 cursor-pointer transition-colors font-medium">
-                    마이페이지
-                  </Link>
-                </DropdownMenuItem>
-                {userProfile?.role === 'admin' && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin" className="flex w-full items-center px-2 py-2 text-sm rounded-md hover:bg-slate-100 cursor-pointer transition-colors font-medium">
-                      어드민 메뉴
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator className="my-1 bg-slate-100" />
-                <DropdownMenuItem 
-                  onClick={handleLogout} 
-                  className="flex w-full items-center px-2 py-2 text-sm rounded-md text-red-600 hover:bg-red-50 focus:bg-red-50 cursor-pointer transition-colors font-bold"
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={userProfile?.avatar_url || ''} alt={userProfile?.username} />
+                  <AvatarFallback className="bg-neutral-100 italic font-bold">
+                    {userProfile?.username?.[0]?.toUpperCase() || <UserIcon className="h-5 w-5" />}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+
+              {isMenuOpen && (
+                <div 
+                  className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] border border-neutral-200 z-[10000] overflow-hidden animate-in fade-in zoom-in duration-200"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  로그아웃
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <div className="p-3 border-b border-neutral-100">
+                    <p className="text-xs font-semibold text-neutral-400 mb-1">나의 계정</p>
+                    <p className="text-sm font-bold text-neutral-900 truncate">{userProfile?.username}</p>
+                    <p className="text-[11px] text-neutral-500 truncate">{user.email}</p>
+                  </div>
+                  
+                  <div className="p-1">
+                    <Link 
+                      href="/mypage" 
+                      className="flex items-center px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 rounded-lg transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      마이페이지
+                    </Link>
+                    {userProfile?.role === 'admin' && (
+                      <Link 
+                        href="/admin" 
+                        className="flex items-center px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 rounded-lg transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        어드민 메뉴
+                      </Link>
+                    )}
+                  </div>
+
+                  <div className="p-1 border-t border-neutral-100">
+                    <button 
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors font-bold"
+                    >
+                      로그아웃
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="flex items-center gap-2">
               <Button asChild variant="link">
