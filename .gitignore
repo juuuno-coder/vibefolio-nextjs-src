@@ -42,3 +42,4 @@ next-env.d.ts
 
 # logs
 dev_server.log
+testsprite_tests/test_credentials.txt

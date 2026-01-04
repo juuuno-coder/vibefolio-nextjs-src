@@ -24,20 +24,20 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
       if (signInError) throw signInError;
 
-      // 성공 시
-      console.log("로그인 성공");
-      router.refresh(); // AuthContext 갱신 유도
-      router.push("/");
+      if (data.user) {
+        alert("로그인 성공!");
+        router.push("/");
+      }
     } catch (error: any) {
       console.error("로그인 오류:", error);
-      setError("이메일 또는 비밀번호를 확인해주세요.");
+      setError(error.message || "로그인 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -47,9 +47,6 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
       });
       if (error) throw error;
     } catch (error: any) {
@@ -69,7 +66,7 @@ export default function LoginPage() {
             계정이 없으신가요?{" "}
             <Link
               href="/signup"
-              className="font-medium text-[#16A34A] hover:text-[#15803d]"
+              className="font-medium text-[#4ACAD4] hover:text-[#41a3aa]"
             >
               회원가입
             </Link>
@@ -102,7 +99,6 @@ export default function LoginPage() {
                   setFormData({ ...formData, email: e.target.value })
                 }
                 placeholder="example@email.com"
-                className="bg-white"
               />
             </div>
 
@@ -124,7 +120,6 @@ export default function LoginPage() {
                   setFormData({ ...formData, password: e.target.value })
                 }
                 placeholder="비밀번호"
-                className="bg-white"
               />
             </div>
           </div>
@@ -135,7 +130,7 @@ export default function LoginPage() {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-[#16A34A] focus:ring-[#16A34A]"
+                className="h-4 w-4 rounded border-gray-300 text-[#4ACAD4] focus:ring-[#4ACAD4]"
               />
               <label
                 htmlFor="remember-me"
@@ -148,7 +143,7 @@ export default function LoginPage() {
             <div className="text-sm">
               <a
                 href="#"
-                className="font-medium text-[#16A34A] hover:text-[#15803d]"
+                className="font-medium text-[#4ACAD4] hover:text-[#41a3aa]"
               >
                 비밀번호 찾기
               </a>
@@ -159,7 +154,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-black hover:bg-gray-800 text-white font-bold py-3 transition-colors"
+              className="w-full bg-[#4ACAD4] hover:bg-[#41a3aa] text-white"
             >
               {loading ? "로그인 중..." : "로그인"}
             </Button>

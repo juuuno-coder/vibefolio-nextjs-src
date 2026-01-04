@@ -10,48 +10,34 @@ async function getUser() {
 }
 
 /**
- * Add a view to a project.
- * Increments the views column in the Project table.
- * Includes simple client-side deduplication using localStorage to prevent spamming.
+ * Records a view for a project.
+ * Does not count multiple views from the same user within a short time frame.
  */
-export async function addView(projectId: string): Promise<void> {
-  // 1. Client-side deduplication using localStorage
-  if (typeof window !== "undefined") {
-    const viewedKey = `viewed_project_${projectId}`;
-    const lastViewed = localStorage.getItem(viewedKey);
-    const now = Date.now();
+export async function recordView(projectId: string): Promise<void> {
+  const user = await getUser();
+  if (!user) return;
 
-    // If viewed within last 1 hour, ignore
-    if (lastViewed && now - parseInt(lastViewed) < 1000 * 60 * 60) {
-      return;
-    }
+  // Check if the user has already viewed this project
+  const { data, error: selectError } = await supabase
+    .from("views")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .eq("project_id", projectId)
+    .single();
 
-    localStorage.setItem(viewedKey, now.toString());
+  if (selectError && selectError.code !== "PGRST116") { // PGRST116 = no rows found
+    console.error("Error checking for existing view:", selectError);
+    return;
   }
 
-  // 2. Server-side update (RPC preferred)
-  const { error: rpcError } = await supabase.rpc('increment_project_views', { p_id: projectId });
+  // If the user has not viewed the project, add a new view
+  if (!data) {
+    const { error: insertError } = await supabase
+      .from("views")
+      .insert({ user_id: user.id, project_id: projectId });
 
-  if (rpcError) {
-    // Fallback: Fetch current views and update (less safe but works without RPC)
-    const { data: project, error: fetchError } = await supabase
-      .from("Project")
-      .select("views")
-      .eq("project_id", projectId)
-      .single();
-
-    if (fetchError || !project) {
-      console.error("Error fetching project views:", fetchError);
-      return;
-    }
-
-    const { error: updateError } = await supabase
-      .from("Project")
-      .update({ views: (project.views || 0) + 1 })
-      .eq("project_id", projectId);
-
-    if (updateError) {
-      console.error("Error updating views:", updateError);
+    if (insertError) {
+      console.error("Error adding view:", insertError);
     }
   }
 }
@@ -60,16 +46,15 @@ export async function addView(projectId: string): Promise<void> {
  * Get the view count for a project.
  */
 export async function getProjectViewCount(projectId: string): Promise<number> {
-  const { data, error } = await supabase
-    .from("Project")
-    .select("views")
-    .eq("project_id", projectId)
-    .single();
+  const { count, error } = await supabase
+    .from("views")
+    .select("*", { count: "exact", head: true })
+    .eq("project_id", projectId);
 
   if (error) {
     console.error("Error getting project view count:", error);
     return 0;
   }
 
-  return data?.views || 0;
+  return count || 0;
 }
