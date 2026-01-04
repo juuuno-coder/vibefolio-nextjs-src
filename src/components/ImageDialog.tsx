@@ -8,6 +8,7 @@ import dayjs from "dayjs";
 import { addCommas } from "@/lib/format/comma";
 
 import { ImageCard } from "@/components/ImageCard";
+import { supabase } from "@/lib/supabase/client";
 
 import {
   Button,
@@ -81,10 +82,70 @@ export function ImageDialog({ props }: { props: ImageDialogProps }) {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(props.likes);
 
-  const handleLikeToggle = () => {
-    setIsLiked((prev) => !prev);
-    setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
+  const handleLikeToggle = async () => {
+    // 1. 사용자 체크
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      if (confirm("로그인이 필요한 기능입니다. 로그인하시겠습니까?")) {
+        // 현재 URL 기억하고 로그인 페이지로 이동 (선택 사항)
+        window.location.href = "/login";
+      }
+      return;
+    }
+
+    // 2. 낙관적 업데이트 (UI 먼저 갱신)
+    const prevIsLiked = isLiked;
+    const prevLikeCount = likeCount;
+
+    setIsLiked(!prevIsLiked);
+    setLikeCount(prevIsLiked ? prevLikeCount - 1 : prevLikeCount + 1);
+
+    try {
+      if (prevIsLiked) {
+        // 좋아요 취소 (DELETE)
+        const { error } = await supabase
+          .from("Like" as any)
+          .delete()
+          .match({ project_id: props.id, user_id: user.id } as any);
+
+        if (error) throw error;
+      } else {
+        // 좋아요 추가 (INSERT)
+        const { error } = await supabase
+          .from("Like" as any)
+          .insert({ project_id: props.id, user_id: user.id } as any);
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error("좋아요 처리 실패:", error);
+      // 롤백
+      setIsLiked(prevIsLiked);
+      setLikeCount(prevLikeCount);
+      alert("요청을 처리하는 중 오류가 발생했습니다.");
+    }
   };
+
+  // 3. 초기 로딩 시 좋아요 여부 확인
+  React.useEffect(() => {
+    const checkIsLiked = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("Like" as any)
+        .select("created_at")
+        .eq("project_id", props.id)
+        .eq("user_id", user.id)
+        .maybeSingle(); // single() 대신 maybeSingle() 사용 (없어도 에러 아님)
+
+      if (data) {
+        setIsLiked(true);
+      }
+    };
+
+    checkIsLiked();
+  }, [props.id]);
 
   return (
     <Dialog>
