@@ -98,9 +98,12 @@ function HomeContent() {
         const limit = 20;
         const res = await fetch(`/api/projects?page=${pageNum}&limit=${limit}`);
         const data = await res.json();
+        
+        // API 응답 키가 'data'일 수도 있고 'projects'일 수도 있음 (Dual Support)
+        const projectList = data.data || data.projects;
 
-        if (res.ok && data.projects) {
-          const enriched = data.projects.map((proj: any) => {
+        if (res.ok && projectList) {
+          const enriched = projectList.map((proj: any) => {
             // API에서 User 정보를 함께 받아오므로 getUserInfo 호출 불필요
             // users(소문자) 또는 User(대문자) 모두 체크
             const userInfo = proj.User || proj.users || { username: 'Unknown', profile_image_url: '/globe.svg' };
@@ -139,7 +142,7 @@ function HomeContent() {
           reset ? setProjects(enriched) : setProjects(prev => [...prev, ...enriched]);
           
           // 더 이상 불러올 데이터가 없으면 hasMore를 false로 설정
-          if (data.projects.length < limit) {
+          if (projectList.length < limit) {
             setHasMore(false);
           }
         } else {
