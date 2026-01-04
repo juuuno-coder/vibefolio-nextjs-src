@@ -26,18 +26,10 @@ export async function GET(request: NextRequest) {
     
     const offset = (page - 1) * limit;
 
-    // 필요한 필드만 선택 (최적화) - 컬럼명 불일치 방지용 최소화
+    // 필요한 필드만 선택 (최적화) - 안전하게 모든 컬럼 조회
     let query = (supabase as any)
       .from('Project')
-      .select(`
-        project_id,
-        user_id,
-        title,
-        thumbnail_url,
-        content_text,
-        rendering_type,
-        created_at
-      `)
+      .select('*, Category(category_id, name)')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
