@@ -12,8 +12,8 @@ const supabaseAdmin = supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey) 
   : supabase;
 
-// 캐시 설정 추가
-export const revalidate = 60; // 60초마다 재검증
+// 캐시 설정 제거 (실시간 디버깅)
+export const revalidate = 0; 
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     
     const offset = (page - 1) * limit;
 
-    // 필요한 필드만 선택 (최적화) - users 조인 제거하여 쿼리 실패 방지
+    // 필요한 필드만 선택 (최적화) - 복잡한 조인 모두 제거
     let query = (supabase as any)
       .from('Project')
       .select(`
@@ -38,11 +38,8 @@ export async function GET(request: NextRequest) {
         likes_count,
         views_count,
         rendering_type,
-        created_at,
-        Category (
-          category_id,
-          name
-        )
+        category_id,
+        created_at
       `)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
