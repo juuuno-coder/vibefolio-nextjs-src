@@ -56,29 +56,77 @@ export function Header({
 
   useEffect(() => {
     let mounted = true;
+    
+    async function fetchProfile(userId: string) {
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('username, avatar_url, role')
+          .eq('id', userId)
+          .single();
+          
+        if (error) {
+          console.error("Error fetching profile:", error);
+          return null;
+        }
+        return profile;
+      } catch (e) {
+        console.error("Exception fetching profile:", e);
+        return null;
+      }
+    }
+
     async function initializeAuth() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!mounted) return;
+      
       if (session?.user) {
         setUser(session.user);
-        setUserProfile({
+        
+        // 1. 세션 메타데이터에서 기본 정보 가져오기
+        let profileData = {
           username: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
           avatar_url: session.user.user_metadata?.avatar_url || "",
           role: session.user.app_metadata?.role || "user",
-        });
+        };
+
+        // 2. DB profiles 테이블에서 최신 정보(특히 role) 가져오기
+        const dbProfile = await fetchProfile(session.user.id);
+        if (dbProfile) {
+          profileData = {
+            username: dbProfile.username || profileData.username,
+            avatar_url: dbProfile.avatar_url || profileData.avatar_url,
+            role: dbProfile.role || profileData.role, // 여기서 DB role 우선 적용
+          };
+        }
+
+        setUserProfile(profileData);
       }
     }
+    
     initializeAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
       setUser(session?.user ?? null);
+      
       if (session?.user) {
-        setUserProfile({
+        let profileData = {
           username: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
           avatar_url: session.user.user_metadata?.avatar_url || "",
           role: session.user.app_metadata?.role || "user",
-        });
+        };
+
+        const dbProfile = await fetchProfile(session.user.id);
+        if (dbProfile) {
+          profileData = {
+            username: dbProfile.username || profileData.username,
+            avatar_url: dbProfile.avatar_url || profileData.avatar_url,
+            role: dbProfile.role || profileData.role,
+          };
+        }
+        
+        setUserProfile(profileData);
       } else {
         setUserProfile(null);
       }
@@ -184,7 +232,7 @@ export function Header({
                             <UserIcon className="mr-2 h-4 w-4" /> 마이페이지
                          </Link>
                       </DropdownMenuItem>
-                      {(userProfile?.role === 'admin' || user.email === 'juuuno@naver.com') && (
+                      {userProfile?.role === 'admin' && (
                         <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-black hover:bg-gray-50 focus:bg-gray-50">
                            <Link href="/admin">
                               <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자
@@ -249,7 +297,7 @@ export function Header({
                         </Avatar>
                         <span className="font-medium">{userProfile?.username}</span>
                      </Link>
-                     {(userProfile?.role === 'admin' || user.email === 'juuuno@naver.com') && (
+                     {userProfile?.role === 'admin' && (
                        <Link href="/admin" className="text-left text-[#4ACAD4] text-sm font-medium">
                          관리자 페이지
                        </Link>

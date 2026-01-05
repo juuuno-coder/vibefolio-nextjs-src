@@ -49,9 +49,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(s);
     setUser(u);
     if (u) {
-      // DB 조회 없이 즉시 메타데이터로 설정
+      // 1. 기본 메타데이터로 즉시 설정 (UX 반응성)
       const profile = loadProfileFromMetadata(u);
       setUserProfile(profile);
+
+      // 2. DB profiles 테이블에서 최신 데이터(특히 role) 가져오기
+      try {
+        const { data: dbProfile, error } = await supabase
+          .from('profiles')
+          .select('username, avatar_url, role')
+          .eq('id', u.id)
+          .single();
+
+        if (dbProfile && !error) {
+          setUserProfile({
+            nickname: (dbProfile as any).username || profile.nickname,
+            profile_image_url: (dbProfile as any).avatar_url || profile.profile_image_url,
+            role: (dbProfile as any).role || profile.role,
+          });
+        }
+      } catch (e) {
+        console.error("[Auth] DB profile fetch error:", e);
+      }
     } else {
       setUserProfile(null);
     }
@@ -126,6 +145,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/login"); // 로그아웃 후 로그인 페이지로
   };
 
+  const refreshUserProfile = useCallback(async () => {
+    if (!user) return;
+    const { data: { user: u } } = await supabase.auth.getUser();
+    if (u) {
+      const profile = loadProfileFromMetadata(u);
+      
+      const { data: dbProfile } = await supabase
+        .from('profiles')
+        .select('username, avatar_url, role')
+        .eq('id', u.id)
+        .single();
+
+      if (dbProfile) {
+        setUserProfile({
+          nickname: (dbProfile as any).username || profile.nickname,
+          profile_image_url: (dbProfile as any).avatar_url || profile.profile_image_url,
+          role: (dbProfile as any).role || profile.role,
+        });
+      } else {
+        setUserProfile(profile);
+      }
+    }
+  }, [user, loadProfileFromMetadata]);
+
   const value = {
     user,
     session,
@@ -134,13 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userProfile,
     isAdmin: userProfile?.role === "admin",
     signOut,
-    refreshUserProfile: async () => {
-      const { data: { user: u } } = await supabase.auth.getUser();
-      if (u) {
-        const p = loadProfileFromMetadata(u);
-        setUserProfile(p);
-      }
-    }
+    refreshUserProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
