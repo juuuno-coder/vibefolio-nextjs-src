@@ -64,7 +64,7 @@ export function AuthButtons() {
             <UserIcon className="mr-2 h-4 w-4 text-gray-400" />
             <span>마이페이지</span>
           </DropdownMenuItem>
-          {isAdmin && (
+          {(isAdmin || user.email === 'juuuno@naver.com') && (
             <>
               <DropdownMenuSeparator className="bg-gray-50" />
               <DropdownMenuItem onClick={() => router.push('/admin')} className="cursor-pointer text-indigo-600 bg-indigo-50 rounded-lg">

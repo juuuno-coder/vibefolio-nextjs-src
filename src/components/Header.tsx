@@ -249,6 +249,11 @@ export function Header({
                         </Avatar>
                         <span className="font-medium">{userProfile?.username}</span>
                      </Link>
+                     {(userProfile?.role === 'admin' || user.email === 'juuuno@naver.com') && (
+                       <Link href="/admin" className="text-left text-[#4ACAD4] text-sm font-medium">
+                         관리자 페이지
+                       </Link>
+                     )}
                      <button onClick={handleLogout} className="text-left text-red-500 text-sm font-medium">로그아웃</button>
                   </>
                ) : (
