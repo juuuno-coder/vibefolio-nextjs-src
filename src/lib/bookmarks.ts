@@ -1,5 +1,8 @@
 // src/lib/bookmarks.ts
 import { supabase } from "./supabase/client";
+import { Database } from "./supabase/types";
+
+type BookmarkRow = Database["public"]["Tables"]["Bookmark"]["Row"];
 
 /**
  * Get the current user.
@@ -21,7 +24,8 @@ export async function getUserBookmarks(userId: string) {
     console.error("Error fetching user bookmarks:", error);
     return [];
   }
-  return (data || []).map((bookmark) => bookmark.project_id);
+  const bookmarks = data as unknown as BookmarkRow[];
+  return (bookmarks || []).map((bookmark) => bookmark.project_id);
 }
 
 /**
@@ -42,7 +46,7 @@ export async function isProjectBookmarked(projectId: string): Promise<boolean> {
     console.error("Error checking if project is bookmarked:", error);
   }
 
-  return !!data;
+  return !!(data as unknown as BookmarkRow);
 }
 
 /**
