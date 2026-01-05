@@ -3,6 +3,7 @@ import { supabase } from "./supabase/client";
 import { Database } from "./supabase/types";
 
 type BookmarkRow = Database["public"]["Tables"]["Bookmark"]["Row"];
+type BookmarkInsert = Database["public"]["Tables"]["Bookmark"]["Insert"];
 
 /**
  * Get the current user.
@@ -58,7 +59,7 @@ export async function addBookmark(projectId: string): Promise<void> {
 
   const { error } = await supabase
     .from("Bookmark")
-    .insert({ user_id: user.id, project_id: projectId });
+    .insert({ user_id: user.id, project_id: projectId } as BookmarkInsert);
 
   if (error) {
     console.error("Error adding bookmark:", error);

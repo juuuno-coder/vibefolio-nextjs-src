@@ -1,5 +1,9 @@
 // src/lib/views.ts
 import { supabase } from "./supabase/client";
+import { Database } from "./supabase/types";
+
+type ViewRow = Database["public"]["Tables"]["View"]["Row"];
+type ViewInsert = Database["public"]["Tables"]["View"]["Insert"];
 
 /**
  * Get the current user.
@@ -34,7 +38,7 @@ export async function recordView(projectId: string): Promise<void> {
   if (!data) {
     const { error: insertError } = await supabase
       .from("View")
-      .insert({ user_id: user.id, project_id: projectId });
+      .insert({ user_id: user.id, project_id: projectId } as ViewInsert);
 
     if (insertError) {
       console.error("Error adding view:", insertError);

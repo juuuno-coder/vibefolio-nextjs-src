@@ -1,5 +1,9 @@
 // src/lib/comments.ts
 import { supabase } from "./supabase/client";
+import { Database } from "./supabase/types";
+
+type CommentRow = Database["public"]["Tables"]["Comment"]["Row"];
+type CommentInsert = Database["public"]["Tables"]["Comment"]["Insert"];
 
 export interface Comment {
   id: string;
@@ -26,7 +30,9 @@ export async function getProjectComments(projectId: string): Promise<Comment[]> 
     return [];
   }
 
-  return (data || []).map((c) => ({
+  /* Safe Casting: Supabase returns partial or full Row objects */
+  const comments = data as unknown as CommentRow[];
+  return (comments || []).map((c) => ({
     id: c.id,
     project_id: c.project_id,
     user_id: c.user_id,
@@ -55,7 +61,7 @@ export async function addComment(
       content,
       username,
       user_avatar_url: avatarUrl,
-    })
+    }) as unknown as CommentInsert)
     .select("id, project_id, user_id, content, created_at, username, user_avatar_url")
     .single();
 
@@ -66,14 +72,16 @@ export async function addComment(
 
   if (!data) return null;
 
+  const d = data as unknown as CommentRow;
+
   return {
-    id: data.id,
-    project_id: data.project_id,
-    user_id: data.user_id,
-    content: data.content,
-    createdAt: data.created_at,
-    username: data.username,
-    userAvatar: data.user_avatar_url,
+    id: d.id,
+    project_id: d.project_id,
+    user_id: d.user_id,
+    content: d.content,
+    createdAt: d.created_at,
+    username: d.username,
+    userAvatar: d.user_avatar_url,
   };
 }
 

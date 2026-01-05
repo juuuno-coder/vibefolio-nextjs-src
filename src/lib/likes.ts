@@ -1,5 +1,9 @@
 // src/lib/likes.ts
 import { supabase } from "./supabase/client";
+import { Database } from "./supabase/types";
+
+type LikeRow = Database["public"]["Tables"]["Like"]["Row"];
+type LikeInsert = Database["public"]["Tables"]["Like"]["Insert"];
 
 /**
  * Get the current user.
@@ -21,7 +25,8 @@ export async function getUserLikes(userId: string) {
     console.error("Error fetching user likes:", error);
     return [];
   }
-  return (data || []).map((like) => like.project_id);
+  const likes = data as unknown as LikeRow[];
+  return (likes || []).map((like) => like.project_id);
 }
 
 /**
@@ -42,7 +47,7 @@ export async function isProjectLiked(projectId: string): Promise<boolean> {
     console.error("Error checking if project is liked:", error);
   }
 
-  return !!data;
+  return !!(data as unknown as LikeRow);
 }
 
 /**
@@ -54,7 +59,7 @@ export async function addLike(projectId: string): Promise<void> {
 
   const { error } = await supabase
     .from("Like")
-    .insert({ user_id: user.id, project_id: projectId });
+    .insert({ user_id: user.id, project_id: projectId } as LikeInsert);
 
   if (error) {
     console.error("Error adding like:", error);
