@@ -17,7 +17,7 @@ async function getUser() {
  * Records a view for a project.
  * Does not count multiple views from the same user within a short time frame.
  */
-export async function recordView(projectId: string): Promise<void> {
+export async function recordView(projectId: string | number): Promise<void> {
   const user = await getUser();
   if (!user) return;
 
@@ -49,7 +49,7 @@ export async function recordView(projectId: string): Promise<void> {
 /**
  * Get the view count for a project.
  */
-export async function getProjectViewCount(projectId: string): Promise<number> {
+export async function getProjectViewCount(projectId: string | number): Promise<number> {
   const { count, error } = await supabase
     .from("view")
     .select("*", { count: "exact", head: true })

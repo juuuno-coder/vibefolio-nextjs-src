@@ -32,7 +32,7 @@ export async function getUserLikes(userId: string) {
 /**
  * Check if a user has liked a specific project.
  */
-export async function isProjectLiked(projectId: string): Promise<boolean> {
+export async function isProjectLiked(projectId: string | number): Promise<boolean> {
   const user = await getUser();
   if (!user) return false;
 
@@ -53,7 +53,7 @@ export async function isProjectLiked(projectId: string): Promise<boolean> {
 /**
  * Add a like to a project.
  */
-export async function addLike(projectId: string): Promise<void> {
+export async function addLike(projectId: string | number): Promise<void> {
   const user = await getUser();
   if (!user) return;
 
@@ -69,7 +69,7 @@ export async function addLike(projectId: string): Promise<void> {
 /**
  * Remove a like from a project.
  */
-export async function removeLike(projectId: string): Promise<void> {
+export async function removeLike(projectId: string | number): Promise<void> {
   const user = await getUser();
   if (!user) return;
 
@@ -87,7 +87,7 @@ export async function removeLike(projectId: string): Promise<void> {
 /**
  * Toggle a like on a project.
  */
-export async function toggleLike(projectId: string): Promise<boolean> {
+export async function toggleLike(projectId: string | number): Promise<boolean> {
   const liked = await isProjectLiked(projectId);
   if (liked) {
     await removeLike(projectId);
@@ -101,7 +101,7 @@ export async function toggleLike(projectId: string): Promise<boolean> {
 /**
  * Get the like count for a project.
  */
-export async function getProjectLikeCount(projectId: string): Promise<number> {
+export async function getProjectLikeCount(projectId: string | number): Promise<number> {
   const { count, error } = await supabase
     .from("like")
     .select("*", { count: "exact", head: true })

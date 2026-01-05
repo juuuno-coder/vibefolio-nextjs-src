@@ -71,8 +71,8 @@ export async function GET(request: NextRequest) {
         let usersError: any = null;
 
         for (const tableName of possibleTables) {
-          const result = await targetClient
-            .from(tableName)
+          const result = await (targetClient
+            .from(tableName as any) as any)
             .select('*') 
             .in('id', userIds);
           

@@ -18,7 +18,7 @@ export interface Comment {
 /**
  * Get all comments for a project.
  */
-export async function getProjectComments(projectId: string): Promise<Comment[]> {
+export async function getProjectComments(projectId: string | number): Promise<Comment[]> {
   const { data, error } = await supabase
     .from("comment")
     .select("id, project_id, user_id, content, created_at, username, user_avatar_url")
@@ -47,7 +47,7 @@ export async function getProjectComments(projectId: string): Promise<Comment[]> 
  * Add a comment to a project.
  */
 export async function addComment(
-  projectId: string,
+  projectId: string | number,
   userId: string,
   content: string,
   username: string,
@@ -104,7 +104,7 @@ export async function deleteComment(commentId: string, userId: string): Promise<
 /**
  * Get the comment count for a project.
  */
-export async function getCommentCount(projectId: string): Promise<number> {
+export async function getCommentCount(projectId: string | number): Promise<number> {
   const { count, error } = await supabase
     .from("comment")
     .select("*", { count: "exact", head: true })

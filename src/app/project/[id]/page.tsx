@@ -81,7 +81,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
       const { data: projectData, error: projectError } = await supabase
         .from("Project") // projects -> Project
         .select("*")
-        .eq("project_id", projectId) // id -> project_id
+        .eq("project_id", Number(projectId)) // id -> project_id
         .single() as any;
 
       if (projectError || !projectData) {
@@ -94,7 +94,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
         .from("Project") // projects -> Project
         .select("*")
         .eq("category_id", projectData.category_id) // category -> category_id
-        .neq("project_id", projectId) // id -> project_id
+        .neq("project_id", Number(projectId)) // id -> project_id
         .limit(4);
       setRelatedProjects((relatedData || []).map((p: any) => ({ ...p, id: p.project_id })));
 
@@ -105,9 +105,9 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
 
       // Fetch likes, bookmarks, views, and comments in parallel
       const [likeCount, viewCount, comments] = await Promise.all([
-        getProjectLikeCount(projectId),
-        getProjectViewCount(projectId),
-        getProjectComments(projectId),
+        getProjectLikeCount(Number(projectId)),
+        getProjectViewCount(Number(projectId)),
+        getProjectComments(Number(projectId)),
       ]);
       setLikeCount(likeCount);
       setViewCount(viewCount);

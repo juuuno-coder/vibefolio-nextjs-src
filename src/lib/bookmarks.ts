@@ -34,7 +34,7 @@ export async function getUserBookmarks(userId: string) {
 /**
  * Check if a user has bookmarked a specific project.
  */
-export async function isProjectBookmarked(projectId: string): Promise<boolean> {
+export async function isProjectBookmarked(projectId: string | number): Promise<boolean> {
   const user = await getUser();
   if (!user) return false;
 
@@ -55,7 +55,7 @@ export async function isProjectBookmarked(projectId: string): Promise<boolean> {
 /**
  * Add a bookmark to a project.
  */
-export async function addBookmark(projectId: string): Promise<void> {
+export async function addBookmark(projectId: string | number): Promise<void> {
   const user = await getUser();
   if (!user) return;
 
@@ -71,7 +71,7 @@ export async function addBookmark(projectId: string): Promise<void> {
 /**
  * Remove a bookmark from a project.
  */
-export async function removeBookmark(projectId: string): Promise<void> {
+export async function removeBookmark(projectId: string | number): Promise<void> {
   const user = await getUser();
   if (!user) return;
 
@@ -89,7 +89,7 @@ export async function removeBookmark(projectId: string): Promise<void> {
 /**
  * Toggle a bookmark on a project.
  */
-export async function toggleBookmark(projectId: string): Promise<boolean> {
+export async function toggleBookmark(projectId: string | number): Promise<boolean> {
   const bookmarked = await isProjectBookmarked(projectId);
   if (bookmarked) {
     await removeBookmark(projectId);
