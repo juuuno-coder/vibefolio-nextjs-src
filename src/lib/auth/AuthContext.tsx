@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 interface UserProfile {
-  nickname: string;
+  username: string;
   profile_image_url: string;
   role: string;
 }
@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const metadata = currentUser.user_metadata || {};
     
     return {
-      nickname: metadata.full_name || metadata.name || metadata.nickname || currentUser.email?.split("@")[0] || "User",
+      username: metadata.full_name || metadata.name || metadata.nickname || currentUser.email?.split("@")[0] || "User",
       profile_image_url: metadata.avatar_url || metadata.picture || "/globe.svg",
       role: currentUser.app_metadata?.role || metadata.role || "user",
     };
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (dbProfile && !error) {
           setUserProfile({
-            nickname: (dbProfile as any).username || profile.nickname,
+            username: (dbProfile as any).username || profile.username,
             profile_image_url: (dbProfile as any).avatar_url || profile.profile_image_url,
             role: (dbProfile as any).role || profile.role,
           });
@@ -159,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (dbProfile) {
         setUserProfile({
-          nickname: (dbProfile as any).username || profile.nickname,
+          username: (dbProfile as any).username || profile.username,
           profile_image_url: (dbProfile as any).avatar_url || profile.profile_image_url,
           role: (dbProfile as any).role || profile.role,
         });

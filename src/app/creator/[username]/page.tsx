@@ -26,7 +26,6 @@ import { supabase } from "@/lib/supabase/client";
 interface UserProfile {
   id: string;
   username: string;
-  nickname: string;
   email: string;
   bio: string;
   location: string;
@@ -95,8 +94,7 @@ export default function CreatorProfilePage() {
 
         setProfile({
           id: userData.id,
-          username: userData.username || userData.nickname,
-          nickname: userData.nickname || userData.username,
+          username: userData.username || userData.nickname || username,
           email: userData.email || '',
           bio: userData.bio || '',
           location: userData.location || '',
@@ -131,7 +129,7 @@ export default function CreatorProfilePage() {
               regular: p.thumbnail_url || "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=800"
             },
             user: {
-              username: p.User?.nickname || p.User?.username || username,
+              username: p.User?.username || p.User?.nickname || username,
               profile_image: {
                 small: p.User?.profile_image_url || "",
                 large: p.User?.profile_image_url || ""
@@ -251,7 +249,7 @@ export default function CreatorProfilePage() {
             <Avatar className="w-32 h-32">
               <AvatarImage 
                 src={profile?.profileImage} 
-                alt={profile?.nickname || username} 
+                alt={profile?.username || username} 
               />
               <AvatarFallback className="bg-gray-100">
                 <User size={48} className="text-gray-400" />
@@ -262,7 +260,7 @@ export default function CreatorProfilePage() {
             <div className="flex-1">
               <div className="flex items-center gap-4 mb-2">
                 <h1 className="text-4xl font-bold text-gray-900">
-                  {profile?.nickname || username}
+                  {profile?.username || username}
                 </h1>
                 {/* 팔로우 버튼 */}
                 {currentUserId && profile?.id && currentUserId !== profile.id && (

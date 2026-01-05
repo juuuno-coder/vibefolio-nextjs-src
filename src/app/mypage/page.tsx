@@ -61,7 +61,7 @@ export default function MyPage() {
           const dbUser = data as any;
           
           setUserProfile({
-            nickname: dbUser?.nickname || user.user_metadata?.nickname || user.email?.split('@')[0] || '사용자',
+            username: dbUser?.username || user.user_metadata?.full_name || user.user_metadata?.nickname || user.email?.split('@')[0] || '사용자',
             email: user.email,
             profile_image_url: dbUser?.profile_image_url || user.user_metadata?.profile_image_url || '/globe.svg',
             cover_image_url: dbUser?.cover_image_url || null,
@@ -70,7 +70,7 @@ export default function MyPage() {
         } catch (e) {
           console.warn("프로필 로드 실패, 기본값 사용:", e);
           setUserProfile({
-            nickname: user.user_metadata?.nickname || '사용자',
+            username: user.user_metadata?.full_name || user.user_metadata?.nickname || '사용자',
             email: user.email,
             profile_image_url: user.user_metadata?.profile_image_url || '/globe.svg',
             cover_image_url: null,
@@ -380,7 +380,7 @@ export default function MyPage() {
               </div>
               {/* 패딩 추가 */}
               <div className="flex-1 md:pb-2 pt-16 md:pt-20 md:pl-8">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{userProfile?.nickname || '사용자'}</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{userProfile?.username || '사용자'}</h1>
                 <p className="text-gray-500 text-sm md:text-base mt-1">{userProfile?.email}</p>
               </div>
               <div className="md:pb-2">
@@ -559,7 +559,7 @@ export default function MyPage() {
                             id: String(item.Project.project_id),
                             title: item.Project.title,
                             urls: { full: item.Project.thumbnail_url || '/placeholder.jpg', regular: item.Project.thumbnail_url || '/placeholder.jpg' },
-                            user: { username: userProfile?.nickname || 'Unknown', profile_image: { small: '/globe.svg', large: '/globe.svg' } },
+                            user: { username: userProfile?.username || 'Unknown', profile_image: { small: '/globe.svg', large: '/globe.svg' } },
                             likes: 0, views: 0,
                           });
                           setModalOpen(true);

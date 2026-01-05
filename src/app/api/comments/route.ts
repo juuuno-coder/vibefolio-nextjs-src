@@ -1,10 +1,10 @@
 // src/app/api/comments/route.ts
-// 댓글 CRUD API
+// ?��? CRUD API
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/client';
 
-// 댓글 조회
+// ?��? 조회
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     if (!projectId) {
       return NextResponse.json(
-        { error: 'projectId가 필요합니다.' },
+        { error: 'projectId가 ?�요?�니??' },
         { status: 400 }
       );
     }
@@ -25,14 +25,14 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('댓글 조회 실패:', error);
+      console.error('?��? 조회 ?�패:', error);
       return NextResponse.json(
-        { error: '댓글 조회에 실패했습니다.' },
+        { error: '?��? 조회???�패?�습?�다.' },
         { status: 500 }
       );
     }
 
-    // Auth에서 사용자 정보 가져오기
+    // Auth?�서 ?�용???�보 가?�오�?
     if (data && data.length > 0) {
       const userIds = Array.from(new Set(data.map((c: any) => c.user_id).filter(Boolean))) as string[];
       
@@ -42,12 +42,12 @@ export async function GET(request: NextRequest) {
           if (authData.user) {
             return {
               user_id: authData.user.id,
-              nickname: authData.user.user_metadata?.nickname || authData.user.email?.split('@')[0] || 'Unknown',
+              username: authData.user.user_metadata?.username || authData.user.email?.split('@')[0] || 'Unknown',
               profile_image_url: authData.user.user_metadata?.profile_image_url || '/globe.svg'
             };
           }
         } catch (e) {
-          console.error(`사용자 ${uid} 정보 조회 실패:`, e);
+          console.error(`?�용??${uid} ?�보 조회 ?�패:`, e);
         }
         return null;
       });
@@ -62,15 +62,15 @@ export async function GET(request: NextRequest) {
       data.forEach((comment: any) => {
         const user = userMap.get(comment.user_id);
         comment.user = user ? {
-          nickname: user.nickname,
+          username: user.username,
           profile_image_url: user.profile_image_url
         } : {
-          nickname: 'Unknown',
+          username: 'Unknown',
           profile_image_url: '/globe.svg'
         };
       });
 
-      // 대댓글 구조화
+      // ?�?��? 구조??
       const commentMap = new Map();
       const rootComments: any[] = [];
 
@@ -95,22 +95,22 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ comments: data });
   } catch (error) {
-    console.error('서버 오류:', error);
+    console.error('?�버 ?�류:', error);
     return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.' },
+      { error: '?�버 ?�류가 발생?�습?�다.' },
       { status: 500 }
     );
   }
 }
 
-// 댓글 작성
+// ?��? ?�성
 export async function POST(request: NextRequest) {
   try {
-    // Authorization 헤더에서 토큰 추출
+    // Authorization ?�더?�서 ?�큰 추출
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
       return NextResponse.json(
-        { error: '로그인이 필요합니다.' },
+        { error: '로그?�이 ?�요?�니??' },
         { status: 401 }
       );
     }
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     
     if (authError || !user) {
       return NextResponse.json(
-        { error: '인증에 실패했습니다.' },
+        { error: '?�증???�패?�습?�다.' },
         { status: 401 }
       );
     }
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { projectId, content, parentCommentId, mentionedUserId } = body;
 
-    console.log('댓글 작성 요청:', { 
+    console.log('?��? ?�성 ?�청:', { 
       userId: user.id, 
       projectId, 
       content, 
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
 
     if (!projectId || !content) {
       return NextResponse.json(
-        { error: '필수 필드가 누락되었습니다.' },
+        { error: '?�수 ?�드가 ?�락?�었?�니??' },
         { status: 400 }
       );
     }
@@ -158,38 +158,38 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('댓글 작성 실패:', error);
+      console.error('?��? ?�성 ?�패:', error);
       return NextResponse.json(
-        { error: `댓글 작성에 실패했습니다: ${error.message || error.code}` },
+        { error: `?��? ?�성???�패?�습?�다: ${error.message || error.code}` },
         { status: 500 }
       );
     }
 
-    console.log('댓글 작성 성공:', data);
+    console.log('?��? ?�성 ?�공:', data);
 
-    // 작성한 사용자 정보 추가
+    // ?�성???�용???�보 추�?
     data.user = {
-      nickname: user.user_metadata?.nickname || user.email?.split('@')[0] || 'Unknown',
+      username: user.user_metadata?.username || user.email?.split('@')[0] || 'Unknown',
       profile_image_url: user.user_metadata?.profile_image_url || '/globe.svg'
     };
 
     return NextResponse.json(
       {
-        message: '댓글이 작성되었습니다.',
+        message: '?��????�성?�었?�니??',
         comment: data,
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error('서버 오류:', error);
+    console.error('?�버 ?�류:', error);
     return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.' },
+      { error: '?�버 ?�류가 발생?�습?�다.' },
       { status: 500 }
     );
   }
 }
 
-// 댓글 삭제 (소프트 삭제)
+// ?��? ??�� (?�프????��)
 export async function DELETE(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -198,52 +198,52 @@ export async function DELETE(request: NextRequest) {
 
     if (!commentId || !userId) {
       return NextResponse.json(
-        { error: 'commentId와 userId가 필요합니다.' },
+        { error: 'commentId?� userId가 ?�요?�니??' },
         { status: 400 }
       );
     }
 
-    // 댓글 소유자 확인
+    // ?��? ?�유???�인
     const { data: comment } = await supabaseAdmin
       .from('Comment')
       .select('user_id')
       .eq('comment_id', commentId)
-      .single() as { data: any, error: any }; // 타입 단언 추가
+      .single() as { data: any, error: any }; // ?�???�언 추�?
 
     if (!comment) {
       return NextResponse.json(
-        { error: '댓글을 찾을 수 없습니다.' },
+        { error: '?��???찾을 ???�습?�다.' },
         { status: 404 }
       );
     }
 
-    // UUID 비교 (문자열)
+    // UUID 비교 (문자??
     if (comment.user_id !== userId) {
       return NextResponse.json(
-        { error: '댓글을 삭제할 권한이 없습니다.' },
+        { error: '?��?????��??권한???�습?�다.' },
         { status: 403 }
       );
     }
 
-    // 소프트 삭제
+    // ?�프????��
     const { error } = await (supabaseAdmin as any)
       .from('Comment')
       .update({ is_deleted: true })
       .eq('comment_id', commentId);
 
     if (error) {
-      console.error('댓글 삭제 실패:', error);
+      console.error('?��? ??�� ?�패:', error);
       return NextResponse.json(
-        { error: '댓글 삭제에 실패했습니다.' },
+        { error: '?��? ??��???�패?�습?�다.' },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ message: '댓글이 삭제되었습니다.' });
+    return NextResponse.json({ message: '?��?????��?�었?�니??' });
   } catch (error) {
-    console.error('서버 오류:', error);
+    console.error('?�버 ?�류:', error);
     return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.' },
+      { error: '?�버 ?�류가 발생?�습?�다.' },
       { status: 500 }
     );
   }

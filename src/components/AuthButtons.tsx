@@ -37,7 +37,7 @@ export function AuthButtons() {
 
   // 1. 로그인 성공 상태 확인 (로딩 여부 상관없이 데이터가 있으면 즉시 표시)
   if (isAuthenticated && user) {
-    const displayName = userProfile?.nickname || user.email?.split('@')[0] || "User";
+    const displayName = userProfile?.username || user.email?.split('@')[0] || "User";
     const displayImage = userProfile?.profile_image_url || "/globe.svg";
 
     return (

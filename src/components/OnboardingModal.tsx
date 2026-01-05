@@ -163,11 +163,26 @@ export function OnboardingModal({
         }, { onConflict: 'id' });
 
       if (dbError) {
-        console.error('[Onboarding] DB 업데이트 에러:', dbError);
-        throw new Error("DB 업데이트 실패: " + dbError.message);
+        console.error('[Onboarding] users 테이블 업데이트 에러:', dbError);
       }
       
-      console.log("[Onboarding] Users 테이블 업데이트 완료");
+      // 3. profiles 테이블 업데이트 (Header 및 AuthContext에서 사용됨)
+      console.log("[Onboarding] profiles 테이블 업데이트 시작...");
+      const { error: profileError } = await (supabase as any)
+        .from('profiles')
+        .upsert({
+          id: userId,
+          email: userEmail,
+          username: nickname, // profiles 테이블은 username 컬럼을 사용함
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+
+      if (profileError) {
+        console.error('[Onboarding] profiles 업데이트 에러:', profileError);
+        throw new Error("정보 저장 실패: " + profileError.message);
+      }
+      
+      console.log("[Onboarding] 모든 테이블 업데이트 완료");
 
       // 성공 처리
       console.log("[Onboarding] 완료 처리 시작...");

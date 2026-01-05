@@ -43,6 +43,7 @@ export default function AuthCallbackPage() {
               email: user.email,
               username: user.user_metadata?.full_name || 
                        user.user_metadata?.name || 
+                       user.user_metadata?.nickname || 
                        user.email?.split('@')[0] || 
                        'user',
               avatar_url: user.user_metadata?.avatar_url || 
