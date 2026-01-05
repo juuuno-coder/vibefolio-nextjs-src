@@ -1,5 +1,5 @@
 // src/lib/comments.ts
-import { supabase } from "./supabase";
+import { supabase } from "./supabase/client";
 
 export interface Comment {
   id: string;

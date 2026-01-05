@@ -1,5 +1,5 @@
 // src/lib/inquiries.ts
-import { supabase } from "./supabase";
+import { supabase } from "./supabase/client";
 import { PostgrestError } from "@supabase/supabase-js";
 
 export interface Inquiry {

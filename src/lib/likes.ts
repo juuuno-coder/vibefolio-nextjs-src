@@ -1,5 +1,5 @@
 // src/lib/likes.ts
-import { supabase } from "./supabase";
+import { supabase } from "./supabase/client";
 
 /**
  * Get the current user.
