@@ -3,30 +3,20 @@
 
 import { VibeLogo } from "./Logo";
 import { useEffect, useState } from "react";
-import { Menu, Search, User as UserIcon, X, LogOut, LayoutDashboard, User } from "lucide-react";
+import { Menu, Search, User as UserIcon, X, LogOut, LayoutDashboard, Shield } from "lucide-react";
 import {
   Button,
-  Drawer,
-  DrawerContent,
-  DrawerTrigger,
-  Input,
-  Sheet,
-  SheetContent,
-  SheetTrigger,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/index";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
-import { User as SupabaseUser } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 // 메뉴 정의
 const menuItems = [
@@ -39,8 +29,7 @@ export function Header({
 }: {
   onSetCategory?: (value: string) => void;
 }) {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [userProfile, setUserProfile] = useState<{ username: string; avatar_url: string; role: string } | null>(null);
+  const { user, userProfile, isAdmin, signOut, isAuthenticated } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -54,93 +43,8 @@ export function Header({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
-    
-    async function fetchProfile(userId: string) {
-      try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('username, avatar_url, role')
-          .eq('id', userId)
-          .single();
-          
-        if (error) {
-          console.error("Error fetching profile:", error);
-          return null;
-        }
-        return profile;
-      } catch (e) {
-        console.error("Exception fetching profile:", e);
-        return null;
-      }
-    }
-
-    async function initializeAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!mounted) return;
-      
-      if (session?.user) {
-        setUser(session.user);
-        
-        // 1. 세션 메타데이터에서 기본 정보 가져오기
-        let profileData = {
-          username: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
-          avatar_url: session.user.user_metadata?.avatar_url || "",
-          role: session.user.app_metadata?.role || "user",
-        };
-
-        // 2. DB profiles 테이블에서 최신 정보(특히 role) 가져오기
-        const dbProfile = await fetchProfile(session.user.id);
-        if (dbProfile) {
-          profileData = {
-            username: dbProfile.username || profileData.username,
-            avatar_url: dbProfile.avatar_url || profileData.avatar_url,
-            role: dbProfile.role || profileData.role, // 여기서 DB role 우선 적용
-          };
-        }
-
-        setUserProfile(profileData);
-      }
-    }
-    
-    initializeAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!mounted) return;
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        let profileData = {
-          username: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
-          avatar_url: session.user.user_metadata?.avatar_url || "",
-          role: session.user.app_metadata?.role || "user",
-        };
-
-        const dbProfile = await fetchProfile(session.user.id);
-        if (dbProfile) {
-          profileData = {
-            username: dbProfile.username || profileData.username,
-            avatar_url: dbProfile.avatar_url || profileData.avatar_url,
-            role: dbProfile.role || profileData.role,
-          };
-        }
-        
-        setUserProfile(profileData);
-      } else {
-        setUserProfile(null);
-      }
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.clear();
+    await signOut();
     router.push("/");
   };
 
@@ -191,7 +95,7 @@ export function Header({
         {/* 우측: 검색 + 로그인/가입 */}
         <div className="flex items-center gap-6">
           
-          {/* 검색 아이콘 (클릭 시 확장되거나 모달) */}
+          {/* 검색 아이콘 */}
           <div className="hidden md:flex items-center">
              <div className={`flex items-center transition-all duration-300 ${isSearchOpen ? "w-64 bg-gray-50 px-4 py-2 rounded-full ring-1 ring-gray-200" : "w-8 justify-end"}`}>
                 <Search 
@@ -206,7 +110,7 @@ export function Header({
                       className="bg-transparent border-none outline-none text-sm w-full font-pretendard placeholder:text-gray-400"
                       placeholder="검색어를 입력하세요"
                       onKeyDown={handleSearchKeyDown}
-                      onBlur={() => !onSetCategory && setIsSearchOpen(false)} // 값 입력 없으면 닫기 등의 로직 추가 가능
+                      onBlur={() => !onSetCategory && setIsSearchOpen(false)}
                    />
                 )}
              </div>
@@ -214,13 +118,13 @@ export function Header({
 
            {/* Auth Buttons */}
            <div className="hidden md:flex items-center gap-4 font-poppins text-[15px] font-medium">
-              {user ? (
+              {isAuthenticated && user ? (
                  // 로그인 상태
                  <DropdownMenu>
                    <DropdownMenuTrigger asChild>
                      <button className="outline-none rounded-full ring-2 ring-transparent ring-offset-2 hover:ring-gray-200 transition-all">
                        <Avatar className="w-9 h-9 cursor-pointer border border-gray-200">
-                         <AvatarImage src={userProfile?.avatar_url} />
+                         <AvatarImage src={userProfile?.profile_image_url} />
                           <AvatarFallback className="bg-gray-100 text-black font-bold">
                             {userProfile?.username?.charAt(0) || "U"}
                           </AvatarFallback>
@@ -229,19 +133,15 @@ export function Header({
                    </DropdownMenuTrigger>
                    <DropdownMenuContent align="end" className="w-60 mt-2 rounded-xl border border-gray-100 shadow-xl bg-white p-2">
                        <div className="px-3 py-3 border-b border-gray-50 mb-1">
-                          <p className="font-bold text-sm text-black">{userProfile?.username}</p>
+                          <p className="font-bold text-sm text-black truncate">{userProfile?.username}</p>
                           <p className="text-xs text-black/60 truncate">{user.email}</p>
                        </div>
-                      <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-black hover:bg-gray-50 focus:bg-gray-50">
-                         <Link href="/mypage">
-                            <UserIcon className="mr-2 h-4 w-4" /> 마이페이지
-                         </Link>
+                      <DropdownMenuItem onClick={() => router.push('/mypage')} className="rounded-lg cursor-pointer text-black hover:bg-gray-50 focus:bg-gray-50">
+                        <UserIcon className="mr-2 h-4 w-4" /> 마이페이지
                       </DropdownMenuItem>
-                      {userProfile?.role === 'admin' && (
-                        <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-indigo-600 bg-indigo-50 hover:bg-indigo-100 focus:bg-indigo-100 font-bold mt-1">
-                           <Link href="/admin">
-                              <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자 센터
-                           </Link>
+                      {isAdmin && (
+                        <DropdownMenuItem onClick={() => router.push('/admin')} className="rounded-lg cursor-pointer text-indigo-600 bg-indigo-50 hover:bg-indigo-100 focus:bg-indigo-100 font-bold mt-1">
+                           <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자 센터
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuItem onClick={handleLogout} className="rounded-lg cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:bg-red-50 focus:text-red-700">
@@ -293,26 +193,30 @@ export function Header({
             </nav>
             <div className="h-px bg-gray-100 w-full" />
             <div className="flex flex-col gap-4">
-               {user ? (
+               {isAuthenticated && user ? (
                   <>
-                     <Link href="/mypage" className="flex items-center gap-3">
-                        <Avatar className="w-8 h-8">
-                           <AvatarImage src={userProfile?.avatar_url} />
+                     <div className="flex items-center gap-3">
+                        <Avatar className="w-10 h-10 border border-gray-100">
+                           <AvatarImage src={userProfile?.profile_image_url} />
                            <AvatarFallback>U</AvatarFallback>
                         </Avatar>
-                         <span className="font-medium">{userProfile?.username}</span>
-                     </Link>
-                     {userProfile?.role === 'admin' && (
-                       <Link href="/admin" className="text-left text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg text-sm font-bold mt-1 inline-flex items-center">
+                         <div className="flex flex-col">
+                            <span className="font-bold text-gray-900">{userProfile?.username}</span>
+                            <span className="text-xs text-gray-500">{user.email}</span>
+                         </div>
+                     </div>
+                     <Link href="/mypage" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-700 font-medium py-1">마이페이지</Link>
+                     {isAdmin && (
+                       <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-indigo-600 font-bold bg-indigo-50 px-3 py-2 rounded-lg inline-flex items-center w-fit">
                          <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자 센터
                        </Link>
                      )}
-                     <button onClick={handleLogout} className="text-left text-red-500 text-sm font-medium mt-2">로그아웃</button>
+                     <button onClick={handleLogout} className="text-left text-red-500 font-medium py-1">로그아웃</button>
                   </>
                ) : (
                   <>
-                     <Link href="/login" className="w-full py-3 text-center border border-gray-200 rounded-lg font-medium text-gray-700">Login</Link>
-                     <Link href="/signup" className="w-full py-3 text-center bg-black text-white rounded-lg font-medium">회원가입</Link>
+                     <Link href="/login" className="w-full py-3 text-center border border-gray-200 rounded-lg font-medium text-gray-700" onClick={() => setIsMobileMenuOpen(false)}>로그인</Link>
+                     <Link href="/signup" className="w-full py-3 text-center bg-black text-white rounded-lg font-medium" onClick={() => setIsMobileMenuOpen(false)}>회원가입</Link>
                   </>
                )}
             </div>
