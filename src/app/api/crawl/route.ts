@@ -1,219 +1,198 @@
-// src/app/api/crawl/route.ts
+// 채용/공모전/이벤트 크롤링 API
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { crawlAll, crawlByType } from '@/lib/crawlers/crawler';
-import { CrawledItem } from '@/lib/crawlers/types';
+import * as cheerio from 'cheerio';
 
-// Supabase 서비스 역할 클라이언트 (RLS 우회)
-const supabaseAdmin = createClient(
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+// 사람인 채용 크롤링
+async function crawlSaramin() {
+  const items = [];
+  try {
+    const response = await fetch('https://www.saramin.co.kr/zf_user/jobs/list/job-category?cat_cd=404%2C405%2C406&panel_type=&search_optional_item=y&search_done=y&panel_count=y');
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    
+    $('.item_recruit').each((i, el) => {
+      if (i >= 10) return false; // 최대 10개
+      
+      const title = $(el).find('.job_tit a').text().trim();
+      const company = $(el).find('.corp_name a').text().trim();
+      const link = 'https://www.saramin.co.kr' + $(el).find('.job_tit a').attr('href');
+      const deadline = $(el).find('.job_date .date').text().trim();
+      
+      if (title && company) {
+        items.push({
+          type: 'job',
+          title,
+          company,
+          link,
+          deadline,
+          source: '사람인'
+        });
+      }
+    });
+  } catch (error) {
+    console.error('사람인 크롤링 실패:', error);
+  }
+  
+  return items;
+}
+
+// 씽굿 공모전 크롤링
+async function crawlThinkgood() {
+  const items = [];
+  try {
+    const response = await fetch('https://www.thinkcontest.com/Contest/AjaxList');
+    const data = await response.json();
+    
+    data.slice(0, 10).forEach((item: any) => {
+      items.push({
+        type: 'contest',
+        title: item.title,
+        organizer: item.organizer,
+        link: `https://www.thinkcontest.com/Contest/View/${item.id}`,
+        deadline: item.deadline,
+        prize: item.prize,
+        source: '씽굿'
+      });
+    });
+  } catch (error) {
+    console.error('씽굿 크롤링 실패:', error);
+  }
+  
+  return items;
+}
+
+// 온오프믹스 이벤트 크롤링  
+async function crawlOnoffmix() {
+  const items = [];
+  try {
+    const response = await fetch('https://www.onoffmix.com/event/main?c=100');
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    
+    $('.event-list li').each((i, el) => {
+      if (i >= 10) return false;
+      
+      const title = $(el).find('.event-title').text().trim();
+      const link = 'https://www.onoffmix.com' + $(el).find('a').attr('href');
+      const date = $(el).find('.event-date').text().trim();
+      
+      if (title) {
+        items.push({
+          type: 'event',
+          title,
+          link,
+          date,
+          source: '온오프믹스'
+        });
+      }
+    });
+  } catch (error) {
+    console.error('온오프믹스 크롤링 실패:', error);
+  }
+  
+  return items;
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    // 크롤링 로그 조회
+    const { data: logs } = await supabase
+      .from('crawl_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(20);
+    
+    // 통계 조회
+    const recruitItems = JSON.parse(localStorage.getItem('recruitItems') || '[]');
+    const statistics = {
+      total: recruitItems.length,
+      crawled: recruitItems.filter((item: any) => item.source).length,
+      manual: recruitItems.filter((item: any) => !item.source).length,
+      byType: {
+        job: recruitItems.filter((item: any) => item.type === 'job').length,
+        contest: recruitItems.filter((item: any) => item.type === 'contest').length,
+        event: recruitItems.filter((item: any) => item.type === 'event').length,
+      }
+    };
+    
+    return NextResponse.json({ logs: logs || [], statistics });
+  } catch (error) {
+    console.error('크롤링 상태 조회 실패:', error);
+    return NextResponse.json({ error: 'Failed to fetch crawl status' }, { status: 500 });
+  }
+}
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   
   try {
-    // 인증 확인 (관리자만 수동 크롤링 가능)
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { type = 'all' } = await request.json();
+    
+    let allItems: any[] = [];
+    
+    // 타입별 크롤링 실행
+    if (type === 'all' || type === 'job') {
+      const jobs = await crawlSaramin();
+      allItems = [...allItems, ...jobs];
     }
-
-    // 요청 본문 파싱
-    const body = await request.json();
-    const { type, secret } = body;
-
-    // Cron job secret 확인 (스케줄러용)
-    const cronSecret = process.env.CRON_SECRET || 'your-secret-key-here';
-    if (secret !== cronSecret) {
-      // Secret이 없거나 틀리면 사용자 인증 확인
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-      
-      if (authError || !user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
-      // 관리자 권한 확인
-      const { data: userData } = await supabaseAdmin
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      if (userData?.role !== 'admin') {
-        return NextResponse.json({ error: 'Forbidden: Admin only' }, { status: 403 });
-      }
+    
+    if (type === 'all' || type === 'contest') {
+      const contests = await crawlThinkgood();
+      allItems = [...allItems, ...contests];
     }
-
-    // 크롤링 실행
-    const crawlResult = type && type !== 'all' 
-      ? await crawlByType(type as 'job' | 'contest' | 'event')
-      : await crawlAll();
-
-    if (!crawlResult.success) {
-      throw new Error(crawlResult.error || 'Crawling failed');
+    
+    if (type === 'all' || type === 'event') {
+      const events = await crawlOnoffmix();
+      allItems = [...allItems, ...events];
     }
-
-    // 데이터베이스에 저장
-    let itemsAdded = 0;
-    let itemsUpdated = 0;
-
-    for (const item of crawlResult.items) {
-      // 중복 체크 (제목과 링크로)
-      const { data: existing } = await supabaseAdmin
-        .from('recruit_items')
-        .select('id')
-        .eq('title', item.title)
-        .eq('link', item.link)
-        .single();
-
-      const itemData = {
-        title: item.title,
-        description: item.description,
-        type: item.type,
-        date: item.date,
-        location: item.location,
-        prize: item.prize,
-        salary: item.salary,
-        company: item.company,
-        employment_type: item.employmentType,
-        link: item.link,
-        thumbnail: item.thumbnail,
-        is_crawled: true,
-        source_url: item.sourceUrl,
-        crawled_at: new Date().toISOString(),
-        is_active: true,
-      };
-
-      if (existing) {
-        // 업데이트
-        await supabaseAdmin
-          .from('recruit_items')
-          .update(itemData)
-          .eq('id', existing.id);
-        itemsUpdated++;
-      } else {
-        // 새로 추가
-        await supabaseAdmin
-          .from('recruit_items')
-          .insert(itemData);
-        itemsAdded++;
-      }
-    }
-
-    const duration = Date.now() - startTime;
-
+    
+    // localStorage에 저장 (임시 - 추후 DB로 이전)
+    const existingItems = JSON.parse(localStorage.getItem('recruitItems') || '[]');
+    const newItems = allItems.filter(item => 
+      !existingItems.some((existing: any) => existing.link === item.link)
+    );
+    
+    const updatedItems = [...existingItems, ...newItems];
+    localStorage.setItem('recruitItems', JSON.stringify(updatedItems));
+    
     // 크롤링 로그 저장
-    await supabaseAdmin.from('crawl_logs').insert({
-      type: type || 'all',
+    const duration = Date.now() - startTime;
+    await supabase.from('crawl_logs').insert({
+      type,
       status: 'success',
-      items_found: crawlResult.itemsFound,
-      items_added: itemsAdded,
-      items_updated: itemsUpdated,
+      items_found: allItems.length,
+      items_added: newItems.length,
+      items_updated: 0,
       duration_ms: duration,
     });
-
+    
     return NextResponse.json({
       success: true,
-      itemsFound: crawlResult.itemsFound,
-      itemsAdded,
-      itemsUpdated,
-      duration,
+      itemsFound: allItems.length,
+      itemsAdded: newItems.length,
+      itemsUpdated: 0,
     });
-
-  } catch (error) {
-    const duration = Date.now() - startTime;
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
+    
+  } catch (error: any) {
+    console.error('크롤링 실패:', error);
+    
     // 에러 로그 저장
-    await supabaseAdmin.from('crawl_logs').insert({
+    await supabase.from('crawl_logs').insert({
       type: 'all',
-      status: 'failed',
+      status: 'error',
       items_found: 0,
       items_added: 0,
       items_updated: 0,
-      error_message: errorMessage,
-      duration_ms: duration,
+      error_message: error.message,
+      duration_ms: Date.now() - startTime,
     });
-
-    console.error('Crawl error:', error);
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
-  }
-}
-
-// GET 요청으로 크롤링 상태 확인
-export async function GET(request: NextRequest) {
-  try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // 관리자 권한 확인
-    const { data: userData } = await supabaseAdmin
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (userData?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden: Admin only' }, { status: 403 });
-    }
-
-    // 최근 크롤링 로그 조회
-    const { data: logs, error } = await supabaseAdmin
-      .from('crawl_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    if (error) throw error;
-
-    // 통계 정보
-    const { data: stats } = await supabaseAdmin
-      .from('recruit_items')
-      .select('type, is_crawled')
-      .eq('is_active', true);
-
-    const statistics = {
-      total: stats?.length || 0,
-      crawled: stats?.filter(s => s.is_crawled).length || 0,
-      manual: stats?.filter(s => !s.is_crawled).length || 0,
-      byType: {
-        job: stats?.filter(s => s.type === 'job').length || 0,
-        contest: stats?.filter(s => s.type === 'contest').length || 0,
-        event: stats?.filter(s => s.type === 'event').length || 0,
-      },
-    };
-
-    return NextResponse.json({
-      logs,
-      statistics,
-    });
-
-  } catch (error) {
-    console.error('Error fetching crawl status:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch crawl status' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Crawl failed', message: error.message }, { status: 500 });
   }
 }
