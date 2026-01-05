@@ -164,9 +164,10 @@ export function StickyMenu({
 
   return (
     <>
-      {/* Sticky 카테고리 바 */}
-      <div className={`sticky top-[80px] z-20 w-full bg-white/95 backdrop-blur-sm border-b border-gray-100 transition-all duration-300 ${isScrolled ? "h-12 shadow-sm" : "h-16 md:h-20"}`}>
-        {/* 메인 카테고리 바 */}
+  return (
+    <div className={`sticky top-[80px] z-20 w-full transition-all duration-300`}>
+      {/* 1. 상단 메인 카테고리 바 */}
+      <div className={`w-full bg-white/95 backdrop-blur-sm border-b border-gray-100 transition-all duration-300 ${isScrolled ? "h-12 shadow-sm" : "h-16 md:h-20"}`}>
         <section className={`flex items-center justify-between px-3 md:px-6 h-full w-full gap-2`}>
           {/* 카테고리 목록 */}
           <div className="flex items-center justify-start md:justify-center gap-1 md:gap-2 overflow-x-auto no-scrollbar h-full flex-1">
@@ -260,15 +261,15 @@ export function StickyMenu({
         </section>
       </div>
 
-      {/* 분야별 확장 패널 - Sticky 영역 외부에서 렌더링하여 아래 콘텐츠가 밀리도록 */}
+      {/* 2. 분야별 확장 패널 - 같은 Sticky 컨테이너 내부로 이동 */}
       <div 
-        className={`overflow-hidden transition-all duration-300 ease-in-out bg-white border-b border-gray-100 ${
+        className={`overflow-hidden transition-all duration-300 ease-in-out bg-gray-50/95 backdrop-blur-sm border-b border-gray-100 ${
           isFieldPanelOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
         }`}
       >
-        <div className="px-4 md:px-12 lg:px-20 py-3">
-          <div className="flex items-center gap-3 overflow-x-auto no-scrollbar">
-            <span className="text-sm font-medium text-gray-600 whitespace-nowrap">분야</span>
+        <div className="px-3 md:px-6 py-3">
+          <div className="flex items-center justify-start md:justify-center gap-3 overflow-x-auto no-scrollbar">
+            <span className="text-sm font-bold text-gray-800 whitespace-nowrap mr-2">분야</span>
             {fieldCategories.map((field) => {
               const isSelected = selectedFields.includes(field.id);
               return (
@@ -292,7 +293,7 @@ export function StickyMenu({
                   setSelectedFields([]);
                   onSetField?.([]);
                 }}
-                className="text-xs text-gray-400 hover:text-red-500 whitespace-nowrap"
+                className="text-xs text-gray-400 hover:text-red-500 whitespace-nowrap ml-2"
               >
                 초기화
               </button>
@@ -302,7 +303,7 @@ export function StickyMenu({
 
         {/* 현재 필터 표시 */}
         {hasActiveFilters && (
-          <div className="px-4 md:px-12 lg:px-20 py-2 flex items-center gap-2 text-sm flex-wrap border-t border-gray-50">
+          <div className="px-3 md:px-6 py-2 flex items-center justify-start md:justify-center gap-2 text-sm flex-wrap border-t border-gray-100 bg-white/50">
             <span className="text-gray-400 text-xs">선택됨:</span>
             {selectedCategories.map(cat => {
               const category = categories.find(c => c.value === cat);
@@ -334,13 +335,14 @@ export function StickyMenu({
             })}
             <button
               onClick={handleResetFilters}
-              className="ml-auto text-xs text-gray-500 hover:text-red-500"
+              className="ml-2 text-xs text-gray-500 hover:text-red-500"
             >
               전체 초기화
             </button>
           </div>
         )}
       </div>
+    </div>
     </>
   );
 }
