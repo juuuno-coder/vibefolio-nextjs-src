@@ -13,15 +13,15 @@ async function getUser() {
  * Get the list of projects a user has bookmarked.
  */
 export async function getUserBookmarks(userId: string) {
-  const { data, error } = await supabase
-    .from("Bookmark")
+  const { data, error } = await (supabase
+    .from("Bookmark") as any)
     .select("project_id")
     .eq("user_id", userId);
   if (error) {
     console.error("Error fetching user bookmarks:", error);
     return [];
   }
-  return data.map((bookmark) => bookmark.project_id);
+  return (data as any[] || []).map((bookmark) => bookmark.project_id);
 }
 
 /**
@@ -31,8 +31,8 @@ export async function isProjectBookmarked(projectId: string): Promise<boolean> {
   const user = await getUser();
   if (!user) return false;
 
-  const { data, error } = await supabase
-    .from("Bookmark")
+  const { data, error } = await (supabase
+    .from("Bookmark") as any)
     .select("project_id")
     .eq("user_id", user.id)
     .eq("project_id", projectId)
@@ -42,7 +42,7 @@ export async function isProjectBookmarked(projectId: string): Promise<boolean> {
     console.error("Error checking if project is bookmarked:", error);
   }
 
-  return !!data;
+  return !!(data as any);
 }
 
 /**
@@ -52,9 +52,9 @@ export async function addBookmark(projectId: string): Promise<void> {
   const user = await getUser();
   if (!user) return;
 
-  const { error } = await supabase
-    .from("Bookmark")
-    .insert({ user_id: user.id, project_id: projectId });
+  const { error } = await (supabase
+    .from("Bookmark") as any)
+    .insert({ user_id: user.id, project_id: projectId } as any);
 
   if (error) {
     console.error("Error adding bookmark:", error);
@@ -68,8 +68,8 @@ export async function removeBookmark(projectId: string): Promise<void> {
   const user = await getUser();
   if (!user) return;
 
-  const { error } = await supabase
-    .from("Bookmark")
+  const { error } = await (supabase
+    .from("Bookmark") as any)
     .delete()
     .eq("user_id", user.id)
     .eq("project_id", projectId);

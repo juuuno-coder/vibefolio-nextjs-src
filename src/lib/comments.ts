@@ -15,8 +15,8 @@ export interface Comment {
  * Get all comments for a project.
  */
 export async function getProjectComments(projectId: string): Promise<Comment[]> {
-  const { data, error } = await supabase
-    .from("Comment")
+  const { data, error } = await (supabase
+    .from("Comment") as any)
     .select("id, project_id, user_id, content, created_at, username, user_avatar_url")
     .eq("project_id", projectId)
     .order("created_at", { ascending: false });
@@ -26,7 +26,7 @@ export async function getProjectComments(projectId: string): Promise<Comment[]> 
     return [];
   }
 
-  return data.map((c) => ({
+  return (data as any[] || []).map((c) => ({
     id: c.id,
     project_id: c.project_id,
     user_id: c.user_id,
@@ -47,15 +47,15 @@ export async function addComment(
   username: string,
   avatarUrl: string,
 ): Promise<Comment | null> {
-  const { data, error } = await supabase
-    .from("Comment")
+  const { data, error } = await (supabase
+    .from("Comment") as any)
     .insert({
       project_id: projectId,
       user_id: userId,
       content,
       username,
       user_avatar_url: avatarUrl,
-    })
+    } as any)
     .select("id, project_id, user_id, content, created_at, username, user_avatar_url")
     .single();
 
@@ -64,14 +64,17 @@ export async function addComment(
     return null;
   }
 
+  const d = data as any;
+  if (!d) return null;
+
   return {
-    id: data.id,
-    project_id: data.project_id,
-    user_id: data.user_id,
-    content: data.content,
-    createdAt: data.created_at,
-    username: data.username,
-    userAvatar: data.user_avatar_url,
+    id: d.id,
+    project_id: d.project_id,
+    user_id: d.user_id,
+    content: d.content,
+    createdAt: d.created_at,
+    username: d.username,
+    userAvatar: d.user_avatar_url,
   };
 }
 
@@ -79,8 +82,8 @@ export async function addComment(
  * Delete a comment.
  */
 export async function deleteComment(commentId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from("Comment")
+  const { error } = await (supabase
+    .from("Comment") as any)
     .delete()
     .eq("id", commentId)
     .eq("user_id", userId);
@@ -95,8 +98,8 @@ export async function deleteComment(commentId: string, userId: string): Promise<
  * Get the comment count for a project.
  */
 export async function getCommentCount(projectId: string): Promise<number> {
-  const { count, error } = await supabase
-    .from("Comment")
+  const { count, error } = await (supabase
+    .from("Comment") as any)
     .select("*", { count: "exact", head: true })
     .eq("project_id", projectId);
 

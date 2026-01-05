@@ -22,8 +22,8 @@ export interface Inquiry {
  * Get all inquiries for a specific user.
  */
 export async function getUserInquiries(userId: string): Promise<Inquiry[]> {
-  const { data, error } = await supabase
-    .from("inquiries")
+  const { data, error } = await (supabase
+    .from("inquiries") as any)
     .select(`
       id,
       project_id,
@@ -63,15 +63,15 @@ export async function addInquiry(
   userId: string,
   message: string
 ): Promise<Inquiry | null> {
-  const { data, error } = await supabase
-    .from("inquiries")
+  const { data, error } = await (supabase
+    .from("inquiries") as any)
     .insert({
       project_id: projectId,
       creator_id: creatorId,
       user_id: userId,
       message,
       status: "pending",
-    })
+    } as any)
     .select()
     .single();
 
@@ -86,7 +86,7 @@ export async function addInquiry(
  * Delete an inquiry.
  */
 export async function deleteInquiry(inquiryId: number, userId: string): Promise<{ data: null; error: PostgrestError | null }> {
-  let query = supabase.from("inquiries").delete().eq("id", inquiryId);
+  let query = (supabase.from("inquiries") as any).delete().eq("id", inquiryId);
   // If userId is provided, it's a user deleting their own. Otherwise, it's an admin.
   if (userId) {
     query = query.eq("user_id", userId);
@@ -100,8 +100,8 @@ export async function deleteInquiry(inquiryId: number, userId: string): Promise<
  * (Admin) Get all inquiries.
  */
 export async function getAllInquiries(): Promise<Inquiry[]> {
-  const { data, error } = await supabase
-    .from("inquiries")
+  const { data, error } = await (supabase
+    .from("inquiries") as any)
     .select(`
       id,
       project_id,
@@ -138,9 +138,9 @@ export async function updateInquiryStatus(
   inquiryId: number,
   status: "pending" | "answered"
 ): Promise<Inquiry | null> {
-  const { data, error } = await supabase
-    .from("inquiries")
-    .update({ status })
+  const { data, error } = await (supabase
+    .from("inquiries") as any)
+    .update({ status } as any)
     .eq("id", inquiryId)
     .select()
     .single();
