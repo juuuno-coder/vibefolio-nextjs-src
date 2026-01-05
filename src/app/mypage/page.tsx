@@ -53,7 +53,7 @@ export default function MyPage() {
         // 프로필 정보 로드 (실패해도 진행)
         try {
           const { data } = await supabase
-            .from('users')
+            .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
@@ -299,7 +299,7 @@ export default function MyPage() {
 
       // 3. DB 업데이트
       const { error: updateError } = await (supabase
-        .from('users') as any)
+        .from('profiles') as any)
         .update({ cover_image_url: publicUrl })
         .eq('id', userId);
 

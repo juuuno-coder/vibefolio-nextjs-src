@@ -86,7 +86,7 @@ export default function ProfileSettingsPage() {
         // Supabase에서 직접 프로필 정보 가져오기 (API 라우트 우회)
         try {
           const { data: userData, error: fetchError } = await supabase
-            .from('users')
+            .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single() as any;
@@ -178,7 +178,7 @@ export default function ProfileSettingsPage() {
       console.log('프로필 업데이트 시작...');
       
       const { error: updateError } = await (supabase
-        .from('users') as any)
+        .from('profiles') as any)
         .update({
           nickname: profile.username,
           bio: profile.bio,
