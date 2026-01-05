@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { FcGoogle } from "react-icons/fc";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -175,7 +176,7 @@ export default function LoginPage() {
             onClick={handleGoogleLogin}
             className="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
           >
-            <img src="/google.svg" alt="Google" className="h-5 w-5 mr-2" />
+            <FcGoogle className="h-5 w-5 mr-2" />
             Google 계정으로 로그인
           </Button>
         </div>
