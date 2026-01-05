@@ -2,8 +2,8 @@
 import { supabase } from "./supabase/client";
 import { Database } from "./supabase/types";
 
-type ViewRow = Database["public"]["Tables"]["View"]["Row"];
-type ViewInsert = Database["public"]["Tables"]["View"]["Insert"];
+type ViewRow = Database["public"]["Tables"]["view"]["Row"];
+type ViewInsert = Database["public"]["Tables"]["view"]["Insert"];
 
 /**
  * Get the current user.
@@ -23,7 +23,7 @@ export async function recordView(projectId: string): Promise<void> {
 
   // Check if the user has already viewed this project
   const { data, error: selectError } = await supabase
-    .from("View")
+    .from("view")
     .select("user_id")
     .eq("user_id", user.id)
     .eq("project_id", projectId)
@@ -37,7 +37,7 @@ export async function recordView(projectId: string): Promise<void> {
   // If the user has not viewed the project, add a new view
   if (!data) {
     const { error: insertError } = await supabase
-      .from("View")
+      .from("view")
       .insert({ user_id: user.id, project_id: projectId } as ViewInsert);
 
     if (insertError) {
@@ -51,7 +51,7 @@ export async function recordView(projectId: string): Promise<void> {
  */
 export async function getProjectViewCount(projectId: string): Promise<number> {
   const { count, error } = await supabase
-    .from("View")
+    .from("view")
     .select("*", { count: "exact", head: true })
     .eq("project_id", projectId);
 

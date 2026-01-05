@@ -2,8 +2,8 @@
 import { supabase } from "./supabase/client";
 import { Database } from "./supabase/types";
 
-type BookmarkRow = Database["public"]["Tables"]["Bookmark"]["Row"];
-type BookmarkInsert = Database["public"]["Tables"]["Bookmark"]["Insert"];
+type BookmarkRow = Database["public"]["Tables"]["bookmark"]["Row"];
+type BookmarkInsert = Database["public"]["Tables"]["bookmark"]["Insert"];
 
 /**
  * Get the current user.
@@ -74,7 +74,7 @@ export async function removeBookmark(projectId: string): Promise<void> {
   if (!user) return;
 
   const { error } = await supabase
-    .from("Bookmark")
+    .from("bookmark")
     .delete()
     .eq("user_id", user.id)
     .eq("project_id", projectId);

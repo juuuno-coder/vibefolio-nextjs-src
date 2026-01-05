@@ -2,8 +2,8 @@
 import { supabase } from "./supabase/client";
 import { Database } from "./supabase/types";
 
-type CommentRow = Database["public"]["Tables"]["Comment"]["Row"];
-type CommentInsert = Database["public"]["Tables"]["Comment"]["Insert"];
+type CommentRow = Database["public"]["Tables"]["comment"]["Row"];
+type CommentInsert = Database["public"]["Tables"]["comment"]["Insert"];
 
 export interface Comment {
   id: string;
@@ -20,7 +20,7 @@ export interface Comment {
  */
 export async function getProjectComments(projectId: string): Promise<Comment[]> {
   const { data, error } = await supabase
-    .from("Comment")
+    .from("comment")
     .select("id, project_id, user_id, content, created_at, username, user_avatar_url")
     .eq("project_id", projectId)
     .order("created_at", { ascending: false });
@@ -54,7 +54,7 @@ export async function addComment(
   avatarUrl: string,
 ): Promise<Comment | null> {
   const { data, error } = await supabase
-    .from("Comment")
+    .from("comment")
     .insert({
       project_id: projectId,
       user_id: userId,
@@ -90,7 +90,7 @@ export async function addComment(
  */
 export async function deleteComment(commentId: string, userId: string): Promise<void> {
   const { error } = await supabase
-    .from("Comment")
+    .from("comment")
     .delete()
     .eq("id", commentId)
     .eq("user_id", userId);
@@ -106,7 +106,7 @@ export async function deleteComment(commentId: string, userId: string): Promise<
  */
 export async function getCommentCount(projectId: string): Promise<number> {
   const { count, error } = await supabase
-    .from("Comment")
+    .from("comment")
     .select("*", { count: "exact", head: true })
     .eq("project_id", projectId);
 

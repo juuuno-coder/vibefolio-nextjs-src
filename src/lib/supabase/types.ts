@@ -94,7 +94,7 @@ export interface Database {
           updated_at?: string;
         };
       };
-      Like: {
+      like: {
         Row: {
           user_id: string; // UUID
           project_id: number;
@@ -160,7 +160,7 @@ export interface Database {
           is_deleted?: boolean;
         };
       };
-      Comment: {
+      comment: {
         Row: {
           id: string;
           user_id: string;
@@ -192,7 +192,7 @@ export interface Database {
           is_deleted?: boolean;
         };
       };
-      Bookmark: {
+      bookmark: {
         Row: {
           user_id: string;
           project_id: string;
@@ -209,7 +209,7 @@ export interface Database {
           created_at?: string;
         };
       };
-      View: {
+      view: {
         Row: {
           user_id: string;
           project_id: string;

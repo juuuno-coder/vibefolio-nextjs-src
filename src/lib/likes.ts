@@ -2,8 +2,8 @@
 import { supabase } from "./supabase/client";
 import { Database } from "./supabase/types";
 
-type LikeRow = Database["public"]["Tables"]["Like"]["Row"];
-type LikeInsert = Database["public"]["Tables"]["Like"]["Insert"];
+type LikeRow = Database["public"]["Tables"]["like"]["Row"];
+type LikeInsert = Database["public"]["Tables"]["like"]["Insert"];
 
 /**
  * Get the current user.
@@ -103,7 +103,7 @@ export async function toggleLike(projectId: string): Promise<boolean> {
  */
 export async function getProjectLikeCount(projectId: string): Promise<number> {
   const { count, error } = await supabase
-    .from("Like")
+    .from("like")
     .select("*", { count: "exact", head: true })
     .eq("project_id", projectId);
 
