@@ -44,54 +44,54 @@ export default function AdminPage() {
   const [recentProjects, setRecentProjects] = useState<any[]>([]);
   const [recentInquiries, setRecentInquiries] = useState<any[]>([]);
 
-  // 관리자가 ?�니�??�근 차단
+  // 관리자가 아니면 접근 차단
   useEffect(() => {
     if (!isAdminLoading && !isAdmin) {
-      alert('관리자 권한???�요?�니??');
+      alert('관리자 권한이 필요합니다.');
       router.push('/');
     }
   }, [isAdmin, isAdminLoading, router]);
 
-  // ?�계 �?최근 ?�이??로드 (CSR ?�전)
+  // 통계 및 최근 데이터 로드 (CSR 안전)
   useEffect(() => {
-    // ?�라?�언???�이?�에?�만 ?�행
+    // 클라이언트 사이드에서만 실행
     if (typeof window === 'undefined') return;
     if (!isAdmin) return;
 
     const loadStats = async () => {
       setIsLoadingStats(true);
       try {
-        // ?�로?�트 ??
+        // 프로젝트 수
         const { count: projectCount } = await supabase
           .from('Project')
           .select('*', { count: 'exact', head: true });
 
-        // ?�용????
+        // 사용자 수
         const { count: userCount } = await supabase
           .from('users')
           .select('*', { count: 'exact', head: true });
 
-        // 공�??�항 ??
+        // 공지사항 수
         const { count: noticeCount } = await supabase
           .from('notices')
           .select('*', { count: 'exact', head: true });
 
-        // 문의?�항 ??
+        // 문의사항 수
         const { count: inquiryCount } = await supabase
           .from('inquiries')
           .select('*', { count: 'exact', head: true });
 
-        // FAQ ??
+        // FAQ 수
         const { count: faqCount } = await supabase
           .from('faqs')
           .select('*', { count: 'exact', head: true });
 
-        // ?�업 ??
+        // 팝업 수
         const { count: popupCount } = await supabase
           .from('popups')
           .select('*', { count: 'exact', head: true });
 
-        // 최근 ?�로?�트
+        // 최근 프로젝트
         const { data: projects } = await supabase
           .from('Project')
           .select(`
@@ -101,14 +101,14 @@ export default function AdminPage() {
           .order('created_at', { ascending: false })
           .limit(5);
 
-        // 로컬?�토리�? ?�이??(CSR ?�전) - 채용�?배너
+        // 로컬스토리지 데이터 (CSR 안전) - 채용과 배너
         let recruitItems: any[] = [];
         let banners: any[] = [];
         try {
           recruitItems = JSON.parse(localStorage.getItem("recruitItems") || "[]");
           banners = JSON.parse(localStorage.getItem("banners") || "[]");
         } catch (e) {
-          console.warn("localStorage ?�근 ?�패:", e);
+          console.warn("localStorage 접근 실패:", e);
         }
 
         // 최근 문의
@@ -133,7 +133,7 @@ export default function AdminPage() {
 
         setRecentProjects(projects || []);
       } catch (error) {
-        console.error('?�계 로드 ?�패:', error);
+        console.error('통계 로드 실패:', error);
       } finally {
         setIsLoadingStats(false);
       }
@@ -144,8 +144,8 @@ export default function AdminPage() {
 
   const adminMenus = [
     {
-      title: "공�??�항 관�?,
-      description: "?�비??공�? �??�벤???�식 ?�록",
+      title: "공지사항 관리",
+      description: "서비스 공지 및 이벤트 소식 등록",
       icon: Megaphone,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
@@ -153,8 +153,8 @@ export default function AdminPage() {
       count: stats.totalNotices,
     },
     {
-      title: "FAQ 관�?,
-      description: "?�주 묻는 질문 ?�록 �?관�?,
+      title: "FAQ 관리",
+      description: "자주 묻는 질문 등록 및 관리",
       icon: HelpCircle,
       color: "text-green-600",
       bgColor: "bg-green-50",
@@ -162,8 +162,8 @@ export default function AdminPage() {
       count: stats.totalFaqs,
     },
     {
-      title: "?�업 광고 관�?,
-      description: "메인 ?�이지 ?�업 ?�록 �?관�?,
+      title: "팝업 광고 관리",
+      description: "메인 페이지 팝업 등록 및 관리",
       icon: Megaphone,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
@@ -171,8 +171,8 @@ export default function AdminPage() {
       count: stats.totalPopups,
     },
     {
-      title: "배너 관�?,
-      description: "메인 ?�이지 배너 ?�로??�?관�?,
+      title: "배너 관리",
+      description: "메인 페이지 배너 업로드 및 관리",
       icon: ImageIcon,
       color: "text-purple-500",
       bgColor: "bg-purple-50",
@@ -180,8 +180,8 @@ export default function AdminPage() {
       count: stats.totalBanners,
     },
     {
-      title: "?�로?�트 관�?,
-      description: "?�록???�로?�트 조회 �?관�?,
+      title: "프로젝트 관리",
+      description: "등록된 프로젝트 조회 및 관리",
       icon: FileText,
       color: "text-blue-500",
       bgColor: "bg-blue-50",
@@ -189,8 +189,8 @@ export default function AdminPage() {
       count: stats.totalProjects,
     },
     {
-      title: "채용/공모??관�?,
-      description: "채용, 공모?? ?�벤??관�?,
+      title: "채용/공모전 관리",
+      description: "채용, 공모전, 이벤트 관리",
       icon: Briefcase,
       color: "text-green-500",
       bgColor: "bg-green-50",
@@ -198,8 +198,8 @@ export default function AdminPage() {
       count: stats.totalRecruitItems,
     },
     {
-      title: "문의 관�?,
-      description: "1:1 문의 ?�역 조회 �??��?",
+      title: "문의 관리",
+      description: "1:1 문의 내역 조회 및 답변",
       icon: MessageCircle,
       color: "text-orange-500",
       bgColor: "bg-orange-50",
@@ -207,8 +207,8 @@ export default function AdminPage() {
       count: stats.totalInquiries,
     },
     {
-      title: "?�용??관�?,
-      description: "?�원 ?�보 조회 �?관�?,
+      title: "사용자 관리",
+      description: "회원 정보 조회 및 관리",
       icon: Users,
       color: "text-pink-500",
       bgColor: "bg-pink-50",
@@ -216,8 +216,8 @@ export default function AdminPage() {
       count: stats.totalUsers,
     },
     {
-      title: "?�계",
-      description: "?�이???�계 �?분석",
+      title: "통계",
+      description: "사이트 통계 및 분석",
       icon: BarChart3,
       color: "text-indigo-500",
       bgColor: "bg-indigo-50",
@@ -226,28 +226,28 @@ export default function AdminPage() {
     },
   ];
 
-  // 로딩 중일 ??
+  // 로딩 중일 때
   if (isAdminLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 size={48} className="animate-spin text-[#4ACAD4] mx-auto mb-4" />
-          <p className="text-gray-600">권한 ?�인 �?..</p>
+          <p className="text-gray-600">권한 확인 중...</p>
         </div>
       </div>
     );
   }
 
-  // 관리자가 ?�닐 ??
+  // 관리자가 아닐 때
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">?�근 권한???�습?�다</h1>
-          <p className="text-gray-600 mb-4">관리자�??�근?????�는 ?�이지?�니??</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">접근 권한이 없습니다</h1>
+          <p className="text-gray-600 mb-4">관리자만 접근할 수 있는 페이지입니다.</p>
           <Link href="/">
-            <Button>?�으�??�아가�?/Button>
+            <Button>홈으로 돌아가기</Button>
           </Link>
         </div>
       </div>
@@ -257,33 +257,33 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-6">
-        {/* ?�더 */}
+        {/* 헤더 */}
         <div className="mb-8 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <Shield className="text-[#4ACAD4]" size={32} />
               <h1 className="text-3xl font-bold text-gray-900">
-                관리자 ?�?�보??
+                관리자 대시보드
               </h1>
             </div>
             <p className="text-gray-600">
-              ?�이???�체�?관리하�?모니?�링?�세??
+              사이트 전체를 관리하고 모니터링하세요
             </p>
           </div>
           <Link href="/">
             <Button variant="outline">
-              ?�이?�로 ?�아가�?
+              사이트로 돌아가기
             </Button>
           </Link>
         </div>
 
-        {/* ?�계 카드 */}
+        {/* 통계 카드 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">?�체 ?�로?�트</p>
+                  <p className="text-sm text-gray-600 mb-1">전체 프로젝트</p>
                   <p className="text-3xl font-bold text-gray-900">
                     {stats.totalProjects}
                   </p>
@@ -299,7 +299,7 @@ export default function AdminPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">문의 ?�역</p>
+                  <p className="text-sm text-gray-600 mb-1">문의 내역</p>
                   <p className="text-3xl font-bold text-gray-900">
                     {stats.totalInquiries}
                   </p>
@@ -315,7 +315,7 @@ export default function AdminPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">채용/공모??/p>
+                  <p className="text-sm text-gray-600 mb-1">채용/공모전</p>
                   <p className="text-3xl font-bold text-gray-900">
                     {stats.totalRecruitItems}
                   </p>
@@ -344,9 +344,9 @@ export default function AdminPage() {
           </Card>
         </div>
 
-        {/* 관�?메뉴 */}
+        {/* 관리 메뉴 */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">관�?메뉴</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">관리 메뉴</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {adminMenus.map((menu, index) => (
               <Link href={menu.path} key={index}>
@@ -373,17 +373,17 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* 최근 ?�동 */}
+        {/* 최근 활동 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 최근 ?�로?�트 */}
+          {/* 최근 프로젝트 */}
           <Card>
             <CardHeader>
-              <CardTitle>최근 ?�록???�로?�트</CardTitle>
+              <CardTitle>최근 등록된 프로젝트</CardTitle>
             </CardHeader>
             <CardContent>
               {recentProjects.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">
-                  ?�록???�로?�트가 ?�습?�다
+                  등록된 프로젝트가 없습니다
                 </p>
               ) : (
                 <div className="space-y-3">
@@ -400,10 +400,10 @@ export default function AdminPage() {
                         />
                         <div>
                           <p className="font-medium text-sm">
-                            {project.title || project.description?.substring(0, 30) || "?�목 ?�음"}
+                            {project.title || project.description?.substring(0, 30) || "제목 없음"}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {project.user?.username || "?�명"}
+                            {project.user?.username || "익명"}
                           </p>
                         </div>
                       </div>
@@ -425,7 +425,7 @@ export default function AdminPage() {
             <CardContent>
               {recentInquiries.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">
-                  문의 ?�역???�습?�다
+                  문의 내역이 없습니다
                 </p>
               ) : (
                 <div className="space-y-3">

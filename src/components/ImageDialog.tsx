@@ -31,7 +31,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/index";
 
-// ImageDialog Props TypeScript ?�터?�이???�의
+// ImageDialog Props TypeScript 인터페이스 정의
 interface ImageDialogProps {
   id: string;
   urls: {
@@ -53,7 +53,7 @@ interface ImageDialogProps {
   height: number;
 }
 
-// ?�팁 그룹 컴포?�트�??�의?�여 코드�?간결??(onClick prop 추�?)
+// 툴팁 그룹 컴포넌트를 정의하여 코드를 간결화 (onClick prop 추가)
 const ActionTooltip = ({
   icon,
   label,
@@ -113,16 +113,16 @@ export function ImageDialog({ props }: { props: ImageDialogProps }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', props.id] });
-      toast.success("?��????�록?�었?�니??");
+      toast.success("댓글이 등록되었습니다.");
     },
     onError: () => {
-      toast.error("?��? ?�록???�패?�습?�다.");
+      toast.error("댓글 등록에 실패했습니다.");
     }
   });
 
   const handleLikeToggle = () => {
     if (!currentUser) {
-      if (confirm("로그?�이 ?�요??기능?�니?? 로그?�하?�겠?�니�?")) {
+      if (confirm("로그인이 필요한 기능입니다. 로그인하시겠습니까?")) {
         window.location.href = "/login";
       }
       return;
@@ -132,7 +132,7 @@ export function ImageDialog({ props }: { props: ImageDialogProps }) {
 
   const handleAddComment = (text: string) => {
       if (!currentUser) {
-          toast.error("로그?�이 ?�요?�니??");
+          toast.error("로그인이 필요합니다.");
           return;
       }
       postComment(text);
@@ -174,35 +174,35 @@ export function ImageDialog({ props }: { props: ImageDialogProps }) {
                 className={isLiked ? "fill-red-500 text-red-500" : ""}
               />
             }
-            label={displayLikes > 0 ? addCommas(displayLikes) : "좋아??}
+            label={displayLikes > 0 ? addCommas(displayLikes) : "좋아요"}
             onClick={handleLikeToggle}
           />
           <ActionTooltip
             icon={<MessageSquare size={20} />}
-            label="?��?"
+            label="댓글"
             onClick={() => setIsCommentModalOpen(true)}
           />
            <ActionTooltip
             icon={<FolderPlus size={20} />}
-            label="컬렉??
+            label="컬렉션"
             onClick={() => {
                 if (!currentUser) {
-                    toast.error("로그?�이 ?�요?�니??");
+                    toast.error("로그인이 필요합니다.");
                     return;
                 }
                 setIsCollectionModalOpen(true);
             }}
           />
-          <ActionTooltip icon={<User size={20} />} label="?�로?? />
-          <ActionTooltip icon={<Send size={20} />} label="?�안?�기" />
-          <ActionTooltip icon={<Download size={20} />} label="?�운로드" />
+          <ActionTooltip icon={<User size={20} />} label="프로필" />
+          <ActionTooltip icon={<Send size={20} />} label="제안하기" />
+          <ActionTooltip icon={<Download size={20} />} label="다운로드" />
         </div>
 
         <div className="p-6">
           <DialogHeader>
             <DialogTitle>Image Title</DialogTitle>
             <DialogDescription>
-              {props.description || "?�록???�명???�습?�다."}
+              {props.description || "등록된 설명이 없습니다."}
             </DialogDescription>
           </DialogHeader>
 
@@ -246,7 +246,7 @@ export function ImageDialog({ props }: { props: ImageDialogProps }) {
                   className="min-w-4 mt-1.5 text-neutral-500"
                 />
                 <p className="text-neutral-500 line-clamp-3">
-                  {props.alt_description || "?�록???�명???�습?�다."}
+                  {props.alt_description || "등록된 설명이 없습니다."}
                 </p>
               </div>
 
@@ -268,7 +268,7 @@ export function ImageDialog({ props }: { props: ImageDialogProps }) {
         </div>
       </DialogContent>
 
-      {/* ?��? 모달 */}
+      {/* 댓글 모달 */}
       <CommentModal
         open={isCommentModalOpen}
         onOpenChange={setIsCommentModalOpen}
@@ -283,7 +283,7 @@ export function ImageDialog({ props }: { props: ImageDialogProps }) {
         userProfile={userProfile ? { username: userProfile.username, profile_image: userProfile.profile_image_url } : undefined}
       />
 
-      {/* 컬렉??모달 */}
+      {/* 컬렉션 모달 */}
       <CollectionModal
         open={isCollectionModalOpen}
         onOpenChange={setIsCollectionModalOpen}
