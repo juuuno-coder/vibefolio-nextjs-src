@@ -160,6 +160,101 @@ export interface Database {
           is_deleted?: boolean;
         };
       };
+      Comment: {
+        Row: {
+          id: string;
+          user_id: string;
+          project_id: string;
+          content: string;
+          created_at: string;
+          username: string;
+          user_avatar_url: string;
+          is_deleted: boolean;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          project_id: string;
+          content: string;
+          created_at?: string;
+          username: string;
+          user_avatar_url: string;
+          is_deleted?: boolean;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          project_id?: string;
+          content?: string;
+          created_at?: string;
+          username?: string;
+          user_avatar_url?: string;
+          is_deleted?: boolean;
+        };
+      };
+      Bookmark: {
+        Row: {
+          user_id: string;
+          project_id: string;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          project_id: string;
+          created_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          project_id?: string;
+          created_at?: string;
+        };
+      };
+      View: {
+        Row: {
+          user_id: string;
+          project_id: string;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          project_id: string;
+          created_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          project_id?: string;
+          created_at?: string;
+        };
+      };
+      inquiries: {
+        Row: {
+          id: number;
+          project_id: string;
+          creator_id: string;
+          user_id: string;
+          message: string;
+          created_at: string;
+          status: string;
+        };
+        Insert: {
+          id?: number;
+          project_id: string;
+          creator_id: string;
+          user_id: string;
+          message: string;
+          created_at?: string;
+          status?: string;
+        };
+        Update: {
+          id?: number;
+          project_id?: string;
+          creator_id?: string;
+          user_id?: string;
+          message?: string;
+          created_at?: string;
+          status?: string;
+        };
+      };
       Proposal: {
         Row: {
           proposal_id: number;
