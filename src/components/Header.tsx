@@ -106,9 +106,7 @@ export function Header({
   return (
     // 헤더 컨테이너
     <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-white/90 backdrop-blur-md border-b border-gray-100 py-3" : "bg-white py-5"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white/90 backdrop-blur-md border-b border-gray-100 py-3`}
     >
       <div className="max-w-[1920px] mx-auto px-6 md:px-12 flex items-center justify-between h-12">
         
@@ -161,64 +159,59 @@ export function Header({
              </div>
           </div>
 
-          {/* Auth Buttons */}
-          <div className="hidden md:flex items-center gap-4 font-poppins text-[15px] font-medium">
-             {user ? (
-                // 로그인 상태
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="outline-none rounded-full">
-                      <Avatar className="w-9 h-9 cursor-pointer border border-gray-200 hover:border-black transition-colors">
-                        <AvatarImage src={userProfile?.avatar_url} />
-                        <AvatarFallback className="bg-gray-100">
-                          <UserIcon className="w-5 h-5 text-gray-500" />
-                        </AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 mt-2 rounded-xl border border-gray-100 shadow-xl bg-white p-2">
-                     <div className="px-3 py-3 border-b border-gray-50 mb-1">
-                        <p className="font-bold text-sm">{userProfile?.username}</p>
-                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                     </div>
-                     <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-                        <Link href="/mypage">
-                           <User className="mr-2 h-4 w-4" /> 마이페이지
-                        </Link>
-                     </DropdownMenuItem>
-                     {userProfile?.role === 'admin' && (
-                       <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-                          <Link href="/admin">
-                             <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자
-                          </Link>
-                       </DropdownMenuItem>
-                     )}
-                     <DropdownMenuItem onClick={handleLogout} className="rounded-lg cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:bg-red-50 focus:text-red-700">
-                        <LogOut className="mr-2 h-4 w-4" /> 로그아웃
-                     </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-             ) : (
-                // 비로그인 상태
-                <>
-                   <Link href="/login" className="text-gray-600 hover:text-black transition-colors">
-                      Login
-                   </Link>
-                   <div className="flex items-center gap-2">
-                       <span className="text-gray-300">|</span>
-                       <button className="text-gray-600 hover:text-black transition-colors flex items-center gap-1 dropdown-trigger">
-                          Kr <span className="text-[10px]">▼</span>
-                       </button>
-                   </div>
-                   <Link 
-                      href="/signup" 
-                      className="bg-black text-white px-6 py-2.5 rounded-full hover:bg-gray-900 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-black/10"
-                   >
-                      서비스 도입하기
-                   </Link>
-                </>
-             )}
-          </div>
+           {/* Auth Buttons */}
+           <div className="hidden md:flex items-center gap-4 font-poppins text-[15px] font-medium">
+              {user ? (
+                 // 로그인 상태
+                 <DropdownMenu>
+                   <DropdownMenuTrigger asChild>
+                     <button className="outline-none rounded-full ring-2 ring-transparent ring-offset-2 hover:ring-gray-200 transition-all">
+                       <Avatar className="w-9 h-9 cursor-pointer border border-gray-200">
+                         <AvatarImage src={userProfile?.avatar_url} />
+                         <AvatarFallback className="bg-gray-100 text-black font-bold">
+                           {userProfile?.username?.charAt(0) || "U"}
+                         </AvatarFallback>
+                       </Avatar>
+                     </button>
+                   </DropdownMenuTrigger>
+                   <DropdownMenuContent align="end" className="w-60 mt-2 rounded-xl border border-gray-100 shadow-xl bg-white p-2">
+                      <div className="px-3 py-3 border-b border-gray-50 mb-1">
+                         <p className="font-bold text-sm text-black">{userProfile?.username || "익명 사용자"}</p>
+                         <p className="text-xs text-black/60 truncate">{user.email}</p>
+                      </div>
+                      <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-black hover:bg-gray-50 focus:bg-gray-50">
+                         <Link href="/mypage">
+                            <UserIcon className="mr-2 h-4 w-4" /> 마이페이지
+                         </Link>
+                      </DropdownMenuItem>
+                      {userProfile?.role === 'admin' && (
+                        <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-black hover:bg-gray-50 focus:bg-gray-50">
+                           <Link href="/admin">
+                              <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자
+                           </Link>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={handleLogout} className="rounded-lg cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:bg-red-50 focus:text-red-700">
+                         <LogOut className="mr-2 h-4 w-4" /> 로그아웃
+                      </DropdownMenuItem>
+                   </DropdownMenuContent>
+                 </DropdownMenu>
+              ) : (
+                 // 비로그인 상태
+                 <div className="flex items-center gap-1">
+                    <Link href="/login">
+                       <Button variant="ghost" className="text-[15px] font-medium text-black hover:bg-gray-100 rounded-full px-5">
+                          로그인
+                       </Button>
+                    </Link>
+                    <Link href="/signup">
+                       <Button className="rounded-full bg-black hover:bg-gray-800 text-white text-[15px] px-6 font-medium shadow-none">
+                          회원가입
+                       </Button>
+                    </Link>
+                 </div>
+              )}
+           </div>
 
           {/* Mobile Menu Toggle */}
           <button 

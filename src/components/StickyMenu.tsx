@@ -222,16 +222,16 @@ export function StickyMenu({
                 </span>
                 <FontAwesomeIcon icon={faChevronDown} className="text-neutral-400 w-2.5 h-2.5" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuContent align="end" className="w-40 bg-white border border-gray-100 shadow-lg">
                 {sortOptions.map((option) => (
                   <DropdownMenuItem
                     key={option.value}
                     onClick={() => handleSortChange(option.value)}
-                    className={`flex items-center gap-2 cursor-pointer ${
-                      selectedSort === option.value ? "bg-green-50 text-green-600" : ""
+                    className={`flex items-center gap-2 cursor-pointer p-2 ${
+                      selectedSort === option.value ? "bg-green-50 text-green-600 font-semibold" : "text-gray-700 hover:bg-gray-50 hover:text-black"
                     }`}
                   >
-                    <FontAwesomeIcon icon={option.icon} className="w-4 h-4" />
+                    <FontAwesomeIcon icon={option.icon} className="w-4 h-4 opacity-70" />
                     <span>{option.label}</span>
                   </DropdownMenuItem>
                 ))}
