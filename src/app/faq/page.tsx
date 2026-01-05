@@ -39,12 +39,33 @@ export default function FAQPage() {
           .order("order_index", { ascending: true });
 
         if (error) throw error;
-        if (data) {
+        
+        // DB에 데이터가 없으면 기본 FAQ 사용
+        if (!data || data.length === 0) {
+          const defaultFaqs: FAQ[] = [
+            { id: 1, category: "서비스 이용", question: "Vibefolio는 어떤 서비스인가요?", answer: "Vibefolio는 크리에이터들이 자신의 포트폴리오를 공유하고, 전 세계 아티스트들과 소통하며 영감을 주고받을 수 있는 프리미엄 포트폴리오 커뮤니티입니다." },
+            { id: 2, category: "계정 관리", question: "회원가입은 어떻게 하나요?", answer: "우측 상단의 '회원가입' 버튼을 클릭하거나, Google 계정으로 간편하게 가입하실 수 있습니다." },
+            { id: 3, category: "프로젝트", question: "프로젝트는 어떻게 업로드하나요?", answer: "로그인 후 '프로젝트 등록' 버튼을 클릭하여 이미지, 제목, 설명 등을 입력하고 업로드하실 수 있습니다." },
+            { id: 4, category: "프로젝트", question: "어떤 형식의 파일을 업로드할 수 있나요?", answer: "JPG, PNG, GIF 등의 이미지 파일을 지원하며, 최대 10MB까지 업로드 가능합니다." },
+            { id: 5, category: "운영 정책", question: "저작권은 어떻게 보호되나요?", answer: "업로드된 모든 작품의 저작권은 창작자에게 있으며, 무단 도용 시 법적 조치가 가능합니다." },
+            { id: 6, category: "문의", question: "문의는 어떻게 하나요?", answer: "하단의 '1:1 문의하기' 버튼을 통해 언제든지 문의하실 수 있으며, 24시간 내에 답변드립니다." },
+          ];
+          setFaqs(defaultFaqs);
+          setFilteredFaqs(defaultFaqs);
+        } else {
           setFaqs(data);
           setFilteredFaqs(data);
         }
       } catch (e) {
         console.error("FAQ Load Error:", e);
+        // 에러 발생 시에도 기본 FAQ 표시
+        const defaultFaqs: FAQ[] = [
+          { id: 1, category: "서비스 이용", question: "Vibefolio는 어떤 서비스인가요?", answer: "Vibefolio는 크리에이터들이 자신의 포트폴리오를 공유하고, 전 세계 아티스트들과 소통하며 영감을 주고받을 수 있는 프리미엄 포트폴리오 커뮤니티입니다." },
+          { id: 2, category: "계정 관리", question: "회원가입은 어떻게 하나요?", answer: "우측 상단의 '회원가입' 버튼을 클릭하거나, Google 계정으로 간편하게 가입하실 수 있습니다." },
+          { id: 3, category: "프로젝트", question: "프로젝트는 어떻게 업로드하나요?", answer: "로그인 후 '프로젝트 등록' 버튼을 클릭하여 이미지, 제목, 설명 등을 입력하고 업로드하실 수 있습니다." },
+        ];
+        setFaqs(defaultFaqs);
+        setFilteredFaqs(defaultFaqs);
       } finally {
         setLoading(false);
       }

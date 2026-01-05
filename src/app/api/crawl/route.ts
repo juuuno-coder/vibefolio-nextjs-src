@@ -10,7 +10,7 @@ const supabase = createClient(
 
 // 사람인 채용 크롤링
 async function crawlSaramin() {
-  const items = [];
+  const items: any[] = [];
   try {
     const response = await fetch('https://www.saramin.co.kr/zf_user/jobs/list/job-category?cat_cd=404%2C405%2C406&panel_type=&search_optional_item=y&search_done=y&panel_count=y');
     const html = await response.text();
@@ -44,7 +44,7 @@ async function crawlSaramin() {
 
 // 씽굿 공모전 크롤링
 async function crawlThinkgood() {
-  const items = [];
+  const items: any[] = [];
   try {
     const response = await fetch('https://www.thinkcontest.com/Contest/AjaxList');
     const data = await response.json();
@@ -69,7 +69,7 @@ async function crawlThinkgood() {
 
 // 온오프믹스 이벤트 크롤링  
 async function crawlOnoffmix() {
-  const items = [];
+  const items: any[] = [];
   try {
     const response = await fetch('https://www.onoffmix.com/event/main?c=100');
     const html = await response.text();

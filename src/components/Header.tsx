@@ -147,7 +147,12 @@ export function Header({
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       const target = e.target as HTMLInputElement;
-      onSetCategory(target.value.replace(/\s+/g, ""));
+      const query = target.value.trim();
+      if (query) {
+        router.push(`/?q=${encodeURIComponent(query)}`);
+        setIsSearchOpen(false);
+        target.value = '';
+      }
     }
   };
 
