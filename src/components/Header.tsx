@@ -85,7 +85,7 @@ export function Header({
         
         // 1. 세션 메타데이터에서 기본 정보 가져오기
         let profileData = {
-          username: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
+          nickname: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
           avatar_url: session.user.user_metadata?.avatar_url || "",
           role: session.user.app_metadata?.role || "user",
         };
@@ -94,7 +94,7 @@ export function Header({
         const dbProfile = await fetchProfile(session.user.id);
         if (dbProfile) {
           profileData = {
-            username: dbProfile.username || profileData.username,
+            nickname: dbProfile.username || profileData.nickname,
             avatar_url: dbProfile.avatar_url || profileData.avatar_url,
             role: dbProfile.role || profileData.role, // 여기서 DB role 우선 적용
           };
@@ -112,7 +112,7 @@ export function Header({
       
       if (session?.user) {
         let profileData = {
-          username: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
+          nickname: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
           avatar_url: session.user.user_metadata?.avatar_url || "",
           role: session.user.app_metadata?.role || "user",
         };
@@ -120,7 +120,7 @@ export function Header({
         const dbProfile = await fetchProfile(session.user.id);
         if (dbProfile) {
           profileData = {
-            username: dbProfile.username || profileData.username,
+            nickname: dbProfile.username || profileData.nickname,
             avatar_url: dbProfile.avatar_url || profileData.avatar_url,
             role: dbProfile.role || profileData.role,
           };
