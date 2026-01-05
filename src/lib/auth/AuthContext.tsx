@@ -77,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   }, [loadProfileFromMetadata]);
 
+  // ====== 초기화 및 Auth 상태 감지 (한 번만 실행) ======
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
@@ -109,35 +110,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    // ====== 자동 로그아웃 타이머 (30분) ======
-    let logoutTimer: NodeJS.Timeout;
-
-    const resetTimer = () => {
-      if (logoutTimer) clearTimeout(logoutTimer);
-      if (user) { // 로그인 상태일 때만 타이머 동작
-        logoutTimer = setTimeout(async () => {
-          console.log("[Auth] Session timeout due to inactivity");
-          await signOut();
-          alert("장시간 활동이 없어 로그아웃 되었습니다.");
-        }, 30 * 60 * 1000); // 30분
-      }
-    };
-
-    // 활동 감지 이벤트 리스너
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
-    const handleActivity = () => resetTimer();
-
-    if (user) {
-      events.forEach(event => window.addEventListener(event, handleActivity));
-      resetTimer(); // 초기 실행
-    }
-
     return () => {
       subscription.unsubscribe();
-      if (logoutTimer) clearTimeout(logoutTimer);
-      events.forEach(event => window.removeEventListener(event, handleActivity));
     };
-  }, [updateState, user]);
+  }, [updateState]); // user 제거
+
+  // ====== 자동 로그아웃 로직 (user 변경 시 실행) ======
+  // Note: AutoLogoutProvider가 별도로 존재하므로 여기서는 제거하거나, 
+  // AuthContext가 중심이라면 여기서 관리해야 합니다. 
+  // 혼선 방지를 위해 AuthContext에서의 자동 로그아웃은 제거하고 AutoLogoutProvider에 위임합니다.
+  /* 
+  useEffect(() => {
+    if (!user) return;
+    // ... (AutoLogoutProvider로 대체됨)
+  }, [user]); 
+  */
 
   const signOut = async () => {
     // setLoading(true); // 로그아웃 시 로딩 상태 전환은 UX를 해칠 수 있음 (선택 사항)
