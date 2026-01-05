@@ -2,6 +2,8 @@
 import { supabase } from "./supabase/client";
 import { Database } from "./supabase/types";
 
+// Force rebuild timestamp: 2026-01-05
+
 type BookmarkRow = Database["public"]["Tables"]["bookmark"]["Row"];
 type BookmarkInsert = Database["public"]["Tables"]["bookmark"]["Insert"];
 
