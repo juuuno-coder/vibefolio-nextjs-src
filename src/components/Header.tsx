@@ -40,7 +40,7 @@ export function Header({
   onSetCategory?: (value: string) => void;
 }) {
   const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [userProfile, setUserProfile] = useState<{ nickname: string; avatar_url: string; role: string } | null>(null);
+  const [userProfile, setUserProfile] = useState<{ username: string; avatar_url: string; role: string } | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -85,7 +85,7 @@ export function Header({
         
         // 1. 세션 메타데이터에서 기본 정보 가져오기
         let profileData = {
-          nickname: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
+          username: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
           avatar_url: session.user.user_metadata?.avatar_url || "",
           role: session.user.app_metadata?.role || "user",
         };
@@ -94,7 +94,7 @@ export function Header({
         const dbProfile = await fetchProfile(session.user.id);
         if (dbProfile) {
           profileData = {
-            nickname: dbProfile.username || profileData.nickname,
+            username: dbProfile.username || profileData.username,
             avatar_url: dbProfile.avatar_url || profileData.avatar_url,
             role: dbProfile.role || profileData.role, // 여기서 DB role 우선 적용
           };
@@ -112,7 +112,7 @@ export function Header({
       
       if (session?.user) {
         let profileData = {
-          nickname: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
+          username: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
           avatar_url: session.user.user_metadata?.avatar_url || "",
           role: session.user.app_metadata?.role || "user",
         };
@@ -120,7 +120,7 @@ export function Header({
         const dbProfile = await fetchProfile(session.user.id);
         if (dbProfile) {
           profileData = {
-            nickname: dbProfile.username || profileData.nickname,
+            username: dbProfile.username || profileData.username,
             avatar_url: dbProfile.avatar_url || profileData.avatar_url,
             role: dbProfile.role || profileData.role,
           };
