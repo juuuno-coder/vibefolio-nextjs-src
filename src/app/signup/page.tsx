@@ -8,6 +8,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGoogle } from "@fortawesome/free-brands-svg-icons";
+import { toast } from "sonner";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -46,10 +47,14 @@ export default function SignupPage() {
 
       if (data.session) {
         // 이미 세션이 생성됨 (자동 로그인 설정인 경우)
+        toast.success("회원가입이 완료되었습니다!");
         router.push("/");
       } else {
-        // 이메일 확인 필요 또는 가입 성공
-        alert("회원가입 확인 이메일이 발송되었습니다. 이메일을 확인해주세요!");
+        // 이메일 확인 필요
+        toast.success("회원가입 확인 이메일이 발송되었습니다!", {
+          description: "이메일을 확인하여 계정을 활성화해주세요.",
+          duration: 5000,
+        });
         router.push("/login");
       }
     } catch (error: any) {
