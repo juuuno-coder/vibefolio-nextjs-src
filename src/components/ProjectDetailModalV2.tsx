@@ -123,15 +123,21 @@ interface ProjectDetailModalV2Props {
   } | null;
 }
 
-// HTML 엔티티 디코딩 함수
+// HTML 엔티티 디코딩 함수 (강력한 버전)
 function unescapeHtml(html: string) {
-  if (!html) return '';
-  return html
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, "&");
+  if (typeof window === 'undefined' || !html) return html;
+  try {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return doc.documentElement.textContent || "";
+  } catch (e) {
+    // Fallback for simple cases
+    return html
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&amp;/g, "&");
+  }
 }
 
 export function ProjectDetailModalV2({
@@ -626,7 +632,16 @@ export function ProjectDetailModalV2({
                 {project.rendering_type === 'rich_text' ? (
                   <div 
                     className="prose prose-lg max-w-4xl w-full bg-white p-10 rounded-xl"
-                    dangerouslySetInnerHTML={{ __html: unescapeHtml(project.description || '') }}
+                    dangerouslySetInnerHTML={{ 
+                      __html: (() => {
+                        let decoded = unescapeHtml(project.description || '');
+                        // 이중 인코딩 체크: 디코딩 후에도 태그가 이스케이프 된 상태라면 한 번 더 디코딩
+                        if (decoded && decoded.trim().startsWith('&lt;')) {
+                          decoded = unescapeHtml(decoded);
+                        }
+                        return decoded;
+                      })()
+                    }}
                   />
                 ) : (
                   <img
@@ -641,15 +656,15 @@ export function ProjectDetailModalV2({
             </div>
 
             {/* 액션바 - 데스크톱 */}
-            <div className="h-full bg-transparent flex flex-col items-center py-8 gap-5">
+            <div className="h-full bg-transparent flex flex-col items-center py-8 gap-4">
               {/* 프로필 아바타 */}
               <button
                 onClick={() => {
                   window.location.href = `/creator/${project.user.username}`;
                 }}
-                className="flex flex-col items-center gap-1 group cursor-pointer"
+                className="flex flex-col items-center gap-1 group cursor-pointer mb-2"
               >
-                <Avatar className={`w-12 h-12 border-2 bg-white transition-colors ${following ? 'border-[#4ACAD4]' : 'border-gray-200 hover:border-[#4ACAD4]'}`}>
+                <Avatar className={`w-12 h-12 border-2 bg-white transition-all shadow-md group-hover:scale-105 ${following ? 'border-[#4ACAD4]' : 'border-white group-hover:border-[#4ACAD4]'}`}>
                   <AvatarImage src={project.user.profile_image.large} />
                   <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-4 h-4" /></AvatarFallback>
                 </Avatar>
@@ -657,21 +672,21 @@ export function ProjectDetailModalV2({
 
               {/* 팔로우 버튼 */}
               {isLoggedIn && project.userId && currentUserId !== project.userId && (
-                <div className="flex flex-col items-center">
+                <div className="flex flex-col items-center mb-2">
                   <Button
                     onClick={handleFollow}
                     disabled={loading.follow}
                     size="sm"
-                    className={`text-xs px-3 py-1 h-7 rounded-full transition-colors ${
+                    className={`text-xs px-3 py-1 h-8 rounded-full transition-all shadow-md ${
                       following 
-                        ? 'bg-gray-200 text-gray-700 hover:bg-red-100 hover:text-red-600' 
-                        : 'bg-[#4ACAD4] text-white hover:bg-[#3db8c0]'
+                        ? 'bg-white text-gray-700 border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200' 
+                        : 'bg-[#4ACAD4] text-white hover:bg-[#3db8c0] hover:scale-105'
                     }`}
                   >
                     {loading.follow ? '...' : (following ? '팔로잉' : '팔로우')}
                   </Button>
                   {followersCount > 0 && (
-                    <span className="text-[10px] text-gray-500 mt-1">{followersCount}</span>
+                    <span className="text-[11px] font-medium text-white mt-1 drop-shadow-md">{followersCount}</span>
                   )}
                 </div>
               )}
@@ -688,7 +703,7 @@ export function ProjectDetailModalV2({
                   }
                   setProposalModalOpen(true);
                 }}
-                className="w-12 h-12 rounded-full bg-gray-100 hover:bg-[#4ACAD4] hover:text-white flex items-center justify-center transition-colors"
+                className="w-12 h-12 rounded-full bg-white text-gray-700 border border-gray-100 shadow-lg hover:bg-[#4ACAD4] hover:text-white hover:scale-105 flex items-center justify-center transition-all"
                 title="제안하기"
               >
                 <FontAwesomeIcon icon={faPaperPlane} className="w-5 h-5" />
@@ -697,8 +712,8 @@ export function ProjectDetailModalV2({
               <button 
                 onClick={handleLike}
                 disabled={!isLoggedIn}
-                className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-colors ${
-                  liked ? 'bg-red-500 text-white' : 'bg-gray-100 hover:bg-red-500 hover:text-white'
+                className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex flex-col items-center justify-center transition-all hover:scale-105 ${
+                  liked ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 hover:bg-red-50 hover:text-red-500'
                 }`}
               >
                 {loading.like ? (
@@ -710,7 +725,7 @@ export function ProjectDetailModalV2({
 
               <button 
                 onClick={handleCollectionClick}
-                className="w-12 h-12 rounded-full bg-gray-100 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-colors"
+                className="w-12 h-12 rounded-full bg-white text-gray-700 border border-gray-100 shadow-lg hover:bg-blue-500 hover:text-white hover:scale-105 flex items-center justify-center transition-all"
                 title="컬렉션에 저장"
               >
                 <FontAwesomeIcon icon={faFolder} className="w-5 h-5" />
@@ -718,15 +733,15 @@ export function ProjectDetailModalV2({
 
               <button 
                 onClick={() => setShareModalOpen(true)}
-                className="w-12 h-12 rounded-full bg-gray-100 hover:bg-[#4ACAD4] hover:text-white flex items-center justify-center transition-colors"
+                className="w-12 h-12 rounded-full bg-white text-gray-700 border border-gray-100 shadow-lg hover:bg-[#4ACAD4] hover:text-white hover:scale-105 flex items-center justify-center transition-all"
               >
                 <FontAwesomeIcon icon={faShareNodes} className="w-5 h-5" />
               </button>
 
               <button 
                 onClick={() => setCommentsPanelOpen(!commentsPanelOpen)}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-                  commentsPanelOpen ? 'bg-[#4ACAD4] text-white' : 'bg-gray-100 hover:bg-[#4ACAD4] hover:text-white'
+                className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 ${
+                  commentsPanelOpen ? 'bg-[#4ACAD4] text-white border-[#4ACAD4]' : 'bg-white text-gray-700 hover:bg-[#4ACAD4] hover:text-white'
                 }`}
               >
                 <FontAwesomeIcon icon={faComment} className="w-5 h-5" />
