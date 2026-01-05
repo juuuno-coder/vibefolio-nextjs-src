@@ -165,7 +165,7 @@ export function StickyMenu({
   return (
     <>
       {/* Sticky 카테고리 바 */}
-      <div className={`sticky top-16 z-20 w-full bg-white/95 backdrop-blur-sm border-b border-gray-100 transition-all duration-300 ${isScrolled ? "h-12 shadow-sm" : "h-16 md:h-20"}`}>
+      <div className={`sticky top-[72px] z-20 w-full bg-white/95 backdrop-blur-sm border-b border-gray-100 transition-all duration-300 ${isScrolled ? "h-12 shadow-sm" : "h-16 md:h-20"}`}>
         {/* 메인 카테고리 바 */}
         <section className={`flex items-center justify-between px-3 md:px-6 h-full w-full gap-2`}>
           {/* 카테고리 목록 */}
