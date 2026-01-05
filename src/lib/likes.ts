@@ -18,7 +18,7 @@ async function getUser() {
  */
 export async function getUserLikes(userId: string) {
   const { data, error } = await supabase
-    .from("Like")
+    .from("like")
     .select("project_id")
     .eq("user_id", userId);
   if (error) {
@@ -37,7 +37,7 @@ export async function isProjectLiked(projectId: string): Promise<boolean> {
   if (!user) return false;
 
   const { data, error } = await supabase
-    .from("Like")
+    .from("like")
     .select("project_id")
     .eq("user_id", user.id)
     .eq("project_id", projectId)
@@ -58,7 +58,7 @@ export async function addLike(projectId: string): Promise<void> {
   if (!user) return;
 
   const { error } = await supabase
-    .from("Like")
+    .from("like")
     .insert({ user_id: user.id, project_id: projectId } as LikeInsert);
 
   if (error) {
@@ -74,7 +74,7 @@ export async function removeLike(projectId: string): Promise<void> {
   if (!user) return;
 
   const { error } = await supabase
-    .from("Like")
+    .from("like")
     .delete()
     .eq("user_id", user.id)
     .eq("project_id", projectId);
