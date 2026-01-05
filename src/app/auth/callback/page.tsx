@@ -36,8 +36,8 @@ export default function AuthCallbackPage() {
 
         // 프로필이 없으면 생성
         if (!existingProfile && !profileError) {
-          const { error: insertError } = await supabase
-            .from('profiles')
+          const { error: insertError } = await (supabase
+            .from('profiles') as any)
             .insert({
               id: user.id,
               email: user.email,
