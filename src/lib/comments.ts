@@ -61,7 +61,7 @@ export async function addComment(
       content,
       username,
       user_avatar_url: avatarUrl,
-    }) as unknown as CommentInsert)
+    } as unknown as CommentInsert)
     .select("id, project_id, user_id, content, created_at, username, user_avatar_url")
     .single();
 
