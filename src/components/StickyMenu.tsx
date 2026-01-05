@@ -219,11 +219,11 @@ export function StickyMenu({
               {/* 정렬 드롭다운 */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 h-9 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none border border-transparent hover:border-gray-200">
-                  <FontAwesomeIcon icon={faArrowsUpDown} className="text-neutral-400 w-3.5 h-3.5" />
-                  <span className={`whitespace-nowrap font-semibold pt-[1px] ${isScrolled ? "text-xs" : "text-[13px] md:text-sm text-neutral-600"}`}>
+                  <FontAwesomeIcon icon={faArrowsUpDown} className="text-gray-600 w-3.5 h-3.5" />
+                  <span className={`whitespace-nowrap font-bold pt-[1px] ${isScrolled ? "text-xs" : "text-[13px] md:text-sm text-gray-800"}`}>
                     {currentSortLabel}
                   </span>
-                  <FontAwesomeIcon icon={faChevronDown} className="text-neutral-400 w-2.5 h-2.5 ml-0.5" />
+                  <FontAwesomeIcon icon={faChevronDown} className="text-gray-500 w-2.5 h-2.5 ml-0.5" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40 bg-white border border-gray-100 shadow-xl rounded-xl p-1">
                   {sortOptions.map((option) => (
@@ -246,12 +246,12 @@ export function StickyMenu({
                 onClick={() => setIsFieldPanelOpen(!isFieldPanelOpen)}
                 className={`flex items-center gap-1.5 px-3 h-9 rounded-lg transition-all whitespace-nowrap border ${
                   isFieldPanelOpen || selectedFields.length > 0
-                    ? "bg-green-50 text-green-600 border-green-100"
-                    : "bg-transparent hover:bg-gray-50 text-neutral-600 border-transparent hover:border-gray-200"
+                    ? "bg-green-50 text-green-700 border-green-200"
+                    : "bg-transparent hover:bg-gray-50 text-gray-700 border-transparent hover:border-gray-200"
                 }`}
               >
                 <FontAwesomeIcon icon={faIndustry} className="w-3.5 h-3.5" />
-                <span className={`font-semibold pt-[1px] ${isScrolled ? "text-xs" : "text-[13px] md:text-sm"}`}>
+                <span className={`font-bold pt-[1px] ${isScrolled ? "text-xs" : "text-[13px] md:text-sm"}`}>
                   분야별 {selectedFields.length > 0 && `(${selectedFields.length})`}
                 </span>
                 <FontAwesomeIcon 
