@@ -167,7 +167,7 @@ export function StickyMenu({
       {/* Placeholder for layout shift prevention */}
       {isScrolled && <div className="h-16 md:h-20 w-full" />}
 
-      <div className={`${isScrolled ? "fixed top-[80px] left-0 right-0 shadow-md" : "relative"} z-40 w-full transition-all duration-300`}>
+      <div className={`${isScrolled ? "fixed top-[72px] left-0 right-0 shadow-md" : "relative"} z-40 w-full transition-all duration-300`}>
         {/* 1. 상단 메인 카테고리 바 */}
         <div className={`w-full bg-white/95 backdrop-blur-sm border-b border-gray-100 transition-all duration-300 ${isScrolled ? "h-12" : "h-16 md:h-20"}`}>
           <section className={`flex items-center justify-between px-3 md:px-6 h-full w-full gap-2`}>
@@ -263,26 +263,26 @@ export function StickyMenu({
           </section>
         </div>
 
-        {/* 2. 분야별 확장 패널 - 같은 Sticky 컨테이너 내부로 이동 */}
+        {/* 2. 분야별 확장 패널 - 스크롤 시 축소 적용 */}
         <div 
           className={`overflow-hidden transition-all duration-300 ease-in-out bg-gray-50/95 backdrop-blur-sm border-b border-gray-100 ${
             isFieldPanelOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
           }`}
         >
-          <div className="px-3 md:px-6 py-3">
+          <div className={`px-3 md:px-6 transition-all duration-300 ${isScrolled ? "py-2" : "py-3"}`}>
             <div className="flex items-center justify-start md:justify-center gap-3 overflow-x-auto no-scrollbar">
-              <span className="text-sm font-bold text-gray-800 whitespace-nowrap mr-2">분야</span>
+              <span className={`font-bold text-gray-800 whitespace-nowrap mr-2 transition-all ${isScrolled ? "text-xs" : "text-sm"}`}>분야</span>
               {fieldCategories.map((field) => {
                 const isSelected = selectedFields.includes(field.id);
                 return (
                   <button
                     key={field.id}
                     onClick={() => handleFieldToggle(field.id)}
-                    className={`px-4 py-1.5 rounded-full border text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 ${
+                    className={`rounded-full border font-medium transition-all whitespace-nowrap flex items-center gap-2 ${
                       isSelected
                         ? "bg-[#16A34A] border-[#16A34A] text-white"
                         : "bg-white border-gray-200 text-gray-600 hover:border-green-400 hover:text-green-600"
-                    }`}
+                    } ${isScrolled ? "px-3 py-1 text-xs" : "px-4 py-1.5 text-sm"}`}
                   >
                     {field.label}
                     {isSelected && <FontAwesomeIcon icon={faCheck} className="w-2.5 h-2.5" />}
