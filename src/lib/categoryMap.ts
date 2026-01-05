@@ -60,6 +60,27 @@ export function getCategoryValue(name: string): string {
   return CATEGORY_REVERSE_MAP[name] || "all";
 }
 
+// 카테고리 ID를 이름으로 변환 (DB에서 숫자로 저장된 경우)
+export function getCategoryNameById(id: number | string): string {
+  const idMap: Record<number, string> = {
+    1: "포토",
+    2: "애니메이션", 
+    3: "그래픽",
+    4: "디자인",
+    5: "영상",
+    6: "영화·드라마",
+    7: "오디오",
+    8: "3D",
+    9: "텍스트",
+    10: "코드",
+    11: "웹/앱",
+    12: "게임",
+  };
+  
+  const numId = typeof id === 'string' ? parseInt(id) : id;
+  return idMap[numId] || "전체";
+}
+
 // 관심 장르에 해당하는 프로젝트 필터링
 export function filterByInterests(
   projects: any[],

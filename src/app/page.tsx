@@ -10,7 +10,7 @@ import { MainBanner } from "@/components/MainBanner";
 import { ImageCard } from "@/components/ImageCard";
 import { StickyMenu } from "@/components/StickyMenu";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { getCategoryName } from "@/lib/categoryMap";
+import { getCategoryName, getCategoryNameById } from "@/lib/categoryMap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWandSparkles, faXmark, faCheck } from "@fortawesome/free-solid-svg-icons";
 
@@ -132,7 +132,7 @@ function HomeContent() {
               created_at: proj.created_at,
               width: 400,
               height: 300,
-              category: proj.Category?.name || "korea",
+              category: proj.Category?.name || getCategoryNameById(proj.category_id || proj.Category || 1),
               field: (proj.field || "it").toLowerCase(), // 소문자로 통일
               userId: proj.user_id,
               rendering_type: proj.rendering_type,
