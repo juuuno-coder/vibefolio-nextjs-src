@@ -40,7 +40,7 @@ export function Header({
   onSetCategory?: (value: string) => void;
 }) {
   const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [userProfile, setUserProfile] = useState<{ username: string; avatar_url: string; role: string } | null>(null);
+  const [userProfile, setUserProfile] = useState<{ nickname: string; avatar_url: string; role: string } | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -216,17 +216,17 @@ export function Header({
                      <button className="outline-none rounded-full ring-2 ring-transparent ring-offset-2 hover:ring-gray-200 transition-all">
                        <Avatar className="w-9 h-9 cursor-pointer border border-gray-200">
                          <AvatarImage src={userProfile?.avatar_url} />
-                         <AvatarFallback className="bg-gray-100 text-black font-bold">
-                           {userProfile?.username?.charAt(0) || "U"}
-                         </AvatarFallback>
+                          <AvatarFallback className="bg-gray-100 text-black font-bold">
+                            {userProfile?.nickname?.charAt(0) || "U"}
+                          </AvatarFallback>
                        </Avatar>
                      </button>
                    </DropdownMenuTrigger>
                    <DropdownMenuContent align="end" className="w-60 mt-2 rounded-xl border border-gray-100 shadow-xl bg-white p-2">
-                      <div className="px-3 py-3 border-b border-gray-50 mb-1">
-                         <p className="font-bold text-sm text-black">{userProfile?.username || "익명 사용자"}</p>
-                         <p className="text-xs text-black/60 truncate">{user.email}</p>
-                      </div>
+                       <div className="px-3 py-3 border-b border-gray-50 mb-1">
+                          <p className="font-bold text-sm text-black">{userProfile?.nickname}</p>
+                          <p className="text-xs text-black/60 truncate">{user.email}</p>
+                       </div>
                       <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-black hover:bg-gray-50 focus:bg-gray-50">
                          <Link href="/mypage">
                             <UserIcon className="mr-2 h-4 w-4" /> 마이페이지
@@ -295,7 +295,7 @@ export function Header({
                            <AvatarImage src={userProfile?.avatar_url} />
                            <AvatarFallback>U</AvatarFallback>
                         </Avatar>
-                        <span className="font-medium">{userProfile?.username}</span>
+                         <span className="font-medium">{userProfile?.nickname}</span>
                      </Link>
                      {userProfile?.role === 'admin' && (
                        <Link href="/admin" className="text-left text-[#4ACAD4] text-sm font-medium">
