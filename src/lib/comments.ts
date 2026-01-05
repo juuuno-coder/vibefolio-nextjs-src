@@ -7,7 +7,7 @@ type CommentInsert = Database["public"]["Tables"]["comment"]["Insert"];
 
 export interface Comment {
   id: string;
-  project_id: string;
+  project_id: number;
   user_id: string;
   content: string;
   createdAt: string; // Fix: Rename to createdAt
@@ -22,7 +22,7 @@ export async function getProjectComments(projectId: string): Promise<Comment[]> 
   const { data, error } = await supabase
     .from("comment")
     .select("id, project_id, user_id, content, created_at, username, user_avatar_url")
-    .eq("project_id", projectId)
+    .eq("project_id", Number(projectId))
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -31,8 +31,8 @@ export async function getProjectComments(projectId: string): Promise<Comment[]> 
   }
 
   /* Safe Casting: Supabase returns partial or full Row objects */
-  const comments = data as unknown as CommentRow[];
-  return (comments || []).map((c) => ({
+  const comments = data as any;
+  return (comments || []).map((c: any) => ({
     id: c.id,
     project_id: c.project_id,
     user_id: c.user_id,
@@ -56,7 +56,7 @@ export async function addComment(
   const { data, error } = await supabase
     .from("comment")
     .insert({
-      project_id: projectId,
+      project_id: Number(projectId),
       user_id: userId,
       content,
       username,
@@ -72,7 +72,7 @@ export async function addComment(
 
   if (!data) return null;
 
-  const d = data as unknown as CommentRow;
+  const d = data as any;
 
   return {
     id: d.id,
@@ -108,7 +108,7 @@ export async function getCommentCount(projectId: string): Promise<number> {
   const { count, error } = await supabase
     .from("comment")
     .select("*", { count: "exact", head: true })
-    .eq("project_id", projectId);
+    .eq("project_id", Number(projectId));
 
   if (error) {
     console.error("Error getting comment count:", error);

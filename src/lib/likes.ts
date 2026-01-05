@@ -40,7 +40,7 @@ export async function isProjectLiked(projectId: string): Promise<boolean> {
     .from("like")
     .select("project_id")
     .eq("user_id", user.id)
-    .eq("project_id", projectId)
+    .eq("project_id", Number(projectId))
     .single();
 
   if (error && error.code !== "PGRST116") { // PGRST116 = no rows found
@@ -59,7 +59,7 @@ export async function addLike(projectId: string): Promise<void> {
 
   const { error } = await supabase
     .from("like")
-    .insert({ user_id: user.id, project_id: projectId } as LikeInsert);
+    .insert({ user_id: user.id, project_id: Number(projectId) } as LikeInsert);
 
   if (error) {
     console.error("Error adding like:", error);
@@ -77,7 +77,7 @@ export async function removeLike(projectId: string): Promise<void> {
     .from("like")
     .delete()
     .eq("user_id", user.id)
-    .eq("project_id", projectId);
+    .eq("project_id", Number(projectId));
 
   if (error) {
     console.error("Error removing like:", error);
@@ -105,7 +105,7 @@ export async function getProjectLikeCount(projectId: string): Promise<number> {
   const { count, error } = await supabase
     .from("like")
     .select("*", { count: "exact", head: true })
-    .eq("project_id", projectId);
+    .eq("project_id", Number(projectId));
 
   if (error) {
     console.error("Error getting project like count:", error);

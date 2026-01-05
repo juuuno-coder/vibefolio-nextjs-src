@@ -51,7 +51,7 @@ export async function getUserInquiries(userId: string): Promise<Inquiry[]> {
   return (data || []).map((item: any) => ({
     ...item,
     projects: Array.isArray(item.Project) ? item.Project[0] : item.Project
-  })) as unknown as Inquiry[];
+  })) as any; // Temporary cast to avoid interface mismatch
 }
 
 /**
@@ -66,7 +66,7 @@ export async function addInquiry(
   const { data, error } = await supabase
     .from("inquiries")
     .insert({
-      project_id: projectId,
+      project_id: Number(projectId),
       creator_id: creatorId,
       user_id: userId,
       message,
@@ -79,7 +79,7 @@ export async function addInquiry(
     console.error("Error adding inquiry:", error);
     return null;
   }
-  return data as Inquiry;
+  return data as unknown as Inquiry;
 }
 
 /**
@@ -128,7 +128,7 @@ export async function getAllInquiries(): Promise<Inquiry[]> {
   return (data || []).map((item: any) => ({
     ...item,
     projects: Array.isArray(item.Project) ? item.Project[0] : item.Project
-  })) as unknown as Inquiry[];
+  })) as any; // Temporary cast to avoid interface mismatch
 }
 
 /**
@@ -149,5 +149,5 @@ export async function updateInquiryStatus(
     console.error("Error updating inquiry status:", error);
     return null;
   }
-  return data as Inquiry;
+  return data as unknown as Inquiry;
 }

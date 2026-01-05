@@ -42,7 +42,7 @@ export async function isProjectBookmarked(projectId: string): Promise<boolean> {
     .from("bookmark")
     .select("project_id")
     .eq("user_id", user.id)
-    .eq("project_id", projectId)
+    .eq("project_id", Number(projectId))
     .single();
 
   if (error && error.code !== "PGRST116") { // PGRST116 = no rows found
@@ -61,7 +61,7 @@ export async function addBookmark(projectId: string): Promise<void> {
 
   const { error } = await supabase
     .from("bookmark")
-    .insert({ user_id: user.id, project_id: projectId } as BookmarkInsert);
+    .insert({ user_id: user.id, project_id: Number(projectId) } as BookmarkInsert);
 
   if (error) {
     console.error("Error adding bookmark:", error);
@@ -79,7 +79,7 @@ export async function removeBookmark(projectId: string): Promise<void> {
     .from("bookmark")
     .delete()
     .eq("user_id", user.id)
-    .eq("project_id", projectId);
+    .eq("project_id", Number(projectId));
 
   if (error) {
     console.error("Error removing bookmark:", error);

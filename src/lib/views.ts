@@ -26,7 +26,7 @@ export async function recordView(projectId: string): Promise<void> {
     .from("view")
     .select("user_id")
     .eq("user_id", user.id)
-    .eq("project_id", projectId)
+    .eq("project_id", Number(projectId))
     .single();
 
   if (selectError && selectError.code !== "PGRST116") { // PGRST116 = no rows found
@@ -38,7 +38,7 @@ export async function recordView(projectId: string): Promise<void> {
   if (!data) {
     const { error: insertError } = await supabase
       .from("view")
-      .insert({ user_id: user.id, project_id: projectId } as ViewInsert);
+      .insert({ user_id: user.id, project_id: Number(projectId) } as ViewInsert);
 
     if (insertError) {
       console.error("Error adding view:", insertError);
@@ -53,7 +53,7 @@ export async function getProjectViewCount(projectId: string): Promise<number> {
   const { count, error } = await supabase
     .from("view")
     .select("*", { count: "exact", head: true })
-    .eq("project_id", projectId);
+    .eq("project_id", Number(projectId));
 
   if (error) {
     console.error("Error getting project view count:", error);
