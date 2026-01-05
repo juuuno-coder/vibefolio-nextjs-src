@@ -213,8 +213,8 @@ export function StickyMenu({
 
             {/* 오른쪽 컨트롤 영역 - 한 줄로 항상 유지 */}
             <div className="flex items-center gap-1 md:gap-2 h-full">
-              {/* 구분선 */}
-              <Separator orientation="vertical" className="h-5 bg-gray-200" />
+              {/* 구분선 제거됨 */}
+
 
               {/* 정렬 드롭다운 */}
               <DropdownMenu>

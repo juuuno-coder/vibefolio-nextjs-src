@@ -184,7 +184,7 @@ export function Header({
                             <UserIcon className="mr-2 h-4 w-4" /> 마이페이지
                          </Link>
                       </DropdownMenuItem>
-                      {userProfile?.role === 'admin' && (
+                      {(userProfile?.role === 'admin' || user.email === 'juuuno@naver.com') && (
                         <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-black hover:bg-gray-50 focus:bg-gray-50">
                            <Link href="/admin">
                               <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자
