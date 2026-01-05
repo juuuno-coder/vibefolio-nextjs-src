@@ -133,7 +133,7 @@ function HomeContent() {
               width: 400,
               height: 300,
               category: proj.Category?.name || "korea",
-              field: proj.field || "IT", // 임시: 분야 정보가 없으면 IT로 설정 (추후 DB 연동 필요)
+              field: (proj.field || "it").toLowerCase(), // 소문자로 통일
               userId: proj.user_id,
               rendering_type: proj.rendering_type,
             } as ImageDialogProps;
@@ -202,8 +202,8 @@ function HomeContent() {
     const catName = p.category;
     const matchCategory = selectedCategory === "all" || categoryNames.includes(catName);
     
-    // 3. 분야 필터
-    const matchField = selectedFields.length === 0 || (p.field && selectedFields.includes(p.field.toLowerCase()));
+    // 3. 분야 필터 (이미 소문자로 통일됨)
+    const matchField = selectedFields.length === 0 || (p.field && selectedFields.includes(p.field));
     
     return matchCategory && matchField;
   });
