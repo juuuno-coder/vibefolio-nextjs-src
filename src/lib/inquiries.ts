@@ -22,8 +22,8 @@ export interface Inquiry {
  * Get all inquiries for a specific user.
  */
 export async function getUserInquiries(userId: string): Promise<Inquiry[]> {
-  const { data, error } = await (supabase
-    .from("inquiries") as any)
+  const { data, error } = await supabase
+    .from("inquiries")
     .select(`
       id,
       project_id,
@@ -100,8 +100,8 @@ export async function deleteInquiry(inquiryId: number, userId: string): Promise<
  * (Admin) Get all inquiries.
  */
 export async function getAllInquiries(): Promise<Inquiry[]> {
-  const { data, error } = await (supabase
-    .from("inquiries") as any)
+  const { data, error } = await supabase
+    .from("inquiries")
     .select(`
       id,
       project_id,
