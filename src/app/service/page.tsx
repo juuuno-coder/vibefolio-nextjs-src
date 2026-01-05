@@ -32,7 +32,7 @@ export default function ServicePage() {
           <div className="absolute -bottom-8 left-1/2 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
         </div>
         
-        <div className="max-w-5xl mx-auto text-center">
+        <div className="max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100 text-green-700 text-sm font-medium mb-8 animate-fade-in-up">
             <Rocket size={14} />
             <span>크리에이터의 새로운 무대, Vibefolio 1.0</span>
@@ -58,7 +58,7 @@ export default function ServicePage() {
 
       {/* Philosophy Section */}
       <section className="py-32 bg-slate-50">
-        <div className="max-w-6xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-20">
             <h2 className="text-sm font-bold text-green-600 tracking-widest uppercase mb-4">Our Values</h2>
             <h3 className="text-4xl font-bold text-slate-900">우리가 추구하는 가치</h3>
