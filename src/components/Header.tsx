@@ -28,14 +28,14 @@ import { supabase } from "@/lib/supabase";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
-// 메뉴 ?�의
+// 메뉴 정의
 const menuItems = [
   { label: "발견", path: "/", dropdown: false },
-  { label: "?�결", path: "/recruit", dropdown: false, newest: true },
+  { label: "연결", path: "/recruit", dropdown: false, newest: true },
 ];
 
 export function Header({
-  onSetCategory = (value: string) => console.log("검???�청:", value),
+  onSetCategory = (value: string) => console.log("검색 요청:", value),
 }: {
   onSetCategory?: (value: string) => void;
 }) {
@@ -83,20 +83,20 @@ export function Header({
       if (session?.user) {
         setUser(session.user);
         
-        // 1. ?�션 메�??�이?�에??기본 ?�보 가?�오�?
+        // 1. 세션 메타데이터에서 기본 정보 가져오기
         let profileData = {
-          username: session.user.user_metadata?.user_name || session.user.user_metadata?.username || session.user.email?.split("@")[0] || "User",
+          username: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
           avatar_url: session.user.user_metadata?.avatar_url || "",
           role: session.user.app_metadata?.role || "user",
         };
 
-        // 2. DB profiles ?�이블에??최신 ?�보(?�히 role) 가?�오�?
+        // 2. DB profiles 테이블에서 최신 정보(특히 role) 가져오기
         const dbProfile = await fetchProfile(session.user.id);
         if (dbProfile) {
           profileData = {
             username: dbProfile.username || profileData.username,
             avatar_url: dbProfile.avatar_url || profileData.avatar_url,
-            role: dbProfile.role || profileData.role, // ?�기??DB role ?�선 ?�용
+            role: dbProfile.role || profileData.role, // 여기서 DB role 우선 적용
           };
         }
 
@@ -112,7 +112,7 @@ export function Header({
       
       if (session?.user) {
         let profileData = {
-          username: session.user.user_metadata?.user_name || session.user.user_metadata?.username || session.user.email?.split("@")[0] || "User",
+          username: session.user.user_metadata?.user_name || session.user.user_metadata?.nickname || session.user.email?.split("@")[0] || "User",
           avatar_url: session.user.user_metadata?.avatar_url || "",
           role: session.user.app_metadata?.role || "user",
         };
@@ -157,7 +157,7 @@ export function Header({
   };
 
   return (
-    // ?�더 컨테?�너
+    // 헤더 컨테이너
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white/90 backdrop-blur-md border-b border-gray-100 py-3`}
     >
@@ -179,7 +179,7 @@ export function Header({
                 className="relative flex items-center gap-1 text-[15px] font-medium text-gray-800 hover:text-black transition-colors"
               >
                 {item.label}
-                {item.dropdown && <span className="text-[10px] text-gray-400">??/span>}
+                {item.dropdown && <span className="text-[10px] text-gray-400">▼</span>}
                 {item.newest && (
                   <span className="ml-[2px] mb-[2px] text-[10px] font-bold text-[#05BCC6]">N</span>
                 )}
@@ -188,10 +188,10 @@ export function Header({
           </nav>
         </div>
 
-        {/* ?�측: 검??+ 로그??가??*/}
+        {/* 우측: 검색 + 로그인/가입 */}
         <div className="flex items-center gap-6">
           
-          {/* 검???�이�?(?�릭 ???�장?�거??모달) */}
+          {/* 검색 아이콘 (클릭 시 확장되거나 모달) */}
           <div className="hidden md:flex items-center">
              <div className={`flex items-center transition-all duration-300 ${isSearchOpen ? "w-64 bg-gray-50 px-4 py-2 rounded-full ring-1 ring-gray-200" : "w-8 justify-end"}`}>
                 <Search 
@@ -204,9 +204,9 @@ export function Header({
                       autoFocus
                       type="text"
                       className="bg-transparent border-none outline-none text-sm w-full font-pretendard placeholder:text-gray-400"
-                      placeholder="검?�어�??�력?�세??
+                      placeholder="검색어를 입력하세요"
                       onKeyDown={handleSearchKeyDown}
-                      onBlur={() => !onSetCategory && setIsSearchOpen(false)} // �??�력 ?�으�??�기 ?�의 로직 추�? 가??
+                      onBlur={() => !onSetCategory && setIsSearchOpen(false)} // 값 입력 없으면 닫기 등의 로직 추가 가능
                    />
                 )}
              </div>
@@ -215,26 +215,26 @@ export function Header({
            {/* Auth Buttons */}
            <div className="hidden md:flex items-center gap-4 font-poppins text-[15px] font-medium">
               {user ? (
-                 // 로그???�태
+                 // 로그인 상태
                  <DropdownMenu>
                    <DropdownMenuTrigger asChild>
                      <button className="outline-none rounded-full ring-2 ring-transparent ring-offset-2 hover:ring-gray-200 transition-all">
                        <Avatar className="w-9 h-9 cursor-pointer border border-gray-200">
                          <AvatarImage src={userProfile?.avatar_url} />
                           <AvatarFallback className="bg-gray-100 text-black font-bold">
-                            {userProfile?.username?.charAt(0) || "U"}
+                            {userProfile?.nickname?.charAt(0) || "U"}
                           </AvatarFallback>
                        </Avatar>
                      </button>
                    </DropdownMenuTrigger>
                    <DropdownMenuContent align="end" className="w-60 mt-2 rounded-xl border border-gray-100 shadow-xl bg-white p-2">
                        <div className="px-3 py-3 border-b border-gray-50 mb-1">
-                          <p className="font-bold text-sm text-black">{userProfile?.username}</p>
+                          <p className="font-bold text-sm text-black">{userProfile?.nickname}</p>
                           <p className="text-xs text-black/60 truncate">{user.email}</p>
                        </div>
                       <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-black hover:bg-gray-50 focus:bg-gray-50">
                          <Link href="/mypage">
-                            <UserIcon className="mr-2 h-4 w-4" /> 마이?�이지
+                            <UserIcon className="mr-2 h-4 w-4" /> 마이페이지
                          </Link>
                       </DropdownMenuItem>
                       {userProfile?.role === 'admin' && (
@@ -245,21 +245,21 @@ export function Header({
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuItem onClick={handleLogout} className="rounded-lg cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:bg-red-50 focus:text-red-700">
-                         <LogOut className="mr-2 h-4 w-4" /> 로그?�웃
+                         <LogOut className="mr-2 h-4 w-4" /> 로그아웃
                       </DropdownMenuItem>
                    </DropdownMenuContent>
                  </DropdownMenu>
               ) : (
-                 // 비로그인 ?�태
+                 // 비로그인 상태
                  <div className="flex items-center gap-1">
                     <Link href="/login">
                        <Button variant="ghost" className="text-[15px] font-medium text-black hover:bg-gray-100 rounded-full px-5">
-                          로그??
+                          로그인
                        </Button>
                     </Link>
                     <Link href="/signup">
                        <Button className="rounded-full bg-black hover:bg-gray-800 text-white text-[15px] px-6 font-medium shadow-none">
-                          ?�원가??
+                          회원가입
                        </Button>
                     </Link>
                  </div>
@@ -300,19 +300,19 @@ export function Header({
                            <AvatarImage src={userProfile?.avatar_url} />
                            <AvatarFallback>U</AvatarFallback>
                         </Avatar>
-                         <span className="font-medium">{userProfile?.username}</span>
+                         <span className="font-medium">{userProfile?.nickname}</span>
                      </Link>
                      {userProfile?.role === 'admin' && (
                        <Link href="/admin" className="text-left text-[#4ACAD4] text-sm font-medium">
-                         관리자 ?�이지
+                         관리자 페이지
                        </Link>
                      )}
-                     <button onClick={handleLogout} className="text-left text-red-500 text-sm font-medium">로그?�웃</button>
+                     <button onClick={handleLogout} className="text-left text-red-500 text-sm font-medium">로그아웃</button>
                   </>
                ) : (
                   <>
                      <Link href="/login" className="w-full py-3 text-center border border-gray-200 rounded-lg font-medium text-gray-700">Login</Link>
-                     <Link href="/signup" className="w-full py-3 text-center bg-black text-white rounded-lg font-medium">?�비???�입?�기</Link>
+                     <Link href="/signup" className="w-full py-3 text-center bg-black text-white rounded-lg font-medium">서비스 도입하기</Link>
                   </>
                )}
             </div>
