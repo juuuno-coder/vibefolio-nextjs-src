@@ -629,7 +629,7 @@ export function ProjectDetailModalV2({
               
               {/* 이미지 또는 리치 텍스트 */}
               <div className="flex-1 overflow-y-auto flex items-start justify-center p-8 custom-scrollbar">
-                {project.rendering_type === 'rich_text' ? (
+                {project.rendering_type === 'rich_text' && project.description?.includes('<') ? (
                   <div 
                     className="prose prose-lg max-w-4xl w-full bg-white p-10 rounded-xl"
                     dangerouslySetInnerHTML={{ 
