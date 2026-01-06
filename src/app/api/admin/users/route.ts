@@ -1,56 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabase } from '@/lib/supabase/client';
 
 // 사용자 목록 조회
-import { supabase } from '@/lib/supabase/client'; // 폴백용 일반 클라이언트 추가
-
 export async function GET(request: NextRequest) {
   try {
-    // 환경변수 체크 로그 (서버 로그에서 확인 가능)
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error("[Admin API] CRITICAL: SUPABASE_SERVICE_ROLE_KEY is missing!");
-    }
-
-    // 1. profiles fetch 
-    // supabaseAdmin이 준비 안 됐다면 일반 supabase 클라이언트라도 사용 (RLS가 허용한다는 가정하에)
-    const client = supabaseAdmin && !supabaseAdmin.toString().includes('Proxy') ? supabaseAdmin : supabase;
+    console.log("[Admin API] Start fetching users...");
     
-    const { data: profiles, error: profileError } = await client
+    // 1. profiles fetch (DB 데이터 조회)
+    // supabaseAdmin이 준비 안 됐다면 일반 클라이언트 폴백 시도
+    let { data: profiles, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
 
-    if (profileError) {
-      console.error("Profile Fetch Error:", profileError);
-      return NextResponse.json({ error: profileError.message, users: [] }, { status: 200 }); // 에러 나더라도 빈 배열 반환
+    if (profileError || !profiles) {
+      console.warn("[Admin API] Admin client failed, trying public client fallback");
+      const { data: publicProfiles, error: publicError } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      if (publicError) {
+        return NextResponse.json({ users: [], error: publicError.message });
+      }
+      profiles = publicProfiles;
     }
 
     // 2. Auth list fetch (실패해도 무시)
     let authUsers: any[] = [];
-    if (supabaseAdmin && !supabaseAdmin.toString().includes('Proxy')) {
-      try {
+    try {
+      if (supabaseAdmin && !supabaseAdmin.toString().includes('Proxy')) {
         const { data, error: authError } = await supabaseAdmin.auth.admin.listUsers();
         if (!authError && data) {
           authUsers = data.users;
         }
-      } catch (e) {
-        console.warn("Auth sync failed, but continuing with profiles only.");
       }
+    } catch (e) {
+      console.warn("[Admin API] Auth list sync skipped.");
     }
 
-    // 3. Merge data
-    const combinedUsers = (profiles || []).map((profile: any) => {
-      const authUser = authUsers.find((u: any) => u.id === profile.id);
+    // 3. Merge data (어떤 필드명이 들어있든 유연하게 처리)
+    const combinedUsers = (profiles || []).map((p: any) => {
+      const authUser = authUsers.find((u: any) => u.id === p.id);
       return {
-        ...profile,
-        email: authUser?.email || profile.email || 'No Email',
-        last_sign_in_at: authUser?.last_sign_in_at,
-        created_at: profile.created_at || authUser?.created_at,
-        role: profile.role || 'user'
+        id: p.id,
+        email: p.email || authUser?.email || '이메일 없음',
+        username: p.username || p.nickname || p.full_name || '이름 없음',
+        profile_image_url: p.avatar_url || p.profile_image_url || '/globe.svg',
+        role: p.role || 'user',
+        created_at: p.created_at || authUser?.created_at || new Date().toISOString()
       };
     });
 
-    console.log(`[Admin API] Returning ${combinedUsers.length} users`);
     return NextResponse.json({ users: combinedUsers });
   } catch (error: any) {
     console.error("Admin Users GET Final Error:", error);
@@ -62,37 +62,30 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, role } = body; // role: 'admin' | 'user'
+    const { userId, role } = body;
 
-    if (!userId || !['admin', 'user'].includes(role)) {
-      return NextResponse.json({ error: 'Invalid userId or role' }, { status: 400 });
+    if (!userId || !role) {
+      return NextResponse.json({ error: 'Missing userId or role' }, { status: 400 });
     }
 
-    // 1. Auth User의 app_metadata 업데이트 (이게 핵심! 미들웨어 체크용)
+    // Auth Metadata 업데이트 (미들웨어용)
     const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
       userId,
       { app_metadata: { role } }
     );
 
-    if (authError) {
-      console.error("Auth Update Error:", authError);
-      throw authError;
-    }
-
-    // 2. profiles 테이블 업데이트 (클라이언트 UI 표시용)
+    // Profiles 테이블 업데이트 (UI/DB용)
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({ role })
       .eq('id', userId);
 
-    if (profileError) {
-      console.error("Profile Update Error:", profileError);
-      throw profileError;
+    if (authError || profileError) {
+      return NextResponse.json({ error: 'Update failed' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, role });
   } catch (error: any) {
-    console.error("Admin Users PATCH Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
