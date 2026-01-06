@@ -162,7 +162,7 @@ export function MainBanner() {
   if (banners.length === 0) return null;
 
   return (
-    <section className="w-full">
+    <section className="w-full min-h-[340px] md:min-h-[470px]">
       <Carousel
         opts={{
           align: "start",
