@@ -208,18 +208,24 @@ export default function TiptapUploadPage() {
   };
 
   // Step 2 -> Submit
-  const handleSubmit = async () => {
-    if (isSubmitting) return;
+  const handleSubmit = async (settings?: any) => {
+    if (isSubmitting && !settings) return;
 
-    if (!title.trim()) {
+    // settings가 있으면 해당 값을 우선 사용, 없으면 현재 상태값 사용
+    const finalTitle = settings?.title || title;
+    const finalGenres = settings?.selectedGenres || selectedGenres;
+    const finalFields = settings?.selectedFields || selectedFields;
+    const finalTags = settings?.tagList || [];
+
+    if (!finalTitle.trim()) {
       toast.error('프로젝트 제목을 입력해주세요.');
       return;
     }
-    if (!coverImage) {
+    if (!coverImage && !settings?.coverUrl) { // 이미 모달에서 업로드된 경우 포함
       toast.error('커버 이미지를 선택해주세요.');
       return;
     }
-    if (selectedGenres.length === 0) {
+    if (finalGenres.length === 0) {
       toast.error('최소 1개의 장르를 선택해주세요.');
       return;
     }
@@ -227,13 +233,16 @@ export default function TiptapUploadPage() {
     setIsSubmitting(true);
 
     try {
-      if (!userId || !coverImage) throw new Error('필수 정보가 누락되었습니다.');
+      if (!userId) throw new Error('로그인이 필요합니다.');
 
-      // 커버 이미지 업로드
-      const coverUrl = await uploadImage(coverImage);
+      // 커버 이미지 업로드 (새로 선택한 경우만)
+      let coverUrl = settings?.coverUrl;
+      if (!coverUrl && coverImage) {
+        coverUrl = await uploadImage(coverImage);
+      }
 
       // 프로젝트 생성
-      const category_id = GENRE_TO_CATEGORY_ID[selectedGenres[0]] || 1;
+      const category_id = GENRE_TO_CATEGORY_ID[finalGenres[0]] || 1;
 
       const response = await fetch('/api/projects', {
         method: 'POST',
@@ -241,13 +250,14 @@ export default function TiptapUploadPage() {
         body: JSON.stringify({
           user_id: userId,
           category_id,
-          title,
+          title: finalTitle,
           content_text: content, // Tiptap HTML content
           thumbnail_url: coverUrl,
-          rendering_type: 'rich_text', // Tiptap 렌더링 타입
+          rendering_type: 'rich_text',
           custom_data: JSON.stringify({
-            genres: selectedGenres,
-            fields: selectedFields,
+            genres: finalGenres,
+            fields: finalFields,
+            tags: finalTags, // 태그 리스트 저장
           }),
         }),
       });
@@ -411,7 +421,17 @@ export default function TiptapUploadPage() {
   };
 
   const handleSettingsSave = (settings: any) => {
-    console.log('Project settings:', settings);
+    // SettingsModal에서 전달받은 세련된 데이터들을 부모 상태에 업데이트
+    if (settings.title) setTitle(settings.title);
+    if (settings.selectedGenres) setSelectedGenres(settings.selectedGenres);
+    if (settings.selectedFields) setSelectedFields(settings.selectedFields);
+    
+    // 태그 리스트를 문자열로 변환하여 저장하거나, 나중에 API 전송 시 사용
+    // 일단 상태를 업데이트한 후 실제 제출 함수 실행
+    setIsSubmitting(true);
+    setTimeout(() => {
+      handleSubmit(settings);
+    }, 100);
   };
 
   // Lightroom에서 이미지 가져오기
@@ -678,44 +698,51 @@ export default function TiptapUploadPage() {
       </div>
 
       {/* Main Layout: Editor + Sidebar */}
-      <div className="max-w-[1600px] mx-auto flex pt-8 pb-20 justify-center">
+      <div className="max-w-[1600px] mx-auto flex pt-8 pb-20 px-6 gap-10">
         
-        {/* Editor Area (Center) */}
-        <div className="flex-1 max-w-[900px] min-h-[800px]" style={{ backgroundColor: projectBgColor }}>
-          <TiptapEditor
-            content={content}
-            onChange={setContent}
-            onEditorReady={setEditor}
-            placeholder="여기에 내용을 입력하세요..."
-          />
+        {/* Editor Area (Left/Center) */}
+        <div className="flex-1 flex justify-center">
+          <div 
+            className="w-full max-w-[900px] min-h-[1000px] shadow-sm rounded-lg overflow-hidden border border-gray-100 bg-white" 
+            style={{ backgroundColor: projectBgColor }}
+          >
+            <TiptapEditor
+              content={content}
+              onChange={setContent}
+              onEditorReady={setEditor}
+              placeholder="여기에 내용을 입력하세요..."
+            />
+          </div>
         </div>
 
-        {/* Right Sidebar (Fixed) */}
-        <div className="hidden lg:block">
-           <EditorSidebar 
-             onAddText={handleAddText}
-             onAddImage={handleSidebarImageClick}
-             onAddVideo={handleAddVideo}
-             onAddGrid={handleAddGrid}
-             onAddCode={handleAddCode}
-             onAddEmbed={() => handleOpenEmbedModal("media")}
-             onAddLightroom={() => setLightroomModalOpen(true)}
-             onAddPrototype={() => handleOpenEmbedModal("prototype")}
-             onAdd3D={() => handleOpenEmbedModal("3d")}
-             onStyleClick={() => setStyleModalOpen(true)}
-             onSettingsClick={() => setSettingsModalOpen(true)}
-             onAddAsset={() => setAssetModalOpen(true)}
-           />
+        {/* Right Sidebar (Sticky) */}
+        <div className="hidden xl:block w-[320px] flex-shrink-0">
+           <div className="sticky top-28">
+             <EditorSidebar 
+               onAddText={handleAddText}
+               onAddImage={handleSidebarImageClick}
+               onAddVideo={handleAddVideo}
+               onAddGrid={handleAddGrid}
+               onAddCode={handleAddCode}
+               onAddEmbed={() => handleOpenEmbedModal("media")}
+               onAddLightroom={() => setLightroomModalOpen(true)}
+               onAddPrototype={() => handleOpenEmbedModal("prototype")}
+               onAdd3D={() => handleOpenEmbedModal("3d")}
+               onStyleClick={() => setStyleModalOpen(true)}
+               onSettingsClick={() => setSettingsModalOpen(true)}
+               onAddAsset={() => setAssetModalOpen(true)}
+             />
+           </div>
+           
            {/* Hidden File Input for Sidebar (Single Image) */}
            <input 
              type="file"
              ref={sidebarFileInputRef}
              className="hidden"
-           accept="image/*"
+             accept="image/*"
              onChange={handleSidebarFileChange}
            />
         </div>
-
       </div>
 
       {/* Modals */}

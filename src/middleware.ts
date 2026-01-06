@@ -61,6 +61,7 @@ export async function middleware(request: NextRequest) {
     // 임시: 특정 이메일 허용
     const adminEmails = [
       "juuuno@naver.com", 
+      "juseok1116@gmail.com",
       "juuuno1116@gmail.com", 
       "designd@designd.co.kr", 
       "designdlab@designdlab.co.kr", 

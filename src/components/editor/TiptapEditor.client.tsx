@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent, BubbleMenu, Editor } from '@tiptap/react';
+import { useEditor, EditorContent, BubbleMenu, FloatingMenu, Editor } from '@tiptap/react';
 import { StarterKit } from '@tiptap/starter-kit';
 import { CustomImageExtension } from './CustomImageExtension';
 import { Link as LinkExtension } from '@tiptap/extension-link';
@@ -30,6 +30,12 @@ import {
   AlignRight,
   Palette,
   ChevronDown,
+  Plus,
+  Image as ImageIcon,
+  Type,
+  Video,
+  Grid,
+  Code as CodeIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { uploadImage } from '@/lib/supabase/storage';
@@ -257,8 +263,51 @@ export default function TiptapEditor({
   const currentFontFamily = editor.getAttributes('textStyle').fontFamily || '기본';
   
   return (
-    <div className="relative min-h-[600px] w-full max-w-[850px] mx-auto">
-      {/* 비핸스 스타일 Bubble Menu */}
+    <div className="relative min-h-[800px] w-full max-w-[850px] mx-auto editor-container">
+      {/* 1. 플로팅 메뉴 (빈 줄에서 나타남) */}
+      {editor && (
+        <FloatingMenu 
+          editor={editor} 
+          tippyOptions={{ duration: 100 }}
+          className="flex flex-col bg-white border border-gray-200 rounded-xl shadow-2xl p-2 gap-1 animate-in fade-in zoom-in-95 duration-200 min-w-[180px]"
+        >
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 py-2">Quick Add</p>
+          <button
+            onClick={() => editor.chain().focus().run()} // Placeholder for logic
+            className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors group"
+          >
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-green-100 group-hover:text-green-600 transition-colors">
+              <Plus className="w-4 h-4" />
+            </div>
+            <div className="text-left">
+              <p className="font-bold text-xs">블록 추가</p>
+              <p className="text-[10px] text-gray-400">메뉴를 열어 다양한 요소를 추가하세요</p>
+            </div>
+          </button>
+          
+          <div className="h-px bg-gray-100 my-1 mx-2" />
+
+          <button
+            onClick={() => {
+              const url = window.prompt('이미지 URL을 입력하거나 측면 바를 이용해 업로드하세요:');
+              if (url) editor.chain().focus().setImage({ src: url }).run();
+            }}
+            className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            <ImageIcon className="w-4 h-4 text-blue-500" />
+            <span className="font-medium">이미지 삽입</span>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            <Type className="w-4 h-4 text-green-500" />
+            <span className="font-medium">큰 제목 추가</span>
+          </button>
+        </FloatingMenu>
+      )}
+
+      {/* 2. 버블 메뉴 (텍스트 선택 시) */}
       {editor && (
         <BubbleMenu 
           editor={editor} 
