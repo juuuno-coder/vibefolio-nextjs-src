@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
     if (profileError) throw profileError;
 
     // 3. Merge data (profile + email from auth)
-    const combinedUsers = profiles.map(profile => {
-      const authUser = users.find(u => u.id === profile.id);
+    const combinedUsers = profiles.map((profile: any) => {
+      const authUser = users.find((u: any) => u.id === profile.id);
       return {
         ...profile,
         email: authUser?.email || '',
