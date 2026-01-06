@@ -2,7 +2,7 @@
 // Supabase Auth만 사용하는 사용자 프로필 API
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 // 사용자 프로필 조회 (Auth user_metadata 사용)
 export async function GET(
