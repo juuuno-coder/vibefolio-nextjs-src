@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export default function Header({ 
+export function Header({ 
   onSetCategory 
 }: { 
   onSetCategory?: (value: string) => void;
