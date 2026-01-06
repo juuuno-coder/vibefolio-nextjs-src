@@ -46,58 +46,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ====== 상태 업데이트 통합 관리 ======
   const updateState = useCallback(async (s: Session | null, u: User | null) => {
-    // 1. 세션/유저 상태 업데이트
+    // 1. 상태 업데이트 (로딩 중에도 유저가 있으면 세팅)
     setSession(s);
     setUser(u);
     
     if (u) {
-      // 2. 프로필 및 어드민 여부 판단 로직
-      const baseProfile = loadProfileFromMetadata(u);
+      // 2. 기초 프로필 생성 (Metadata에서)
+      const base = loadProfileFromMetadata(u);
       
-      // DB 조회 전 기본값 설정
-      setUserProfile(baseProfile);
-
       try {
-        const { data: dbProfile, error } = await supabase
+        // 3. DB 상세 프로필 조회
+        const { data: db, error } = await supabase
           .from('profiles')
-          .select('username, avatar_url, role')
+          .select('username, avatar_url, profile_image_url, role')
           .eq('id', u.id)
           .single();
 
-        if (dbProfile && !error) {
+        if (db && !error) {
           const finalProfile = {
-            username: (dbProfile as any).username || baseProfile.username,
-            profile_image_url: (dbProfile as any).avatar_url || (dbProfile as any).profile_image_url || baseProfile.profile_image_url,
-            role: (dbProfile as any).role || baseProfile.role,
+            username: (db as any).username || base.username,
+            profile_image_url: (db as any).avatar_url || (db as any).profile_image_url || base.profile_image_url,
+            role: (db as any).role || base.role,
           };
           setUserProfile(finalProfile);
+        } else {
+          setUserProfile(base);
         }
       } catch (e) {
-        console.error("[Auth] DB profile fetch error:", e);
+        setUserProfile(base);
       }
     } else {
       setUserProfile(null);
     }
-    setLoading(false); // 로딩 상태는 여기서만 관리
+    setLoading(false);
   }, [loadProfileFromMetadata]);
 
-  // ====== 초기화 및 Auth 상태 감지 (한 번만 실행) ======
+  // ====== 초기화 및 관찰자 설정 ======
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
-    const init = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      await updateState(currentSession, currentSession?.user || null);
-    };
+    // 초기 세션 확인
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      updateState(session, session?.user || null);
+    });
 
-    init();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+    // 상태 변경 리스너
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (['SIGNED_IN', 'TOKEN_REFRESHED', 'INITIAL_SESSION'].includes(event)) {
-        await updateState(currentSession, currentSession?.user || null);
+        updateState(session, session?.user || null);
       } else if (event === "SIGNED_OUT") {
-        await updateState(null, null);
+        updateState(null, null);
       }
     });
 
@@ -116,25 +115,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   */
 
   const signOut = useCallback(async () => {
-    try {
-      if (user) localStorage.removeItem(`profile_${user.id}`);
-      setUser(null);
-      setSession(null);
-      setUserProfile(null);
-      await supabase.auth.signOut();
-      router.push("/login");
-    } catch (e) {
-      console.error("SignOut Error:", e);
-    }
-  }, [user, router]);
+    setUser(null);
+    setSession(null);
+    setUserProfile(null);
+    await supabase.auth.signOut();
+    router.push("/login");
+  }, [router]);
 
   const refreshUserProfile = useCallback(async () => {
     if (!user) return;
     const { data: { user: u } } = await supabase.auth.getUser();
-    if (u) await updateState(session, u);
+    updateState(session, u);
   }, [user, session, updateState]);
 
-  // ====== 성능의 핵심: Context Value Memoization ======
+  // ====== 권한 체크 & 메모이제이션 ======
   const isAdminUser = React.useMemo(() => {
     const adminEmails = [
       "juuuno@naver.com", 
@@ -143,13 +137,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       "designdlab@designdlab.co.kr", 
       "admin@vibefolio.net"
     ];
-    const result = !!(user?.email && adminEmails.includes(user.email)) || userProfile?.role === "admin";
+    const isMatched = !!(user?.email && adminEmails.includes(user.email)) || userProfile?.role === "admin";
     
-    if (user) {
-      console.log(`[Auth] Permission check: ${result ? 'ADMIN' : 'USER'} for ${user.email}`);
+    // 원칙에 따라 로그가 필요할 때만 출력
+    if (user && userProfile) {
+      console.log(`[Auth] Determined: ${isMatched ? 'ADMIN' : 'USER'} (${user.email})`);
     }
-    
-    return result;
+
+    return isMatched;
   }, [user?.email, userProfile?.role]);
 
   const authValue = React.useMemo(() => ({
