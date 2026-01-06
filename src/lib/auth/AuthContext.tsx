@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (dbProfile && !error) {
           const finalProfile = {
             username: (dbProfile as any).username || baseProfile.username,
-            profile_image_url: (dbProfile as any).avatar_url || baseProfile.profile_image_url,
+            profile_image_url: (dbProfile as any).avatar_url || (dbProfile as any).profile_image_url || baseProfile.profile_image_url,
             role: (dbProfile as any).role || baseProfile.role,
           };
           setUserProfile(finalProfile);

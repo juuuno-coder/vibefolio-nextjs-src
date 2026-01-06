@@ -50,17 +50,26 @@ export default function MyPage() {
     const initStats = async () => {
       setUserId(authUser.id);
       
-      // 기존에 로드된 프로필이 있으면 즉시 연동
+      // 기존에 로드된 프로필이 있으면 즉시 연동하고 추가 정보 로드
       if (authProfile) {
-        setUserProfile({
-          username: authProfile.username,
-          email: authUser.email,
-          profile_image_url: authProfile.profile_image_url,
-          role: authProfile.role,
-        });
+        // ... (existing)
       }
-
+      
       try {
+        const { data: dbProfile } = await supabase
+          .from('profiles')
+          .select('bio, cover_image_url')
+          .eq('id', authUser.id)
+          .single();
+
+        setUserProfile({
+          username: authProfile?.username || '사용자',
+          email: authUser.email,
+          profile_image_url: authProfile?.profile_image_url || '/globe.svg',
+          role: authProfile?.role || 'user',
+          bio: (dbProfile as any)?.bio || '',
+          cover_image_url: (dbProfile as any)?.cover_image_url || null,
+        });
         // 통계 로드 최적화: head: true를 써서 데이터 본문 없이 카운트만 가져옴
         const getCount = async (query: any) => {
           const { count, error } = await query;
