@@ -83,7 +83,7 @@ export default function CreatorProfilePage() {
         const { data: userData, error: userError } = await supabase
           .from('profiles')
           .select('*')
-          .or(`username.eq.${username},nickname.eq.${username}`)
+          .eq('username', username)
           .maybeSingle();
 
         if (userError || !userData) {
