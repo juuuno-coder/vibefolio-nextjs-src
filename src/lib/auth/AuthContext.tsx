@@ -46,32 +46,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ====== 상태 업데이트 통합 관리 ======
   const updateState = useCallback(async (s: Session | null, u: User | null) => {
+    // 1. 세션/유저 상태 업데이트
     setSession(s);
     setUser(u);
+    
     if (u) {
-      // 1. 기본 메타데이터로 즉시 설정 (UX 반응성)
-      const profile = loadProfileFromMetadata(u);
-      setUserProfile(profile);
-
-      // 2. 캐시 확인 (localStorage)
-      const cacheKey = `profile_${u.id}`;
-      const cached = localStorage.getItem(cacheKey);
+      // 2. 프로필 및 어드민 여부 판단 로직
+      const baseProfile = loadProfileFromMetadata(u);
       
-      if (cached) {
-        try {
-          const cachedProfile = JSON.parse(cached);
-          // 캐시가 1시간 이내면 사용
-          if (Date.now() - cachedProfile.timestamp < 60 * 60 * 1000) {
-            setUserProfile(cachedProfile.data);
-            setLoading(false);
-            return; // DB 조회 스킵
-          }
-        } catch (e) {
-          // 캐시 파싱 실패 시 무시
-        }
-      }
+      // DB 조회 전 기본값 설정
+      setUserProfile(baseProfile);
 
-      // 3. DB profiles 테이블에서 최신 데이터 가져오기 (캐시 없을 때만)
       try {
         const { data: dbProfile, error } = await supabase
           .from('profiles')
@@ -81,17 +66,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (dbProfile && !error) {
           const finalProfile = {
-            username: (dbProfile as any).username || profile.username,
-            profile_image_url: (dbProfile as any).avatar_url || profile.profile_image_url,
-            role: (dbProfile as any).role || profile.role,
+            username: (dbProfile as any).username || baseProfile.username,
+            profile_image_url: (dbProfile as any).avatar_url || baseProfile.profile_image_url,
+            role: (dbProfile as any).role || baseProfile.role,
           };
           setUserProfile(finalProfile);
-          
-          // 캐시 저장
-          localStorage.setItem(cacheKey, JSON.stringify({
-            data: finalProfile,
-            timestamp: Date.now()
-          }));
         }
       } catch (e) {
         console.error("[Auth] DB profile fetch error:", e);
@@ -99,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       setUserProfile(null);
     }
-    setLoading(false);
+    setLoading(false); // 로딩 상태는 여기서만 관리
   }, [loadProfileFromMetadata]);
 
   // ====== 초기화 및 Auth 상태 감지 (한 번만 실행) ======
@@ -108,37 +87,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializedRef.current = true;
 
     const init = async () => {
-      try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        
-        if (currentSession?.user) {
-          await updateState(currentSession, currentSession.user);
-        } else {
-          await updateState(null, null);
-        }
-      } catch (e) {
-        console.error("[Auth] Init error:", e);
-        await updateState(null, null);
-      }
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      await updateState(currentSession, currentSession?.user || null);
     };
 
     init();
 
-    // 상태 변경 감시
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
-        if (currentSession?.user) {
-          await updateState(currentSession, currentSession.user);
-        }
+      if (['SIGNED_IN', 'TOKEN_REFRESHED', 'INITIAL_SESSION'].includes(event)) {
+        await updateState(currentSession, currentSession?.user || null);
       } else if (event === "SIGNED_OUT") {
         await updateState(null, null);
       }
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [updateState]); // user 제거
+    return () => subscription.unsubscribe();
+  }, [updateState]);
 
   // ====== 자동 로그아웃 로직 (user 변경 시 실행) ======
   // Note: AutoLogoutProvider가 별도로 존재하므로 여기서는 제거하거나, 
@@ -151,56 +115,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]); 
   */
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
-      if (user) {
-        // 캐시 삭제
-        localStorage.removeItem(`profile_${user.id}`);
-      }
-      // 상태 초기화
+      if (user) localStorage.removeItem(`profile_${user.id}`);
       setUser(null);
       setSession(null);
       setUserProfile(null);
-      
       await supabase.auth.signOut();
-      router.push("/login"); // 로그아웃 후 로그인 페이지로
+      router.push("/login");
     } catch (e) {
       console.error("SignOut Error:", e);
     }
-  };
+  }, [user, router]);
 
   const refreshUserProfile = useCallback(async () => {
     if (!user) return;
     const { data: { user: u } } = await supabase.auth.getUser();
-    if (u) {
-      const profile = loadProfileFromMetadata(u);
-      
-      const { data: dbProfile } = await supabase
-        .from('profiles')
-        .select('username, avatar_url, role')
-        .eq('id', u.id)
-        .single();
+    if (u) await updateState(session, u);
+  }, [user, session, updateState]);
 
-      if (dbProfile) {
-        const updatedProfile = {
-          username: (dbProfile as any).username || profile.username,
-          profile_image_url: (dbProfile as any).avatar_url || profile.profile_image_url,
-          role: (dbProfile as any).role || profile.role,
-        };
-        setUserProfile(updatedProfile);
-        
-        // 캐시 갱신
-        localStorage.setItem(`profile_${u.id}`, JSON.stringify({
-          data: updatedProfile,
-          timestamp: Date.now()
-        }));
-      } else {
-        setUserProfile(profile);
-      }
-    }
-  }, [user, loadProfileFromMetadata]);
-
-  // 임시: 특정 이메일들을 admin으로 처리 (나중에 DB에서 role 설정 후 제거)
+  // ====== 성능의 핵심: Context Value Memoization ======
   const isAdminUser = React.useMemo(() => {
     const adminEmails = [
       "juuuno@naver.com", 
@@ -209,15 +143,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       "designdlab@designdlab.co.kr", 
       "admin@vibefolio.net"
     ];
-    const isHardcodedAdmin = user?.email && adminEmails.includes(user.email);
-    const isDbAdmin = userProfile?.role === "admin";
-    
-    console.log("[Auth] Admin Check:", { email: user?.email, isHardcodedAdmin, isDbAdmin });
-    
-    return !!(isDbAdmin || isHardcodedAdmin);
-  }, [user, userProfile]);
+    return !!(user?.email && adminEmails.includes(user.email)) || userProfile?.role === "admin";
+  }, [user?.email, userProfile?.role]);
 
-  const value = {
+  const authValue = React.useMemo(() => ({
     user,
     session,
     loading,
@@ -226,9 +155,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin: isAdminUser,
     signOut,
     refreshUserProfile
-  };
+  }), [user, session, loading, userProfile, isAdminUser, signOut, refreshUserProfile]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

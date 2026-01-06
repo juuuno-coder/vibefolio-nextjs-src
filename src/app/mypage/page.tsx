@@ -9,6 +9,7 @@ import { CommentCard } from "@/components/CommentCard";
 import { ProjectDetailModalV2 } from "@/components/ProjectDetailModalV2";
 import { ProposalDetailModal } from "@/components/ProposalDetailModal";
 import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 type TabType = 'projects' | 'likes' | 'collections' | 'proposals' | 'comments';
 
@@ -36,80 +37,54 @@ export default function MyPage() {
   const [selectedProposal, setSelectedProposal] = useState<any>(null);
   const [proposalModalOpen, setProposalModalOpen] = useState(false);
 
-  // 1. 초기화 - 사용자 정보 로드
+  const { user: authUser, userProfile: authProfile, loading: authLoading } = useAuth();
+  
+  // 1. 초기화 - 사용자 정보 및 통계 로드
   useEffect(() => {
-    const init = async () => {
-      try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        
-        if (authError || !user) {
-          console.error("인증 실패:", authError);
-          router.push('/login');
-          return;
-        }
-        
-        setUserId(user.id);
-        
-        // 프로필 정보 로드 (실패해도 진행)
-        try {
-          const { data } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-            
-          const dbUser = data as any;
-          
-          setUserProfile({
-            username: dbUser?.username || user.user_metadata?.full_name || user.user_metadata?.nickname || user.email?.split('@')[0] || '사용자',
-            email: user.email,
-            profile_image_url: dbUser?.profile_image_url || user.user_metadata?.profile_image_url || '/globe.svg',
-            cover_image_url: dbUser?.cover_image_url || null,
-            bio: dbUser?.bio || '',
-          });
-        } catch (e) {
-          console.warn("프로필 로드 실패, 기본값 사용:", e);
-          setUserProfile({
-            username: user.user_metadata?.full_name || user.user_metadata?.nickname || '사용자',
-            email: user.email,
-            profile_image_url: user.user_metadata?.profile_image_url || '/globe.svg',
-            cover_image_url: null,
-            bio: '',
-          });
-        }
-        
-        // 통계 로드 (실패해도 0으로 처리)
-        try {
-          const getCount = async (table: string, query: any) => {
-            const { count, error } = await query;
-            if (error) throw error;
-            return count || 0;
-          };
+    if (authLoading) return;
+    if (!authUser) {
+      router.push('/login');
+      return;
+    }
 
-          const [p, l, c, fr, fg] = await Promise.all([
-            getCount('Project', supabase.from('Project').select('*', { count: 'exact', head: true }).eq('user_id', user.id)),
-            getCount('Like', supabase.from('Like').select('*', { count: 'exact', head: true }).eq('user_id', user.id)),
-            getCount('Collection', supabase.from('Collection').select('*', { count: 'exact', head: true }).eq('user_id', user.id)),
-            getCount('Follow', supabase.from('Follow').select('*', { count: 'exact', head: true }).eq('following_id', user.id)),
-            getCount('Follow', supabase.from('Follow').select('*', { count: 'exact', head: true }).eq('follower_id', user.id)),
-          ]);
-          
-          setStats({ projects: p, likes: l, collections: c, followers: fr, following: fg });
-        } catch (e) {
-          console.warn("통계 로드 실패:", e);
-          // 실패 시 기존 0값 유지
-        }
+    const initStats = async () => {
+      setUserId(authUser.id);
+      
+      // 기존에 로드된 프로필이 있으면 즉시 연동
+      if (authProfile) {
+        setUserProfile({
+          username: authProfile.username,
+          email: authUser.email,
+          profile_image_url: authProfile.profile_image_url,
+          role: authProfile.role,
+        });
+      }
+
+      try {
+        // 통계 로드 최적화: head: true를 써서 데이터 본문 없이 카운트만 가져옴
+        const getCount = async (query: any) => {
+          const { count, error } = await query;
+          return error ? 0 : (count || 0);
+        };
+
+        const [p, l, c, fr, fg] = await Promise.all([
+          getCount(supabase.from('Project').select('*', { count: 'exact', head: true }).eq('user_id', authUser.id)),
+          getCount(supabase.from('Like').select('*', { count: 'exact', head: true }).eq('user_id', authUser.id)),
+          getCount(supabase.from('Collection').select('*', { count: 'exact', head: true }).eq('user_id', authUser.id)),
+          getCount(supabase.from('Follow').select('*', { count: 'exact', head: true }).eq('following_id', authUser.id)),
+          getCount(supabase.from('Follow').select('*', { count: 'exact', head: true }).eq('follower_id', authUser.id)),
+        ]);
         
-      } catch (err) {
-        console.error('초기화 치명적 실패:', err);
+        setStats({ projects: p, likes: l, collections: c, followers: fr, following: fg });
+      } catch (e) {
+        console.warn("통계 로드 실패:", e);
       } finally {
-        // 성공하든 실패하든 로딩 종료
         setInitialized(true);
       }
     };
     
-    init();
-  }, [router]);
+    initStats();
+  }, [authUser, authProfile, authLoading, router]);
 
   // 2. 탭 데이터 로드 - userId와 activeTab 변경 시에만
   useEffect(() => {
