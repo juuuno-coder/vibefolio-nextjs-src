@@ -148,32 +148,16 @@ export function OnboardingModal({
         console.warn("[Onboarding] Auth 업데이트 실패/타임아웃 (무시하고 진행):", e);
       }
 
-      // 2. Users 테이블 업데이트 (이것이 핵심)
-      console.log("[Onboarding] Users 테이블 업데이트 시작...");
-      // update 대신 upsert 사용 (데이터가 없으면 생성)
-      const { error: dbError } = await (supabase as any)
-        .from('users')
-        .upsert({
-          id: userId, // upsert를 위해 id 필수
-          email: userEmail, // email도 필수
-          nickname: nickname,
-          interests: { genres, fields },
-          updated_at: new Date().toISOString(),
-          // role이나 profile_image_url 등은 기존 값 유지하거나 기본값
-        }, { onConflict: 'id' });
-
-      if (dbError) {
-        console.error('[Onboarding] users 테이블 업데이트 에러:', dbError);
-      }
-      
-      // 3. profiles 테이블 업데이트 (Header 및 AuthContext에서 사용됨)
+      // 2. profiles 테이블 업데이트 (이것이 실질적인 서비스 프로필)
       console.log("[Onboarding] profiles 테이블 업데이트 시작...");
       const { error: profileError } = await (supabase as any)
         .from('profiles')
         .upsert({
           id: userId,
           email: userEmail,
-          username: nickname, // profiles 테이블은 username 컬럼을 사용함
+          username: nickname, // 닉네임을 username으로 저장
+          interests: { genres, fields }, // 관심사 정보 저장
+          avatar_url: '/globe.svg', // 기본 아바타 설정 (없을 경우)
           updated_at: new Date().toISOString(),
         }, { onConflict: 'id' });
 
@@ -182,7 +166,7 @@ export function OnboardingModal({
         throw new Error("정보 저장 실패: " + profileError.message);
       }
       
-      console.log("[Onboarding] 모든 테이블 업데이트 완료");
+      console.log("[Onboarding] profiles 업데이트 완료");
 
       // 성공 처리
       console.log("[Onboarding] 완료 처리 시작...");
