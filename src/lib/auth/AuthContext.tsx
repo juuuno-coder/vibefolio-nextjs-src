@@ -204,7 +204,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdminUser = React.useMemo(() => {
     const adminEmails = [
       "juuuno@naver.com", 
-      "juseok1116@gmail.com",
       "juuuno1116@gmail.com", 
       "designd@designd.co.kr", 
       "designdlab@designdlab.co.kr", 
