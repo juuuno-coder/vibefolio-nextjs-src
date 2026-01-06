@@ -31,8 +31,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Vibefolio",
     description: "영감을 수집하고 공유하세요",
-    images: ["/og-image.png"],
+    // images: ["/og-image.png"], // TODO: 실제 이미지 파일 추가 필요
     type: "website",
+  },
+  icons: {
+    icon: "/favicon.ico",
   },
 };
 
