@@ -156,13 +156,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, loadProfileFromMetadata]);
 
+  // 임시: 특정 이메일을 admin으로 처리 (나중에 DB에서 role 설정 후 제거)
+  const isAdminUser = userProfile?.role === "admin" || user?.email === "jason.log@naver.com";
+
   const value = {
     user,
     session,
     loading,
     isAuthenticated: !!user,
     userProfile,
-    isAdmin: userProfile?.role === "admin",
+    isAdmin: isAdminUser,
     signOut,
     refreshUserProfile
   };
