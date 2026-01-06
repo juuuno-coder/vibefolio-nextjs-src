@@ -180,15 +180,12 @@ export function MainBanner() {
                 <Card 
                   className="w-full h-[320px] md:h-[450px] overflow-hidden hover:shadow-2xl transition-shadow duration-300 border-none rounded-[32px] group relative"
                 >
-                  <CardContent className="flex items-center justify-center h-full p-0 relative">
-                    {/* Background Image - Full Coverage */}
-                    <div 
-                      className="absolute inset-0 bg-cover bg-center"
-                      style={{ 
-                        backgroundImage: `url(${banner.image_url})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center center'
-                      }}
+                  <CardContent className="h-full p-0 relative">
+                    {/* Background Image - Full Coverage with img tag */}
+                    <img 
+                      src={banner.image_url}
+                      alt={banner.title}
+                      className="absolute inset-0 w-full h-full object-cover"
                     />
                     
                     {/* Gradient Overlay */}
