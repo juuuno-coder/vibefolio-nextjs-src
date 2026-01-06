@@ -2,49 +2,59 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
 // 사용자 목록 조회
+import { supabase } from '@/lib/supabase/client'; // 폴백용 일반 클라이언트 추가
+
 export async function GET(request: NextRequest) {
   try {
-    // 1. profiles fetch (DB 데이터는 대개 타임아웃 확률이 낮음)
-    const { data: profiles, error: profileError } = await supabaseAdmin
+    // 환경변수 체크 로그 (서버 로그에서 확인 가능)
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("[Admin API] CRITICAL: SUPABASE_SERVICE_ROLE_KEY is missing!");
+    }
+
+    // 1. profiles fetch 
+    // supabaseAdmin이 준비 안 됐다면 일반 supabase 클라이언트라도 사용 (RLS가 허용한다는 가정하에)
+    const client = supabaseAdmin && !supabaseAdmin.toString().includes('Proxy') ? supabaseAdmin : supabase;
+    
+    const { data: profiles, error: profileError } = await client
       .from('profiles')
       .select('*')
       .order('created_at', { ascending: false });
 
     if (profileError) {
       console.error("Profile Fetch Error:", profileError);
-      throw profileError;
+      return NextResponse.json({ error: profileError.message, users: [] }, { status: 200 }); // 에러 나더라도 빈 배열 반환
     }
 
-    // 2. Auth list fetch (타임아웃이나 에러가 잦으므로 별도로 처리)
+    // 2. Auth list fetch (실패해도 무시)
     let authUsers: any[] = [];
-    try {
-      const { data, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-      if (!authError && data) {
-        authUsers = data.users;
-      } else if (authError) {
-        console.warn("Auth list fetch warning:", authError.message);
+    if (supabaseAdmin && !supabaseAdmin.toString().includes('Proxy')) {
+      try {
+        const { data, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+        if (!authError && data) {
+          authUsers = data.users;
+        }
+      } catch (e) {
+        console.warn("Auth sync failed, but continuing with profiles only.");
       }
-    } catch (e) {
-      console.error("Auth list fetch timeout or crash:", e);
-      // 그냥 빈 배열로 넘어가서 최소한 profile 리스트는 보이게 함
     }
 
-    // 3. Merge data (profile + email from auth if available)
-    const combinedUsers = profiles.map((profile: any) => {
+    // 3. Merge data
+    const combinedUsers = (profiles || []).map((profile: any) => {
       const authUser = authUsers.find((u: any) => u.id === profile.id);
       return {
         ...profile,
-        email: authUser?.email || profile.email || 'No Email', // profile에도 email이 있을 수 있음
+        email: authUser?.email || profile.email || 'No Email',
         last_sign_in_at: authUser?.last_sign_in_at,
         created_at: profile.created_at || authUser?.created_at,
         role: profile.role || 'user'
       };
     });
 
+    console.log(`[Admin API] Returning ${combinedUsers.length} users`);
     return NextResponse.json({ users: combinedUsers });
   } catch (error: any) {
-    console.error("Admin Users GET Error:", error);
-    return NextResponse.json({ error: error.message, users: [] }, { status: 500 });
+    console.error("Admin Users GET Final Error:", error);
+    return NextResponse.json({ error: error.message, users: [] }, { status: 200 });
   }
 }
 

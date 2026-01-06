@@ -97,10 +97,14 @@ export default function AdminUsersPage() {
   };
 
   // 필터링
-  const filteredUsers = users.filter(user => 
-    user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(user => {
+    const search = searchTerm.toLowerCase();
+    const username = (user.username || "").toLowerCase();
+    const email = (user.email || "").toLowerCase();
+    const nickname = (user as any).nickname?.toLowerCase() || "";
+    
+    return username.includes(search) || email.includes(search) || nickname.includes(search);
+  });
 
   if (adminLoading || loading) {
     return (
@@ -157,13 +161,20 @@ export default function AdminUsersPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <Avatar className="w-10 h-10 border border-gray-100">
-                        <AvatarImage src={user.profile_image_url || "/globe.svg"} />
-                        <AvatarFallback>{user.username?.[0] || "U"}</AvatarFallback>
+                        <AvatarImage src={user.profile_image_url || (user as any).avatar_url || "/globe.svg"} />
+                        <AvatarFallback>{(user.username || (user as any).nickname || "U")[0]}</AvatarFallback>
                       </Avatar>
-                      <span className="font-medium text-gray-900">{user.username}</span>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900">
+                          {user.username || (user as any).nickname || "이름 없음"}
+                        </span>
+                        {(user as any).nickname && user.username && (
+                           <span className="text-[10px] text-gray-400">@{user.username}</span>
+                        )}
+                      </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-600 font-mono text-xs">{user.email}</td>
+                  <td className="px-6 py-4 text-gray-600 font-mono text-xs">{user.email || "이메일 없음"}</td>
                   <td className="px-6 py-4 text-gray-500 text-xs">
                     {new Date(user.created_at).toLocaleDateString()}
                   </td>
