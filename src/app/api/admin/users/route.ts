@@ -4,35 +4,47 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 // 사용자 목록 조회
 export async function GET(request: NextRequest) {
   try {
-    // 1. users list fetch from Supabase Auth (to get emails)
-    const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (authError) throw authError;
-
-    // 2. profiles fetch
+    // 1. profiles fetch (DB 데이터는 대개 타임아웃 확률이 낮음)
     const { data: profiles, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error("Profile Fetch Error:", profileError);
+      throw profileError;
+    }
 
-    // 3. Merge data (profile + email from auth)
+    // 2. Auth list fetch (타임아웃이나 에러가 잦으므로 별도로 처리)
+    let authUsers: any[] = [];
+    try {
+      const { data, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+      if (!authError && data) {
+        authUsers = data.users;
+      } else if (authError) {
+        console.warn("Auth list fetch warning:", authError.message);
+      }
+    } catch (e) {
+      console.error("Auth list fetch timeout or crash:", e);
+      // 그냥 빈 배열로 넘어가서 최소한 profile 리스트는 보이게 함
+    }
+
+    // 3. Merge data (profile + email from auth if available)
     const combinedUsers = profiles.map((profile: any) => {
-      const authUser = users.find((u: any) => u.id === profile.id);
+      const authUser = authUsers.find((u: any) => u.id === profile.id);
       return {
         ...profile,
-        email: authUser?.email || '',
+        email: authUser?.email || profile.email || 'No Email', // profile에도 email이 있을 수 있음
         last_sign_in_at: authUser?.last_sign_in_at,
-        created_at: authUser?.created_at || profile.created_at,
-        role: profile.role || 'user' // Ensure role exists
+        created_at: profile.created_at || authUser?.created_at,
+        role: profile.role || 'user'
       };
     });
 
     return NextResponse.json({ users: combinedUsers });
   } catch (error: any) {
     console.error("Admin Users GET Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message, users: [] }, { status: 500 });
   }
 }
 

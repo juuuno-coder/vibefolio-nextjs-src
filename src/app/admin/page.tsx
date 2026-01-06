@@ -68,7 +68,7 @@ export default function AdminPage() {
 
         // 사용자 수
         const { count: userCount } = await supabase
-          .from('users')
+          .from('profiles')
           .select('*', { count: 'exact', head: true });
 
         // 공지사항 수
@@ -96,7 +96,7 @@ export default function AdminPage() {
           .from('Project')
           .select(`
             *,
-            users (nickname, profile_image_url)
+            profiles (username, avatar_url)
           `)
           .order('created_at', { ascending: false })
           .limit(5);
