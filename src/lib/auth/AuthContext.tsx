@@ -63,9 +63,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
 
         if (db && !error) {
+          // 서비스 내부에서 설정한 이미지가 있는지 우선 확인
+          const customImage = (db as any).profile_image_url || (db as any).avatar_url;
+          
           const finalProfile = {
             username: (db as any).username || base.username,
-            profile_image_url: (db as any).avatar_url || (db as any).profile_image_url || base.profile_image_url,
+            // 우선순위: Vibefolio 커스텀 이미지 > 구글/소셜 이미지 > 기본 로고
+            profile_image_url: customImage || base.profile_image_url,
             role: (db as any).role || base.role,
           };
           setUserProfile(finalProfile);
