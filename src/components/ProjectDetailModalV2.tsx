@@ -113,6 +113,7 @@ interface ProjectDetailModalV2Props {
     };
     likes: number;
     views?: number;
+    title?: string | null;
     description: string | null;
     alt_description: string | null;
     created_at: string;
@@ -121,6 +122,12 @@ interface ProjectDetailModalV2Props {
     userId?: string;
     rendering_type?: string;
   } | null;
+}
+
+// HTML 태그를 제거하고 텍스트만 추출하는 함수 (제목용)
+function stripHtml(html: string) {
+  if (!html) return "";
+  return html.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim();
 }
 
 // HTML 엔티티 디코딩 함수 (강력한 버전)
@@ -548,8 +555,8 @@ export function ProjectDetailModalV2({
 
               {/* 프로젝트 정보 */}
               <div className="px-4 py-4">
-                <h1 className="text-lg font-bold text-gray-900 mb-2">
-                  {project.description || project.alt_description || "제목 없음"}
+                <h1 className="text-lg font-bold text-gray-900 mb-2 truncate">
+                  {project.title || stripHtml(project.description || project.alt_description || "제목 없음")}
                 </h1>
                 <p className="text-sm text-gray-500 mb-3">
                   {dayjs(project.created_at).fromNow()} | 크리에이티브
@@ -623,7 +630,7 @@ export function ProjectDetailModalV2({
               {/* 프로젝트 정보 헤더 */}
               <div className="p-6 bg-white border-b border-gray-100">
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                  {project.description || project.alt_description || "제목 없음"}
+                  {project.title || stripHtml(project.description || project.alt_description || "제목 없음")}
                 </h1>
                 <button
                   onClick={() => {
