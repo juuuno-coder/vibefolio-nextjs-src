@@ -170,7 +170,7 @@ export function MainBanner() {
         }}
         className="w-full"
       >
-        <CarouselContent className="w-full flex justify-start gap-4 -ml-4 py-1 px-1">
+        <CarouselContent className="w-full flex justify-start gap-4 -ml-4 pt-0 pb-6 px-1">
           {banners.map((banner) => (
             <CarouselItem
               key={banner.id}
