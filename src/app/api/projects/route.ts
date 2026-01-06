@@ -110,12 +110,13 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      data: data, // data 키로 감싸서 반환 (프론트엔드 페이지네이션 로직과 맞춤)
+      projects: data, // Compatibility for some admin pages
+      data: data, // Alignment with pagination logic
       metadata: {
         total: count || 0,
         page: page,
         limit: limit,
-        hasMore: data?.length === limit // 간단한 hasMore 계산
+        hasMore: data?.length === limit
       }
     });
   } catch (error: any) {

@@ -96,7 +96,7 @@ export default function AdminPage() {
           .from('Project')
           .select(`
             *,
-            users (username, profile_image_url)
+            users (nickname, profile_image_url)
           `)
           .order('created_at', { ascending: false })
           .limit(5);
