@@ -53,7 +53,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const profile = loadProfileFromMetadata(u);
       setUserProfile(profile);
 
-      // 2. DB profiles 테이블에서 최신 데이터(특히 role) 가져오기
+      // 2. 캐시 확인 (localStorage)
+      const cacheKey = `profile_${u.id}`;
+      const cached = localStorage.getItem(cacheKey);
+      
+      if (cached) {
+        try {
+          const cachedProfile = JSON.parse(cached);
+          // 캐시가 1시간 이내면 사용
+          if (Date.now() - cachedProfile.timestamp < 60 * 60 * 1000) {
+            setUserProfile(cachedProfile.data);
+            setLoading(false);
+            return; // DB 조회 스킵
+          }
+        } catch (e) {
+          // 캐시 파싱 실패 시 무시
+        }
+      }
+
+      // 3. DB profiles 테이블에서 최신 데이터 가져오기 (캐시 없을 때만)
       try {
         const { data: dbProfile, error } = await supabase
           .from('profiles')
@@ -62,11 +80,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
 
         if (dbProfile && !error) {
-          setUserProfile({
+          const finalProfile = {
             username: (dbProfile as any).username || profile.username,
             profile_image_url: (dbProfile as any).avatar_url || profile.profile_image_url,
             role: (dbProfile as any).role || profile.role,
-          });
+          };
+          setUserProfile(finalProfile);
+          
+          // 캐시 저장
+          localStorage.setItem(cacheKey, JSON.stringify({
+            data: finalProfile,
+            timestamp: Date.now()
+          }));
         }
       } catch (e) {
         console.error("[Auth] DB profile fetch error:", e);
