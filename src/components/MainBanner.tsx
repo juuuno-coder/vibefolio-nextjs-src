@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import {
   Card,
@@ -171,7 +172,7 @@ export function MainBanner() {
         className="w-full"
       >
         <CarouselContent className="w-full flex justify-start gap-4 -ml-4 pt-0 pb-6 px-1">
-          {banners.map((banner) => (
+          {banners.map((banner, index) => (
             <CarouselItem
               key={banner.id}
               className="basis-[92vw] md:basis-[700px] pl-4"
@@ -181,18 +182,22 @@ export function MainBanner() {
                   className="w-full h-[320px] md:h-[450px] overflow-hidden hover:shadow-2xl transition-shadow duration-300 border-none rounded-[32px] group relative"
                 >
                   <CardContent className="h-full p-0 relative">
-                    {/* Background Image - Full Coverage with img tag */}
-                    <img 
+                    {/* Optimized Image with Next.js Image component */}
+                    <Image 
                       src={banner.image_url}
                       alt={banner.title}
-                      className="absolute inset-0 w-full h-full object-cover"
+                      fill
+                      priority={index === 0} // First banner loads with priority
+                      sizes="(max-width: 768px) 92vw, 700px"
+                      className="object-cover"
+                      quality={90}
                     />
                     
                     {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10" />
 
                     {/* Content */}
-                    <div className="absolute bottom-0 left-0 w-full p-8 md:p-10 flex flex-col items-start gap-3">
+                    <div className="absolute bottom-0 left-0 w-full p-8 md:p-10 flex flex-col items-start gap-3 z-20">
                       {banner.subtitle && (
                         <div 
                           className="px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase backdrop-blur-md bg-white/20 border border-white/30"
