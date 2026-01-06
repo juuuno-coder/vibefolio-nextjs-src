@@ -58,8 +58,14 @@ export async function middleware(request: NextRequest) {
 
   // Admin protection
   if (request.nextUrl.pathname.startsWith('/admin')) {
-    // 임시: 특정 이메일 허용 (jason.log@naver.com, juuuno@naver.com)
-    const adminEmails = ["jason.log@naver.com", "juuuno@naver.com"];
+    // 임시: 특정 이메일 허용
+    const adminEmails = [
+      "juuuno@naver.com", 
+      "juuuno1116@gmail.com", 
+      "designd@designd.co.kr", 
+      "designdlab@designdlab.co.kr", 
+      "admin@vibefolio.net"
+    ];
     const isHardcodedAdmin = user?.email && adminEmails.includes(user.email);
     const isRoleAdmin = user?.app_metadata?.role === 'admin';
 

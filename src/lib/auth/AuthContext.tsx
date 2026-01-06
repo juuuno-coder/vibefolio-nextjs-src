@@ -202,7 +202,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 임시: 특정 이메일들을 admin으로 처리 (나중에 DB에서 role 설정 후 제거)
   const isAdminUser = React.useMemo(() => {
-    const adminEmails = ["jason.log@naver.com", "juuuno@naver.com"];
+    const adminEmails = [
+      "juuuno@naver.com", 
+      "juuuno1116@gmail.com", 
+      "designd@designd.co.kr", 
+      "designdlab@designdlab.co.kr", 
+      "admin@vibefolio.net"
+    ];
     const isHardcodedAdmin = user?.email && adminEmails.includes(user.email);
     const isDbAdmin = userProfile?.role === "admin";
     
