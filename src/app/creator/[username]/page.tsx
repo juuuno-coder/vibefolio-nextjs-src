@@ -79,12 +79,12 @@ export default function CreatorProfilePage() {
         const { data: { user } } = await supabase.auth.getUser();
         setCurrentUserId(user?.id || null);
 
-        // 사용자 정보 가져오기 (username 또는 nickname으로 검색)
+        // 사용자 정보 가져오기 (profiles 테이블 사용)
         const { data: userData, error: userError } = await supabase
-          .from('users')
+          .from('profiles')
           .select('*')
           .or(`username.eq.${username},nickname.eq.${username}`)
-          .single() as { data: any; error: any };
+          .maybeSingle();
 
         if (userError || !userData) {
           console.error('사용자를 찾을 수 없습니다:', userError);
@@ -94,14 +94,14 @@ export default function CreatorProfilePage() {
 
         setProfile({
           id: userData.id,
-          username: userData.username || userData.nickname || username,
-          email: userData.email || '',
+          username: userData.username || (userData as any).nickname || username,
+          email: (userData as any).email || '',
           bio: userData.bio || '',
-          location: userData.location || '',
-          website: userData.website || '',
-          profileImage: userData.profile_image_url || '',
-          skills: userData.skills || [],
-          socialLinks: userData.social_links || {},
+          location: (userData as any).location || '',
+          website: (userData as any).website || '',
+          profileImage: userData.avatar_url || (userData as any).profile_image_url || '',
+          skills: (userData as any).skills || [],
+          socialLinks: (userData as any).social_links || {},
         });
 
         // 해당 사용자의 프로젝트 가져오기
