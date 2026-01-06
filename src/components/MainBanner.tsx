@@ -170,7 +170,7 @@ export function MainBanner() {
         }}
         className="w-full"
       >
-        <CarouselContent className="w-full flex justify-start gap-4 -ml-4 py-4 px-1">
+        <CarouselContent className="w-full flex justify-start gap-4 -ml-4 py-1 px-1">
           {banners.map((banner) => (
             <CarouselItem
               key={banner.id}
@@ -178,20 +178,21 @@ export function MainBanner() {
             >
               <Link href={banner.link_url || "#"} className={banner.link_url ? "cursor-pointer" : "cursor-default"}>
                 <Card 
-                  className="w-full h-[320px] md:h-[450px] overflow-hidden hover:shadow-2xl transition-all duration-500 border-none rounded-[32px] group relative"
+                  className="w-full h-[320px] md:h-[450px] overflow-hidden hover:shadow-2xl transition-shadow duration-300 border-none rounded-[32px] group relative"
                 >
                   <CardContent className="flex items-center justify-center h-full p-0 relative">
-                    {/* Background Image with Zoom Effect - Using img tag for better loading/rendering if needed, but keeping div style for bg-cover */}
+                    {/* Background Image - Full Coverage */}
                     <div 
-                      className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
+                      className="absolute inset-0 bg-cover bg-center"
                       style={{ 
                         backgroundImage: `url(${banner.image_url})`,
+                        backgroundSize: 'cover',
                         backgroundPosition: 'center center'
                       }}
                     />
                     
-                    {/* Sophisticated Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent transition-opacity duration-300 group-hover:opacity-95" />
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
                     {/* Content */}
                     <div className="absolute bottom-0 left-0 w-full p-8 md:p-10 flex flex-col items-start gap-3">
