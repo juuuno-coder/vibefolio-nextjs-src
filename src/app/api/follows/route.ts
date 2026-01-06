@@ -2,7 +2,7 @@
 // 팔로우 추가/제거 API
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 // 팔로우 토글 (팔로우/언팔로우)
 export async function POST(request: NextRequest) {

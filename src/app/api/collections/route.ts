@@ -2,7 +2,7 @@
 // 컬렉션 폴더 관리 API
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 // 컬렉션 목록 조회
 export async function GET(request: NextRequest) {

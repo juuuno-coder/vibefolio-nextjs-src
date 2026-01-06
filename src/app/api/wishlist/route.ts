@@ -2,7 +2,7 @@
 // 위시리스트(북마크) 추가/제거 API
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 // 위시리스트 토글 (추가/제거)
 export async function POST(request: NextRequest) {

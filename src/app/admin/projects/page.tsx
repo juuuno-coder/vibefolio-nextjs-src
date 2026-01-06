@@ -19,7 +19,7 @@ import {
   Loader2
 } from "lucide-react";
 import Link from "next/link";
-import { supabase, supabaseAdmin } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { useAdmin } from "@/hooks/useAdmin";
 
 // 카테고리 목록
