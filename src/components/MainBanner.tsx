@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
+import { getBlurDataURL } from "@/lib/utils/imageOptimization";
 import {
   Card,
   CardContent,
@@ -191,6 +192,8 @@ export function MainBanner() {
                       sizes="(max-width: 768px) 92vw, 700px"
                       className="object-cover"
                       quality={90}
+                      placeholder="blur"
+                      blurDataURL={getBlurDataURL(700, 450)}
                     />
                     
                     {/* Gradient Overlay */}
