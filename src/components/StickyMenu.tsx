@@ -167,7 +167,7 @@ export function StickyMenu({
       {/* Placeholder for layout shift prevention */}
       {isScrolled && <div className="h-16 md:h-20 w-full" />}
 
-      <div className={`${isScrolled ? "fixed top-[72px] left-0 right-0 shadow-md" : "relative"} z-40 w-full transition-all duration-300`}>
+      <div className={`${isScrolled ? "fixed top-[64px] left-0 right-0 shadow-md" : "relative"} z-40 w-full transition-all duration-300`}>
         {/* 1. 상단 메인 카테고리 바 */}
         <div className={`w-full bg-white/95 backdrop-blur-sm border-b border-gray-100 transition-all duration-300 ${isScrolled ? "h-12" : "h-16 md:h-20"}`}>
           <section className={`flex items-center justify-between px-3 md:px-6 h-full w-full gap-2`}>
