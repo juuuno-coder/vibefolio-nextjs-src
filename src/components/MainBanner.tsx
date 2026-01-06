@@ -170,25 +170,28 @@ export function MainBanner() {
         }}
         className="w-full"
       >
-        <CarouselContent className="w-full flex justify-start gap-4 -ml-4 py-8 px-1">
+        <CarouselContent className="w-full flex justify-start gap-4 -ml-4 py-4 px-1">
           {banners.map((banner) => (
             <CarouselItem
               key={banner.id}
-              className="basis-[90vw] md:basis-[600px] pl-4"
+              className="basis-[92vw] md:basis-[700px] pl-4"
             >
               <Link href={banner.link_url || "#"} className={banner.link_url ? "cursor-pointer" : "cursor-default"}>
                 <Card 
-                  className="w-full h-[300px] md:h-[400px] overflow-hidden hover:shadow-xl transition-all duration-300 border-none rounded-[32px] group relative"
+                  className="w-full h-[320px] md:h-[450px] overflow-hidden hover:shadow-2xl transition-all duration-500 border-none rounded-[32px] group relative"
                 >
                   <CardContent className="flex items-center justify-center h-full p-0 relative">
-                    {/* Background Image with Zoom Effect */}
+                    {/* Background Image with Zoom Effect - Using img tag for better loading/rendering if needed, but keeping div style for bg-cover */}
                     <div 
-                      className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                      style={{ backgroundImage: `url(${banner.image_url})` }}
+                      className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
+                      style={{ 
+                        backgroundImage: `url(${banner.image_url})`,
+                        backgroundPosition: 'center center'
+                      }}
                     />
                     
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90" />
+                    {/* Sophisticated Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent transition-opacity duration-300 group-hover:opacity-95" />
 
                     {/* Content */}
                     <div className="absolute bottom-0 left-0 w-full p-8 md:p-10 flex flex-col items-start gap-3">

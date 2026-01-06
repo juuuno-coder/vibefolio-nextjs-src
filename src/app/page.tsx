@@ -289,7 +289,7 @@ function HomeContent() {
 
   return (
     <div className="min-h-screen bg-white">
-      <main className="w-full pt-[80px]">
+      <main className="w-full pt-[68px]">
         {/* 메인 배너 - 헤더와 밀착 */}
         <section className="w-full">
           <MainBanner />
