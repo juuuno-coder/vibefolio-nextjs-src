@@ -152,9 +152,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   */
 
   const signOut = async () => {
-    // setLoading(true); // 로그아웃 시 로딩 상태 전환은 UX를 해칠 수 있음 (선택 사항)
-    await supabase.auth.signOut();
-    router.push("/login"); // 로그아웃 후 로그인 페이지로
+    try {
+      if (user) {
+        // 캐시 삭제
+        localStorage.removeItem(`profile_${user.id}`);
+      }
+      // 상태 초기화
+      setUser(null);
+      setSession(null);
+      setUserProfile(null);
+      
+      await supabase.auth.signOut();
+      router.push("/login"); // 로그아웃 후 로그인 페이지로
+    } catch (e) {
+      console.error("SignOut Error:", e);
+    }
   };
 
   const refreshUserProfile = useCallback(async () => {
@@ -170,11 +182,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (dbProfile) {
-        setUserProfile({
+        const updatedProfile = {
           username: (dbProfile as any).username || profile.username,
           profile_image_url: (dbProfile as any).avatar_url || profile.profile_image_url,
           role: (dbProfile as any).role || profile.role,
-        });
+        };
+        setUserProfile(updatedProfile);
+        
+        // 캐시 갱신
+        localStorage.setItem(`profile_${u.id}`, JSON.stringify({
+          data: updatedProfile,
+          timestamp: Date.now()
+        }));
       } else {
         setUserProfile(profile);
       }
@@ -182,8 +201,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, loadProfileFromMetadata]);
 
   // 임시: 특정 이메일들을 admin으로 처리 (나중에 DB에서 role 설정 후 제거)
-  const adminEmails = ["jason.log@naver.com", "juuuno@naver.com"];
-  const isAdminUser = !!(userProfile?.role === "admin" || (user?.email && adminEmails.includes(user.email)));
+  const isAdminUser = React.useMemo(() => {
+    const adminEmails = ["jason.log@naver.com", "juuuno@naver.com"];
+    const isHardcodedAdmin = user?.email && adminEmails.includes(user.email);
+    const isDbAdmin = userProfile?.role === "admin";
+    
+    console.log("[Auth] Admin Check:", { email: user?.email, isHardcodedAdmin, isDbAdmin });
+    
+    return !!(isDbAdmin || isHardcodedAdmin);
+  }, [user, userProfile]);
 
   const value = {
     user,
