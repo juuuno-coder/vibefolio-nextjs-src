@@ -143,7 +143,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       "designdlab@designdlab.co.kr", 
       "admin@vibefolio.net"
     ];
-    return !!(user?.email && adminEmails.includes(user.email)) || userProfile?.role === "admin";
+    const result = !!(user?.email && adminEmails.includes(user.email)) || userProfile?.role === "admin";
+    
+    if (user) {
+      console.log(`[Auth] Permission check: ${result ? 'ADMIN' : 'USER'} for ${user.email}`);
+    }
+    
+    return result;
   }, [user?.email, userProfile?.role]);
 
   const authValue = React.useMemo(() => ({
