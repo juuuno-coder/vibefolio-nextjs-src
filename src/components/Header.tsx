@@ -68,10 +68,10 @@ export function Header({
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
-        scrolled ? "bg-white/80 backdrop-blur-md shadow-sm h-[64px] flex items-center" : "bg-white h-[80px] flex items-center"
+        scrolled ? "bg-white/80 backdrop-blur-md shadow-sm h-[64px]" : "bg-white h-[80px]"
       }`}
     >
-      <div className="max-w-[1920px] mx-auto px-6 md:px-10 flex items-center justify-between">
+      <div className="max-w-[1920px] mx-auto px-6 md:px-10 flex items-center justify-between h-full w-full">
         {/* Left: Logo & Nav */}
         <div className="flex items-center gap-12">
           <Link href="/" className="flex items-center">
