@@ -15,9 +15,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWandSparkles, faXmark, faCheck } from "@fortawesome/free-solid-svg-icons";
 
 
-// 모달은 초기에 필요 없으므로 Dynamic Import로 지연 로딩
 const ProjectDetailModalV2 = dynamic(() => 
   import("@/components/ProjectDetailModalV2").then(mod => mod.ProjectDetailModalV2), 
+  { ssr: false }
+);
+const OnboardingModal = dynamic(() => 
+  import("@/components/OnboardingModal").then(mod => mod.OnboardingModal), 
   { ssr: false }
 );
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -46,7 +49,7 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q"); // 검색어 가져오기
 
-  const { user, isAuthenticated } = useAuth();
+  const { user, userProfile, isAuthenticated } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string | string[]>("all");
   const [sortBy, setSortBy] = useState("latest");
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
@@ -60,6 +63,27 @@ function HomeContent() {
   const [selectedProject, setSelectedProject] = useState<ImageDialogProps | null>(null);
   const [userInterests, setUserInterests] = useState<{ genres: string[]; fields: string[] } | null>(null);
   const [usePersonalized, setUsePersonalized] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // 온보딩 트리거 체크
+  useEffect(() => {
+    // 1. 로그인 상태이고 로딩이 끝났을 때
+    if (!loading && user && userProfile) {
+      // 2. 프로필 정보가 부실하거나 온보딩 완료 여부 체크
+      // (예: username이 이메일 형식이거나 기본값인 경우, 또는 명시적인 플래그)
+      const isNewUser = !userProfile.username || 
+                       userProfile.username.includes('@') || 
+                       userProfile.username === '익명사용자';
+      
+      const isSkipped = localStorage.getItem(`onboarding_skipped_${user.id}`);
+      
+      if (isNewUser && !isSkipped) {
+        // 약간의 지연 후 온보딩 모달 표시
+        const timer = setTimeout(() => setShowOnboarding(true), 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [user, userProfile, loading]);
 
   // Auth 상태 변경 시 관심 카테고리 정보만 로드 (자동 적용 X)
   useEffect(() => {
@@ -337,7 +361,16 @@ function HomeContent() {
       )}
       
       {/* 관심사 설정 모달 */}
-      {/* ... (관심사 모달 구현 생략 - 필요하다면 추가) */}
+      <OnboardingModal
+        open={showOnboarding}
+        onOpenChange={setShowOnboarding}
+        userId={user?.id || ""}
+        userEmail={user?.email || ""}
+        onComplete={() => {
+          setShowOnboarding(false);
+          // 관심사 탭 데이터 갱신을 위해 필요한 경우 추가 로직 가동
+        }}
+      />
     </div>
   );
 }
