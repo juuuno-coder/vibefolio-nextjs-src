@@ -107,15 +107,7 @@ export default function CreatorProfilePage() {
         // 해당 사용자의 프로젝트 가져오기
         const { data: projectsData, error: projectsError } = await supabase
           .from('Project')
-          .select(`
-            *,
-            User:user_id (
-              id,
-              username,
-              nickname,
-              profile_image_url
-            )
-          `)
+          .select('*')
           .eq('user_id', userData.id)
           .order('created_at', { ascending: false });
 
@@ -123,26 +115,27 @@ export default function CreatorProfilePage() {
           console.error('프로젝트 로드 실패:', projectsError);
         } else {
           const mappedProjects = projectsData?.map((p: any) => ({
-            id: String(p.project_id),
+            id: String(p.id || p.project_id),
             urls: {
-              full: p.thumbnail_url || "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=2000",
-              regular: p.thumbnail_url || "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=800"
+              full: p.thumbnail_url || p.cover_image_url || "",
+              regular: p.thumbnail_url || p.cover_image_url || ""
             },
             user: {
-              username: p.User?.username || p.User?.nickname || username,
+              username: userData.username || (userData as any).nickname || username,
               profile_image: {
-                small: p.User?.profile_image_url || "",
-                large: p.User?.profile_image_url || ""
+                small: userData.avatar_url || (userData as any).profile_image_url || "",
+                large: userData.avatar_url || (userData as any).profile_image_url || ""
               }
             },
             likes: p.likes_count || 0,
             views: p.views_count || 0,
-            description: p.content_text,
-            alt_description: p.title,
+            description: p.content_html || p.content_text || "",
+            title: p.title || "",
+            alt_description: p.title || "",
             created_at: p.created_at,
             width: 800,
             height: 600,
-            category: "general",
+            category: p.category || "general",
             userId: p.user_id,
           })) || [];
 
@@ -165,7 +158,7 @@ export default function CreatorProfilePage() {
             .select()
             .eq('follower_id', user.id)
             .eq('following_id', userData.id)
-            .single();
+            .maybeSingle();
 
           setIsFollowing(!!followData);
         }

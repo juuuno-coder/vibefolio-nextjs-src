@@ -874,9 +874,9 @@ export function ProjectDetailModalV2({
       <ShareModal
         open={shareModalOpen}
         onOpenChange={setShareModalOpen}
-        url={typeof window !== 'undefined' ? window.location.href : ''}
-        title={project.description || project.alt_description || '프로젝트'}
-        description={project.description || ''}
+        url={typeof window !== 'undefined' ? `${window.location.origin}/project/${project.id}` : ''}
+        title={project.title || stripHtml(project.description || project.alt_description || "프로젝트 공유")}
+        description={stripHtml(project.description || "")}
         imageUrl={project.urls.full}
       />
 
@@ -885,7 +885,7 @@ export function ProjectDetailModalV2({
         onOpenChange={setProposalModalOpen}
         projectId={project.id}
         receiverId={project.userId || ''}
-        projectTitle={project.description || project.alt_description || '프로젝트'}
+        projectTitle={project.title || stripHtml(project.description || project.alt_description || "프로젝트")}
       />
 
       <CollectionModal

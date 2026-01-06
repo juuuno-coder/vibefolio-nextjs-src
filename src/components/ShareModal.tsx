@@ -49,64 +49,27 @@ export function ShareModal({
     }
   };
 
-  // 카카오톡 공유 (카카오톡 앱으로 직접 공유)
-  const shareKakao = () => {
-    // 카카오 SDK가 로드되어 있는지 확인
-    if (typeof window !== "undefined" && (window as any).Kakao) {
-      const Kakao = (window as any).Kakao;
-      
-      if (!Kakao.isInitialized()) {
-        // 카카오 SDK가 초기화되지 않은 경우 - 모바일 카카오톡 URL scheme 사용
-        shareKakaoFallback();
-        return;
-      }
 
-      Kakao.Share.sendDefault({
-        objectType: "feed",
-        content: {
-          title: title,
-          description: description,
-          imageUrl: imageUrl,
-          link: {
-            mobileWebUrl: url,
-            webUrl: url,
-          },
-        },
-        buttons: [
-          {
-            title: "자세히 보기",
-            link: {
-              mobileWebUrl: url,
-              webUrl: url,
-            },
-          },
-        ],
-      });
-    } else {
-      shareKakaoFallback();
-    }
+
+  // HTML 태그 제거 함수
+  const stripHtml = (html: string) => {
+    if (!html) return "";
+    return html.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim();
   };
 
-  // 카카오톡 폴백 - 모바일에서는 카카오톡 앱 호출, PC에서는 URL 복사 안내
-  const shareKakaoFallback = () => {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-      // 모바일에서는 카카오톡 공유 URL 사용
-      const kakaoShareUrl = `https://sharer.kakao.com/talk/friends/picker/link?app_key=YOUR_APP_KEY&app_ver=1.0&request_url=${encodeURIComponent(url)}&template_id=0&title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}`;
-      
-      // 간단한 방법: 카카오톡 링크 공유 페이지로 이동
-      window.open(`https://sharer.kakao.com/talk/friends/picker/link?url=${encodeURIComponent(url)}`, "_blank", "width=600,height=700");
-    } else {
-      // PC에서는 링크 복사 후 안내
-      copyToClipboard();
-      // 토스트 대신 알림은 이후 토스트로 대체
-    }
+  const cleanTitle = stripHtml(title);
+  const cleanDescription = stripHtml(description);
+
+  // 카카오톡 공유
+  const shareKakao = () => {
+    // 인텐트 기반 카카오 공유 URL (PC/모바일 공용)
+    const kakaoUrl = `https://sharer.kakao.com/talk/friends/picker/link?url=${encodeURIComponent(url)}`;
+    window.open(kakaoUrl, "_blank", "width=600,height=700");
   };
 
   // 트위터(X) 공유
   const shareTwitter = () => {
-    const text = `${title}\n${description}`;
+    const text = `${cleanTitle}\n${cleanDescription}`.slice(0, 200);
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       text
     )}&url=${encodeURIComponent(url)}`;
@@ -115,8 +78,7 @@ export function ShareModal({
 
   // Threads 공유
   const shareThreads = () => {
-    const text = `${title}\n${description}\n${url}`;
-    // Threads 웹 공유 URL (인텐트)
+    const text = `${cleanTitle}\n${cleanDescription}\n${url}`.slice(0, 500);
     const threadsUrl = `https://www.threads.net/intent/post?text=${encodeURIComponent(text)}`;
     window.open(threadsUrl, "_blank", "width=600,height=700");
   };
