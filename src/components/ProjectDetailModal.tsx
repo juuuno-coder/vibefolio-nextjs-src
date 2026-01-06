@@ -343,11 +343,16 @@ export function ProjectDetailModal({
                   />
                 </div>
 
-                {/* 설명 텍스트 */}
-                <div className="mb-20 max-w-3xl mx-auto w-full">
-                    <p className="text-gray-800 leading-loose text-lg whitespace-pre-wrap">
-                        {project.description || "설명이 없습니다."}
-                    </p>
+                {/* 설명 텍스트 (HTML 렌더링) */}
+                <div className="mb-20 max-w-4xl mx-auto w-full content-renderer">
+                    {project.description ? (
+                      <div 
+                        className="prose prose-lg max-w-none text-gray-800 leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: project.description }} 
+                      />
+                    ) : (
+                      <p className="text-gray-400 italic text-center">작품 설명이 없습니다.</p>
+                    )}
                 </div>
 
                 {/* 하단 태그/정보 영역 */}

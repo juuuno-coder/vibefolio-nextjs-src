@@ -428,117 +428,206 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
   const [title, setTitle] = useState("");
-  const [tags, setTags] = useState("");
-  const [category, setCategory] = useState("");
-  const [tools, setTools] = useState("");
+  const [tagList, setTagList] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [visibility, setVisibility] = useState("public");
   const [isAdult, setIsAdult] = useState(false);
+
+  // 장르 데이터 정의
+  const genres = [
+    { id: "photo", label: "포토", icon: "📷" },
+    { id: "animation", label: "애니메이션", icon: "🪄" },
+    { id: "graphic", label: "그래픽", icon: "🎨" },
+    { id: "design", label: "디자인", icon: "📎" },
+    { id: "video", label: "영상", icon: "📹" },
+    { id: "movie", label: "영화·드라마", icon: "🎞️" },
+    { id: "audio", label: "오디오", icon: "🎧" },
+    { id: "3d", label: "3D", icon: "🧊" },
+    { id: "text", label: "텍스트", icon: "📄" },
+    { id: "code", label: "코드", icon: "💻" },
+    { id: "app", label: "웹/앱", icon: "📱" },
+    { id: "game", label: "게임", icon: "🎮" },
+  ];
+
+  // 관련 분야 데이터 정의
+  const fields = ["경제/금융", "헬스케어", "뷰티/패션", "반려", "F&B", "여행/레저", "교육", "IT", "라이프스타일", "비즈니스", "기타"];
+
+  const toggleGenre = (id: string) => {
+    setSelectedGenres(prev => 
+      prev.includes(id) ? prev.filter(g => g !== id) : prev.length < 3 ? [...prev, id] : prev
+    );
+  };
+
+  const toggleField = (id: string) => {
+    setSelectedFields(prev => 
+      prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
+    );
+  };
+
+  const handleAddTag = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      if (!tagList.includes(tagInput.trim()) && tagList.length < 10) {
+        setTagList([...tagList, tagInput.trim()]);
+      }
+      setTagInput("");
+    }
+  };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
-        <div className="flex items-start justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
-          <h2 className="text-xl font-bold text-gray-900">프로젝트 설정</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <X className="w-5 h-5 text-gray-400" />
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+      <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+        {/* Header */}
+        <div className="flex items-center justify-between p-8 border-b border-gray-50 flex-shrink-0">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">프로젝트 설정</h2>
+            <p className="text-sm text-gray-500 mt-1">Vibefolio에 당신의 감각을 게시할 준비를 하세요.</p>
+          </div>
+          <button onClick={onClose} className="p-3 hover:bg-gray-100 rounded-full transition-all group">
+            <X className="w-6 h-6 text-gray-400 group-hover:rotate-90 transition-transform duration-300" />
           </button>
         </div>
 
-        <div className="p-6 grid grid-cols-2 gap-8">
-          {/* Left - Cover Image */}
-          <div className="space-y-4">
-            <p className="font-medium text-gray-700">프로젝트 표지 <span className="text-gray-400">(필수)</span></p>
-            <div className="aspect-square border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center bg-gray-50">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white">이미지 업로드</Button>
-              <p className="text-xs text-gray-400 mt-4 text-center">최소 크기 "808 x 632px"<br />GIF 파일은 애니메이트되지 않습니다.</p>
-            </div>
-          </div>
-
-          {/* Right - Form */}
-          <div className="space-y-5">
-            <p className="font-bold text-gray-800">프로젝트 정보</p>
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+          <div className="space-y-12">
             
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-600">제목 <span className="text-gray-400">(필수)</span></label>
+            {/* 1. 타이틀 섹션 */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-1.5 text-sm font-bold text-gray-900 uppercase tracking-widest leading-none">
+                프로젝트 제목 <span className="text-red-500">*</span>
+              </label>
               <input 
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="프로젝트 제목 입력"
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="제목을 입력해 주세요"
+                className="w-full px-5 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-black transition-all outline-none text-lg font-medium shadow-sm active:scale-[0.99]"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-600">태그 <span className="text-gray-400">(최대 10개)</span></label>
-              <input 
-                type="text"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                placeholder="사람들이 내 프로젝트를 쉽게 찾을 수 있도록 최대 10개의 키워드를 추가하세요..."
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="space-y-2">
+            {/* 2. 작품 장르 칩 섹션 */}
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-gray-600">범주 <span className="text-gray-400">(필수, 최대 3)</span></label>
-                <button className="text-sm text-blue-600 hover:underline">모두 보기</button>
+                <label className="text-sm font-bold text-gray-900 uppercase tracking-widest">
+                  작품 장르 <span className="text-gray-400 font-normal ml-2">최대 3개 선택 가능</span>
+                </label>
               </div>
-              <input 
-                type="text"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="이 프로젝트를 어떤 범주로 분류시겠습니까?"
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {genres.map((genre) => (
+                  <button
+                    key={genre.id}
+                    onClick={() => toggleGenre(genre.id)}
+                    className={`flex items-center justify-center gap-2 h-12 px-4 rounded-xl border-2 transition-all transform active:scale-95 ${
+                      selectedGenres.includes(genre.id)
+                        ? "border-black bg-black text-white shadow-lg"
+                        : "border-gray-100 bg-white hover:border-gray-300 text-gray-700"
+                    }`}
+                  >
+                    <span className="text-lg">{genre.icon}</span>
+                    <span className="text-xs font-bold">{genre.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-600">사용 툴</label>
-              <input 
-                type="text"
-                value={tools}
-                onChange={(e) => setTools(e.target.value)}
-                placeholder="사용하신 소프트웨어, 하드웨어 또는 재질은 무엇입니까?"
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-600">Behance 가시성 <span className="text-gray-400">(필수)</span></label>
-              <select 
-                value={visibility}
-                onChange={(e) => setVisibility(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="public">모든 사용자</option>
-                <option value="private">비공개</option>
-              </select>
-              <p className="text-xs text-gray-400">모든 사용자가 액세스하고 검색할 수 있습니다.</p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-600">성인 콘텐츠</label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={isAdult} 
-                  onChange={(e) => setIsAdult(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300"
-                />
-                <span className="text-sm text-gray-600">이 프로젝트에는 성인물이 포함되어 있음</span>
+            {/* 3. 관련 분야 섹션 */}
+            <div className="space-y-4">
+              <label className="text-sm font-bold text-gray-900 uppercase tracking-widest">
+                관련 분야 <span className="text-gray-400 font-normal ml-2">(선택)</span>
               </label>
+              <div className="flex flex-wrap gap-2">
+                {fields.map((field) => (
+                  <button
+                    key={field}
+                    onClick={() => toggleField(field)}
+                    className={`px-5 py-2.5 rounded-full border text-xs font-bold transition-all active:scale-95 ${
+                      selectedFields.includes(field)
+                        ? "bg-gray-900 border-gray-900 text-white shadow-md"
+                        : "bg-white border-gray-200 text-gray-600 hover:border-gray-400"
+                    }`}
+                  >
+                    {field}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* 4. 태그 및 가시성 설정 (2열 배치) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <label className="text-sm font-bold text-gray-900 uppercase tracking-widest">태그</label>
+                <div className="relative">
+                  <input 
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleAddTag}
+                    placeholder="태그 입력 후 Enter"
+                    className="w-full pl-5 pr-12 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-black transition-all outline-none text-sm"
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 text-sm font-bold">↵</div>
+                </div>
+                <div className="flex flex-wrap gap-1.5 min-h-[32px]">
+                  {tagList.map(tag => (
+                    <span key={tag} className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-[11px] font-bold flex items-center gap-1.5 border border-indigo-100">
+                      #{tag}
+                      <button onClick={() => setTagList(tagList.filter(t => t !== tag))} className="hover:text-red-500"><X size={10} /></button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-sm font-bold text-gray-900 uppercase tracking-widest">공개 설정</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button 
+                    onClick={() => setVisibility("public")}
+                    className={`px-4 py-4 rounded-2xl border-2 text-center transition-all ${visibility === "public" ? "border-black bg-black text-white" : "border-gray-100 hover:bg-gray-50"}`}
+                  >
+                    <p className="font-bold text-xs">전체 공개</p>
+                  </button>
+                  <button 
+                    onClick={() => setVisibility("private")}
+                    className={`px-4 py-4 rounded-2xl border-2 text-center transition-all ${visibility === "private" ? "border-black bg-black text-white" : "border-gray-100 hover:bg-gray-50"}`}
+                  >
+                    <p className="font-bold text-xs">비공개</p>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 5. 성인 콘텐츠 설정 */}
+            <div className="flex items-center justify-between p-6 bg-gray-50 rounded-3xl border border-gray-100">
+              <div>
+                <p className="font-bold text-gray-900 text-sm">민감한 콘텐츠 포함</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">성인물 또는 폭력적인 내용이 포함되어 있나요?</p>
+              </div>
+              <div 
+                onClick={() => setIsAdult(!isAdult)}
+                className={`w-14 h-8 rounded-full p-1.5 cursor-pointer transition-all duration-300 ${isAdult ? "bg-red-500 shadow-inner" : "bg-gray-300"}`}
+              >
+                <div className={`w-5 h-5 bg-white rounded-full shadow-lg transform transition-transform duration-300 ${isAdult ? "translate-x-6" : ""}`} />
+              </div>
+            </div>
+
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100 sticky bottom-0 bg-white">
-          <Button variant="ghost" onClick={onClose} className="text-gray-500">취소</Button>
-          <Button variant="outline" className="text-gray-600">저장 중...</Button>
-          <Button onClick={() => { onSave({ title, tags, category, tools, visibility, isAdult }); onClose(); }} className="bg-blue-600 hover:bg-blue-700 text-white px-8">게시</Button>
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 p-8 border-t border-gray-50 bg-white flex-shrink-0">
+          <Button variant="ghost" onClick={onClose} className="text-gray-500 px-8 rounded-full">취소</Button>
+          <Button 
+            onClick={() => { onSave({ title, tagList, selectedGenres, selectedFields, visibility, isAdult }); onClose(); }} 
+            disabled={!title || selectedGenres.length === 0}
+            className="bg-green-500 hover:bg-green-600 text-white px-14 py-7 rounded-full font-bold shadow-xl shadow-green-200 transition-all disabled:opacity-30 active:scale-95 flex items-center gap-3"
+          >
+            <span>프로젝트 발행하기</span>
+            <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] tracking-widest font-black uppercase">Publish</span>
+          </Button>
         </div>
       </div>
     </div>
