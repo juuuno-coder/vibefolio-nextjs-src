@@ -476,7 +476,7 @@ export function ProjectDetailModalV2({
         onOpenChange(newOpen);
       }}>
         <DialogContent 
-          className="!max-w-none !w-screen !h-[92vh] md:!h-[92vh] !p-0 !m-0 !gap-0 !top-auto !bottom-0 !left-1/2 !-translate-x-1/2 !translate-y-0 bg-transparent border-none shadow-none overflow-hidden flex items-end justify-center"
+          className="!max-w-none !w-screen !h-[90vh] md:!h-[90vh] !p-0 !m-0 !gap-0 !top-auto !bottom-0 !left-1/2 !-translate-x-1/2 !translate-y-0 bg-transparent border-none shadow-none overflow-hidden flex items-end justify-center"
           showCloseButton={false}
         >
           {/* 모바일 뷰 - 노트폴리오 스타일 */}
