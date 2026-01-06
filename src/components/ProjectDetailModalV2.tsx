@@ -486,8 +486,23 @@ export function ProjectDetailModalV2({
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               {project.rendering_type === 'rich_text' ? (
                 <div 
-                  className="prose prose-sm max-w-full p-6 mx-auto"
-                  dangerouslySetInnerHTML={{ __html: unescapeHtml(project.description || '') }}
+                  className="prose prose-sm max-w-full p-6 mx-auto bg-white"
+                  dangerouslySetInnerHTML={{ 
+                    __html: (() => {
+                      let content = project.description || '';
+                      const decode = (str: string) => {
+                        if (typeof window === 'undefined') return str;
+                        const txt = document.createElement("textarea");
+                        txt.innerHTML = str;
+                        return txt.value;
+                      };
+                      let decoded = decode(content);
+                      if (decoded.includes('&lt;') || decoded.includes('&gt;')) {
+                        decoded = decode(decoded);
+                      }
+                      return decoded;
+                    })()
+                  }}
                 />
               ) : (
                 <img
@@ -627,17 +642,25 @@ export function ProjectDetailModalV2({
                 </button>
               </div>
               
-              {/* 이미지 또는 리치 텍스트 */}
               <div className="flex-1 overflow-y-auto flex items-start justify-center p-8 custom-scrollbar">
-                {project.rendering_type === 'rich_text' && project.description?.includes('<') ? (
+                {project.rendering_type === 'rich_text' ? (
                   <div 
                     className="prose prose-lg max-w-4xl w-full bg-white p-10 rounded-xl"
                     dangerouslySetInnerHTML={{ 
                       __html: (() => {
-                        let decoded = unescapeHtml(project.description || '');
-                        // 이중 인코딩 체크: 디코딩 후에도 태그가 이스케이프 된 상태라면 한 번 더 디코딩
-                        if (decoded && decoded.trim().startsWith('&lt;')) {
-                          decoded = unescapeHtml(decoded);
+                        let content = project.description || '';
+                        // Tiptap에서 저장된 이중 인코딩 태그(&lt;p&gt;)를 실제 태그(<p>)로 변환
+                        const decode = (str: string) => {
+                          if (typeof window === 'undefined') return str;
+                          const txt = document.createElement("textarea");
+                          txt.innerHTML = str;
+                          return txt.value;
+                        };
+                        
+                        let decoded = decode(content);
+                        // 한 번 더 확인하여 잔여 엔티티 제거
+                        if (decoded.includes('&lt;') || decoded.includes('&gt;')) {
+                          decoded = decode(decoded);
                         }
                         return decoded;
                       })()
