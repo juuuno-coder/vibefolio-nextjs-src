@@ -70,6 +70,7 @@ export default function TiptapUploadPage() {
   // Step 1: Content (Editor), Step 2: Info (Settings)
   const [step, setStep] = useState<'content' | 'info'>('content');
   const [title, setTitle] = useState("");
+  const [summary, setSummary] = useState("");
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
@@ -113,6 +114,7 @@ export default function TiptapUploadPage() {
           const draft = JSON.parse(savedDraft);
           if (confirm('임시 저장된 작업이 있습니다. 불러오시겠습니까?')) {
             setTitle(draft.title || '');
+            setSummary(draft.summary || '');
             setContent(draft.content || '');
             setSelectedGenres(draft.genres || []);
             setSelectedFields(draft.fields || []);
@@ -151,6 +153,7 @@ export default function TiptapUploadPage() {
       const interval = setInterval(() => {
         const draft = {
           title,
+          summary,
           content, 
           genres: selectedGenres,
           fields: selectedFields,
@@ -213,6 +216,7 @@ export default function TiptapUploadPage() {
 
     // settings가 있으면 해당 값을 우선 사용, 없으면 현재 상태값 사용
     const finalTitle = settings?.title || title;
+    const finalSummary = settings?.summary || summary;
     const finalGenres = settings?.selectedGenres || selectedGenres;
     const finalFields = settings?.selectedFields || selectedFields;
     const finalTags = settings?.tagList || [];
@@ -251,6 +255,7 @@ export default function TiptapUploadPage() {
           user_id: userId,
           category_id,
           title: finalTitle,
+          summary: finalSummary,
           content_text: content, // Tiptap HTML content
           thumbnail_url: coverUrl,
           rendering_type: 'rich_text',
@@ -555,6 +560,21 @@ export default function TiptapUploadPage() {
               />
             </div>
 
+            {/* 한줄 소개 */}
+            <div className="space-y-3">
+              <label className="text-xl font-bold text-gray-900">
+                한줄 소개
+                <span className="text-sm font-normal text-gray-400 ml-2">(선택)</span>
+              </label>
+              <Input
+                type="text"
+                placeholder="작품을 한 문장으로 소개해 주세요. (상세 페이지 댓글 상단에 표시됩니다)"
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
+                className="text-lg h-14 px-6 font-medium border-2 border-gray-200 focus:border-green-500 rounded-xl transition-all placeholder:text-gray-300"
+              />
+            </div>
+
             {/* 장르 */}
             <div className="space-y-4">
               <label className="text-xl font-bold text-gray-900">
@@ -662,6 +682,7 @@ export default function TiptapUploadPage() {
             </button>
             <div>
               <h2 className="text-lg font-bold text-gray-900">{title || "새 프로젝트"}</h2>
+              <p className="text-xs text-gray-500 truncate max-w-[300px]">{summary}</p>
               <p className="text-xs text-gray-500 flex items-center gap-1">
                  {lastSaved ? (
                     <>
@@ -679,7 +700,7 @@ export default function TiptapUploadPage() {
               variant="ghost"
               className="text-gray-500 hover:text-gray-900"
               onClick={() => {
-                const draft = { title, content: editor?.getHTML() || content, genres: selectedGenres, fields: selectedFields, savedAt: new Date().toISOString() };
+                const draft = { title, summary, content: editor?.getHTML() || content, genres: selectedGenres, fields: selectedFields, savedAt: new Date().toISOString() };
                 localStorage.setItem('project_draft', JSON.stringify(draft));
                 setLastSaved(new Date());
                 toast.success('임시 저장되었습니다.');

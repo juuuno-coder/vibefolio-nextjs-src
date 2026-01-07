@@ -20,6 +20,7 @@ import {
   faSpinner,
   faFolder,
   faEye,
+  faCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { faHeart as faHeartRegular, faComment as faCommentRegular, faBookmark as faBookmarkRegular } from "@fortawesome/free-regular-svg-icons";
 import { addCommas } from "@/lib/format/comma";
@@ -115,6 +116,7 @@ interface ProjectDetailModalV2Props {
     views?: number;
     title?: string | null;
     description: string | null;
+    summary?: string | null;
     alt_description: string | null;
     created_at: string;
     width: number;
@@ -807,10 +809,16 @@ export function ProjectDetailModalV2({
                       <p className="text-[10px] text-gray-500">{dayjs(project.created_at).fromNow()}</p>
                     </div>
                   </div>
-                  {project.description && (
-                    <p className="text-xs text-gray-700 leading-relaxed line-clamp-3 mt-2">
-                      {project.description}
-                    </p>
+                  {project.summary && (
+                    <div className="bg-gray-50 p-3 rounded-lg mt-2">
+                       <p className="text-sm font-medium text-gray-800 leading-relaxed">
+                         {project.summary}
+                       </p>
+                       <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                         <FontAwesomeIcon icon={faCheck} className="w-2 h-2" />
+                         작성자의 한마디
+                       </p>
+                    </div>
                   )}
                 </div>
 
