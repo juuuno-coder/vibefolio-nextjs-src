@@ -103,22 +103,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ liked: !!data });
     } else if (userId) {
       // 사용자가 좋아요한 모든 프로젝트 조회
-      const { data, error } = await supabaseAdmin
+      const { data: likes, error } = await supabaseAdmin
         .from('Like')
-        .select(`
-          project_id,
-          created_at,
-          Project!inner (
-            project_id,
-            title,
-            thumbnail_url,
-            users (
-              id,
-              nickname,
-              profile_image_url
-            )
-          )
-        `)
+        .select('project_id, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
@@ -130,7 +117,52 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      return NextResponse.json({ likes: data });
+      // 프로젝트 정보 별도 조회
+      if (likes && likes.length > 0) {
+        const projectIds = likes.map((like: any) => like.project_id);
+        
+        const { data: projects, error: projectError } = await supabaseAdmin
+          .from('Project')
+          .select('project_id, title, thumbnail_url, user_id')
+          .in('project_id', projectIds);
+
+        if (!projectError && projects) {
+          // 프로젝트 작성자 정보 조회 (profiles 테이블 사용)
+          const userIds = [...new Set(projects.map((p: any) => p.user_id))];
+          const { data: profiles } = await supabaseAdmin
+            .from('profiles')
+            .select('id, username, avatar_url')
+            .in('id', userIds);
+
+          const profileMap = new Map(
+            profiles?.map((p: any) => [p.id, p]) || []
+          );
+
+          // 데이터 병합
+          const enrichedLikes = likes.map((like: any) => {
+            const project = projects.find((p: any) => p.project_id === like.project_id);
+            if (project) {
+              const profile = profileMap.get(project.user_id);
+              return {
+                ...like,
+                Project: {
+                  ...project,
+                  user: profile ? {
+                    id: profile.id,
+                    username: profile.username || 'Unknown',
+                    profile_image_url: profile.avatar_url || '/globe.svg'
+                  } : null
+                }
+              };
+            }
+            return like;
+          });
+
+          return NextResponse.json({ likes: enrichedLikes });
+        }
+      }
+
+      return NextResponse.json({ likes: likes || [] });
     } else if (projectId) {
       // 프로젝트의 좋아요 수 조회
       const { count, error } = await supabaseAdmin

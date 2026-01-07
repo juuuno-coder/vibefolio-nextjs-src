@@ -28,9 +28,9 @@ export async function GET(
     const user = {
       id: authUser.id,
       email: authUser.email,
-      nickname: authUser.user_metadata?.nickname || authUser.email?.split('@')[0] || 'User',
+      username: authUser.user_metadata?.username || authUser.user_metadata?.nickname || authUser.email?.split('@')[0] || 'User',
       bio: authUser.user_metadata?.bio || '',
-      profile_image_url: authUser.user_metadata?.profile_image_url || '/globe.svg',
+      profile_image_url: authUser.user_metadata?.profile_image_url || authUser.user_metadata?.avatar_url || '/globe.svg',
       cover_image_url: authUser.user_metadata?.cover_image_url || null,
       role: authUser.user_metadata?.role || 'user',
       created_at: authUser.created_at,
@@ -54,7 +54,7 @@ export async function PUT(
   const { id } = await params;
   try {
     const body = await request.json();
-    const { nickname, bio, profile_image_url, cover_image_url } = body;
+    const { username, bio, profile_image_url, cover_image_url } = body;
 
     // 현재 user_metadata 가져오기
     const { data: authData, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(id);
@@ -69,7 +69,7 @@ export async function PUT(
     // user_metadata 업데이트
     const updatedMetadata = {
       ...authData.user.user_metadata,
-      ...(nickname && { nickname }),
+      ...(username && { username }),
       ...(bio !== undefined && { bio }),
       ...(profile_image_url && { profile_image_url }),
       ...(cover_image_url !== undefined && { cover_image_url }),
@@ -95,9 +95,9 @@ export async function PUT(
     const user = {
       id: updatedUser.id,
       email: updatedUser.email,
-      nickname: updatedUser.user_metadata?.nickname,
+      username: updatedUser.user_metadata?.username || updatedUser.user_metadata?.nickname,
       bio: updatedUser.user_metadata?.bio,
-      profile_image_url: updatedUser.user_metadata?.profile_image_url,
+      profile_image_url: updatedUser.user_metadata?.profile_image_url || updatedUser.user_metadata?.avatar_url,
       cover_image_url: updatedUser.user_metadata?.cover_image_url,
       role: updatedUser.user_metadata?.role || 'user',
       created_at: updatedUser.created_at,

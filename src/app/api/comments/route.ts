@@ -32,39 +32,29 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Auth에서 사용자 정보 가져오기
+    // 사용자 정보 조회 (profiles 테이블 사용 - 성능 개선)
     if (data && data.length > 0) {
       const userIds = Array.from(new Set(data.map((c: any) => c.user_id).filter(Boolean))) as string[];
       
-      const userPromises = userIds.map(async (uid) => {
-        try {
-          const { data: authData } = await supabaseAdmin.auth.admin.getUserById(uid);
-          if (authData.user) {
-            return {
-              user_id: authData.user.id,
-              username: authData.user.user_metadata?.nickname || authData.user.email?.split('@')[0] || 'Unknown',
-              profile_image_url: authData.user.user_metadata?.profile_image_url || '/globe.svg'
-            };
-          }
-        } catch (e) {
-          console.error(`사용자 ${uid} 정보 조회 실패:`, e);
-        }
-        return null;
-      });
+      // profiles 테이블에서 사용자 정보 조회
+      const { data: profiles } = await supabaseAdmin
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .in('id', userIds);
 
-      const users = await Promise.all(userPromises);
       const userMap = new Map(
-        users
-          .filter((u): u is NonNullable<typeof u> => u !== null)
-          .map(u => [u.user_id, u])
+        profiles?.map((p: any) => [
+          p.id,
+          {
+            username: p.username || 'Unknown',
+            profile_image_url: p.avatar_url || '/globe.svg'
+          }
+        ]) || []
       );
 
       data.forEach((comment: any) => {
         const user = userMap.get(comment.user_id);
-        comment.user = user ? {
-          username: user.username,
-          profile_image_url: user.profile_image_url
-        } : {
+        comment.user = user || {
           username: 'Unknown',
           profile_image_url: '/globe.svg'
         };
