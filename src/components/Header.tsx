@@ -61,8 +61,8 @@ export function Header({
   };
 
   const menuItems = [
-    { label: "발견", path: "/" },
-    { label: "연결", path: "/recruit" },
+    { label: "발견하기", path: "/" },
+    { label: "연결하기", path: "/recruit" },
   ];
 
   return (
@@ -86,7 +86,7 @@ export function Header({
                 className="text-[15px] font-medium text-gray-900 transition-colors hover:text-black/60 font-poppins relative group"
               >
                 {item.label}
-                {item.label === "연결" && (
+                {item.label === "연결하기" && (
                   <span className="absolute -top-1 -right-3 w-1 h-1 bg-green-500 rounded-full" />
                 )}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black transition-all group-hover:w-full" />
