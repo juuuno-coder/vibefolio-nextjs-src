@@ -210,7 +210,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                     </Button>
                   )}
                   <p className="text-center text-slate-500 text-xs font-medium">
-                    클릭 시 원문 사이트로 이동합니다.
+                    클릭 시 주최측 공식 홈페이지로 이동합니다.
                   </p>
                 </div>
 

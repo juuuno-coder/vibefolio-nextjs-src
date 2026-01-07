@@ -36,14 +36,18 @@ export async function POST(request: NextRequest) {
 
     // 2. DB 저장 (중복 체크)
     for (const item of result.items) {
-      // 제목 또는 링크로 중복 확인
+      // 중복 체크 로직 개선
       const { data: existing } = await supabaseAdmin
         .from('recruit_items')
         .select('id')
-        .or(`title.eq."${item.title}",link.eq."${item.link}"`)
+        .or(`title.eq."${item.title}",link.eq."${item.officialLink || item.link}"`)
         .maybeSingle();
 
       if (!existing) {
+        // officialLink가 있으면 그것을 메인 link로 사용
+        const mainLink = item.officialLink || item.link;
+        const sourceLink = item.link; // 위비티 상세페이지 주소
+
         const { error: insertError } = await supabaseAdmin
           .from('recruit_items')
           .insert([{
@@ -52,12 +56,13 @@ export async function POST(request: NextRequest) {
             type: item.type,
             date: item.date || new Date().toISOString().split('T')[0],
             company: item.company,
-            link: item.link,
+            link: mainLink,
+            source_link: sourceLink,
             thumbnail: item.image || item.thumbnail,
             location: item.location,
             prize: item.prize,
             salary: item.salary,
-            is_approved: true, // 관리자가 직접 업데이트 버튼을 눌렀으므로 바로 승인
+            is_approved: true,
             is_active: true,
             crawled_at: new Date().toISOString()
           }]);

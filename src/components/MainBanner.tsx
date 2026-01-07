@@ -100,7 +100,7 @@ export function MainBanner() {
             description: r.description,
             button_text: "자세히 보기",
             image_url: r.thumbnail || "",
-            link_url: r.link || `/recruit`,
+            link_url: `/recruit/${r.id}`,
             bg_color: "#000000",
             text_color: "#ffffff",
             priority: r.banner_priority || 999

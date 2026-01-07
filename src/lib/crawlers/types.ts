@@ -10,6 +10,7 @@ export interface CrawledItem {
   company?: string;
   employmentType?: string;
   link?: string;
+  officialLink?: string;
   thumbnail?: string;
   image?: string;
   sourceUrl: string;
