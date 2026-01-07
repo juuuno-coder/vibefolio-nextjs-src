@@ -24,15 +24,27 @@ export const metadata: Metadata = {
 export default function ServicePage() {
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-green-100 selection:text-green-900">
-      {/* Hero Section with Moving Gradient Background */}
-      <section className="relative overflow-hidden pt-32 pb-40 px-6">
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
-          <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-8 left-1/2 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
+      {/* Full-screen Hero Section with AI Video Background */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        {/* Video Background */}
+        <div className="absolute inset-0 z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          >
+            <source
+              src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-a-human-brain-spinning-around-31032-large.mp4"
+              type="video/mp4"
+            />
+          </video>
+          {/* Subtle Overlay to make text readable */}
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px]"></div>
         </div>
         
-        <div className="max-w-7xl mx-auto text-center">
+        <div className="max-w-7xl mx-auto text-center relative z-10 px-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100 text-green-700 text-sm font-medium mb-8 animate-fade-in-up">
             <Rocket size={14} />
             <span>크리에이터의 새로운 무대, Vibefolio 1.0</span>
