@@ -105,20 +105,9 @@ export async function GET(request: NextRequest) {
     if (userId && type) {
       if (type === 'followers') {
         // 나를 팔로우하는 사람들
-        const { data, error, count } = await supabaseAdmin
+        const { data: follows, error, count } = await supabaseAdmin
           .from('Follow')
-          .select(
-            `
-            follower_id,
-            created_at,
-            users!follower_id (
-              id,
-              nickname,
-              profile_image_url
-            )
-          `,
-            { count: 'exact' }
-          )
+          .select('follower_id, created_at', { count: 'exact' })
           .eq('following_id', userId)
           .order('created_at', { ascending: false });
 
@@ -130,35 +119,78 @@ export async function GET(request: NextRequest) {
           );
         }
 
-        return NextResponse.json({ followers: data, count: count || 0 });
+        // 프로필 정보 별도 조회
+        if (follows && follows.length > 0) {
+          const followerIds = follows.map((f: any) => f.follower_id);
+          const { data: profiles } = await supabaseAdmin
+            .from('profiles')
+            .select('id, username, avatar_url')
+            .in('id', followerIds);
+
+          const profileMap = new Map(
+            profiles?.map((p: any) => [p.id, p]) || []
+          );
+
+          const enrichedFollowers = follows.map((follow: any) => {
+            const profile = profileMap.get(follow.follower_id);
+            return {
+              ...follow,
+              user: profile ? {
+                id: profile.id,
+                username: profile.username || 'Unknown',
+                profile_image_url: profile.avatar_url || '/globe.svg'
+              } : null
+            };
+          });
+
+          return NextResponse.json({ followers: enrichedFollowers, count: count || 0 });
+        }
+
+        return NextResponse.json({ followers: [], count: 0 });
       } else if (type === 'following') {
         // 내가 팔로우하는 사람들
-        const { data, error, count } = await supabaseAdmin
+        const { data: followingData, error: followingError, count: followingCount } = await supabaseAdmin
           .from('Follow')
-          .select(
-            `
-            following_id,
-            created_at,
-            users!following_id (
-              id,
-              nickname,
-              profile_image_url
-            )
-          `,
-            { count: 'exact' }
-          )
+          .select('following_id, created_at', { count: 'exact' })
           .eq('follower_id', userId)
           .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('팔로잉 조회 실패:', error);
+        if (followingError) {
+          console.error('팔로잉 조회 실패:', followingError);
           return NextResponse.json(
             { error: '팔로잉 조회에 실패했습니다.' },
             { status: 500 }
           );
         }
 
-        return NextResponse.json({ following: data, count: count || 0 });
+        // 프로필 정보 별도 조회
+        if (followingData && followingData.length > 0) {
+          const followingIds = followingData.map((f: any) => f.following_id);
+          const { data: profiles } = await supabaseAdmin
+            .from('profiles')
+            .select('id, username, avatar_url')
+            .in('id', followingIds);
+
+          const profileMap = new Map(
+            profiles?.map((p: any) => [p.id, p]) || []
+          );
+
+          const enrichedFollowing = followingData.map((follow: any) => {
+            const profile = profileMap.get(follow.following_id);
+            return {
+              ...follow,
+              user: profile ? {
+                id: profile.id,
+                username: profile.username || 'Unknown',
+                profile_image_url: profile.avatar_url || '/globe.svg'
+              } : null
+            };
+          });
+
+          return NextResponse.json({ following: enrichedFollowing, count: followingCount || 0 });
+        }
+
+        return NextResponse.json({ following: [], count: 0 });
       }
     }
 
