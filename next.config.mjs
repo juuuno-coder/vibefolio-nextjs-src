@@ -3,6 +3,9 @@ const nextConfig = {
   // 패키지 트랜스파일 설정
   transpilePackages: ['cheerio', 'undici'],
 
+  // 서버 전용 외부 패키지 설정 (Next.js 14에서는 최상위에 위치)
+  serverExternalPackages: ['cheerio', 'undici'],
+
   // 이미지 최적화 설정
   images: {
     remotePatterns: [
@@ -15,9 +18,8 @@ const nextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 7, // 7일 캐시
   },
 
-  // 서버 전용 외부 패키지 설정 (undici 관련 빌드 에러 방지)
+  // 실험적 기능
   experimental: {
-    serverExternalPackages: ['cheerio', 'undici'],
     optimizePackageImports: ['lucide-react', '@fortawesome/react-fontawesome', 'dayjs'],
   },
   
