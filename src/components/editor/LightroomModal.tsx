@@ -52,7 +52,7 @@ export function LightroomModal({ isOpen, onClose, onImport }: LightroomModalProp
   // Adobe OAuth 인증 시작
   const handleConnect = () => {
     if (!ADOBE_CLIENT_ID) {
-      alert('Adobe API 클라이언트 ID가 설정되지 않았습니다.\n관리자에게 문의하세요.');
+      alert('Adobe API 클라이언트 ID가 설정되지 않았습니다.\n\n프로젝트 루트의 .env.local 파일에 다음 내용을 추가해주세요:\nNEXT_PUBLIC_ADOBE_CLIENT_ID=발급받은_키_값');
       return;
     }
 
