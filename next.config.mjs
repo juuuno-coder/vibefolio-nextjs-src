@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 패키지 트랜스파일 설정
-  transpilePackages: ['cheerio', 'undici'],
-
-  // 서버 전용 외부 패키지 설정 (Next.js 14에서는 최상위에 위치)
-  serverExternalPackages: ['cheerio', 'undici'],
+  // 서버 전용 외부 패키지 설정 (Next.js 14 특정 버전 대응)
+  experimental: {
+    serverComponentsExternalPackages: ['cheerio', 'undici'],
+    optimizePackageImports: ['lucide-react', '@fortawesome/react-fontawesome', 'dayjs'],
+  },
 
   // 이미지 최적화 설정
   images: {
@@ -16,11 +16,6 @@ const nextConfig = {
     ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 7, // 7일 캐시
-  },
-
-  // 실험적 기능
-  experimental: {
-    optimizePackageImports: ['lucide-react', '@fortawesome/react-fontawesome', 'dayjs'],
   },
   
   // 헤더 설정 (캐싱)
