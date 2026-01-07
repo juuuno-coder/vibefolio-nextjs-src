@@ -3,6 +3,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,9 +39,12 @@ interface Item {
   employmentType?: string;
   link?: string;
   thumbnail?: string;
+  is_approved?: boolean;
+  is_active?: boolean;
 }
 
 export default function RecruitPage() {
+  const router = useRouter();
   const [items, setItems] = useState<Item[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
@@ -228,6 +232,8 @@ export default function RecruitPage() {
         employment_type: formData.employmentType || null,
         link: formData.link || null,
         thumbnail: formData.thumbnail || null,
+        is_approved: isAdmin ? true : false, // 관리자가 아니면 승인 대기
+        is_active: true,
       };
 
       if (editingItem) {
@@ -278,8 +284,13 @@ export default function RecruitPage() {
         thumbnail: "",
       });
       setEditingItem(null);
-      setIsDialogOpen(false);
-      alert(editingItem ? "수정되었습니다." : "추가되었습니다.");
+      handleDialogClose();
+      
+      if (!isAdmin) {
+        alert("정보가 제보되었습니다. 관리자 승인 후 목록에 표시됩니다. 감사합니다!");
+      } else {
+        alert(editingItem ? "수정되었습니다." : "추가되었습니다.");
+      }
     } catch (error) {
       console.error('Error saving item:', error);
       alert("저장 중 오류가 발생했습니다.");
@@ -355,13 +366,16 @@ export default function RecruitPage() {
     });
   };
 
-  // 자세히 보기 클릭 핸들러
+  // 자세히 보기 클릭 핸들러 (내부 상세 페이지로 이동)
   const handleViewDetail = (item: Item) => {
-    if (item.link && item.link.startsWith('http')) {
-      window.open(item.link, '_blank', 'noopener,noreferrer');
-    } else {
-      alert('링크가 등록되지 않았습니다. 관리자에게 문의해주세요.');
-    }
+    router.push(`/recruit/${item.id}`);
+  };
+
+  // 제보하기 기능 (일반 사용자)
+  const handleUserSubmit = () => {
+    setEditingItem(null);
+    handleDialogClose();
+    setIsDialogOpen(true);
   };
 
   // D-day 계산
@@ -383,9 +397,9 @@ export default function RecruitPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 배너 섹션 */}
-      <div className="w-full px-0 py-3 bg-white">
+      <section className="w-full">
         <MainBanner />
-      </div>
+      </section>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* 헤더 */}
@@ -399,22 +413,23 @@ export default function RecruitPage() {
             </p>
           </div>
           
-          {/* 관리자만 새 항목 추가 버튼 표시 */}
-          {isAdmin && (
+          {/* 관리자 추가 버튼 또는 사용자 제보 버튼 */}
+          <div className="flex gap-2">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  variant={isAdmin ? "default" : "outline"}
+                  className={isAdmin ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-600 text-green-600 hover:bg-green-50"}
                   onClick={() => handleDialogClose()}
                 >
                   <Plus size={18} className="mr-2" />
-                  새 항목 추가
+                  {isAdmin ? "새 항목 추가" : "정보 제보하기"}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
-                    {editingItem ? "항목 수정" : "새 항목 추가"}
+                    {isAdmin ? (editingItem ? "항목 수정" : "새 항목 추가") : "공모전/채용 정보 제보"}
                   </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
@@ -560,6 +575,22 @@ export default function RecruitPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                      포스터 이미지 URL
+                    </label>
+                    <Input
+                      placeholder="https://example.com/poster.jpg"
+                      value={formData.thumbnail}
+                      onChange={(e) =>
+                        setFormData({ ...formData, thumbnail: e.target.value })
+                      }
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      홍보 포스터 이미지가 있다면 URL을 입력해주세요 (선택사항)
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       바로가기 링크 (필수)
                     </label>
                     <Input
@@ -582,13 +613,13 @@ export default function RecruitPage() {
                       onClick={handleSubmit}
                       className="bg-green-600 hover:bg-green-700 text-white"
                     >
-                      {editingItem ? "수정" : "추가"}
+                      {isAdmin ? (editingItem ? "수정" : "추가") : "정보 제보하기"}
                     </Button>
                   </div>
                 </div>
               </DialogContent>
             </Dialog>
-          )}
+          </div>
         </div>
 
         {/* 탭 */}

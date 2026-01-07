@@ -101,8 +101,8 @@ export function MainBanner() {
             button_text: "자세히 보기",
             image_url: r.thumbnail || "",
             link_url: r.link || `/recruit`,
-            bg_color: "#ffffff", // 기본 밝은 배경
-            text_color: "#000000",
+            bg_color: "#000000",
+            text_color: "#ffffff",
             priority: r.banner_priority || 999
           }))
         ].sort((a, b) => a.priority - b.priority);
@@ -127,14 +127,14 @@ export function MainBanner() {
           setBanners([
             {
               id: 0,
-              title: "AI Contest 2024",
-              subtitle: "CONTEST",
-              description: "새로운 생성형 AI의 가능성에 도전하세요",
+              title: "2024 Generative AI Hackathon",
+              subtitle: "PREMIUM CONTEST",
+              description: "생성형 AI의 무한한 가능성, 당신의 아이디어로 실현하세요",
               button_text: "공모전 확인하기",
-              image_url: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2670&auto=format&fit=crop",
+              image_url: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=2670",
               link_url: "/recruit",
               priority: 0,
-              bg_color: "#1a1a1a",
+              bg_color: "#0f172a",
               text_color: "#ffffff"
             },
             {
@@ -183,7 +183,7 @@ export function MainBanner() {
   if (banners.length === 0) return null;
 
   return (
-    <section className="w-full min-h-[340px] md:min-h-[470px]">
+    <section className="w-full">
       <Carousel
         opts={{
           align: "start",
@@ -199,7 +199,7 @@ export function MainBanner() {
             >
               <Link href={banner.link_url || "#"} className={banner.link_url ? "cursor-pointer" : "cursor-default"}>
                 <Card 
-                  className="w-full h-[320px] md:h-[450px] overflow-hidden hover:shadow-2xl transition-shadow duration-300 border-none rounded-[32px] group relative"
+                  className="w-full h-[360px] md:h-[480px] overflow-hidden hover:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] transition-all duration-700 border-none rounded-[40px] group relative"
                 >
                   <CardContent className="h-full p-0 relative">
                     {/* Optimized Image with Next.js Image component */}
@@ -215,11 +215,12 @@ export function MainBanner() {
                       blurDataURL={getBlurDataURL(700, 450)}
                     />
                     
-                    {/* Modern Overlay (Light & Subtle) */}
+                    {/* Modern Overlay (Gradient for depth) */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-10" />
                     <div className="absolute inset-0 bg-black/5 z-10" />
 
                     {/* Content Glass Card */}
-                    <div className="absolute bottom-6 left-6 right-6 p-6 md:p-8 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[24px] z-20 flex flex-col items-start gap-1 group-hover:bg-white/20 transition-all duration-500">
+                    <div className="absolute bottom-6 left-6 right-6 p-6 md:p-10 bg-white/10 backdrop-blur-3xl border border-white/20 rounded-[32px] z-20 flex flex-col items-start gap-1 group-hover:bg-white/15 transition-all duration-500">
                       {banner.subtitle && (
                         <div 
                           className="px-3 py-1 rounded-full text-[10px] md:text-xs font-black tracking-widest uppercase bg-black text-white w-fit mb-2"
@@ -229,7 +230,7 @@ export function MainBanner() {
                       )}
                       
                       <h2 
-                        className="text-2xl md:text-4xl font-black tracking-tight leading-tight mb-2 drop-shadow-sm"
+                        className="text-xl md:text-3xl font-black tracking-tight leading-tight mb-2 drop-shadow-sm"
                         style={{ color: banner.text_color }}
                       >
                         {banner.title}

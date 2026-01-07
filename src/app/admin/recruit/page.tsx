@@ -47,6 +47,10 @@ interface Item {
   employmentType?: string;
   link?: string;
   thumbnail?: string;
+  is_approved?: boolean;
+  is_active?: boolean;
+  show_as_banner?: boolean;
+  banner_priority?: number;
 }
 
 export default function AdminRecruitPage() {
@@ -70,6 +74,8 @@ export default function AdminRecruitPage() {
     employmentType: "정규직",
     link: "",
     thumbnail: "",
+    showAsBanner: false,
+    bannerPriority: 999,
   });
 
   // 아이템 로드 (Supabase 연동)
@@ -102,6 +108,10 @@ export default function AdminRecruitPage() {
         employmentType: item.employment_type || "정규직",
         link: item.link || "",
         thumbnail: item.thumbnail || "",
+        is_approved: item.is_approved,
+        is_active: item.is_active,
+        show_as_banner: item.show_as_banner,
+        banner_priority: item.banner_priority,
       }));
       
       setItems(formattedItems);
@@ -138,18 +148,32 @@ export default function AdminRecruitPage() {
         alert(`업데이트 완료!\n- 발견: ${result.found}개\n- 새로 추가: ${result.added}개\n- 중복 제외: ${result.skipped}개`);
         loadItems();
       } else {
-        const errorText = await response.text();
-        console.error("Crawl API Error:", errorText);
-        alert("업데이트 중 오류가 발생했습니다.");
+        alert("크롤러 실행 중 오류가 발생했습니다.");
       }
-    } catch (e) {
-      console.error("Crawl trigger error:", e);
-      alert("네트워크 오류가 발생했습니다.");
+    } catch (error) {
+      console.error('Crawl Error:', error);
+      alert("크롤링 중 서버 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
   };
 
+  // 항목 승인 처리
+  const handleApprove = async (id: number) => {
+    try {
+      const { error } = await supabase
+        .from('recruit_items')
+        .update({ is_approved: true } as any)
+        .eq('id', id);
+
+      if (error) throw error;
+      alert("승인되었습니다.");
+      loadItems();
+    } catch (error) {
+      console.error('Approve Error:', error);
+      alert("승인 처리 중 오류가 발생했습니다.");
+    }
+  };
   // 항목 추가/수정 (Supabase 연동)
   const handleSubmit = async () => {
     if (!formData.title || !formData.description || !formData.date) {
@@ -158,7 +182,7 @@ export default function AdminRecruitPage() {
     }
 
     try {
-      const itemData = {
+      const itemData: any = {
         title: formData.title,
         description: formData.description,
         type: formData.type,
@@ -172,6 +196,8 @@ export default function AdminRecruitPage() {
         thumbnail: formData.thumbnail || null,
         is_approved: true,
         is_active: true,
+        show_as_banner: (formData as any).showAsBanner || false,
+        banner_priority: (formData as any).bannerPriority || 999,
       };
 
       if (editingItem) {
@@ -230,6 +256,8 @@ export default function AdminRecruitPage() {
       employmentType: "정규직",
       link: "",
       thumbnail: "",
+      showAsBanner: false,
+      bannerPriority: 999,
     });
   };
 
@@ -248,6 +276,8 @@ export default function AdminRecruitPage() {
       employmentType: item.employmentType || "정규직",
       link: item.link || "",
       thumbnail: item.thumbnail || "",
+      showAsBanner: item.show_as_banner || false,
+      bannerPriority: item.banner_priority || 999,
     });
     setIsDialogOpen(true);
   };
@@ -499,6 +529,35 @@ export default function AdminRecruitPage() {
                       />
                     </div>
 
+                    <div className="pt-4 border-t border-gray-100 mt-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">메인 배너 노출</p>
+                          <p className="text-xs text-gray-500">이 항목을 메인 페이지 최상단 배너에 게시합니다.</p>
+                        </div>
+                        <input 
+                          type="checkbox"
+                          checked={(formData as any).showAsBanner}
+                          onChange={(e) => setFormData({...formData, showAsBanner: e.target.checked} as any)}
+                          className="w-5 h-5 accent-[#4ACAD4]"
+                        />
+                      </div>
+                      
+                      {(formData as any).showAsBanner && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            배너 노출 우선순위 (낮을수록 앞)
+                          </label>
+                          <Input
+                            type="number"
+                            value={(formData as any).bannerPriority}
+                            onChange={(e) => setFormData({...formData, bannerPriority: parseInt(e.target.value)} as any)}
+                            placeholder="999"
+                          />
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex gap-2 justify-end pt-4">
                       <Button variant="outline" onClick={handleDialogClose}>
                         취소
@@ -655,8 +714,11 @@ export default function AdminRecruitPage() {
                               {dday}
                             </span>
                           </div>
-                          <h3 className="font-semibold text-gray-900 mb-1">
+                          <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
                             {item.title}
+                            {!item.is_approved && (
+                              <span className="px-1.5 py-0.5 rounded-md bg-yellow-100 text-yellow-700 text-[10px] font-black uppercase">PENDING</span>
+                            )}
                           </h3>
                           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
                             {item.company && <span>{item.company}</span>}
@@ -692,6 +754,16 @@ export default function AdminRecruitPage() {
                             >
                               <ExternalLink size={14} className="mr-1" />
                               링크
+                            </Button>
+                          )}
+                          {!item.is_approved && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => handleApprove(item.id)}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              승인
                             </Button>
                           )}
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>

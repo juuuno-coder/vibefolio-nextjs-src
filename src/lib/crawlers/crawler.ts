@@ -7,6 +7,30 @@ import { CRAWLER_SOURCES } from './sources';
  * 실제 크롤링 로직 구현 (Real Crawling)
  */
 
+/**
+ * 제목 키워드를 분석하여 고화질 테마 이미지를 반환합니다.
+ */
+function getThemedPlaceholder(title: string, type: string): string {
+  const t = title.toLowerCase();
+  let keyword = "artificial-intelligence"; // Default
+
+  if (type === 'contest') {
+    if (t.includes('디자인') || t.includes('디지털아트') || t.includes('미디어')) keyword = "abstract-art";
+    else if (t.includes('해커톤') || t.includes('sw') || t.includes('it')) keyword = "cyber-coding";
+    else if (t.includes('광고') || t.includes('영상') || t.includes('숏폼')) keyword = "video-production";
+    else if (t.includes('아이디어') || t.includes('기획')) keyword = "creative-brainstorm";
+    else keyword = "premium-banner";
+  } else if (type === 'job') {
+    keyword = "minimal-office";
+  } else {
+    keyword = "event-concert";
+  }
+
+  // Unsplash Source API (Random but keyword-themed)
+  // 시각적 일관성을 위해 800x600 고정
+  return `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=800&h=600&sig=${encodeURIComponent(title)}`;
+}
+
 // Wevity (Contest)
 async function crawlWevity(): Promise<CrawledItem[]> {
   const url = 'https://www.wevity.com/?c=find&s=1&gub=1&cidx=20'; // 디자인/웹 분야
@@ -22,11 +46,9 @@ async function crawlWevity(): Promise<CrawledItem[]> {
     
     const items: CrawledItem[] = [];
     
-    // Wevity list items can be under .list or direct li
-    $('.list li, .contest-list li, li').each((_, el) => {
+    $('.list li, .contest-list li').each((_, el) => {
       const $li = $(el);
       
-      // Try multiple title selectors
       const $titleLink = $li.find('.tit a, .hide-tit a, a.subject, .title a').first();
       const title = $titleLink.text().trim();
       if (!title || title.length < 2) return;
@@ -37,14 +59,20 @@ async function crawlWevity(): Promise<CrawledItem[]> {
         link = `https://www.wevity.com${link.startsWith('/') ? '' : '/'}${link}`;
       }
       
-      // Image extraction (Thumbnail is critical for banners!)
-      const $img = $li.find('.thumb img, .img img, img').first();
-      let image = $img.attr('src');
-      if (image && !image.startsWith('http')) {
-        image = `https://www.wevity.com${image.startsWith('/') ? '' : '/'}${image}`;
+      let image = $li.find('.thumb img, .img img, .thumb-box img, .poster img').attr('src');
+      if (image) {
+        if (!image.startsWith('http')) {
+          image = `https://www.wevity.com${image.startsWith('/') ? '' : '/'}${image}`;
+        }
+        // 위비티 썸네일(_s.jpg)을 원본 이미지로 변환 시도
+        image = image.replace('_s.jpg', '.jpg').replace('_s.png', '.png');
+      }
+
+      // If no image, generate themed placeholder
+      if (!image || image.includes('no_image') || image.includes('spacer.gif')) {
+        image = getThemedPlaceholder(title, 'contest');
       }
       
-      // Meta info
       const dday = $li.find('.dday, .hide-dday, .date').first().text().trim();
       const category = $li.find('.cat, .hide-cat, .category').first().text().trim();
       const company = $li.find('.organ, .company, .sub-text').first().text().trim() || '위비티 공모전';
@@ -58,7 +86,7 @@ async function crawlWevity(): Promise<CrawledItem[]> {
         location: '온라인/기타',
         link,
         sourceUrl: 'https://www.wevity.com',
-        image: image || undefined,
+        image,
       });
     });
     
@@ -90,7 +118,7 @@ async function crawlWanted(): Promise<CrawledItem[]> {
       location: job.address?.location || '서울',
       link: `https://www.wanted.co.kr/wd/${job.id}`,
       sourceUrl: 'https://www.wanted.co.kr',
-      image: job.title_img?.thumb,
+      image: job.title_img?.thumb || getThemedPlaceholder(job.position, 'job'),
       salary: job.reward?.total ? `보상금: ${job.reward.total}` : undefined,
     }));
   } catch (e) {

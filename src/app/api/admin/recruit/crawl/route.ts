@@ -36,11 +36,11 @@ export async function POST(request: NextRequest) {
 
     // 2. DB 저장 (중복 체크)
     for (const item of result.items) {
-      // 제목과 링크로 중복 확인
+      // 제목 또는 링크로 중복 확인
       const { data: existing } = await supabaseAdmin
         .from('recruit_items')
         .select('id')
-        .eq('title', item.title)
+        .or(`title.eq."${item.title}",link.eq."${item.link}"`)
         .maybeSingle();
 
       if (!existing) {

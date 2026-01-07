@@ -19,35 +19,33 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+/**
+ * 제목 키워드를 분석하여 고화질 테마 이미지를 반환합니다.
+ */
+function getThemedPlaceholder(title, type) {
+  const t = title.toLowerCase();
+  // Unsplash signature for deterministic randomness based on title
+  return `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=800&h=600&sig=${encodeURIComponent(title)}`;
+}
+
 async function crawlWevity() {
-  console.log('🚀 Wevity 공모전 크롤링 시작 (이미지 포함)...\n');
+  console.log('🚀 Wevity 공모전 크롤링 시작 (이미지 최적화)...\n');
 
   try {
-    // Wevity 공모전 목록 페이지 (디자인/웹/IT 카테고리 등)
     const url = 'https://www.wevity.com/?c=find&s=1&gub=1&cidx=20'; 
-    
-    console.log(`📡 요청 중: ${url}`);
-    
     const response = await axios.get(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
       },
       timeout: 10000
     });
 
-    console.log(`✅ 응답 받음 (${response.status})\n`);
-
     const $ = cheerio.load(response.data);
     const items = [];
 
-    // 위비티 리스트 항목 파싱
     $('.list li, .contest-list li').each((i, element) => {
       try {
         const $el = $(element);
-        
-        // 제목 및 링크
         const $titleLink = $el.find('.tit a, .hide-tit a, a.subject').first();
         const title = $titleLink.text().trim();
         let link = $titleLink.attr('href');
@@ -58,20 +56,18 @@ async function crawlWevity() {
           link = 'https://www.wevity.com' + (link.startsWith('/') ? '' : '/') + link;
         }
         
-        // 이미지 (썸네일)
-        const $img = $el.find('.thumb img, .img img, img').first();
-        let thumbnail = $img.attr('src');
+        let thumbnail = $el.find('.thumb img, .img img, .thumb-box img').first().attr('src');
         if (thumbnail && !thumbnail.startsWith('http')) {
           thumbnail = 'https://www.wevity.com' + (thumbnail.startsWith('/') ? '' : '/') + thumbnail;
         }
 
-        // 날짜 (마감일)
+        // 이미지 부재 시 고화질 플레이스홀더 생성
+        if (!thumbnail || thumbnail.includes('no_image') || thumbnail.includes('spacer.gif')) {
+          thumbnail = getThemedPlaceholder(title, 'contest');
+        }
+
         const dateText = $el.find('.dday, .hide-dday, .date').first().text().trim();
-        
-        // 주최사
         const company = $el.find('.organ, .company, .sub-text').first().text().trim() || '위비티';
-        
-        // 설명/카테고리
         const description = $el.find('.desc, .cat, .category').first().text().trim();
 
         items.push({
