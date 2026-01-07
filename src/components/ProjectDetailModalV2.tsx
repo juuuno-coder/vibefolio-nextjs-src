@@ -717,9 +717,6 @@ export function ProjectDetailModalV2({
                   >
                     {loading.follow ? '...' : (following ? '팔로잉' : '팔로우')}
                   </Button>
-                  {followersCount > 0 && (
-                    <span className="text-[11px] font-medium text-white mt-1 drop-shadow-md">{followersCount}</span>
-                  )}
                 </div>
               )}
 
