@@ -154,7 +154,7 @@ export function OnboardingModal({
         .from('profiles')
         .upsert({
           id: userId,
-          email: userEmail,
+          // email: userEmail, // DB에 컬럼이 없어 에러 발생으로 제거
           username: nickname, // 닉네임을 username으로 저장
           interests: { genres, fields }, // 관심사 정보 저장
           avatar_url: '/globe.svg', // 기본 아바타 설정 (없을 경우)

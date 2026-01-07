@@ -44,7 +44,7 @@ export async function GET(request: Request) {
           .from('profiles')
           .upsert({
             id: user.id,
-            email: user.email,
+            // email: user.email, // DB 컬럼 부재로 제거
             username: user.user_metadata?.full_name || 
                      user.user_metadata?.name || 
                      user.user_metadata?.nickname || 
