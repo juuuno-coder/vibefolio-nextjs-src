@@ -28,17 +28,18 @@ export default function AuthCallbackPage() {
         const user = session.user;
 
         // profiles 테이블에 사용자가 있는지 확인
-        const { data: existingProfile, error: profileError } = await supabase
+        const { data: existingProfile, error: profileCheckError } = await supabase
           .from('profiles')
           .select('id')
           .eq('id', user.id)
-          .single();
+          .maybeSingle(); // single() 대신 maybeSingle() 사용
 
-        // 프로필이 없으면 생성
-        if (!existingProfile && !profileError) {
+        // 프로필이 없으면 생성 (오류가 없고 데이터도 없을 때)
+        if (!existingProfile) {
+          console.log('[Auth Callback] 새 프로필 생성 시작...');
           const { error: insertError } = await (supabase
             .from('profiles') as any)
-            .insert({
+            .upsert({ // insert 대신 upsert 사용 (중복 방지)
               id: user.id,
               email: user.email,
               username: user.user_metadata?.full_name || 
@@ -51,13 +52,17 @@ export default function AuthCallbackPage() {
                          null,
               role: 'user',
               created_at: new Date().toISOString(),
-            });
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'id' });
 
           if (insertError) {
-            console.error('프로필 생성 실패:', insertError);
+            console.error('[Auth Callback] 프로필 생성 실패:', insertError);
+            // 프로필 생성 실패해도 로그인은 진행 (이미 auth는 성공했으므로)
           } else {
-            console.log('✅ 프로필 자동 생성 완료');
+            console.log('[Auth Callback] ✅ 프로필 자동 생성 완료');
           }
+        } else {
+          console.log('[Auth Callback] 기존 프로필 확인됨');
         }
 
         // 메인 페이지로 리다이렉트
@@ -75,7 +80,7 @@ export default function AuthCallbackPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="text-center">
-        <Loader2 className="w-12 h-12 animate-spin text-[#4ACAD4] mx-auto mb-4" />
+        <Loader2 className="w-12 h-12 animate-spin text-green-600 mx-auto mb-4" />
         <p className="text-gray-600">로그인 처리 중...</p>
       </div>
     </div>
