@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import YouTube from "react-youtube";
 import { 
   CheckCircle2, 
   Globe, 
@@ -15,40 +16,47 @@ import {
 } from "lucide-react";
 
 export default function ServicePage() {
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsVideoLoaded(true);
+    setIsMounted(true);
   }, []);
+
+  const videoOptions = {
+    playerVars: {
+      autoplay: 1,
+      controls: 0,
+      rel: 0,
+      showinfo: 0,
+      mute: 1,
+      loop: 1,
+      playlist: "s3m2s0hu2DE", // Loop requires playlist with same ID
+      modestbranding: 1,
+      playsinline: 1,
+    },
+  };
 
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-green-100 selection:text-green-900">
-      {/* Full-screen Hero Section with AI Video Background */}
+      {/* Full-screen Hero Section with YouTube Video Background */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden bg-slate-900">
-        {/* Video Background Container */}
-        <div className="absolute inset-0 z-0">
-          {isVideoLoaded && (
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover opacity-60"
-              onCanPlayThrough={() => console.log("Video can play")}
-            >
-              <source
-                src="https://cdn.pixabay.com/video/2023/10/20/185799-876127110_large.mp4"
-                type="video/mp4"
+        {/* YouTube Background Container */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          {isMounted && (
+            <div className="absolute top-1/2 left-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] -translate-x-1/2 -translate-y-1/2 opacity-60">
+              <YouTube
+                videoId="s3m2s0hu2DE"
+                opts={videoOptions}
+                className="w-full h-full"
+                iframeClassName="w-full h-full pointer-events-none"
+                onReady={(event: any) => {
+                  event.target.playVideo();
+                }}
               />
-              {/* Fallback video if first one fails */}
-              <source
-                src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-a-human-brain-spinning-around-31032-large.mp4"
-                type="video/mp4"
-              />
-            </video>
+            </div>
           )}
           {/* Gradient Overlay for Depth and Readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-transparent to-slate-900/80"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-transparent to-slate-900/80"></div>
         </div>
         
         <div className="max-w-7xl mx-auto text-center relative z-10 px-6">
