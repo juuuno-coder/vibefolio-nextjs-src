@@ -67,7 +67,7 @@ export default function LoginPage() {
             계정이 없으신가요?{" "}
             <Link
               href="/signup"
-              className="font-medium text-[#4ACAD4] hover:text-[#41a3aa]"
+              className="font-medium text-green-600 hover:text-green-700"
             >
               회원가입
             </Link>
@@ -131,7 +131,7 @@ export default function LoginPage() {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-[#4ACAD4] focus:ring-[#4ACAD4]"
+                className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-600"
               />
               <label
                 htmlFor="remember-me"
@@ -144,7 +144,7 @@ export default function LoginPage() {
             <div className="text-sm">
               <a
                 href="#"
-                className="font-medium text-[#4ACAD4] hover:text-[#41a3aa]"
+                className="font-medium text-green-600 hover:text-green-700"
               >
                 비밀번호 찾기
               </a>
@@ -155,7 +155,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#4ACAD4] hover:bg-[#41a3aa] text-white"
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
             >
               {loading ? "로그인 중..." : "로그인"}
             </Button>
