@@ -70,10 +70,17 @@ function HomeContent() {
     // 1. 로그인 상태이고 로딩이 끝났을 때
     if (!loading && user && userProfile) {
       // 2. 프로필 정보가 부실하거나 온보딩 완료 여부 체크
-      // (예: username이 이메일 형식이거나 기본값인 경우, 또는 명시적인 플래그)
+      
+      // 관심사 정보가 없는 경우도 신규 유저로 간주 (Google 유저 대응)
+      const hasNoInterests = !userProfile.interests || 
+        (Array.isArray(userProfile.interests) && userProfile.interests.length === 0) ||
+        // @ts-ignore: interests might be an object without genres if type is loose
+        (typeof userProfile.interests === 'object' && (!userProfile.interests.genres || userProfile.interests.genres.length === 0));
+
       const isNewUser = !userProfile.username || 
                        userProfile.username.includes('@') || 
-                       userProfile.username === '익명사용자';
+                       userProfile.username === '익명사용자' ||
+                       hasNoInterests;
       
       const isSkipped = localStorage.getItem(`onboarding_skipped_${user.id}`);
       

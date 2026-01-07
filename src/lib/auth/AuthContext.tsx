@@ -9,6 +9,10 @@ interface UserProfile {
   username: string;
   profile_image_url: string;
   role: string;
+  interests?: {
+    genres: string[];
+    fields: string[];
+  };
 }
 
 interface AuthContextType {
@@ -41,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       username: metadata.full_name || metadata.name || metadata.nickname || currentUser.email?.split("@")[0] || "User",
       profile_image_url: metadata.avatar_url || metadata.picture || "/globe.svg",
       role: currentUser.app_metadata?.role || metadata.role || "user",
+      interests: metadata.interests || undefined,
     };
   }, []);
 
@@ -58,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // 3. DB 상세 프로필 조회
         const { data: db, error } = await supabase
           .from('profiles')
-          .select('username, avatar_url, profile_image_url, role')
+          .select('username, avatar_url, profile_image_url, role, interests')
           .eq('id', u.id)
           .single();
 
@@ -71,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // 우선순위: Vibefolio 커스텀 이미지 > 구글/소셜 이미지 > 기본 로고
             profile_image_url: customImage || base.profile_image_url,
             role: (db as any).role || base.role,
+            interests: (db as any).interests || base.interests,
           };
           setUserProfile(finalProfile);
         } else {
@@ -110,14 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ====== 자동 로그아웃 로직 (user 변경 시 실행) ======
   // Note: AutoLogoutProvider가 별도로 존재하므로 여기서는 제거하거나, 
   // AuthContext가 중심이라면 여기서 관리해야 합니다. 
-  // 혼선 방지를 위해 AuthContext에서의 자동 로그아웃은 제거하고 AutoLogoutProvider에 위임합니다.
-  /* 
-  useEffect(() => {
-    if (!user) return;
-    // ... (AutoLogoutProvider로 대체됨)
-  }, [user]); 
-  */
-
+  
   const signOut = useCallback(async () => {
     setUser(null);
     setSession(null);
@@ -145,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // 원칙에 따라 로그가 필요할 때만 출력
     if (user && userProfile) {
-      console.log(`[Auth] Determined: ${isMatched ? 'ADMIN' : 'USER'} (${user.email})`);
+      // console.log(`[Auth] Determined: ${isMatched ? 'ADMIN' : 'USER'} (${user.email})`);
     }
 
     return isMatched;
