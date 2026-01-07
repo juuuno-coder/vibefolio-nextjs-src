@@ -69,7 +69,7 @@ export default function RootLayout({
                 </main>
                 <Footer />
               </div>
-              <Toaster />
+              <Toaster position="top-center" />
               <ScrollToTop />
             </TooltipProvider>
           </AutoLogoutProvider>

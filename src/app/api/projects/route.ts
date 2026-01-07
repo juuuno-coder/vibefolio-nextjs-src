@@ -137,11 +137,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 });
     }
 
-    const { data, error } = await (supabaseAdmin as any)
+    let { data, error } = await (supabaseAdmin as any)
       .from('Project')
       .insert([{ user_id, category_id, title, summary, content_text, thumbnail_url, rendering_type, custom_data, likes_count: 0, views_count: 0 }] as any)
       .select()
       .single();
+
+    // Fallback: If 'summary' column is missing in DB schema, retry without it
+    if (error && error.message && error.message.includes("Could not find the 'summary' column")) {
+       console.warn("DB Schema mismatch: 'summary' column missing. Retrying without summary.");
+       const retryResult = await (supabaseAdmin as any)
+        .from('Project')
+        .insert([{ user_id, category_id, title, content_text, thumbnail_url, rendering_type, custom_data, likes_count: 0, views_count: 0 }] as any)
+        .select()
+        .single();
+        
+       data = retryResult.data;
+       error = retryResult.error;
+    }
 
     if (error) {
       console.error('프로젝트 생성 실패:', error);
