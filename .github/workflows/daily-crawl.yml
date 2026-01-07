@@ -1,0 +1,38 @@
+name: Daily Recruit News Crawl
+
+on:
+  schedule:
+    # 매일 오전 6시 (KST) = UTC 21:00 (전날)
+    - cron: "0 21 * * *"
+
+  # 수동 실행 가능 (테스트용)
+  workflow_dispatch:
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install cheerio axios @supabase/supabase-js
+
+      - name: Run crawler
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/crawl-recruit.js
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "Crawling failed! Check the logs."
