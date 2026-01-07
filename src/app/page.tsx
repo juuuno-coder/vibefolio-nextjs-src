@@ -303,11 +303,11 @@ function HomeContent() {
         <div className="max-w-[1800px] mx-auto px-4 md:px-8 pb-20">
             {/* 검색어 표시 */}
             {searchQuery && (
-              <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-slate-800">
-                  '<span className="text-green-600">{searchQuery}</span>' 검색 결과: {filtered.length}건
+              <div className="pt-10 mb-10 flex items-center justify-between border-b border-gray-100 pb-6 transition-all animate-in fade-in slide-in-from-top-2">
+                <h2 className="text-2xl font-bold text-slate-800">
+                  '<span className="text-green-600">{searchQuery}</span>' 검색 결과: <span className="text-slate-400 font-medium ml-1">{filtered.length}건</span>
                 </h2>
-                <Button variant="ghost" size="sm" onClick={() => router.push('/')}>
+                <Button variant="ghost" size="sm" onClick={() => router.push('/')} className="hover:bg-red-50 hover:text-red-500 rounded-full px-4">
                   <FontAwesomeIcon icon={faXmark} className="mr-2" />
                   검색 취소
                 </Button>
