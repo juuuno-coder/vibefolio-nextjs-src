@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 패키지 트랜스파일 설정 (undici 관련 에러 방지)
+  // 패키지 트랜스파일 설정
   transpilePackages: ['cheerio', 'undici'],
 
   // 이미지 최적화 설정
@@ -14,9 +14,10 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 7, // 7일 캐시
   },
-  
-  // 실험적 기능
+
+  // 서버 전용 외부 패키지 설정 (undici 관련 빌드 에러 방지)
   experimental: {
+    serverExternalPackages: ['cheerio', 'undici'],
     optimizePackageImports: ['lucide-react', '@fortawesome/react-fontawesome', 'dayjs'],
   },
   
