@@ -81,7 +81,7 @@ export function EditorSidebar({
               key={idx}
               onClick={btn.onClick}
               className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-transparent transition-all
-                bg-gray-50 text-gray-700 hover:bg-white hover:shadow-md ${btn.color}
+                bg-gray-50 text-gray-700 hover:bg-gray-100 hover:shadow-md ${btn.color}
               `}
             >
               <btn.icon className="w-6 h-6" />

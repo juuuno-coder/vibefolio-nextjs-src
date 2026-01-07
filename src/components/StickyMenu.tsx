@@ -218,7 +218,7 @@ export function StickyMenu({
 
               {/* 정렬 드롭다운 */}
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 h-9 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none border border-transparent hover:border-gray-200">
+                <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 h-9 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none border border-transparent hover:border-gray-300">
                   <FontAwesomeIcon icon={faArrowsUpDown} className="text-gray-600 w-3.5 h-3.5" />
                   <span className={`whitespace-nowrap font-bold pt-[1px] ${isScrolled ? "text-xs" : "text-[13px] md:text-sm text-gray-800"}`}>
                     {currentSortLabel}
@@ -231,7 +231,7 @@ export function StickyMenu({
                       key={option.value}
                       onClick={() => handleSortChange(option.value)}
                       className={`flex items-center gap-2 cursor-pointer p-2 rounded-lg my-0.5 ${
-                        selectedSort === option.value ? "bg-green-50 text-green-600 font-semibold" : "text-gray-600 hover:bg-gray-50 hover:text-black"
+                        selectedSort === option.value ? "bg-green-50 text-green-600 font-semibold" : "text-gray-600 hover:bg-gray-100 hover:text-black"
                       }`}
                     >
                       <FontAwesomeIcon icon={option.icon} className={`w-4 h-4 ${selectedSort === option.value ? "opacity-100" : "opacity-50"}`} />

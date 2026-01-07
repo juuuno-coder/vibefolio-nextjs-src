@@ -586,13 +586,13 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
                 <div className="grid grid-cols-2 gap-2">
                   <button 
                     onClick={() => setVisibility("public")}
-                    className={`px-4 py-4 rounded-2xl border-2 text-center transition-all ${visibility === "public" ? "border-black bg-black text-white" : "border-gray-100 hover:bg-gray-50"}`}
+                    className={`px-4 py-4 rounded-2xl border-2 text-center transition-all ${visibility === "public" ? "border-black bg-black text-white" : "border-gray-100 hover:bg-gray-100"}`}
                   >
                     <p className="font-bold text-xs">전체 공개</p>
                   </button>
                   <button 
                     onClick={() => setVisibility("private")}
-                    className={`px-4 py-4 rounded-2xl border-2 text-center transition-all ${visibility === "private" ? "border-black bg-black text-white" : "border-gray-100 hover:bg-gray-50"}`}
+                    className={`px-4 py-4 rounded-2xl border-2 text-center transition-all ${visibility === "private" ? "border-black bg-black text-white" : "border-gray-100 hover:bg-gray-100"}`}
                   >
                     <p className="font-bold text-xs">비공개</p>
                   </button>

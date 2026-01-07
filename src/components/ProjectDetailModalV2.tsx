@@ -536,7 +536,7 @@ export function ProjectDetailModalV2({
                   </button>
                   <button 
                     onClick={handleCollectionClick}
-                    className="w-12 h-12 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 flex items-center justify-center transition-colors"
+                    className="w-12 h-12 rounded-full border border-gray-200 bg-white hover:bg-gray-100 text-gray-600 flex items-center justify-center transition-colors"
                   >
                     <FontAwesomeIcon icon={faFolder} className="w-5 h-5" />
                   </button>

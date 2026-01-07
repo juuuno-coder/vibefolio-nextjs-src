@@ -141,11 +141,11 @@ export function Header({
                            <p className="font-bold text-sm text-black truncate">{userProfile?.username}</p>
                            <p className="text-xs text-black/60 truncate">{user.email}</p>
                         </div>
-                       <DropdownMenuItem onClick={() => router.push('/mypage')} className="rounded-lg cursor-pointer text-black hover:bg-gray-50 focus:bg-gray-50">
+                       <DropdownMenuItem onClick={() => router.push('/mypage')} className="rounded-lg cursor-pointer text-black hover:bg-gray-100 focus:bg-gray-100">
                          <UserIcon className="mr-2 h-4 w-4" /> 마이페이지
                        </DropdownMenuItem>
                        {isAdmin && (
-                         <DropdownMenuItem onClick={() => router.push('/admin')} className="rounded-lg cursor-pointer text-indigo-600 bg-indigo-50 hover:bg-indigo-100 focus:bg-indigo-100 font-bold mt-1">
+                         <DropdownMenuItem onClick={() => router.push('/admin')} className="rounded-lg cursor-pointer text-indigo-600 bg-indigo-50 hover:bg-indigo-200 focus:bg-indigo-200 font-bold mt-1">
                             <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자 센터
                          </DropdownMenuItem>
                        )}
