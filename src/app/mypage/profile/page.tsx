@@ -98,17 +98,17 @@ export default function ProfileSettingsPage() {
           if (userData) {
             console.log("Supabase에서 로드된 유저 데이터:", userData); // 디버깅용
             setProfile({
-              username: userData.nickname || defaultUsername,
+              username: userData.username || userData.nickname || defaultUsername,
               email: userEmail,
               phone: '', // DB에 없음
               bio: userData.bio || '',
               location: '', // DB에 없음
-              website: '', // DB 컬럼 확인 필요하지만 일단 빈값 처리하거나 social_links JSON에서 가져와야 함
+              website: userData.website || '',
               profileImage: userData.profile_image_url || '/globe.svg',
               coverImage: userData.cover_image_url || '',
-              skills: [], // DB에 skills 컬럼이 없다면 빈 배열. 필요하면 추가해야 함
+              skills: userData.skills || [],
               interests: userData.interests || { genres: [], fields: [] },
-              socialLinks: {}, // DB에 social_links 컬럼이 있다면 거기서 파싱
+              socialLinks: userData.social_links || {},
             });
           } else {
              // 데이터가 없는 경우 기본값
@@ -180,11 +180,14 @@ export default function ProfileSettingsPage() {
       const { error: updateError } = await (supabase
         .from('profiles') as any)
         .update({
-          nickname: profile.username,
+          username: profile.username,
           bio: profile.bio,
           profile_image_url: imageUrl,
           cover_image_url: coverUrl,
-          interests: profile.interests, // JSONB 저장
+          interests: profile.interests,
+          website: profile.website,
+          social_links: profile.socialLinks,
+          skills: profile.skills,
           updated_at: new Date().toISOString(),
         })
         .eq('id', userId);
