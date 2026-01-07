@@ -1,9 +1,23 @@
 // scripts/crawl-recruit.js
 // 채용·공모전·이벤트 자동 크롤링 스크립트
 
+// 로컬 환경에서 .env.local 파일 읽기
+require('dotenv').config({ path: '.env.local' });
+
 const { createClient } = require('@supabase/supabase-js');
 const axios = require('axios');
 const cheerio = require('cheerio');
+
+// 환경변수 확인
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('❌ 환경변수가 설정되지 않았습니다!');
+  console.error('');
+  console.error('.env.local 파일에 다음 환경변수를 추가하세요:');
+  console.error('  NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co');
+  console.error('  SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...');
+  console.error('');
+  process.exit(1);
+}
 
 // Supabase 클라이언트 초기화
 const supabase = createClient(
