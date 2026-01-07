@@ -73,10 +73,10 @@ export default function ServicePage() {
             함께 성장하는 프리미엄 포트폴리오 커뮤니티입니다.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-6 animate-fade-in-up animation-delay-600">
-            <Button asChild size="lg" className="h-16 px-10 bg-green-600 hover:bg-green-500 text-white rounded-full text-xl font-bold shadow-xl shadow-green-900/20 transition-all hover:-translate-y-1">
+            <Button asChild size="lg" className="h-16 px-10 bg-green-500 hover:bg-green-400 text-white rounded-full text-xl font-bold shadow-xl shadow-green-900/40 transition-all hover:-translate-y-1">
               <Link href="/project/upload">지금 시작하기</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="h-16 px-10 rounded-full border-2 border-white/30 text-white text-xl font-bold transition-all hover:bg-white/10 hover:border-white hover:-translate-y-1 backdrop-blur-sm">
+            <Button asChild size="lg" variant="ghost" className="h-16 px-10 rounded-full border-2 border-white/50 text-white text-xl font-bold transition-all hover:bg-white/20 hover:border-white hover:-translate-y-1 backdrop-blur-md bg-white/10 shadow-lg">
               <Link href="/faq">사용 방법 알아보기</Link>
             </Button>
           </div>
