@@ -15,7 +15,8 @@ import {
   Loader2,
   Eye,
   EyeOff,
-  GripVertical
+  GripVertical,
+  Zap
 } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
@@ -32,12 +33,23 @@ interface Banner {
   id: number;
   title: string;
   subtitle: string | null;
+  description: string | null;
+  button_text: string | null;
   image_url: string;
   link_url: string | null;
   bg_color: string;
   text_color: string;
   is_active: boolean;
   display_order: number;
+}
+
+interface RecruitItem {
+  id: number;
+  title: string;
+  description: string;
+  type: "job" | "contest" | "event";
+  link: string;
+  thumbnail: string;
 }
 
 export default function AdminBannersPage() {
@@ -52,6 +64,8 @@ export default function AdminBannersPage() {
   const [formData, setFormData] = useState({
     title: "",
     subtitle: "",
+    description: "",
+    button_text: "자세히 보기",
     image_url: "",
     link_url: "",
     bg_color: "#000000",
@@ -59,6 +73,9 @@ export default function AdminBannersPage() {
     is_active: true,
     display_order: 0,
   });
+
+  const [recruitItems, setRecruitItems] = useState<RecruitItem[]>([]);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const loadBanners = async () => {
     setLoading(true);
@@ -69,7 +86,7 @@ export default function AdminBannersPage() {
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      if (data) setBanners(data);
+      if (data) setBanners(data as any);
     } catch (err) {
       console.error("Banner load error:", err);
     } finally {
@@ -93,6 +110,8 @@ export default function AdminBannersPage() {
       setFormData({
         title: banner.title,
         subtitle: banner.subtitle || "",
+        description: banner.description || "",
+        button_text: banner.button_text || "자세히 보기",
         image_url: banner.image_url,
         link_url: banner.link_url || "",
         bg_color: banner.bg_color,
@@ -106,6 +125,8 @@ export default function AdminBannersPage() {
       setFormData({
         title: "",
         subtitle: "",
+        description: "",
+        button_text: "자세히 보기",
         image_url: "",
         link_url: "",
         bg_color: "#000000",
@@ -125,6 +146,8 @@ export default function AdminBannersPage() {
       const submitData = {
         title: formData.title,
         subtitle: formData.subtitle || null,
+        description: formData.description || null,
+        button_text: formData.button_text || '자세히 보기',
         image_url: formData.image_url,
         link_url: formData.link_url || null,
         bg_color: formData.bg_color,
@@ -179,6 +202,36 @@ export default function AdminBannersPage() {
     }
   };
 
+  // 크롤링된 데이터 불러오기
+  const handleImportClick = async () => {
+    setIsImportModalOpen(true);
+    try {
+      const { data, error } = await supabase
+        .from('recruit_items')
+        .select('id, title, description, type, link, thumbnail')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      setRecruitItems((data as any[]) || []);
+    } catch (err) {
+      console.error("Error loading recruit items:", err);
+    }
+  };
+
+  const importAsBanner = (item: RecruitItem) => {
+    setFormData({
+      ...formData,
+      title: item.title,
+      subtitle: item.type === 'contest' ? 'CONTEST' : item.type === 'event' ? 'EVENT' : 'JOB',
+      description: item.description,
+      image_url: item.thumbnail || "",
+      link_url: item.link || "",
+    });
+    setIsImportModalOpen(false);
+    setIsModalOpen(true);
+  };
+
   if (adminLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (!isAdmin) return null;
 
@@ -198,10 +251,16 @@ export default function AdminBannersPage() {
             </h1>
             <p className="text-slate-500 mt-2">메인 페이지 상단 슬라이드 배너를 관리합니다.</p>
           </div>
-          <Button onClick={() => handleOpenModal()} className="h-12 px-6 bg-slate-900 rounded-xl shadow-lg shadow-slate-200">
-            <Plus size={18} className="mr-2" />
-            새 배너 등록
-          </Button>
+          <div className="flex gap-3">
+            <Button onClick={handleImportClick} variant="outline" className="h-12 px-6 rounded-xl border-slate-200">
+              <Zap size={18} className="mr-2 text-yellow-500" />
+              공모전/행사 불러오기
+            </Button>
+            <Button onClick={() => handleOpenModal()} className="h-12 px-6 bg-slate-900 rounded-xl shadow-lg shadow-slate-200">
+              <Plus size={18} className="mr-2" />
+              새 배너 등록
+            </Button>
+          </div>
         </div>
 
         {/* List */}
@@ -293,16 +352,16 @@ export default function AdminBannersPage() {
                 <label className="text-sm font-bold text-slate-700">제목 *</label>
                 <Input 
                   required
-                  placeholder="배너 타이틀"
+                  placeholder="배너 메인 타이틀"
                   className="h-12 rounded-xl border-slate-100 bg-slate-50"
                   value={formData.title}
                   onChange={(e) => setFormData({...formData, title: e.target.value})}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">서브 타이틀</label>
+                <label className="text-sm font-bold text-slate-700">뱃지 텍스트 (상단 소제목)</label>
                 <Input 
-                  placeholder="부제목 (선택)"
+                  placeholder="예: CONTEST, EVENT"
                   className="h-12 rounded-xl border-slate-100 bg-slate-50"
                   value={formData.subtitle}
                   onChange={(e) => setFormData({...formData, subtitle: e.target.value})}
@@ -311,13 +370,34 @@ export default function AdminBannersPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">링크 URL</label>
+              <label className="text-sm font-bold text-slate-700">상세 설명 (최대 2줄 권장)</label>
               <Input 
-                placeholder="/page or https://..."
+                placeholder="배너에 표시될 상세 설명 문구"
                 className="h-12 rounded-xl border-slate-100 bg-slate-50"
-                value={formData.link_url}
-                onChange={(e) => setFormData({...formData, link_url: e.target.value})}
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700">링크 URL</label>
+                <Input 
+                  placeholder="/page or https://..."
+                  className="h-12 rounded-xl border-slate-100 bg-slate-50"
+                  value={formData.link_url}
+                  onChange={(e) => setFormData({...formData, link_url: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700">버튼 텍스트</label>
+                <Input 
+                  placeholder="자세히 보기"
+                  className="h-12 rounded-xl border-slate-100 bg-slate-50"
+                  value={formData.button_text}
+                  onChange={(e) => setFormData({...formData, button_text: e.target.value})}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
@@ -386,6 +466,43 @@ export default function AdminBannersPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Modal */}
+      <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
+        <DialogContent className="max-w-3xl bg-white rounded-3xl p-8 max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <Zap className="text-yellow-500" />
+              공모전/행사 정보 불러오기
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-6">
+            {recruitItems.length > 0 ? (
+              recruitItems.map((item) => (
+                <div key={item.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors border border-slate-100">
+                  <div className="flex items-center gap-4 flex-1">
+                     <div 
+                       className="w-16 h-10 rounded-lg bg-slate-200 bg-cover bg-center flex-shrink-0"
+                       style={{ backgroundImage: `url(${item.thumbnail})` }}
+                     />
+                     <div>
+                       <div className="flex items-center gap-2 mb-1">
+                         <Badge variant="outline">{item.type}</Badge>
+                       </div>
+                       <p className="font-bold text-slate-900 line-clamp-1">{item.title}</p>
+                     </div>
+                  </div>
+                  <Button onClick={() => importAsBanner(item)} size="sm" className="ml-4 bg-white text-slate-900 border-slate-200 hover:bg-slate-50">
+                    가져오기
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <p className="text-center py-10 text-slate-400">불러올 수 있는 항목이 없습니다.</p>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

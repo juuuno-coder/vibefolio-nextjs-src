@@ -21,6 +21,8 @@ interface Banner {
   id: number;
   title: string;
   subtitle: string | null;
+  description: string | null;
+  button_text: string | null;
   image_url: string;
   link_url: string | null;
   bg_color: string;
@@ -96,38 +98,35 @@ export function MainBanner() {
           setBanners([
             {
               id: 0,
-              title: "Creative Space",
-              subtitle: "당신의 영감을 펼칠 수 있는 공간",
+              title: "AI Contest 2024",
+              subtitle: "CONTEST",
+              description: "새로운 생성형 AI의 가능성에 도전하세요",
+              button_text: "공모전 확인하기",
               image_url: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2670&auto=format&fit=crop",
-              link_url: null,
+              link_url: "/recruit",
               bg_color: "#1a1a1a",
               text_color: "#ffffff"
             },
             {
               id: 1,
-              title: "Discover Art",
-              subtitle: "새로운 크리에이티브를 발견하세요",
+              title: "Creative Tech",
+              subtitle: "EVENT",
+              description: "기술과 예술이 만나는 지점",
+              button_text: "이벤트 참여하기",
               image_url: "https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=2664&auto=format&fit=crop",
-              link_url: null,
+              link_url: "/recruit",
               bg_color: "#2a2a2a",
               text_color: "#ffffff"
             },
             {
               id: 2,
-              title: "Digital Art Week",
-              subtitle: "이번 주 가장 핫한 디지털 아트 컬렉션",
+              title: "Vibe Insight",
+              subtitle: "TREND",
+              description: "이번 주 가장 주목받는 AI 디자인 트렌드",
+              button_text: "트렌드 읽어보기",
               image_url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2670&auto=format&fit=crop",
-              link_url: null,
+              link_url: "/",
               bg_color: "#4a148c",
-              text_color: "#ffffff"
-            },
-            {
-              id: 3,
-              title: "Motion Design Trends",
-              subtitle: "움직임으로 시선을 사로잡는 모션 그래픽",
-              image_url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2670&auto=format&fit=crop",
-              link_url: null,
-              bg_color: "#0d47a1",
               text_color: "#ffffff"
             }
           ]);
@@ -200,29 +199,39 @@ export function MainBanner() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10" />
 
                     {/* Content */}
-                    <div className="absolute bottom-0 left-0 w-full p-8 md:p-10 flex flex-col items-start gap-3 z-20">
+                    <div className="absolute bottom-0 left-0 w-full p-8 md:p-10 flex flex-col items-start gap-1 z-20">
+                      {banner.description && (
+                        <p 
+                          className="text-sm md:text-base font-medium opacity-90 max-w-lg line-clamp-2 mb-1"
+                          style={{ color: banner.text_color }}
+                        >
+                          {banner.description}
+                        </p>
+                      )}
+                      
+                      <h2 
+                        className="text-3xl md:text-5xl font-black tracking-tight leading-tight mb-2"
+                        style={{ color: banner.text_color }}
+                      >
+                        {banner.title}
+                      </h2>
+                      
                       {banner.subtitle && (
                         <div 
-                          className="px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase backdrop-blur-md bg-white/20 border border-white/30"
+                          className="px-3 py-1 rounded-full text-[10px] md:text-xs font-bold tracking-widest uppercase backdrop-blur-md bg-white/20 border border-white/30 w-fit"
                           style={{ color: banner.text_color }}
                         >
                           {banner.subtitle}
                         </div>
                       )}
                       
-                      <h2 
-                        className="text-3xl md:text-4xl font-black tracking-tight leading-tight"
-                        style={{ color: banner.text_color }}
-                      >
-                        {banner.title}
-                      </h2>
-                      
                       {banner.link_url && (
                         <div 
-                          className="mt-2 flex items-center gap-2 text-sm font-bold opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
+                          className="mt-4 flex items-center gap-3 px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 transition-all duration-300 group-hover:scale-105"
                           style={{ color: banner.text_color }}
                         >
-                          자세히 보기 <ExternalLink size={14} />
+                          <span className="text-sm font-bold">{banner.button_text || "자세히 보기"}</span>
+                          <ExternalLink size={16} className="group-hover:translate-x-1 transition-transform" />
                         </div>
                       )}
                     </div>
