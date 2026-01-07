@@ -127,7 +127,8 @@ function HomeContent() {
       if (reset) setLoading(true);
       try {
         const limit = 20;
-        const res = await fetch(`/api/projects?page=${pageNum}&limit=${limit}`);
+        const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : "";
+        const res = await fetch(`/api/projects?page=${pageNum}&limit=${limit}${searchParam}`);
         const data = await res.json();
         
         // API 응답 키가 'data'일 수도 있고 'projects'일 수도 있음 (Dual Support)
@@ -185,45 +186,29 @@ function HomeContent() {
         setLoading(false);
       }
     },
-    [loading]
+    [loading, searchQuery]
   );
 
-  // 최초 로드
+  // 검색어나 최초 로드 시 데이터 로드
   useEffect(() => {
     loadProjects(1, true);
-  }, []);
+  }, [searchQuery]);
 
   // 카테고리 필터링
   const categoryNames = Array.isArray(selectedCategory) 
     ? selectedCategory.map(c => getCategoryName(c))
     : [getCategoryName(selectedCategory)];
   
-  // 필터링 로직 강화 (카테고리 + 분야 + 관심사 + 검색어)
+  // 필터링 로직 강화 (카테고리 + 분야 + 관심사) - 검색어는 서버 사이드에서 처리됨
   const filtered = projects.filter(p => {
-    // 0. 검색어 필터
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase().replace(/\s+/g, "");
-      const title = (p.title || "").toLowerCase().replace(/\s+/g, "");
-      const desc = (p.description || "").toLowerCase().replace(/\s+/g, "");
-      const username = (p.user.username || "").toLowerCase().replace(/\s+/g, "");
-      
-      if (!title.includes(query) && !desc.includes(query) && !username.includes(query)) {
-        return false;
-      }
-    }
-
     // 1. 관심사 탭 ("interests") 선택 시 로직
     if (selectedCategory === "interests") {
-      if (!userInterests) return false; // 데이터 로딩 전이거나 없으면 안 보여줌
+      if (!userInterests) return false;
       
       const myGenres = userInterests.genres || [];
       const myFields = userInterests.fields || [];
 
-      // 장르 매칭: 내 장르에 포함되거나, 설정한 장르가 없으면 통과
-      // p.category는 한글명("포토"), myGenres는 영어코드("photo")일 확률 높음 -> 변환 필요
       const genreMatch = myGenres.length === 0 || myGenres.some(g => getCategoryName(g) === p.category);
-      
-      // 분야 매칭: 내 분야에 포함되거나, 설정한 분야가 없으면 통과
       const fieldMatch = myFields.length === 0 || (p.field && myFields.includes(p.field));
       
       return genreMatch && fieldMatch;
@@ -233,7 +218,7 @@ function HomeContent() {
     const catName = p.category;
     const matchCategory = selectedCategory === "all" || categoryNames.includes(catName);
     
-    // 3. 분야 필터 (이미 소문자로 통일됨)
+    // 3. 분야 필터
     const matchField = selectedFields.length === 0 || (p.field && selectedFields.includes(p.field));
     
     return matchCategory && matchField;
