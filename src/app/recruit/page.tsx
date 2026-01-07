@@ -773,7 +773,7 @@ function ItemCard({
           <Button
             variant="default"
             size="sm"
-            className="flex-1 bg-[#4ACAD4] hover:bg-[#41a3aa]"
+            className="flex-1 bg-green-600 hover:bg-green-700"
             onClick={() => onViewDetail(item)}
             disabled={isExpired}
           >
