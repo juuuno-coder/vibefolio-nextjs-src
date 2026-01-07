@@ -2,6 +2,8 @@
 
 .ProseMirror {
   outline: none;
+  min-height: 100%;
+  height: 100%;
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {
@@ -331,28 +333,7 @@
 }
 
 /* Text block delete hint on hover */
-.ProseMirror .block-paragraph:hover::after,
-.ProseMirror .block-heading:hover::after {
-  content: "텍스트 선택 후 🗑️ 버튼으로 삭제";
-  position: absolute;
-  top: -24px;
-  right: 0;
-  font-size: 11px;
-  color: #9ca3af;
-  background: white;
-  padding: 2px 8px;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-.ProseMirror .block-paragraph:hover::after,
-.ProseMirror .block-heading:hover::after {
-  opacity: 1;
-}
+/* Text block delete hint removed */
 
 /* Focused block indicator */
 .ProseMirror .has-focus {
