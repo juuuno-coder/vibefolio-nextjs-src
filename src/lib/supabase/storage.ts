@@ -94,3 +94,47 @@ export function base64ToFile(base64: string, filename: string): File {
   
   return new File([u8arr], filename, { type: mime });
 }
+
+/**
+ * 외부 URL 이미지를 다운로드하여 Supabase Storage에 업로드
+ * @param url - 외부 이미지 URL
+ * @param bucket - 버킷 이름
+ * @returns 업로드된 내부 이미지 URL
+ */
+export async function uploadImageFromUrl(
+  url: string,
+  bucket: string = 'projects'
+): Promise<string> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Failed to fetch image from URL');
+    
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    
+    // 파일 확장자 추출
+    const urlPath = new URL(url).pathname;
+    const fileExt = urlPath.split('.').pop() || 'jpg';
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `uploads/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, buffer, {
+        contentType: `image/${fileExt === 'png' ? 'png' : 'jpeg'}`,
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (error) throw error;
+
+    const { data: publicUrlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(filePath);
+
+    return publicUrlData.publicUrl;
+  } catch (error) {
+    console.error('Image proxy upload failed:', error);
+    return url; // 실패 시 원본 URL 반환 (graceful fallback)
+  }
+}
