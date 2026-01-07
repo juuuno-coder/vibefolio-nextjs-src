@@ -29,7 +29,12 @@ export async function GET(request: Request) {
     
     const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code)
     
-    if (!error && session) {
+    if (error) {
+      console.error('[Auth Callback] Exchange Error:', error);
+      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`)
+    }
+
+    if (session) {
       const { user } = session;
       
       // 프로필 생성/확인 로직 (Admin API 사용으로 권한 문제 해결)
@@ -67,6 +72,6 @@ export async function GET(request: Request) {
     }
   }
 
-  // 에러 발생 시 로그인 페이지로 이동하여 에러 표시
-  return NextResponse.redirect(`${origin}/login?error=auth_callback_error`)
+  // 코드가 없거나 세션이 없는 경우
+  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed&reason=no_session`)
 }

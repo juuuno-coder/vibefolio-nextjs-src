@@ -1,23 +1,34 @@
-// src/app/login/page.tsx
-
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { FcGoogle } from "react-icons/fc";
+import { toast } from "sonner"; // 에러 메시지 표시를 위해 toast 사용 추천
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam) {
+      const decodedError = decodeURIComponent(errorParam);
+      setError(decodedError);
+      // 에러가 명확히 보이도록 토스트 메시지도 띄웁니다.
+      toast.error("로그인 오류", { description: decodedError });
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,12 +44,13 @@ export default function LoginPage() {
       if (signInError) throw signInError;
 
       if (data.user) {
-        alert("로그인 성공!");
+        toast.success("로그인 성공!");
         router.push("/");
       }
     } catch (error: any) {
       console.error("로그인 오류:", error);
       setError(error.message || "로그인 중 오류가 발생했습니다.");
+      toast.error("로그인 실패", { description: error.message });
     } finally {
       setLoading(false);
     }
@@ -46,16 +58,23 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     try {
+      console.log("Google Login Redirect URL:", `${window.location.origin}/auth/callback`);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline', // 리프레시 토큰 발급
+            prompt: 'consent', // 강제 로그인 창 표시 (테스트용)
+          },
         },
       });
       if (error) throw error;
     } catch (error: any) {
       console.error("Google 로그인 오류:", error);
       setError(error.message || "Google 로그인 중 오류가 발생했습니다.");
+      toast.error("Google 로그인 실패", { description: error.message });
     }
   };
 
@@ -79,7 +98,7 @@ export default function LoginPage() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm break-words">
               {error}
             </div>
           )}
@@ -185,5 +204,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">로딩 중...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
