@@ -27,6 +27,7 @@ interface Banner {
   link_url: string | null;
   bg_color: string;
   text_color: string;
+  priority: number;
 }
 
 export function MainBanner() {
@@ -61,40 +62,68 @@ export function MainBanner() {
       const hasCache = checkCache();
       
       try {
-        // 1.5초 타임아웃으로 단축
-        const fetchPromise = supabase
+        // 1. 전용 배너 테이블 조회
+        const { data: dedicatedBanners, error: dbError } = await supabase
           .from("banners")
           .select("*")
+          .eq("is_active", true);
+
+        // 2. 관리자 페이지에서 배너로 설정된 공모전/행사 조회
+        const { data: promotedRecruits, error: prError } = await supabase
+          .from("recruit_items")
+          .select("*")
+          .eq("show_as_banner", true)
           .eq("is_active", true)
-          .order("display_order", { ascending: true });
-          
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Timeout")), 1500)
-        );
+          .eq("is_approved", true);
 
-        // @ts-ignore
-        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+        if (dbError) throw dbError;
+        if (prError) throw prError;
 
-        if (error) throw error;
-        
+        // 데이터 통합
+        const mergedBanners: Banner[] = [
+          ...((dedicatedBanners || []) as any[]).map(b => ({
+            id: b.id,
+            title: b.title,
+            subtitle: b.subtitle,
+            description: b.description,
+            button_text: b.button_text,
+            image_url: b.image_url,
+            link_url: b.link_url,
+            bg_color: b.bg_color || "#000000",
+            text_color: b.text_color || "#ffffff",
+            priority: b.display_order || 999
+          })),
+          ...((promotedRecruits || []) as any[]).map(r => ({
+            id: r.id + 10000, // ID 충돌 방지
+            title: r.title,
+            subtitle: r.type?.toUpperCase() || "EVENT",
+            description: r.description,
+            button_text: "자세히 보기",
+            image_url: r.thumbnail || "",
+            link_url: r.link || `/recruit`,
+            bg_color: "#ffffff", // 기본 밝은 배경
+            text_color: "#000000",
+            priority: r.banner_priority || 999
+          }))
+        ].sort((a, b) => a.priority - b.priority);
+
         if (isMounted) {
-          if (data && data.length > 0) {
-            setBanners(data);
+          if (mergedBanners.length > 0) {
+            setBanners(mergedBanners);
             // 캐시 저장
             localStorage.setItem("main_banners_cache", JSON.stringify({
-              data,
+              data: mergedBanners,
               timestamp: Date.now()
             }));
           } else {
-            // DB에 데이터가 없으면 Fallback 사용하도록 에러 던짐
              if (!hasCache) throw new Error("No banners found");
           }
         }
       } catch (error) {
-        console.warn('배너 로드 실패 또는 타임아웃 (샘플/캐시 데이터 사용):', error);
+        console.warn('배너 로드 실패 (샘플/캐시 데이터 사용):', error);
         
         if (isMounted && !hasCache) {
-          // 캐시도 없고 로드도 실패했을 때만 샘플 표시
+          // Fallback ... (기존과 동일)
           setBanners([
             {
               id: 0,
@@ -104,6 +133,7 @@ export function MainBanner() {
               button_text: "공모전 확인하기",
               image_url: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2670&auto=format&fit=crop",
               link_url: "/recruit",
+              priority: 0,
               bg_color: "#1a1a1a",
               text_color: "#ffffff"
             },
@@ -115,18 +145,8 @@ export function MainBanner() {
               button_text: "이벤트 참여하기",
               image_url: "https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=2664&auto=format&fit=crop",
               link_url: "/recruit",
+              priority: 1,
               bg_color: "#2a2a2a",
-              text_color: "#ffffff"
-            },
-            {
-              id: 2,
-              title: "Vibe Insight",
-              subtitle: "TREND",
-              description: "이번 주 가장 주목받는 AI 디자인 트렌드",
-              button_text: "트렌드 읽어보기",
-              image_url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2670&auto=format&fit=crop",
-              link_url: "/",
-              bg_color: "#4a148c",
               text_color: "#ffffff"
             }
           ]);

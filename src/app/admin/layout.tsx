@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AdminGuard } from "@/components/admin/AdminGuard";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
 export const metadata: Metadata = {
   title: "관리자 대시보드 | Vibefolio",
@@ -16,8 +17,13 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <AdminGuard>{children}</AdminGuard>
-    </div>
+    <AdminGuard>
+      <div className="min-h-screen bg-slate-50 flex">
+        <AdminSidebar />
+        <main className="flex-1 ml-64 p-8">
+          {children}
+        </main>
+      </div>
+    </AdminGuard>
   );
 }

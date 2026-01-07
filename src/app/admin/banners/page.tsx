@@ -16,11 +16,22 @@ import {
   Eye,
   EyeOff,
   GripVertical,
-  Zap
+  Zap,
+  Star,
+  StarOff,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { useAdmin } from "@/hooks/useAdmin";
+import { toast } from "sonner";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +61,12 @@ interface RecruitItem {
   type: "job" | "contest" | "event";
   link: string;
   thumbnail: string;
+  show_as_banner: boolean;
+  banner_location?: "discover" | "recruit" | "both" | null;
+  banner_priority: number;
+  company?: string | null;
+  is_active: boolean;
+  is_approved: boolean;
 }
 
 export default function AdminBannersPage() {
@@ -76,6 +93,7 @@ export default function AdminBannersPage() {
 
   const [recruitItems, setRecruitItems] = useState<RecruitItem[]>([]);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [allPromotedItems, setAllPromotedItems] = useState<RecruitItem[]>([]);
 
   const loadBanners = async () => {
     setLoading(true);
@@ -94,6 +112,22 @@ export default function AdminBannersPage() {
     }
   };
 
+  const loadPromotedItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('recruit_items')
+        .select('*')
+        .eq('is_approved', true)
+        .eq('is_active', true)
+        .order('banner_priority', { ascending: true });
+
+      if (error) throw error;
+      setAllPromotedItems((data as any[]) || []);
+    } catch (err) {
+      console.error("Error loading promoted items:", err);
+    }
+  };
+
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
       router.push("/");
@@ -101,6 +135,7 @@ export default function AdminBannersPage() {
     }
     if (isAdmin) {
       loadBanners();
+      loadPromotedItems();
     }
   }, [isAdmin, adminLoading, router]);
 
@@ -169,9 +204,10 @@ export default function AdminBannersPage() {
       
       setIsModalOpen(false);
       loadBanners();
+      toast.success("배너가 저장되었습니다.");
     } catch (err) {
       console.error("Save error:", err);
-      alert("저장 중 오류가 발생했습니다.");
+      toast.error("저장 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -183,9 +219,10 @@ export default function AdminBannersPage() {
       const { error } = await (supabase.from("banners") as any).delete().eq("id", id);
       if (error) throw error;
       loadBanners();
+      toast.success("배너가 삭제되었습니다.");
     } catch (err) {
       console.error("Delete error:", err);
-      alert("삭제 중 오류가 발생했습니다.");
+      toast.error("삭제 중 오류가 발생했습니다.");
     }
   };
 
@@ -202,7 +239,40 @@ export default function AdminBannersPage() {
     }
   };
 
-  // 크롤링된 데이터 불러오기
+  const togglePromotedBanner = async (id: number, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('recruit_items')
+        .update({
+          show_as_banner: !currentStatus,
+          banner_location: !currentStatus ? 'both' : null,
+          banner_priority: !currentStatus ? 1 : 999,
+        } as any)
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success(currentStatus ? '배너에서 해제되었습니다.' : '배너로 등록되었습니다.');
+      loadPromotedItems();
+    } catch (err) {
+      console.error("Toggle error:", err);
+      toast.error("변경에 실패했습니다.");
+    }
+  };
+
+  const updatePromotedPriority = async (id: number, direction: 'up' | 'down') => {
+    const item = allPromotedItems.find(i => i.id === id);
+    if (!item) return;
+    const newPriority = direction === 'up' ? Math.max(0, item.banner_priority - 1) : item.banner_priority + 1;
+    
+    const { error } = await supabase
+      .from('recruit_items')
+      .update({ banner_priority: newPriority } as any)
+      .eq('id', id);
+    if (!error) {
+       loadPromotedItems();
+    }
+  };
+
   const handleImportClick = async () => {
     setIsImportModalOpen(true);
     try {
@@ -223,7 +293,7 @@ export default function AdminBannersPage() {
     setFormData({
       ...formData,
       title: item.title,
-      subtitle: item.type === 'contest' ? 'CONTEST' : item.type === 'event' ? 'EVENT' : 'JOB',
+      subtitle: item.type?.toUpperCase() || "EVENT",
       description: item.description,
       image_url: item.thumbnail || "",
       link_url: item.link || "",
@@ -236,275 +306,361 @@ export default function AdminBannersPage() {
   if (!isAdmin) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-          <div>
-            <Link href="/admin" className="inline-flex items-center text-slate-500 hover:text-slate-900 mb-4 transition-colors">
-              <ArrowLeft size={18} className="mr-2" />
-              대시보드로 돌아가기
-            </Link>
-            <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-              <ImageIcon className="text-purple-500" />
-              메인 배너 관리
-            </h1>
-            <p className="text-slate-500 mt-2">메인 페이지 상단 슬라이드 배너를 관리합니다.</p>
-          </div>
-          <div className="flex gap-3">
-            <Button onClick={handleImportClick} variant="outline" className="h-12 px-6 rounded-xl border-slate-200">
-              <Zap size={18} className="mr-2 text-yellow-500" />
-              공모전/행사 불러오기
-            </Button>
-            <Button onClick={() => handleOpenModal()} className="h-12 px-6 bg-slate-900 rounded-xl shadow-lg shadow-slate-200">
-              <Plus size={18} className="mr-2" />
-              새 배너 등록
-            </Button>
-          </div>
+    <div className="space-y-10 pb-20">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+            <ImageIcon className="text-[#4ACAD4]" size={32} />
+            통합 배너 관리
+          </h1>
+          <p className="text-slate-500 mt-2 font-medium">메인 페이지 상단에 노출될 배너와 홍보 항목을 통합 관리합니다.</p>
         </div>
-
-        {/* List */}
-        <div className="grid grid-cols-1 gap-4">
-          {loading && banners.length === 0 ? (
-            <div className="text-center py-20"><Loader2 className="animate-spin mx-auto text-slate-300" size={32} /></div>
-          ) : banners.length > 0 ? (
-            banners.map(banner => (
-              <Card key={banner.id} className={`overflow-hidden transition-all hover:shadow-md border-slate-100 ${!banner.is_active ? "opacity-60 bg-slate-50" : "bg-white"}`}>
-                <CardHeader className="flex flex-row items-center justify-between py-6">
-                  <div className="flex items-center gap-4 flex-1">
-                    {/* Thumbnail */}
-                    <div 
-                      className="w-32 h-20 rounded-lg bg-slate-100 flex-shrink-0 bg-cover bg-center border border-slate-200"
-                      style={{ backgroundImage: `url(${banner.image_url})` }}
-                    />
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="secondary" className="text-xs">순서: {banner.display_order}</Badge>
-                        {!banner.is_active && <Badge variant="secondary">비활성</Badge>}
-                        {banner.is_active && <Badge className="bg-green-500">활성</Badge>}
-                      </div>
-                      <CardTitle className="text-lg font-bold text-slate-900">{banner.title}</CardTitle>
-                      {banner.subtitle && (
-                        <p className="text-slate-500 text-sm mt-1">{banner.subtitle}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 ml-4">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className={`hover:bg-slate-100 ${banner.is_active ? "text-green-600" : "text-slate-400"}`}
-                      onClick={() => toggleActive(banner)}
-                      title={banner.is_active ? "비활성화" : "활성화"}
-                    >
-                      {banner.is_active ? <Eye size={18} /> : <EyeOff size={18} />}
-                    </Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-slate-100 text-slate-600" onClick={() => handleOpenModal(banner)}>
-                      <Edit size={18} />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-red-50 text-red-500" onClick={() => handleDelete(banner.id)}>
-                      <Trash2 size={18} />
-                    </Button>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))
-          ) : (
-            <div className="bg-white border border-dashed border-slate-200 rounded-[32px] py-32 text-center">
-              <ImageIcon size={48} className="mx-auto text-slate-200 mb-6" />
-              <p className="text-slate-400 text-lg">등록된 배너가 없습니다.</p>
-            </div>
-          )}
+        <div className="flex gap-3">
+          <Button onClick={handleImportClick} variant="outline" className="h-12 px-6 rounded-2xl border-slate-200 font-bold hover:bg-slate-50">
+            <Zap size={18} className="mr-2 text-yellow-500 fill-yellow-500" />
+            정보 가져오기
+          </Button>
+          <Button onClick={() => handleOpenModal()} className="h-12 px-6 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl shadow-xl shadow-slate-200 font-bold">
+            <Plus size={18} className="mr-2" />
+            전용 배너 등록
+          </Button>
         </div>
       </div>
 
-      {/* Editor Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-2xl bg-white rounded-3xl p-8 max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">
-              {editingBanner ? "배너 수정" : "새 배너 등록"}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-6 mt-4">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">이미지 URL *</label>
-              <div className="flex gap-2">
-                <Input 
-                  required
-                  placeholder="https://..."
-                  className="h-12 rounded-xl border-slate-100 bg-slate-50"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-                />
-              </div>
-              {formData.image_url && (
-                <div className="w-full h-32 rounded-xl bg-slate-100 mt-2 bg-cover bg-center border border-slate-200" 
-                  style={{ backgroundImage: `url(${formData.image_url})` }} 
-                />
-              )}
-            </div>
+      <Tabs defaultValue="dedicated" className="w-full">
+        <TabsList className="bg-slate-100 p-1.5 rounded-2xl h-auto mb-8 border border-slate-200/50 shadow-sm">
+          <TabsTrigger value="dedicated" className="rounded-xl px-8 py-2.5 font-bold data-[state=active]:bg-white data-[state=active]:text-slate-900 border-none shadow-none">
+            전용 배너 ({banners.length})
+          </TabsTrigger>
+          <TabsTrigger value="promoted" className="rounded-xl px-8 py-2.5 font-bold data-[state=active]:bg-white data-[state=active]:text-slate-900 border-none shadow-none">
+            홍보 항목 ({allPromotedItems.filter(i => i.show_as_banner).length})
+          </TabsTrigger>
+        </TabsList>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">제목 *</label>
-                <Input 
-                  required
-                  placeholder="배너 메인 타이틀"
-                  className="h-12 rounded-xl border-slate-100 bg-slate-50"
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
-                />
+        <TabsContent value="dedicated">
+          <div className="grid grid-cols-1 gap-6">
+            {loading && banners.length === 0 ? (
+              <div className="text-center py-24 bg-white rounded-[32px] border border-dashed border-slate-200">
+                <Loader2 className="animate-spin mx-auto text-slate-200 mb-4" size={40} />
+                <p className="text-slate-300 font-bold">배너 목록을 불러오는 중...</p>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">뱃지 텍스트 (상단 소제목)</label>
-                <Input 
-                  placeholder="예: CONTEST, EVENT"
-                  className="h-12 rounded-xl border-slate-100 bg-slate-50"
-                  value={formData.subtitle}
-                  onChange={(e) => setFormData({...formData, subtitle: e.target.value})}
-                />
-              </div>
-            </div>
+            ) : banners.length > 0 ? (
+              banners.map(banner => (
+                <Card key={banner.id} className={`group overflow-hidden transition-all duration-300 hover:shadow-xl border-none p-1 rounded-[32px] ${!banner.is_active ? "opacity-50 grayscale" : "bg-white shadow-sm"}`}>
+                  <CardHeader className="flex flex-row items-center justify-between p-6 pr-8">
+                    <div className="flex items-center gap-6 flex-1">
+                      <div 
+                        className="w-48 h-28 rounded-2xl bg-slate-100 flex-shrink-0 bg-cover bg-center border border-slate-100 shadow-inner group-hover:scale-105 transition-transform"
+                        style={{ backgroundImage: `url(${banner.image_url})` }}
+                      />
+                      
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-3">
+                           <span className="text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-400 px-2 py-1 rounded">ORDER {banner.display_order}</span>
+                           <Badge className={banner.is_active ? "bg-green-500/10 text-green-600 border-none font-black text-[10px]" : "bg-slate-100 text-slate-400 border-none font-bold text-[10px]"}>
+                             {banner.is_active ? "● ACTIVE" : "OFFLINE"}
+                           </Badge>
+                        </div>
+                        <CardTitle className="text-xl font-black text-slate-900">{banner.title}</CardTitle>
+                        <p className="text-slate-400 text-sm mt-1.5 font-medium line-clamp-1">{banner.description || banner.subtitle || "상세 설명이 없습니다."}</p>
+                      </div>
+                    </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">상세 설명 (최대 2줄 권장)</label>
-              <Input 
-                placeholder="배너에 표시될 상세 설명 문구"
-                className="h-12 rounded-xl border-slate-100 bg-slate-50"
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">링크 URL</label>
-                <Input 
-                  placeholder="/page or https://..."
-                  className="h-12 rounded-xl border-slate-100 bg-slate-50"
-                  value={formData.link_url}
-                  onChange={(e) => setFormData({...formData, link_url: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">버튼 텍스트</label>
-                <Input 
-                  placeholder="자세히 보기"
-                  className="h-12 rounded-xl border-slate-100 bg-slate-50"
-                  value={formData.button_text}
-                  onChange={(e) => setFormData({...formData, button_text: e.target.value})}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">배경색</label>
-                <div className="flex items-center gap-2">
-                  <input 
-                    type="color" 
-                    value={formData.bg_color}
-                    onChange={(e) => setFormData({...formData, bg_color: e.target.value})}
-                    className="w-10 h-10 rounded cursor-pointer border-none"
-                  />
-                  <Input 
-                    value={formData.bg_color}
-                    onChange={(e) => setFormData({...formData, bg_color: e.target.value})}
-                    className="h-10 rounded-lg border-slate-100 bg-slate-50"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">글자색</label>
-                <div className="flex items-center gap-2">
-                  <input 
-                    type="color" 
-                    value={formData.text_color}
-                    onChange={(e) => setFormData({...formData, text_color: e.target.value})}
-                    className="w-10 h-10 rounded cursor-pointer border-none"
-                  />
-                  <Input 
-                    value={formData.text_color}
-                    onChange={(e) => setFormData({...formData, text_color: e.target.value})}
-                    className="h-10 rounded-lg border-slate-100 bg-slate-50"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">순서</label>
-                <Input 
-                  type="number"
-                  min="0"
-                  className="h-10 rounded-lg border-slate-100 bg-slate-50"
-                  value={formData.display_order}
-                  onChange={(e) => setFormData({...formData, display_order: parseInt(e.target.value) || 0})}
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-6 pt-2">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <input 
-                  type="checkbox"
-                  className="w-5 h-5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-                />
-                <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">활성화</span>
-              </label>
-            </div>
-            
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)} className="h-14 flex-1 font-bold text-slate-400">
-                취소
-              </Button>
-              <Button type="submit" disabled={loading} className="h-14 flex-1 bg-slate-900 hover:bg-slate-800 rounded-2xl font-bold shadow-lg shadow-slate-200">
-                {loading ? <Loader2 className="animate-spin" /> : editingBanner ? "수정 완료" : "등록하기"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Import Modal */}
-      <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
-        <DialogContent className="max-w-3xl bg-white rounded-3xl p-8 max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-              <Zap className="text-yellow-500" />
-              공모전/행사 정보 불러오기
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-6">
-            {recruitItems.length > 0 ? (
-              recruitItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors border border-slate-100">
-                  <div className="flex items-center gap-4 flex-1">
-                     <div 
-                       className="w-16 h-10 rounded-lg bg-slate-200 bg-cover bg-center flex-shrink-0"
-                       style={{ backgroundImage: `url(${item.thumbnail})` }}
-                     />
-                     <div>
-                       <div className="flex items-center gap-2 mb-1">
-                         <Badge variant="outline">{item.type}</Badge>
-                       </div>
-                       <p className="font-bold text-slate-900 line-clamp-1">{item.title}</p>
-                     </div>
-                  </div>
-                  <Button onClick={() => importAsBanner(item)} size="sm" className="ml-4 bg-white text-slate-900 border-slate-200 hover:bg-slate-50">
-                    가져오기
-                  </Button>
-                </div>
+                    <div className="flex items-center gap-2">
+                       <Button 
+                         variant="ghost" 
+                         size="icon" 
+                         className="w-12 h-12 rounded-2xl hover:bg-slate-50 text-slate-400 hover:text-slate-900 transition-all"
+                         onClick={() => toggleActive(banner)}
+                       >
+                         {banner.is_active ? <Eye size={20} /> : <EyeOff size={20} />}
+                       </Button>
+                       <Button variant="ghost" size="icon" className="w-12 h-12 rounded-2xl hover:bg-slate-50 text-slate-400 hover:text-slate-900" onClick={() => handleOpenModal(banner)}>
+                         <Edit size={20} />
+                       </Button>
+                       <Button variant="ghost" size="icon" className="w-12 h-12 rounded-2xl hover:bg-red-50 text-red-300 hover:text-red-500" onClick={() => handleDelete(banner.id)}>
+                         <Trash2 size={20} />
+                       </Button>
+                    </div>
+                  </CardHeader>
+                </Card>
               ))
             ) : (
-              <p className="text-center py-10 text-slate-400">불러올 수 있는 항목이 없습니다.</p>
+              <div className="bg-white border border-dashed border-slate-200 rounded-[40px] py-32 text-center shadow-sm">
+                <ImageIcon size={56} className="mx-auto text-slate-100 mb-6" />
+                <p className="text-slate-400 font-bold text-lg tracking-tighter italic">등록된 전용 배너가 없습니다.</p>
+              </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </TabsContent>
+
+        <TabsContent value="promoted">
+          <div className="space-y-8">
+            {/* 현재 노출 중 */}
+            <div>
+              <h3 className="text-sm font-black text-slate-400 mb-4 px-2 uppercase tracking-widest flex items-center gap-2">
+                <Star className="fill-slate-400" size={14} />
+                현재 노출 중인 항목
+              </h3>
+              <div className="grid grid-cols-1 gap-4">
+                {allPromotedItems.filter(i => i.show_as_banner).map(item => (
+                  <Card key={item.id} className="border-none bg-white shadow-sm rounded-[24px] overflow-hidden group">
+                    <div className="p-4 flex items-center justify-between">
+                       <div className="flex items-center gap-4">
+                         <div className="w-16 h-16 rounded-xl bg-slate-100 bg-cover bg-center shadow-inner" style={{ backgroundImage: `url(${item.thumbnail})` }} />
+                         <div>
+                            <div className="flex items-center gap-2 mb-1">
+                               <Badge variant="outline" className="text-[9px] font-black uppercase text-slate-400">{item.type}</Badge>
+                               <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">순위: {item.banner_priority}</span>
+                            </div>
+                            <p className="font-bold text-slate-900 line-clamp-1">{item.title}</p>
+                         </div>
+                       </div>
+                       <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => updatePromotedPriority(item.id, 'up')}><ArrowUp size={16} /></Button>
+                          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => updatePromotedPriority(item.id, 'down')}><ArrowDown size={16} /></Button>
+                          <Button variant="destructive" size="sm" className="ml-4 rounded-xl font-bold bg-red-50 text-red-500 hover:bg-red-100 border-none shadow-none" onClick={() => togglePromotedBanner(item.id, true)}>
+                            노출 해제
+                          </Button>
+                       </div>
+                    </div>
+                  </Card>
+                ))}
+                {allPromotedItems.filter(i => i.show_as_banner).length === 0 && (
+                   <div className="py-12 text-center bg-slate-50/50 rounded-[24px] border border-dashed border-slate-200">
+                     <p className="text-slate-300 font-bold text-sm italic">노출 중인 홍보 항목이 없습니다.</p>
+                   </div>
+                )}
+              </div>
+            </div>
+
+            {/* 대기 중 */}
+            <div>
+              <h3 className="text-sm font-black text-slate-400 mb-4 px-2 uppercase tracking-widest">추가 가능한 항목</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 {allPromotedItems.filter(i => !i.show_as_banner).map(item => (
+                    <Card key={item.id} className="border-none bg-white shadow-sm rounded-[28px] p-5 hover:shadow-xl transition-all group">
+                       <div className="w-full h-32 rounded-2xl bg-slate-100 bg-cover bg-center mb-4 shadow-inner" style={{ backgroundImage: `url(${item.thumbnail})` }} />
+                       <Badge variant="outline" className="text-[9px] font-black uppercase mb-2">{item.type}</Badge>
+                       <h4 className="font-bold text-slate-900 group-hover:text-[#4ACAD4] transition-colors mb-2 line-clamp-1">{item.title}</h4>
+                       <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed mb-5">{item.description}</p>
+                       <Button className="w-full h-11 bg-slate-900 text-white rounded-xl font-bold text-sm" onClick={() => togglePromotedBanner(item.id, false)}>
+                         배너로 내보내기
+                       </Button>
+                    </Card>
+                 ))}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      <EditorModal 
+        isOpen={isModalOpen} 
+        onOpenChange={setIsModalOpen}
+        editingBanner={editingBanner}
+        formData={formData}
+        setFormData={setFormData}
+        handleSubmit={handleSubmit}
+        loading={loading}
+      />
+
+      <ImportModal 
+        isOpen={isImportModalOpen}
+        onOpenChange={setIsImportModalOpen}
+        recruitItems={recruitItems}
+        onImport={importAsBanner}
+      />
     </div>
+  );
+}
+
+// ------------------------------------------------------------------------------------------------
+// 아래는 모달 컴포넌트들입니다
+// ------------------------------------------------------------------------------------------------
+
+function EditorModal({ 
+  isOpen, 
+  onOpenChange, 
+  editingBanner, 
+  formData, 
+  setFormData, 
+  handleSubmit, 
+  loading 
+}: any) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl bg-white rounded-3xl p-8 max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">
+            {editingBanner ? "배너 수정" : "새 배너 등록"}
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">이미지 URL *</label>
+            <Input 
+              required
+              placeholder="https://..."
+              className="h-12 rounded-xl border-slate-100 bg-slate-50"
+              value={formData.image_url}
+              onChange={(e) => setFormData({...formData, image_url: e.target.value})}
+            />
+            {formData.image_url && (
+              <div className="w-full h-32 rounded-xl bg-slate-100 mt-2 bg-cover bg-center border border-slate-200" 
+                style={{ backgroundImage: `url(${formData.image_url})` }} 
+              />
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">제목 *</label>
+              <Input 
+                required
+                placeholder="배너 메인 타이틀"
+                className="h-12 rounded-xl border-slate-100 bg-slate-50"
+                value={formData.title}
+                onChange={(e) => setFormData({...formData, title: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">뱃지 텍스트</label>
+              <Input 
+                placeholder="예: CONTEST, EVENT"
+                className="h-12 rounded-xl border-slate-100 bg-slate-50"
+                value={formData.subtitle}
+                onChange={(e) => setFormData({...formData, subtitle: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">상세 설명</label>
+            <Input 
+              placeholder="배너에 표시될 상세 설명 문구"
+              className="h-12 rounded-xl border-slate-100 bg-slate-50"
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">링크 URL</label>
+              <Input 
+                placeholder="/page or https://..."
+                className="h-12 rounded-xl border-slate-100 bg-slate-50"
+                value={formData.link_url}
+                onChange={(e) => setFormData({...formData, link_url: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">버튼 텍스트</label>
+              <Input 
+                placeholder="자세히 보기"
+                className="h-12 rounded-xl border-slate-100 bg-slate-50"
+                value={formData.button_text}
+                onChange={(e) => setFormData({...formData, button_text: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">배경색</label>
+              <Input 
+                type="color"
+                value={formData.bg_color}
+                onChange={(e) => setFormData({...formData, bg_color: e.target.value})}
+                className="h-12 w-full p-1 rounded-xl cursor-pointer"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">글자색</label>
+              <Input 
+                type="color"
+                value={formData.text_color}
+                onChange={(e) => setFormData({...formData, text_color: e.target.value})}
+                className="h-12 w-full p-1 rounded-xl cursor-pointer"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">노출 순서</label>
+              <Input 
+                type="number"
+                value={formData.display_order}
+                onChange={(e) => setFormData({...formData, display_order: parseInt(e.target.value) || 0})}
+                className="h-12 rounded-xl border-slate-100 bg-slate-50"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 py-2">
+            <input 
+              type="checkbox" 
+              id="is_active"
+              checked={formData.is_active}
+              onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
+              className="w-5 h-5 rounded border-slate-300 text-[#4ACAD4] focus:ring-[#4ACAD4]"
+            />
+            <label htmlFor="is_active" className="text-sm font-bold text-slate-600">배너 활성화</label>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="h-14 flex-1 font-bold text-slate-400">
+              취소
+            </Button>
+            <Button type="submit" disabled={loading} className="h-14 flex-1 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold shadow-lg shadow-slate-200">
+              {loading ? <Loader2 className="animate-spin" /> : editingBanner ? "수정 완료" : "등록하기"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ImportModal({
+  isOpen,
+  onOpenChange,
+  recruitItems,
+  onImport
+}: any) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl bg-white rounded-3xl p-8 max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+            <Zap className="text-yellow-500 fill-yellow-500" />
+            정보 가져오기
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 mt-6">
+          {recruitItems.length > 0 ? (
+            recruitItems.map((item: any) => (
+              <div key={item.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors border border-slate-100">
+                <div className="flex items-center gap-4 flex-1">
+                   <div 
+                     className="w-16 h-10 rounded-lg bg-slate-200 bg-cover bg-center flex-shrink-0 shadow-inner"
+                     style={{ backgroundImage: `url(${item.thumbnail})` }}
+                   />
+                   <div>
+                     <Badge variant="outline" className="text-[9px] font-black uppercase mb-1">{item.type}</Badge>
+                     <p className="font-bold text-slate-900 line-clamp-1 text-sm">{item.title}</p>
+                   </div>
+                </div>
+                <Button onClick={() => onImport(item)} size="sm" className="ml-4 bg-white text-slate-900 border-slate-200 hover:bg-slate-50 font-bold rounded-xl h-10 px-4">
+                  가져오기
+                </Button>
+              </div>
+            ))
+          ) : (
+            <p className="text-center py-12 text-slate-400 font-medium italic">불러올 수 있는 항목이 없습니다.</p>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
