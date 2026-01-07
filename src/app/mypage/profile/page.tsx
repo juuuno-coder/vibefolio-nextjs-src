@@ -188,7 +188,6 @@ export default function ProfileSettingsPage() {
           website: profile.website,
           social_links: profile.socialLinks,
           skills: profile.skills,
-          updated_at: new Date().toISOString(),
         })
         .eq('id', userId);
 
