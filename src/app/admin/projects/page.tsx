@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { useAdmin } from "@/hooks/useAdmin";
+import { ProjectDetailModalV2 } from "@/components/ProjectDetailModalV2";
 
 // 카테고리 목록
 const CATEGORIES = [
@@ -48,6 +49,8 @@ export default function AdminProjectsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any | null>(null);
 
   // 프로젝트 로드
   const loadProjects = useCallback(async () => {
@@ -409,7 +412,34 @@ export default function AdminProjectsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(`/project/${project.project_id}`, "_blank")}
+                        onClick={() => {
+                          setSelectedProject({
+                             id: project.project_id.toString(),
+                             urls: { 
+                               full: project.thumbnail_url || project.image_url || "/globe.svg", 
+                               regular: project.thumbnail_url || project.image_url || "/globe.svg" 
+                             },
+                             user: {
+                               username: project.User?.username || "익명",
+                               profile_image: { 
+                                 small: project.User?.avatar_url || "/globe.svg", 
+                                 large: project.User?.avatar_url || "/globe.svg" 
+                               }
+                             },
+                             likes: project.likes_count || project.likes || 0,
+                             views: project.views_count || project.views || 0,
+                             title: project.title,
+                             description: project.content_text,
+                             summary: project.summary, // 한줄 소개 매핑
+                             alt_description: project.title,
+                             created_at: project.created_at,
+                             width: 1200, 
+                             height: 800,
+                             userId: project.user_id,
+                             rendering_type: project.rendering_type
+                          });
+                          setDetailModalOpen(true);
+                        }}
                       >
                         <Eye size={16} className="mr-1" />
                         보기
@@ -430,6 +460,12 @@ export default function AdminProjectsPage() {
           </CardContent>
         </Card>
       </div>
+      
+      <ProjectDetailModalV2
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+        project={selectedProject}
+      />
     </div>
   );
 }
