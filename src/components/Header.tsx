@@ -11,7 +11,8 @@ import {
   LogOut, 
   LayoutDashboard,
   Bell,
-  ChevronDown
+  ChevronDown,
+  Zap
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,20 @@ export function Header({
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [trends, setTrends] = useState<{ query: string; count: number }[]>([]);
   const router = useRouter();
+
+  // 검색 트렌드 불러오기
+  useEffect(() => {
+    if (isSearchOpen) {
+      fetch("/api/search/trends")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.trends) setTrends(data.trends);
+        })
+        .catch((err) => console.error("Trends fetch error:", err));
+    }
+  }, [isSearchOpen]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,11 +67,30 @@ export function Header({
       const target = e.target as HTMLInputElement;
       const query = target.value.trim();
       if (query) {
+        // 검색 로그 기록 (비동기로 실행)
+        fetch("/api/search/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query }),
+        }).catch(err => console.error("Log error:", err));
+
         router.push(`/?q=${encodeURIComponent(query)}`);
         setIsSearchOpen(false);
         target.value = '';
       }
     }
+  };
+
+  const handleTrendClick = (query: string) => {
+    // 트렌드 클릭 시에도 로그 기록
+    fetch("/api/search/log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+    }).catch(err => console.error("Log error:", err));
+
+    router.push(`/?q=${encodeURIComponent(query)}`);
+    setIsSearchOpen(false);
   };
 
   const menuItems = [
@@ -98,26 +131,59 @@ export function Header({
         {/* Right: Search & Auth */}
         <div className="flex items-center gap-5">
            {/* Search Bar */}
-           <div className="hidden lg:flex items-center">
-              <div className={`flex items-center transition-all duration-300 ${isSearchOpen ? 'w-64 bg-gray-100 px-4 py-2 opacity-100' : 'w-10 opacity-70'} rounded-full`}>
+           <div className="hidden lg:flex items-center relative">
+              <div className={`flex items-center transition-all duration-300 ${isSearchOpen ? 'w-80 bg-gray-100 px-4 py-2.5 opacity-100 shadow-inner' : 'w-10 opacity-70'} rounded-full`}>
                  <button 
-                    className="p-1 outline-none"
+                    className="p-1 outline-none hover:scale-110 transition-transform"
                     onClick={() => setIsSearchOpen(!isSearchOpen)}
                  >
-                    <Search size={20} className="text-gray-900" />
-                 </button>
-                 {isSearchOpen && (
-                    <input 
-                       autoFocus
-                       type="text"
-                       className="bg-transparent border-none outline-none text-sm w-full font-pretendard placeholder:text-gray-400 ml-2"
-                       placeholder="검색어를 입력하세요"
-                       onKeyDown={handleSearchKeyDown}
-                       onBlur={() => !onSetCategory && setIsSearchOpen(false)}
-                    />
-                 )}
-              </div>
-           </div>
+                    <Search size={20} className={isSearchOpen ? "text-green-600" : "text-gray-900"} />
+                  </button>
+                  {isSearchOpen && (
+                     <input 
+                        autoFocus
+                        type="text"
+                        className="bg-transparent border-none outline-none text-sm w-full font-pretendard placeholder:text-gray-400 ml-2"
+                        placeholder="어떤 영감을 찾으시나요?"
+                        onKeyDown={handleSearchKeyDown}
+                     />
+                  )}
+               </div>
+
+               {/* Trending Keywords Dropdown */}
+               {isSearchOpen && (
+                  <div className="absolute top-full mt-3 right-0 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 animate-in fade-in slide-in-from-top-2 duration-200 z-[101]">
+                     <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                           <Zap size={12} className="text-green-500 fill-green-500" />
+                           실시간 인기 검색어
+                        </h3>
+                        <button onClick={() => setIsSearchOpen(false)} className="text-gray-300 hover:text-gray-500 transition-colors">
+                           <X size={14} />
+                        </button>
+                     </div>
+                     <div className="flex flex-wrap gap-2">
+                        {trends.length > 0 ? (
+                           trends.map((trend, idx) => (
+                              <button
+                                 key={idx}
+                                 onClick={() => handleTrendClick(trend.query)}
+                                 className="px-3 py-1.5 bg-gray-50 hover:bg-green-50 hover:text-green-700 text-[13px] font-medium text-gray-700 rounded-full transition-all border border-transparent hover:border-green-100"
+                              >
+                                 <span className="text-green-500 mr-1 opacity-50 font-bold">{idx + 1}</span>
+                                 {trend.query}
+                              </button>
+                           ))
+                        ) : (
+                           <p className="text-sm text-gray-400 py-2">인기 검색어를 불러오는 중...</p>
+                        )}
+                     </div>
+                     <div className="mt-5 pt-4 border-t border-gray-50">
+                        <p className="text-[11px] text-gray-400 text-center">지금 유저들이 가장 많이 찾는 영감입니다.</p>
+                     </div>
+                  </div>
+               )}
+            </div>
 
             {/* Auth Buttons */}
             <div className="hidden md:flex items-center gap-4 font-poppins text-[15px] font-medium">
