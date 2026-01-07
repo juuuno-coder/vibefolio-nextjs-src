@@ -793,20 +793,25 @@ export function ProjectDetailModalV2({
                 </div>
 
                 {/* 프로젝트 정보 */}
-                <div className="p-4 border-b border-gray-100">
+                <div className="p-4 border-b border-gray-100 bg-gray-50/50">
                   <div className="flex items-center gap-2 mb-2">
                     <Avatar className="w-8 h-8 bg-white">
                       <AvatarImage src={project.user.profile_image.large} />
                       <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-3 h-3" /></AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="font-bold text-xs">{project.user.username}</p>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-xs">{project.user.username}</p>
+                        <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-medium">작성자</span>
+                      </div>
                       <p className="text-[10px] text-gray-500">{dayjs(project.created_at).fromNow()}</p>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-700 leading-relaxed line-clamp-3">
-                    {project.description || "설명이 없습니다."}
-                  </p>
+                  {project.description && (
+                    <p className="text-xs text-gray-700 leading-relaxed line-clamp-3 mt-2">
+                      {project.description}
+                    </p>
+                  )}
                 </div>
 
                 {/* 댓글 목록 */}
