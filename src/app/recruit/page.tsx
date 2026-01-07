@@ -404,7 +404,7 @@ export default function RecruitPage() {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button
-                  className="bg-[#4ACAD4] hover:bg-[#41a3aa]"
+                  className="bg-green-600 hover:bg-green-700 text-white"
                   onClick={() => handleDialogClose()}
                 >
                   <Plus size={18} className="mr-2" />
@@ -580,7 +580,7 @@ export default function RecruitPage() {
                     </Button>
                     <Button
                       onClick={handleSubmit}
-                      className="bg-[#4ACAD4] hover:bg-[#41a3aa]"
+                      className="bg-green-600 hover:bg-green-700 text-white"
                     >
                       {editingItem ? "수정" : "추가"}
                     </Button>
@@ -729,7 +729,7 @@ function ItemCard({
                   ? 'bg-gray-200 text-gray-500' 
                   : dday === 'D-Day' 
                     ? 'bg-red-500 text-white' 
-                    : 'bg-[#4ACAD4]/20 text-[#4ACAD4]'
+                    : 'bg-green-50 text-green-600 border border-green-200'
               }`}>
                 {dday}
               </span>

@@ -462,7 +462,7 @@ export default function TiptapUploadPage() {
               <span className="text-sm font-medium">에디터로 돌아가기</span>
             </button>
             <div className="text-right">
-               <h1 className="text-3xl font-black text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-teal-600">
+               <h1 className="text-3xl font-black text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600">
                 발행 설정
                </h1>
                <p className="text-sm text-gray-500 mt-1">프로젝트의 마지막 디테일을 채워주세요</p>

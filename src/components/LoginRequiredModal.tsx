@@ -29,7 +29,7 @@ export function LoginRequiredModal({
       <DialogContent className="max-w-sm p-6">
         <div className="flex flex-col items-center text-center">
           {/* 아이콘 */}
-          <div className="w-16 h-16 bg-gradient-to-br from-[#4ACAD4] to-[#3db8c0] rounded-full flex items-center justify-center mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mb-4">
             <FontAwesomeIcon icon={faLock} className="w-7 h-7 text-white" />
           </div>
 
@@ -54,7 +54,7 @@ export function LoginRequiredModal({
             </Button>
             <Button
               onClick={handleLogin}
-              className="flex-1 h-11 rounded-full bg-[#4ACAD4] hover:bg-[#3db8c0] text-white"
+              className="flex-1 h-11 rounded-full bg-green-600 hover:bg-green-700 text-white"
             >
               <FontAwesomeIcon icon={faRightToBracket} className="w-4 h-4 mr-2" />
               로그인

@@ -293,7 +293,7 @@ export function ProjectDetailModal({
                                 <AvatarFallback><User /></AvatarFallback>
                             </Avatar>
                             <div>
-                                <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#4ACAD4] transition-colors">
+                                <h3 className="text-lg font-bold text-gray-900 group-hover:text-green-600 transition-colors">
                                     {project.description ? (project.description.length > 30 ? project.description.slice(0, 30) + "..." : project.description) : "무제 프로젝트"}
                                 </h3>
                                 <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
@@ -308,7 +308,7 @@ export function ProjectDetailModal({
                                         className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
                                           following 
                                             ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' 
-                                            : 'bg-[#4ACAD4] text-white hover:bg-[#3dbdc6]'
+                                            : 'bg-green-600 text-white hover:bg-green-700'
                                         }`}
                                       >
                                         {loading.follow ? (
@@ -325,8 +325,8 @@ export function ProjectDetailModal({
                         </Link>
                         
                         <div className="flex items-center gap-2">
-                            <div className="bg-[#4ACAD4] text-white text-xs font-bold px-2 py-3 rounded-b-sm -mt-10 mr-4 shadow-md">
-                                D
+                            <div className="bg-green-600 text-white text-xs font-bold px-2 py-3 rounded-b-sm -mt-10 mr-4 shadow-md">
+                                V
                             </div>
                         </div>
                     </div>
@@ -374,7 +374,7 @@ export function ProjectDetailModal({
 
                 {/* 제안하기 */}
                 <div className="flex flex-col items-center gap-1 group cursor-pointer">
-                    <div className="w-12 h-12 rounded-full bg-gray-800/80 backdrop-blur-sm flex items-center justify-center text-white hover:bg-[#4ACAD4] transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-gray-800/80 backdrop-blur-sm flex items-center justify-center text-white hover:bg-green-600 transition-colors">
                         <Send size={20} />
                     </div>
                     <span className="text-[10px] text-white/80 font-medium opacity-0 group-hover:opacity-100 transition-opacity">제안하기</span>

@@ -106,7 +106,7 @@ export function CommentModal({
                     size="sm" 
                     onClick={handleSubmit} 
                     disabled={!text.trim()}
-                    className="bg-[#4ACAD4] hover:bg-[#3dbdc6]"
+                    className="bg-green-600 hover:bg-green-700"
                 >
                     댓글 작성
                 </Button>

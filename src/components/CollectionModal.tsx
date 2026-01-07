@@ -183,7 +183,7 @@ export function CollectionModal({
           <div className="space-y-2 max-h-[300px] overflow-y-auto">
             {loadingCollections ? (
               <div className="text-center py-8">
-                <div className="animate-spin w-6 h-6 border-2 border-[#4ACAD4] border-t-transparent rounded-full mx-auto mb-2"></div>
+                <div className="animate-spin w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full mx-auto mb-2"></div>
                 <p className="text-gray-500 text-sm">컬렉션을 불러오는 중...</p>
               </div>
             ) : collections.length > 0 ? (
@@ -194,7 +194,7 @@ export function CollectionModal({
                   onDoubleClick={() => addToCollection(collection.collection_id)}
                   className={`w-full p-3 text-left border rounded-lg transition-colors flex items-center gap-2 ${
                     selectedCollectionId === collection.collection_id
-                      ? 'bg-[#4ACAD4] text-white border-[#4ACAD4]'
+                      ? 'bg-green-600 text-white border-green-600'
                       : 'hover:bg-gray-50 border-gray-200'
                   }`}
                 >
@@ -217,7 +217,7 @@ export function CollectionModal({
           {selectedCollectionId && (
             <Button
               onClick={() => addToCollection(selectedCollectionId)}
-              className="w-full bg-[#4ACAD4] hover:bg-[#3db8c0]"
+              className="w-full bg-green-600 hover:bg-green-700"
             >
               선택한 컬렉션에 저장
             </Button>

@@ -293,7 +293,7 @@ export default function ProfileSettingsPage() {
   if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4ACAD4]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     );
   }
@@ -320,7 +320,7 @@ export default function ProfileSettingsPage() {
                   {profile.coverImage ? (
                     <img src={profile.coverImage} alt="Cover" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-[#4ACAD4] to-[#05BCC6] flex items-center justify-center text-white/50">
+                    <div className="w-full h-full bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center text-white/50">
                        <p>이미지가 없습니다</p>
                     </div>
                   )}
@@ -452,7 +452,7 @@ export default function ProfileSettingsPage() {
                       onClick={() => toggleGenre(genre.value)}
                       className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
                         isSelected
-                          ? "border-[#4ACAD4] text-[#4ACAD4] bg-[#4ACAD4]/5"
+                          ? "border-green-600 text-green-600 bg-green-50"
                           : "border-gray-200 text-gray-500 hover:border-gray-300"
                       }`}
                     >
@@ -518,7 +518,7 @@ export default function ProfileSettingsPage() {
               {profile.skills.map((skill, idx) => (
                 <div
                   key={idx}
-                  className="bg-[#4ACAD4] text-white px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                  className="bg-green-600 text-white px-3 py-1 rounded-full text-sm flex items-center gap-2"
                 >
                   {skill}
                   <button
@@ -618,7 +618,7 @@ export default function ProfileSettingsPage() {
           </Button>
           <Button
             onClick={handleSave}
-            className="bg-[#4ACAD4] hover:bg-[#41a3aa]"
+            className="bg-green-600 hover:bg-green-700 text-white"
           >
             저장
           </Button>

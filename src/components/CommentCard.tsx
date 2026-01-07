@@ -42,7 +42,7 @@ export function CommentCard({ comment, onClick }: CommentCardProps) {
   return (
     <div
       onClick={handleClick}
-      className="bg-white rounded-lg border border-gray-200 hover:border-[#4ACAD4] hover:shadow-md transition-all cursor-pointer overflow-hidden"
+      className="bg-white rounded-lg border border-gray-200 hover:border-green-600 hover:shadow-md transition-all cursor-pointer overflow-hidden"
     >
       <div className="flex gap-4 p-4">
         {/* 프로젝트 썸네일 */}

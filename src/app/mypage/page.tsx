@@ -304,13 +304,13 @@ export default function MyPage() {
   if (!initialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4ACAD4]"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
       </div>
     );
   }
 
   const tabs = [
-    { id: 'projects' as TabType, label: '내 프로젝트', icon: Grid, color: 'text-[#4ACAD4]', bgColor: 'bg-[#4ACAD4]' },
+    { id: 'projects' as TabType, label: '내 프로젝트', icon: Grid, color: 'text-green-600', bgColor: 'bg-green-600' },
     { id: 'likes' as TabType, label: '좋아요', icon: Heart, color: 'text-red-500', bgColor: 'bg-red-500' },
     { id: 'collections' as TabType, label: '컬렉션', icon: Folder, color: 'text-blue-500', bgColor: 'bg-blue-500' },
     { id: 'proposals' as TabType, label: '받은 제안', icon: Send, color: 'text-green-500', bgColor: 'bg-green-500' },
@@ -325,7 +325,7 @@ export default function MyPage() {
         {/* 프로필 섹션 */}
         <div className="bg-white rounded-xl mb-6 border border-gray-100 shadow-sm overflow-hidden">
           {/* 커버 이미지 (hover 시 변경 버튼 노출) */}
-          <div className="h-40 md:h-56 bg-gradient-to-r from-[#4ACAD4] to-[#05BCC6] relative group">
+          <div className="h-40 md:h-56 bg-gradient-to-r from-green-500 to-green-600 relative group">
             {userProfile?.cover_image_url && (
               <img src={userProfile.cover_image_url} alt="Cover" className="w-full h-full object-cover" />
             )}
@@ -434,7 +434,7 @@ export default function MyPage() {
         {/* 콘텐츠 영역 */}
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4ACAD4]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
           </div>
         ) : (
           <>

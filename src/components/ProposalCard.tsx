@@ -54,7 +54,7 @@ export function ProposalCard({ proposal, type, onClick }: ProposalCardProps) {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-lg p-6 border border-gray-200 hover:border-[#4ACAD4] hover:shadow-md transition-all cursor-pointer"
+      className="bg-white rounded-lg p-6 border border-gray-200 hover:border-green-600 hover:shadow-md transition-all cursor-pointer"
     >
       {/* 헤더 */}
       <div className="flex items-start justify-between mb-4">
