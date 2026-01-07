@@ -312,7 +312,7 @@ export function StickyMenu({
                 return category ? (
                   <span 
                     key={cat}
-                    className="px-2 py-1 bg-[#4ACAD4]/20 text-[#4ACAD4] rounded-full text-xs font-medium flex items-center gap-1"
+                    className="px-2 py-1 bg-green-100/50 text-green-700 rounded-full text-xs font-medium flex items-center gap-1"
                   >
                     {category.label}
                     <button onClick={() => handleCategoryToggle(cat)}>

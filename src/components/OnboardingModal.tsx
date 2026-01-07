@@ -196,7 +196,7 @@ export function OnboardingModal({
         {/* 스텝 0: 환영 */}
         {step === 0 && (
           <div className="p-8 text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-[#4ACAD4] to-[#3db8c0] rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
               <FontAwesomeIcon icon={faStar} className="w-10 h-10 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -208,7 +208,7 @@ export function OnboardingModal({
             </p>
             <Button
               onClick={() => setStep(1)}
-              className="w-full h-12 bg-[#4ACAD4] hover:bg-[#3db8c0] text-white rounded-full"
+              className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-full"
             >
               시작하기
               <FontAwesomeIcon icon={faArrowRight} className="ml-2 w-4 h-4" />
@@ -220,8 +220,8 @@ export function OnboardingModal({
         {step === 1 && (
           <div className="p-8">
             <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-2 text-sm text-[#4ACAD4] font-medium mb-2">
-                <span className="w-6 h-6 rounded-full bg-[#4ACAD4] text-white flex items-center justify-center text-xs">1</span>
+              <div className="inline-flex items-center gap-2 text-sm text-green-600 font-medium mb-2">
+                <span className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center text-xs">1</span>
                 / 2
               </div>
               <h2 className="text-xl font-bold text-gray-900">
@@ -252,7 +252,7 @@ export function OnboardingModal({
             <Button
               onClick={handleNextStep}
               disabled={!nickname.trim()}
-              className="w-full h-12 bg-[#4ACAD4] hover:bg-[#3db8c0] text-white rounded-full mt-6"
+              className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-full mt-6"
             >
               다음
               <FontAwesomeIcon icon={faArrowRight} className="ml-2 w-4 h-4" />
@@ -264,8 +264,8 @@ export function OnboardingModal({
         {step === 2 && (
           <div className="p-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
             <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-2 text-sm text-[#4ACAD4] font-medium mb-2">
-                <span className="w-6 h-6 rounded-full bg-[#4ACAD4] text-white flex items-center justify-center text-xs">2</span>
+              <div className="inline-flex items-center gap-2 text-sm text-green-600 font-medium mb-2">
+                <span className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center text-xs">2</span>
                 / 2
               </div>
               <h2 className="text-xl font-bold text-gray-900">
@@ -299,14 +299,14 @@ export function OnboardingModal({
                       disabled={isDisabled}
                       className={`relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${
                         isSelected
-                          ? "bg-[#4ACAD4]/10 border-[#4ACAD4] text-[#4ACAD4]"
+                          ? "bg-green-50 border-green-600 text-green-600"
                           : isDisabled
                           ? "bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed"
-                          : "bg-white border-gray-200 text-gray-600 hover:border-[#4ACAD4] hover:text-[#4ACAD4]"
+                          : "bg-white border-gray-200 text-gray-600 hover:border-green-600 hover:text-green-600"
                       }`}
                     >
                       {isSelected && (
-                        <div className="absolute top-1 right-1 w-4 h-4 bg-[#4ACAD4] rounded-full flex items-center justify-center">
+                        <div className="absolute top-1 right-1 w-4 h-4 bg-green-600 rounded-full flex items-center justify-center">
                           <FontAwesomeIcon icon={faCheck} className="w-2 h-2 text-white" />
                         </div>
                       )}
@@ -338,10 +338,10 @@ export function OnboardingModal({
                       disabled={isDisabled}
                       className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-all flex items-center gap-1 ${
                         isSelected
-                          ? "bg-indigo-500 border-indigo-500 text-white"
+                          ? "bg-green-600 border-green-600 text-white"
                           : isDisabled
                           ? "bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed"
-                          : "bg-white border-gray-200 text-gray-600 hover:border-indigo-400 hover:text-indigo-500"
+                          : "bg-white border-gray-200 text-gray-600 hover:border-green-400 hover:text-green-500"
                       }`}
                     >
                       {field.label}
@@ -358,7 +358,7 @@ export function OnboardingModal({
             <Button
               onClick={handleComplete}
               disabled={loading || genres.length === 0}
-              className="w-full h-12 bg-[#4ACAD4] hover:bg-[#3db8c0] text-white rounded-full"
+              className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-full"
             >
               {loading ? "저장 중..." : "완료"}
             </Button>
@@ -399,7 +399,7 @@ export function OnboardingModal({
                 onComplete();
                 onOpenChange(false);
               }}
-              className="w-full h-12 bg-[#4ACAD4] hover:bg-[#3db8c0] text-white rounded-full"
+              className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-full"
             >
               서비스 시작하기
             </Button>

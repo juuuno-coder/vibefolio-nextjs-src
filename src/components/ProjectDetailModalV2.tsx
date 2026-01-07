@@ -67,7 +67,7 @@ function CommentItem({
           <div className="flex items-center gap-2 mt-1">
             <button
               onClick={() => onReply(comment.comment_id, comment.user?.username || 'Unknown')}
-              className="text-[9px] text-gray-500 hover:text-[#4ACAD4]"
+              className="text-[9px] text-gray-500 hover:text-green-600"
             >
               답글
             </button>
@@ -607,7 +607,7 @@ export function ProjectDetailModalV2({
                   }
                   setProposalModalOpen(true);
                 }}
-                className="flex-1 h-12 rounded-full bg-[#4ACAD4] hover:bg-[#3db8c0] text-white"
+                className="flex-1 h-12 rounded-full bg-green-600 hover:bg-green-700 text-white"
               >
                 <FontAwesomeIcon icon={faComment} className="w-4 h-4 mr-2" />
                 제안하기
@@ -694,7 +694,7 @@ export function ProjectDetailModalV2({
                 }}
                 className="flex flex-col items-center gap-1 group cursor-pointer mb-2"
               >
-                <Avatar className={`w-12 h-12 border-2 bg-white transition-all shadow-md group-hover:scale-105 ${following ? 'border-[#4ACAD4]' : 'border-white group-hover:border-[#4ACAD4]'}`}>
+                <Avatar className={`w-12 h-12 border-2 bg-white transition-all shadow-md group-hover:scale-105 ${following ? 'border-green-600' : 'border-white group-hover:border-green-600'}`}>
                   <AvatarImage src={project.user.profile_image.large} />
                   <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-4 h-4" /></AvatarFallback>
                 </Avatar>
@@ -710,7 +710,7 @@ export function ProjectDetailModalV2({
                     className={`text-xs px-3 py-1 h-8 rounded-full transition-all shadow-md ${
                       following 
                         ? 'bg-white text-gray-700 border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200' 
-                        : 'bg-[#4ACAD4] text-white hover:bg-[#3db8c0] hover:scale-105'
+                        : 'bg-green-600 text-white hover:bg-green-700 hover:scale-105'
                     }`}
                   >
                     {loading.follow ? '...' : (following ? '팔로잉' : '팔로우')}
@@ -733,7 +733,7 @@ export function ProjectDetailModalV2({
                   }
                   setProposalModalOpen(true);
                 }}
-                className="w-12 h-12 rounded-full bg-white text-gray-700 border border-gray-100 shadow-lg hover:bg-[#4ACAD4] hover:text-white hover:scale-105 flex items-center justify-center transition-all"
+                className="w-12 h-12 rounded-full bg-white text-gray-700 border border-gray-100 shadow-lg hover:bg-green-600 hover:text-white hover:scale-105 flex items-center justify-center transition-all"
                 title="제안하기"
               >
                 <FontAwesomeIcon icon={faPaperPlane} className="w-5 h-5" />
@@ -763,7 +763,7 @@ export function ProjectDetailModalV2({
 
               <button 
                 onClick={() => setShareModalOpen(true)}
-                className="w-12 h-12 rounded-full bg-white text-gray-700 border border-gray-100 shadow-lg hover:bg-[#4ACAD4] hover:text-white hover:scale-105 flex items-center justify-center transition-all"
+                className="w-12 h-12 rounded-full bg-white text-gray-700 border border-gray-100 shadow-lg hover:bg-green-600 hover:text-white hover:scale-105 flex items-center justify-center transition-all"
               >
                 <FontAwesomeIcon icon={faShareNodes} className="w-5 h-5" />
               </button>
@@ -771,7 +771,7 @@ export function ProjectDetailModalV2({
               <button 
                 onClick={() => setCommentsPanelOpen(!commentsPanelOpen)}
                 className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 ${
-                  commentsPanelOpen ? 'bg-[#4ACAD4] text-white border-[#4ACAD4]' : 'bg-white text-gray-700 hover:bg-[#4ACAD4] hover:text-white'
+                  commentsPanelOpen ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-700 hover:bg-green-600 hover:text-white'
                 }`}
               >
                 <FontAwesomeIcon icon={faComment} className="w-5 h-5" />
@@ -848,13 +848,13 @@ export function ProjectDetailModalV2({
                         onChange={(e) => setNewComment(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleCommentSubmit()}
                         placeholder={replyingTo ? `@${replyingTo.username}에게 답글...` : "댓글을 입력하세요..."}
-                        className="flex-1 px-2 py-1.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[#4ACAD4]"
+                        className="flex-1 px-2 py-1.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-green-600"
                       />
                       <Button
                         onClick={handleCommentSubmit}
                         disabled={!newComment.trim() || loading.comment}
                         size="sm"
-                        className="bg-[#4ACAD4] hover:bg-[#3db8c0] text-xs px-3"
+                        className="bg-green-600 hover:bg-green-700 text-xs px-3"
                       >
                         {loading.comment ? <FontAwesomeIcon icon={faSpinner} className="w-3 h-3 animate-spin" /> : '작성'}
                       </Button>
