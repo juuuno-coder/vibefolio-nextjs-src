@@ -87,10 +87,11 @@ export default function RecruitPage() {
 
   const loadItems = async () => {
     try {
-      // Supabase에서 활성화된 항목 가져오기
+      // Supabase에서 승인되고 활성화된 항목만 가져오기
       const { data, error } = await supabase
         .from('recruit_items')
         .select('*')
+        .eq('is_approved', true)
         .eq('is_active', true)
         .order('date', { ascending: true });
 
