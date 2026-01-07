@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { 
@@ -10,61 +13,70 @@ import {
   Zap,
   ArrowRight
 } from "lucide-react";
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "서비스 소개 | 바이브폴리오",
-  description: "바이브폴리오는 전 세계 크리에이터들과 영감을 주고받으며 함께 성장하는 프리미엄 포트폴리오 커뮤니티입니다.",
-  openGraph: {
-    title: "서비스 소개 | 바이브폴리오",
-    description: "바이브폴리오는 전 세계 크리에이터들과 영감을 주고받으며 함께 성장하는 프리미엄 포트폴리오 커뮤니티입니다.",
-  }
-};
 
 export default function ServicePage() {
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsVideoLoaded(true);
+  }, []);
+
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-green-100 selection:text-green-900">
       {/* Full-screen Hero Section with AI Video Background */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        {/* Video Background */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden bg-slate-900">
+        {/* Video Background Container */}
         <div className="absolute inset-0 z-0">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-          >
-            <source
-              src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-a-human-brain-spinning-around-31032-large.mp4"
-              type="video/mp4"
-            />
-          </video>
-          {/* Subtle Overlay to make text readable */}
-          <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px]"></div>
+          {isVideoLoaded && (
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover opacity-60"
+              onCanPlayThrough={() => console.log("Video can play")}
+            >
+              <source
+                src="https://cdn.pixabay.com/video/2023/10/20/185799-876127110_large.mp4"
+                type="video/mp4"
+              />
+              {/* Fallback video if first one fails */}
+              <source
+                src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-a-human-brain-spinning-around-31032-large.mp4"
+                type="video/mp4"
+              />
+            </video>
+          )}
+          {/* Gradient Overlay for Depth and Readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-transparent to-slate-900/80"></div>
         </div>
         
         <div className="max-w-7xl mx-auto text-center relative z-10 px-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100 text-green-700 text-sm font-medium mb-8 animate-fade-in-up">
-            <Rocket size={14} />
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-green-400 text-sm font-medium mb-8 backdrop-blur-md animate-fade-in-up">
+            <Rocket size={16} />
             <span>크리에이터의 새로운 무대, Vibefolio 1.0</span>
           </div>
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 mb-8 leading-[1.1] animate-fade-in-up animation-delay-200">
-            당신의 모든 <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-500">영감</span>이<br />
+          <h1 className="text-5xl md:text-8xl font-black tracking-tight text-white mb-8 leading-[1.1] animate-fade-in-up animation-delay-200">
+            당신의 모든 <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">영감</span>이<br />
             하나의 포트폴리오가 되는 순간.
           </h1>
-          <p className="text-xl text-slate-600 mb-12 max-w-2xl mx-auto leading-relaxed animate-fade-in-up animation-delay-400">
+          <p className="text-xl md:text-2xl text-slate-200 mb-12 max-w-3xl mx-auto leading-relaxed animate-fade-in-up animation-delay-400 font-medium opacity-90">
             Vibefolio는 단순한 기록을 넘어, 전 세계 크리에이터들과 영감을 주고받으며 
             함께 성장하는 프리미엄 포트폴리오 커뮤니티입니다.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in-up animation-delay-600">
-            <Button asChild size="lg" className="h-14 px-8 bg-slate-900 hover:bg-slate-800 text-white rounded-full text-lg font-bold shadow-lg shadow-slate-200 transition-all hover:-translate-y-1">
+          <div className="flex flex-col sm:flex-row justify-center gap-6 animate-fade-in-up animation-delay-600">
+            <Button asChild size="lg" className="h-16 px-10 bg-green-600 hover:bg-green-500 text-white rounded-full text-xl font-bold shadow-xl shadow-green-900/20 transition-all hover:-translate-y-1">
               <Link href="/project/upload">지금 시작하기</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="h-14 px-8 rounded-full border-2 text-lg font-bold transition-all hover:bg-slate-50 hover:-translate-y-1">
+            <Button asChild size="lg" variant="outline" className="h-16 px-10 rounded-full border-2 border-white/30 text-white text-xl font-bold transition-all hover:bg-white/10 hover:border-white hover:-translate-y-1 backdrop-blur-sm">
               <Link href="/faq">사용 방법 알아보기</Link>
             </Button>
           </div>
+        </div>
+
+        {/* Scroll down indicator */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-white/50">
+          <ArrowRight className="rotate-90 w-8 h-8" />
         </div>
       </section>
 
