@@ -13,12 +13,20 @@ interface RecruitItem {
   title: string;
   description: string;
   type: "job" | "contest" | "event";
-  company?: string;
+  date: string;
+  location?: string | null;
+  prize?: string | null;
+  salary?: string | null;
+  company?: string | null;
+  employment_type?: string | null;
+  link?: string | null;
+  thumbnail?: string | null;
   show_as_banner: boolean;
-  banner_location?: "discover" | "recruit" | "both";
+  banner_location?: "discover" | "recruit" | "both" | null;
   banner_priority: number;
   is_approved: boolean;
   is_active: boolean;
+  created_at: string;
 }
 
 export default function BannerManagementPage() {
@@ -39,7 +47,11 @@ export default function BannerManagementPage() {
         .order('banner_priority', { ascending: true });
 
       if (error) throw error;
-      setItems(data || []);
+      setItems((data as any[])?.map(item => ({
+        ...item,
+        show_as_banner: item.show_as_banner ?? false,
+        banner_priority: item.banner_priority ?? 999,
+      })) || []);
     } catch (error) {
       console.error('Failed to load items:', error);
       toast.error('항목을 불러오는데 실패했습니다.');
@@ -59,7 +71,7 @@ export default function BannerManagementPage() {
           banner_approved_at: !currentStatus ? new Date().toISOString() : null,
           banner_approved_by: !currentStatus ? user?.id : null,
           banner_location: !currentStatus ? 'both' : null,
-        })
+        } as any)
         .eq('id', id);
 
       if (error) throw error;
@@ -76,7 +88,7 @@ export default function BannerManagementPage() {
     try {
       const { error } = await supabase
         .from('recruit_items')
-        .update({ banner_location: location })
+        .update({ banner_location: location } as any)
         .eq('id', id);
 
       if (error) throw error;
@@ -98,7 +110,7 @@ export default function BannerManagementPage() {
     try {
       const { error } = await supabase
         .from('recruit_items')
-        .update({ banner_priority: newPriority })
+        .update({ banner_priority: newPriority } as any)
         .eq('id', id);
 
       if (error) throw error;

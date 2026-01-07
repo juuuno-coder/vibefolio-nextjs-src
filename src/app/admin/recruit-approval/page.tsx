@@ -14,13 +14,16 @@ interface PendingItem {
   description: string;
   type: "job" | "contest" | "event";
   date: string;
-  location?: string;
-  prize?: string;
-  salary?: string;
-  company?: string;
-  employment_type?: string;
-  link?: string;
-  crawled_at: string;
+  location?: string | null;
+  prize?: string | null;
+  salary?: string | null;
+  company?: string | null;
+  employment_type?: string | null;
+  link?: string | null;
+  thumbnail?: string | null;
+  is_active: boolean;
+  created_at: string;
+  crawled_at?: string | null;
 }
 
 export default function RecruitApprovalPage() {
@@ -42,7 +45,7 @@ export default function RecruitApprovalPage() {
 
       if (error) throw error;
 
-      setPendingItems(data || []);
+      setPendingItems((data as any) || []);
     } catch (error) {
       console.error('Failed to load pending items:', error);
       toast.error('승인 대기 항목을 불러오는데 실패했습니다.');
@@ -225,7 +228,7 @@ export default function RecruitApprovalPage() {
                     )}
 
                     <div className="text-xs text-gray-400 mb-4">
-                      크롤링 시간: {new Date(item.crawled_at).toLocaleString("ko-KR")}
+                      크롤링 시간: {item.crawled_at ? new Date(item.crawled_at).toLocaleString("ko-KR") : '알 수 없음'}
                     </div>
 
                     <div className="flex gap-2">
