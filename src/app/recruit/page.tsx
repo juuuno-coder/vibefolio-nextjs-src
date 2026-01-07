@@ -696,13 +696,13 @@ function ItemCard({
   const getTypeInfo = (type: string) => {
     switch (type) {
       case "job":
-        return { label: "채용", color: "bg-blue-100 text-blue-700", icon: Briefcase };
+        return { label: "채용", color: "bg-blue-50 text-blue-600 border-blue-100", icon: Briefcase };
       case "contest":
-        return { label: "공모전", color: "bg-purple-100 text-purple-700", icon: Award };
+        return { label: "공모전", color: "bg-purple-50 text-purple-600 border-purple-100", icon: Award };
       case "event":
-        return { label: "이벤트", color: "bg-green-100 text-green-700", icon: Calendar };
+        return { label: "이벤트", color: "bg-emerald-50 text-emerald-600 border-emerald-100", icon: Calendar };
       default:
-        return { label: "기타", color: "bg-gray-100 text-gray-700", icon: Calendar };
+        return { label: "기타", color: "bg-gray-50 text-gray-600 border-gray-100", icon: Calendar };
     }
   };
 
@@ -711,92 +711,89 @@ function ItemCard({
   const isExpired = dday === '마감';
 
   return (
-    <Card className={`hover:shadow-lg transition-shadow duration-300 ${isExpired ? 'opacity-60' : ''}`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <span className={`px-2 py-1 rounded text-xs font-medium ${typeInfo.color}`}>
-                {typeInfo.label}
-              </span>
-              {item.employmentType && (
-                <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                  {item.employmentType}
-                </span>
-              )}
-              <span className={`px-2 py-1 rounded text-xs font-bold ${
-                isExpired 
-                  ? 'bg-gray-200 text-gray-500' 
-                  : dday === 'D-Day' 
-                    ? 'bg-red-500 text-white' 
-                    : 'bg-green-50 text-green-600 border border-green-200'
-              }`}>
-                {dday}
-              </span>
-            </div>
-            <CardTitle className="text-lg line-clamp-2">{item.title}</CardTitle>
-            {item.company && (
-              <p className="text-sm text-gray-600 mt-1">{item.company}</p>
-            )}
+    <Card className={`group border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[32px] overflow-hidden bg-white flex flex-col h-full ${isExpired ? 'opacity-60' : ''}`}>
+      {/* Thumbnail Area */}
+      <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+        {item.thumbnail ? (
+          <img 
+            src={item.thumbnail} 
+            alt={item.title} 
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-slate-300">
+            <typeInfo.icon size={48} strokeWidth={1} />
           </div>
+        )}
+        
+        {/* Status Badge */}
+        <div className="absolute top-4 left-4 flex gap-2 z-10">
+          <span className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase border ${typeInfo.color} backdrop-blur-md bg-white/80 shadow-sm`}>
+            {typeInfo.label}
+          </span>
+          <span className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase shadow-sm ${
+            isExpired 
+              ? 'bg-slate-200 text-slate-500' 
+              : dday === 'D-Day' 
+                ? 'bg-red-500 text-white animate-pulse' 
+                : 'bg-slate-900 text-white'
+          }`}>
+            {dday}
+          </span>
+        </div>
+
+        {/* Action Buttons (Overlay for Admin) */}
+        {isAdmin && (
+          <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <Button size="icon" variant="secondary" className="w-8 h-8 rounded-full bg-white/90 hover:bg-white text-slate-600 shadow-sm" onClick={() => onEdit(item)}>
+              <Edit size={14} />
+            </Button>
+            <Button size="icon" variant="destructive" className="w-8 h-8 rounded-full bg-red-500/90 hover:bg-red-500 text-white shadow-sm border-none" onClick={() => onDelete(item.id)}>
+              <Trash2 size={14} />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <CardHeader className="p-6 pb-2">
+        <div className="space-y-2">
+          {item.company && (
+            <p className="text-[11px] font-black text-[#4ACAD4] tracking-wider uppercase leading-none">{item.company}</p>
+          )}
+          <CardTitle className="text-xl font-bold line-clamp-2 leading-tight group-hover:text-[#4ACAD4] transition-colors">
+            {item.title}
+          </CardTitle>
         </div>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+
+      <CardContent className="p-6 pt-0 flex flex-col flex-1">
+        <p className="text-sm text-slate-500 mb-6 line-clamp-2 font-medium">
           {item.description}
         </p>
-        <Separator className="my-4" />
-        <div className="space-y-2 text-sm text-gray-600">
-          <div className="flex items-center gap-2">
-            <Clock size={16} className="text-gray-400" />
-            <span>{new Date(item.date).toLocaleDateString("ko-KR")}</span>
+        
+        <div className="mt-auto pt-4 border-t border-slate-50 space-y-2.5">
+          <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
+            <div className="flex items-center gap-1.5">
+              <Clock size={12} className="text-[#4ACAD4]" />
+              <span>~ {new Date(item.date).toLocaleDateString("ko-KR")}</span>
+            </div>
+            {item.location && (
+              <div className="flex items-center gap-1.5">
+                <MapPin size={12} className="text-slate-300" />
+                <span>{item.location}</span>
+              </div>
+            )}
           </div>
-          {item.location && (
-            <div className="flex items-center gap-2">
-              <MapPin size={16} className="text-gray-400" />
-              <span>{item.location}</span>
-            </div>
-          )}
-          {item.salary && (
-            <div className="flex items-center gap-2">
-              <DollarSign size={16} className="text-gray-400" />
-              <span>{item.salary}</span>
-            </div>
-          )}
-          {item.prize && (
-            <div className="flex items-center gap-2">
-              <Award size={16} className="text-gray-400" />
-              <span>{item.prize}</span>
-            </div>
-          )}
-        </div>
-        <div className="flex gap-2 mt-4">
+
           <Button
-            variant="default"
-            size="sm"
-            className="flex-1 bg-green-600 hover:bg-green-700"
+            variant="ghost"
+            className="w-full h-12 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white transition-all duration-300 font-bold text-xs flex items-center justify-center gap-2 group/btn"
             onClick={() => onViewDetail(item)}
             disabled={isExpired}
           >
-            <ExternalLink size={16} className="mr-1" />
             자세히 보기
+            <ExternalLink size={14} className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
           </Button>
-          {/* 관리자만 수정/삭제 버튼 표시 */}
-          {isAdmin && (
-            <>
-              <Button variant="ghost" size="sm" onClick={() => onEdit(item)}>
-                <Edit size={16} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(item.id)}
-                className="text-red-500 hover:text-red-700"
-              >
-                <Trash2 size={16} />
-              </Button>
-            </>
-          )}
         </div>
       </CardContent>
     </Card>

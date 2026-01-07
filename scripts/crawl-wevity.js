@@ -20,11 +20,11 @@ const supabase = createClient(
 );
 
 async function crawlWevity() {
-  console.log('🚀 Wevity 크롤링 시작...\n');
+  console.log('🚀 Wevity 공모전 크롤링 시작 (이미지 포함)...\n');
 
   try {
-    // Wevity 공모전 목록 페이지
-    const url = 'https://www.wevity.com/?c=find&s=1&gub=1&cidx=';
+    // Wevity 공모전 목록 페이지 (디자인/웹/IT 카테고리 등)
+    const url = 'https://www.wevity.com/?c=find&s=1&gub=1&cidx=20'; 
     
     console.log(`📡 요청 중: ${url}`);
     
@@ -42,42 +42,53 @@ async function crawlWevity() {
     const $ = cheerio.load(response.data);
     const items = [];
 
-    // Wevity의 실제 HTML 구조 분석 필요
-    // 예시: 공모전 목록 아이템 선택자
-    $('.list-item, .contest-item, .item').each((i, element) => {
+    // 위비티 리스트 항목 파싱
+    $('.list li, .contest-list li').each((i, element) => {
       try {
-        // 제목 추출 (여러 가능한 선택자 시도)
-        const title = $(element).find('h3, .title, .subject, strong').first().text().trim();
+        const $el = $(element);
         
-        // 링크 추출
-        const linkElement = $(element).find('a').first();
-        let link = linkElement.attr('href');
+        // 제목 및 링크
+        const $titleLink = $el.find('.tit a, .hide-tit a, a.subject').first();
+        const title = $titleLink.text().trim();
+        let link = $titleLink.attr('href');
+        
+        if (!title || !link) return;
+
         if (link && !link.startsWith('http')) {
           link = 'https://www.wevity.com' + (link.startsWith('/') ? '' : '/') + link;
         }
-
-        // 날짜 추출
-        const dateText = $(element).find('.date, .dday, .deadline, time').first().text().trim();
         
-        // 설명 추출
-        const description = $(element).find('.desc, .description, p').first().text().trim();
-
-        if (title && link) {
-          items.push({
-            title,
-            description: description || '자세한 내용은 링크를 참조하세요.',
-            type: 'contest',
-            date: parseDate(dateText),
-            link,
-            company: 'Wevity',
-            location: '온라인',
-            is_approved: false,
-            is_active: false,
-            crawled_at: new Date().toISOString()
-          });
-
-          console.log(`📝 발견: ${title}`);
+        // 이미지 (썸네일)
+        const $img = $el.find('.thumb img, .img img, img').first();
+        let thumbnail = $img.attr('src');
+        if (thumbnail && !thumbnail.startsWith('http')) {
+          thumbnail = 'https://www.wevity.com' + (thumbnail.startsWith('/') ? '' : '/') + thumbnail;
         }
+
+        // 날짜 (마감일)
+        const dateText = $el.find('.dday, .hide-dday, .date').first().text().trim();
+        
+        // 주최사
+        const company = $el.find('.organ, .company, .sub-text').first().text().trim() || '위비티';
+        
+        // 설명/카테고리
+        const description = $el.find('.desc, .cat, .category').first().text().trim();
+
+        items.push({
+          title,
+          description: description || `${company}에서 주최하는 공모전입니다.`,
+          type: 'contest',
+          date: parseDate(dateText),
+          link,
+          company,
+          thumbnail,
+          location: '온라인',
+          is_approved: true, 
+          is_active: true,
+          crawled_at: new Date().toISOString()
+        });
+
+        console.log(`📝 발견: ${title}`);
       } catch (err) {
         console.error('항목 파싱 오류:', err.message);
       }
@@ -88,13 +99,12 @@ async function crawlWevity() {
     // DB에 저장
     if (items.length > 0) {
       for (const item of items) {
-        // 중복 체크
+        // 중복 체크 (제목으로 확인)
         const { data: existing } = await supabase
           .from('recruit_items')
           .select('id')
           .eq('title', item.title)
-          .eq('link', item.link)
-          .single();
+          .maybeSingle();
 
         if (!existing) {
           const { error } = await supabase
@@ -111,28 +121,30 @@ async function crawlWevity() {
         }
       }
     } else {
-      console.log('⚠️ 크롤링된 항목이 없습니다.');
-      console.log('\n💡 HTML 구조를 확인하고 선택자를 수정해야 합니다.');
-      console.log('   브라우저에서 F12를 눌러 Elements 탭을 확인하세요.');
+      console.log('⚠️ 크롤링된 항목이 없습니다. 선택자를 확인하세요.');
     }
 
     console.log('\n✨ 크롤링 완료!');
 
   } catch (error) {
     console.error('💥 크롤링 오류:', error.message);
-    
-    if (error.response) {
-      console.error(`   상태 코드: ${error.response.status}`);
-    }
   }
 }
 
 // 날짜 파싱 함수
 function parseDate(dateText) {
   if (!dateText) {
-    // 기본값: 30일 후
     const date = new Date();
     date.setDate(date.getDate() + 30);
+    return date.toISOString().split('T')[0];
+  }
+
+  // D-day 형식 처리 (D-15 등)
+  const ddayMatch = dateText.match(/D-(\d+)/i);
+  if (ddayMatch) {
+    const days = parseInt(ddayMatch[1]);
+    const date = new Date();
+    date.setDate(date.getDate() + days);
     return date.toISOString().split('T')[0];
   }
 
@@ -142,16 +154,6 @@ function parseDate(dateText) {
     return `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
   }
 
-  // D-day 형식 처리
-  const ddayMatch = dateText.match(/D-(\d+)/);
-  if (ddayMatch) {
-    const days = parseInt(ddayMatch[1]);
-    const date = new Date();
-    date.setDate(date.getDate() + days);
-    return date.toISOString().split('T')[0];
-  }
-
-  // 파싱 실패 시 30일 후
   const date = new Date();
   date.setDate(date.getDate() + 30);
   return date.toISOString().split('T')[0];

@@ -11,48 +11,58 @@ import { CRAWLER_SOURCES } from './sources';
 async function crawlWevity(): Promise<CrawledItem[]> {
   const url = 'https://www.wevity.com/?c=find&s=1&gub=1&cidx=20'; // 디자인/웹 분야
   try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const res = await fetch(url, { 
+      headers: { 
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' 
+      } 
+    });
     if (!res.ok) throw new Error(`Wevity fetch failed: ${res.status}`);
     const html = await res.text();
     const $ = cheerio.load(html);
     
     const items: CrawledItem[] = [];
     
-    // Select items from the list. Based on inspection: li .hide-info
-    // Finding all elements that look like items
-    $('li').each((_, el) => {
+    // Wevity list items can be under .list or direct li
+    $('.list li, .contest-list li, li').each((_, el) => {
       const $li = $(el);
-      const $info = $li.find('.hide-info');
-      if ($info.length === 0) return;
       
-      const $titleLink = $info.find('.hide-tit a');
+      // Try multiple title selectors
+      const $titleLink = $li.find('.tit a, .hide-tit a, a.subject, .title a').first();
       const title = $titleLink.text().trim();
-      if (!title) return;
+      if (!title || title.length < 2) return;
       
       const linkHref = $titleLink.attr('href');
-      const link = linkHref ? `https://www.wevity.com/${linkHref}` : '';
+      let link = linkHref || '';
+      if (link && !link.startsWith('http')) {
+        link = `https://www.wevity.com${link.startsWith('/') ? '' : '/'}${link}`;
+      }
       
-      const $img = $li.find('img');
-      const imgSrc = $img.attr('src');
-      const image = imgSrc ? `https://www.wevity.com${imgSrc}` : undefined;
+      // Image extraction (Thumbnail is critical for banners!)
+      const $img = $li.find('.thumb img, .img img, img').first();
+      let image = $img.attr('src');
+      if (image && !image.startsWith('http')) {
+        image = `https://www.wevity.com${image.startsWith('/') ? '' : '/'}${image}`;
+      }
       
-      const dday = $info.find('.hide-dday').text().trim();
-      const category = $info.find('.hide-cat').text().trim();
+      // Meta info
+      const dday = $li.find('.dday, .hide-dday, .date').first().text().trim();
+      const category = $li.find('.cat, .hide-cat, .category').first().text().trim();
+      const company = $li.find('.organ, .company, .sub-text').first().text().trim() || '위비티 공모전';
       
       items.push({
         title,
-        description: category || '공모전',
+        description: category || '공모전 정보를 확인하세요.',
         type: 'contest',
-        date: dday, // D-day format
-        company: 'Wevity Info', // 주최사 정보가 이 뷰에 없어서 대체
-        location: 'Online',
+        date: dday || '상시모집',
+        company: company,
+        location: '온라인/기타',
         link,
         sourceUrl: 'https://www.wevity.com',
-        image,
+        image: image || undefined,
       });
     });
     
-    return items.slice(0, 10); // Limit to 10
+    return items.filter(i => i.title && i.link).slice(0, 15);
   } catch (e) {
     console.error('Wevity crawl error:', e);
     return [];

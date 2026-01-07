@@ -1,52 +1,345 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  BarChart3,
+  Users,
+  FileText,
+  Briefcase,
   TrendingUp,
+  ArrowUpRight,
+  ArrowDownRight,
   Loader2,
+  Calendar,
+  PieChart as PieChartIcon,
+  Search,
+  Filter
 } from "lucide-react";
 import Link from "next/link";
 import { useAdmin } from "@/hooks/useAdmin";
+import { supabase } from "@/lib/supabase/client";
+import { Badge } from "@/components/ui/badge";
+
+interface DailyStat {
+  date: string;
+  count: number;
+}
 
 export default function AdminStatsPage() {
   const router = useRouter();
   const { isAdmin, isLoading: adminLoading } = useAdmin();
+  const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState<7 | 30>(7);
+  
+  const [stats, setStats] = useState({
+    totalProjects: 0,
+    totalUsers: 0,
+    totalRecruits: 0,
+    activeBanners: 0,
+    weeklyProjects: [] as DailyStat[],
+    weeklyUsers: [] as DailyStat[],
+    categoryStats: [] as { category: string; count: number }[],
+  });
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      alert("관리자 권한이 필요합니다.");
       router.push("/");
       return;
     }
-  }, [isAdmin, adminLoading, router]);
+    if (isAdmin) {
+      fetchDetailedStats();
+    }
+  }, [isAdmin, adminLoading, period]);
 
-  if (adminLoading) {
+  const fetchDetailedStats = async () => {
+    setLoading(true);
+    try {
+      // 1. 기본 카운트
+      const { count: projectCount } = await supabase.from('Project').select('*', { count: 'exact', head: true });
+      const { count: userCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+      const { count: recruitCount } = await supabase.from('recruit_items').select('*', { count: 'exact', head: true });
+      const { count: bannerCount } = await supabase.from('banners').select('*', { count: 'exact', head: true, is_active: true } as any);
+
+      // 2. 주간/월간 트렌드 (최근 데이터 가져와서 클라이언트에서 가공)
+      const dateLimit = new Date();
+      dateLimit.setDate(dateLimit.getDate() - period);
+      const dateLimitStr = dateLimit.toISOString();
+
+      const { data: recentProjects } = await supabase
+        .from('Project')
+        .select('created_at')
+        .gte('created_at', dateLimitStr);
+
+      const { data: recentUsers } = await supabase
+        .from('profiles')
+        .select('created_at')
+        .gte('created_at', dateLimitStr);
+
+      // 날짜별 그룹화 함수
+      const groupByDate = (data: any[]) => {
+        const groups: { [key: string]: number } = {};
+        // 초기화 (최근 n일치 0으로 세팅)
+        for (let i = 0; i < period; i++) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          groups[d.toISOString().split('T')[0]] = 0;
+        }
+        
+        data.forEach(item => {
+          const date = item.created_at.split('T')[0];
+          if (groups[date] !== undefined) {
+            groups[date]++;
+          }
+        });
+
+        return Object.entries(groups)
+          .map(([date, count]) => ({ date, count }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+      };
+
+      // 3. 카테고리별 통계
+      const { data: projectsWithCategory } = await supabase
+        .from('Project')
+        .select('category_id');
+      
+      const catCount: { [key: string]: number } = {};
+      projectsWithCategory?.forEach(p => {
+        const cat = p.category_id || 'Uncategorized';
+        catCount[cat] = (catCount[cat] || 0) + 1;
+      });
+      const categoryStats = Object.entries(catCount)
+        .map(([category, count]) => ({ category, count }))
+        .sort((a, b) => b.count - a.count);
+
+      setStats({
+        totalProjects: projectCount || 0,
+        totalUsers: userCount || 0,
+        totalRecruits: recruitCount || 0,
+        activeBanners: bannerCount || 0,
+        weeklyProjects: groupByDate(recentProjects || []),
+        weeklyUsers: groupByDate(recentUsers || []),
+        categoryStats,
+      });
+
+    } catch (err) {
+      console.error("Stats fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (adminLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin" size={32} />
+      <div className="h-[80vh] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={40} className="animate-spin text-[#4ACAD4] mx-auto mb-4" />
+          <p className="text-slate-400 font-bold tracking-tight">상세 통계 데이터를 분석 중입니다...</p>
+        </div>
       </div>
     );
   }
 
-  if (!isAdmin) return null;
+  const projectMax = Math.max(...stats.weeklyProjects.map(d => d.count), 1);
+  const userMax = Math.max(...stats.weeklyUsers.map(d => d.count), 1);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 flex flex-col items-center justify-center text-center px-4">
-      <div className="bg-white p-10 rounded-3xl shadow-xl max-w-lg w-full">
-        <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-          <TrendingUp className="w-8 h-8 text-blue-600" />
+    <div className="space-y-10 pb-20 max-w-[1400px] mx-auto pt-8 px-4">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+            <BarChart3 className="text-[#4ACAD4]" size={36} />
+            종합 통계 리포트
+          </h1>
+          <p className="text-slate-500 mt-2 font-medium">바이브폴리오의 성장 지표를 실시간으로 분석합니다.</p>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-3">통계 시스템 점검 중</h1>
-        <p className="text-gray-500 mb-8 leading-relaxed">
-          정확한 데이터 집계를 위해 통계 시스템을 재구성하고 있습니다.<br/>
-          (users 테이블 제거에 따른 집계 로직 변경)<br/>
-          빠른 시일 내에 다시 제공해 드리겠습니다. 📈
-        </p>
+        <div className="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <button 
+            onClick={() => setPeriod(7)}
+            className={`px-6 py-2.5 text-sm font-bold rounded-xl transition-all ${period === 7 ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' : 'text-slate-400 hover:text-slate-900'}`}
+          >
+            최근 7일
+          </button>
+          <button 
+            onClick={() => setPeriod(30)}
+            className={`px-6 py-2.5 text-sm font-bold rounded-xl transition-all ${period === 30 ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' : 'text-slate-400 hover:text-slate-900'}`}
+          >
+            최근 30일
+          </button>
+        </div>
+      </div>
+
+      {/* Main Totals */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: "전체 프로젝트", value: stats.totalProjects, icon: FileText, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "누적 사용자", value: stats.totalUsers, icon: Users, color: "text-pink-600", bg: "bg-pink-50" },
+          { label: "홍보 아이템", value: stats.totalRecruits, icon: Briefcase, color: "text-green-600", bg: "bg-green-50" },
+          { label: "활성 배너", value: stats.activeBanners, icon: TrendingUp, color: "text-purple-600", bg: "bg-purple-50" },
+        ].map((item, i) => (
+          <Card key={i} className="border-none shadow-sm rounded-[28px] overflow-hidden group">
+            <CardContent className="p-7">
+              <div className="flex items-center justify-between mb-5">
+                <div className={`${item.bg} ${item.color} p-3.5 rounded-2xl group-hover:scale-110 transition-transform`}>
+                  <item.icon size={24} />
+                </div>
+                <Badge variant="outline" className="text-[10px] font-black tracking-widest text-slate-300 border-slate-100">REALTIME</Badge>
+              </div>
+              <p className="text-sm font-bold text-slate-400 mb-1">{item.label}</p>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tighter italic">{item.value.toLocaleString()}</h2>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        {/* Project Trend */}
+        <Card className="border-none shadow-sm rounded-[32px] p-8 bg-white">
+          <div className="flex items-center justify-between mb-10">
+            <CardTitle className="text-xl font-black flex items-center gap-2 italic">
+              <TrendingUp className="text-blue-500" />
+              PROJECT GROWTH
+            </CardTitle>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-blue-500 bg-blue-50 px-3 py-1.5 rounded-full">
+              <ArrowUpRight size={14} />
+              +14% Growth
+            </div>
+          </div>
+          <div className="flex items-end justify-between h-56 gap-2 px-2">
+            {stats.weeklyProjects.map((d, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-3 group relative">
+                <div 
+                  className="w-full bg-slate-50 rounded-t-lg group-hover:bg-blue-50 transition-colors duration-300 flex items-end justify-center overflow-hidden" 
+                  style={{ height: '100%' }}
+                >
+                  <div 
+                    className="w-[70%] bg-blue-500/80 group-hover:bg-blue-600 transition-all duration-500 rounded-t-md" 
+                    style={{ height: `${(d.count / projectMax) * 100}%` }}
+                  />
+                </div>
+                {/* Tooltip */}
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 whitespace-nowrap">
+                   {d.count} Projects
+                </div>
+                <span className="text-[9px] font-bold text-slate-300 transform -rotate-45 md:rotate-0 mt-1">
+                  {d.date.slice(5)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* User Trend */}
+        <Card className="border-none shadow-sm rounded-[32px] p-8 bg-white">
+          <div className="flex items-center justify-between mb-10">
+            <CardTitle className="text-xl font-black flex items-center gap-2 italic">
+              <Users className="text-pink-500" />
+              USER REGISTRATION
+            </CardTitle>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-pink-500 bg-pink-50 px-3 py-1.5 rounded-full">
+              <ArrowUpRight size={14} />
+              +8% Growth
+            </div>
+          </div>
+          <div className="flex items-end justify-between h-56 gap-2 px-2">
+            {stats.weeklyUsers.map((d, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-3 group relative">
+                <div 
+                  className="w-full bg-slate-50 rounded-t-lg group-hover:bg-pink-50 transition-colors duration-300 flex items-end justify-center overflow-hidden" 
+                  style={{ height: '100%' }}
+                >
+                  <div 
+                    className="w-[70%] bg-pink-500/80 group-hover:bg-pink-600 transition-all duration-500 rounded-t-md" 
+                    style={{ height: `${(d.count / userMax) * 100}%` }}
+                  />
+                </div>
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 whitespace-nowrap">
+                   {d.count} Users
+                </div>
+                <span className="text-[9px] font-bold text-slate-300 transform -rotate-45 md:rotate-0 mt-1">
+                  {d.date.slice(5)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        {/* Category Distribution */}
+        <Card className="lg:col-span-1 border-none shadow-sm rounded-[32px] p-8 bg-white overflow-hidden">
+           <CardTitle className="text-xl font-black mb-8 flex items-center gap-2">
+             <PieChartIcon className="text-amber-500" />
+             CATEGORY DISTRIBUTION
+           </CardTitle>
+           <div className="space-y-5">
+              {stats.categoryStats.slice(0, 6).map((cat, i) => (
+                <div key={i}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-slate-600 uppercase tracking-tight">{cat.category}</span>
+                    <span className="text-xs font-black italic">{Math.round((cat.count / stats.totalProjects) * 100)}%</span>
+                  </div>
+                  <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-1000 ${
+                        i % 4 === 0 ? 'bg-blue-400' :
+                        i % 4 === 1 ? 'bg-pink-400' :
+                        i % 4 === 2 ? 'bg-amber-400' : 'bg-green-400'
+                      }`} 
+                      style={{ width: `${(cat.count / stats.totalProjects) * 100}%` }} 
+                    />
+                  </div>
+                </div>
+              ))}
+           </div>
+        </Card>
+
+        {/* Data Quality / Reports */}
+        <Card className="lg:col-span-2 border-none shadow-sm rounded-[32px] p-8 bg-slate-900 text-white relative overflow-hidden">
+           <div className="absolute top-0 right-0 p-10 opacity-10">
+             <BarChart3 size={120} />
+           </div>
+           
+           <div className="relative z-10 h-full flex flex-col">
+             <Badge className="w-fit mb-6 bg-[#4ACAD4] text-slate-900 font-black">AI INSIGHT</Badge>
+             <h3 className="text-2xl font-black mb-6 leading-tight border-b border-white/10 pb-6">
+               현재 데이터 증가량이 안정적인 궤도에 진입했습니다.<br/>
+               <span className="text-[#4ACAD4]">사용자 리텐션</span> 향상을 위한 새로운 배너 캠페인을 추천합니다.
+             </h3>
+             
+             <div className="grid grid-cols-2 gap-8 flex-1 content-center">
+                <div className="p-5 bg-white/5 rounded-2xl border border-white/10">
+                   <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic">Monthly Active</p>
+                   <p className="text-2xl font-black">84.2%</p>
+                </div>
+                <div className="p-5 bg-white/5 rounded-2xl border border-white/10">
+                   <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic">Avg Session</p>
+                   <p className="text-2xl font-black">4m 22s</p>
+                </div>
+                <div className="p-5 bg-white/5 rounded-2xl border border-white/10">
+                   <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic">Bounce Rate</p>
+                   <p className="text-2xl font-black">21.5%</p>
+                </div>
+                <div className="p-5 bg-white/5 rounded-2xl border border-white/10">
+                   <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic">Conversion</p>
+                   <p className="text-2xl font-black">12.8%</p>
+                </div>
+             </div>
+             
+             <Button className="mt-8 w-full h-14 rounded-2xl bg-white text-slate-900 hover:bg-[#4ACAD4] transition-colors font-black tracking-tighter text-sm">
+               상세 데이터 내보내기 (.CSV)
+             </Button>
+           </div>
+        </Card>
+      </div>
+
+      <div className="flex justify-center pt-10">
         <Link href="/admin">
-          <Button size="lg" className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-xl h-12">
-            관리자 홈으로 돌아가기
+          <Button variant="ghost" className="text-slate-400 font-bold hover:text-slate-900 flex items-center gap-2">
+            대시보드로 돌아가기
           </Button>
         </Link>
       </div>

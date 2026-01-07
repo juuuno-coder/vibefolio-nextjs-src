@@ -215,42 +215,40 @@ export function MainBanner() {
                       blurDataURL={getBlurDataURL(700, 450)}
                     />
                     
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10" />
+                    {/* Modern Overlay (Light & Subtle) */}
+                    <div className="absolute inset-0 bg-black/5 z-10" />
 
-                    {/* Content */}
-                    <div className="absolute bottom-0 left-0 w-full p-8 md:p-10 flex flex-col items-start gap-1 z-20">
+                    {/* Content Glass Card */}
+                    <div className="absolute bottom-6 left-6 right-6 p-6 md:p-8 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[24px] z-20 flex flex-col items-start gap-1 group-hover:bg-white/20 transition-all duration-500">
+                      {banner.subtitle && (
+                        <div 
+                          className="px-3 py-1 rounded-full text-[10px] md:text-xs font-black tracking-widest uppercase bg-black text-white w-fit mb-2"
+                        >
+                          {banner.subtitle}
+                        </div>
+                      )}
+                      
+                      <h2 
+                        className="text-2xl md:text-4xl font-black tracking-tight leading-tight mb-2 drop-shadow-sm"
+                        style={{ color: banner.text_color }}
+                      >
+                        {banner.title}
+                      </h2>
+
                       {banner.description && (
                         <p 
-                          className="text-sm md:text-base font-medium opacity-90 max-w-lg line-clamp-2 mb-1"
+                          className="text-sm md:text-base font-medium opacity-90 max-w-xl line-clamp-1 mb-4"
                           style={{ color: banner.text_color }}
                         >
                           {banner.description}
                         </p>
                       )}
                       
-                      <h2 
-                        className="text-3xl md:text-5xl font-black tracking-tight leading-tight mb-2"
-                        style={{ color: banner.text_color }}
-                      >
-                        {banner.title}
-                      </h2>
-                      
-                      {banner.subtitle && (
-                        <div 
-                          className="px-3 py-1 rounded-full text-[10px] md:text-xs font-bold tracking-widest uppercase backdrop-blur-md bg-white/20 border border-white/30 w-fit"
-                          style={{ color: banner.text_color }}
-                        >
-                          {banner.subtitle}
-                        </div>
-                      )}
-                      
                       {banner.link_url && (
                         <div 
-                          className="mt-4 flex items-center gap-3 px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 transition-all duration-300 group-hover:scale-105"
-                          style={{ color: banner.text_color }}
+                          className="flex items-center gap-3 px-6 py-3 rounded-xl bg-white text-black transition-all duration-300 group-hover:scale-105 font-bold text-sm shadow-xl shadow-black/5"
                         >
-                          <span className="text-sm font-bold">{banner.button_text || "자세히 보기"}</span>
+                          <span>{banner.button_text || "자세히 보기"}</span>
                           <ExternalLink size={16} className="group-hover:translate-x-1 transition-transform" />
                         </div>
                       )}

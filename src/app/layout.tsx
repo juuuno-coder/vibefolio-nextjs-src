@@ -1,8 +1,5 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { Poppins, Noto_Sans_KR } from "next/font/google"; // Poppins
+import { Poppins, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { ClientProviders } from "@/components/ClientProviders";
 import { ScrollToTop } from "@/components/ScrollToTop";
@@ -10,8 +7,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AutoLogoutProvider } from "@/components/AutoLogoutProvider";
 import NextTopLoader from 'nextjs-toploader';
+import { RootLayoutContent } from "@/components/layout/RootLayoutContent";
 
-const poppins = Poppins({ // Poppins
+const poppins = Poppins({
   weight: ['400', '500', '600', '700', '800'],
   subsets: ['latin'],
   variable: "--font-poppins",
@@ -31,7 +29,6 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Vibefolio",
     description: "영감을 수집하고 공유하세요",
-    // images: ["/og-image.png"], // TODO: 실제 이미지 파일 추가 필요
     type: "website",
   },
   icons: {
@@ -47,7 +44,6 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
-        {/* Preconnect to image domains for faster loading */}
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <link rel="preconnect" href="https://vibefolio.com" />
@@ -60,15 +56,7 @@ export default function RootLayout({
         <ClientProviders>
           <AutoLogoutProvider>
             <TooltipProvider>
-              <div className="flex min-h-screen flex-col relative w-full overflow-x-hidden">
-                <Header />
-                <main className="flex-1 w-full max-w-[1920px] mx-auto pt-[60px] pb-20 fade-in">
-                  <Suspense fallback={null}>
-                    {children}
-                  </Suspense>
-                </main>
-                <Footer />
-              </div>
+              <RootLayoutContent>{children}</RootLayoutContent>
               <Toaster position="top-center" />
               <ScrollToTop />
             </TooltipProvider>

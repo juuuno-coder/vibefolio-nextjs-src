@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useAdmin } from "@/hooks/useAdmin";
+import { supabase } from "@/lib/supabase/client";
 
 interface Item {
   id: number;
@@ -71,14 +72,39 @@ export default function AdminRecruitPage() {
     thumbnail: "",
   });
 
-  // 아이템 로드
-  const loadItems = () => {
+  // 아이템 로드 (Supabase 연동)
+  const loadItems = async () => {
     setLoading(true);
     try {
-      const savedItems = localStorage.getItem("recruitItems");
-      if (savedItems) {
-        setItems(JSON.parse(savedItems));
+      console.log('📡 Fetching recruit items from DB...');
+      const { data, error, count } = await supabase
+        .from('recruit_items')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('❌ Supabase Fetch Error:', error);
+        throw error;
       }
+      
+      console.log(`✅ Loaded ${data?.length || 0} items (Total count: ${count})`);
+      
+      const formattedItems: Item[] = (data || []).map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        type: item.type as "job" | "contest" | "event",
+        date: item.date,
+        location: item.location || "",
+        prize: item.prize || "",
+        salary: item.salary || "",
+        company: item.company || "",
+        employmentType: item.employment_type || "정규직",
+        link: item.link || "",
+        thumbnail: item.thumbnail || "",
+      }));
+      
+      setItems(formattedItems);
     } catch (error) {
       console.error("항목 로드 실패:", error);
     } finally {
@@ -97,39 +123,95 @@ export default function AdminRecruitPage() {
     }
   }, [isAdmin, adminLoading, router]);
 
-  // 항목 추가/수정
-  const handleSubmit = () => {
+  // 수동 크롤링 트리거
+  const handleManualCrawl = async () => {
+    if (!confirm("연결된 사이트(위비티, 원티드 등)에서 최신 정보를 가져오시겠습니까? 몇 초 정도 소요될 수 있습니다.")) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch('/api/admin/recruit/crawl', { 
+        method: 'POST' 
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        alert(`업데이트 완료!\n- 발견: ${result.found}개\n- 새로 추가: ${result.added}개\n- 중복 제외: ${result.skipped}개`);
+        loadItems();
+      } else {
+        const errorText = await response.text();
+        console.error("Crawl API Error:", errorText);
+        alert("업데이트 중 오류가 발생했습니다.");
+      }
+    } catch (e) {
+      console.error("Crawl trigger error:", e);
+      alert("네트워크 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 항목 추가/수정 (Supabase 연동)
+  const handleSubmit = async () => {
     if (!formData.title || !formData.description || !formData.date) {
       alert("제목, 설명, 날짜는 필수 항목입니다.");
       return;
     }
 
-    let updatedItems: Item[];
-
-    if (editingItem) {
-      updatedItems = items.map((item) =>
-        item.id === editingItem.id ? { ...formData, id: editingItem.id } : item
-      );
-    } else {
-      const newItem: Item = {
-        ...formData,
-        id: Date.now(),
+    try {
+      const itemData = {
+        title: formData.title,
+        description: formData.description,
+        type: formData.type,
+        date: formData.date,
+        location: formData.location || null,
+        prize: formData.prize || null,
+        salary: formData.salary || null,
+        company: formData.company || null,
+        employment_type: formData.employmentType || null,
+        link: formData.link || null,
+        thumbnail: formData.thumbnail || null,
+        is_approved: true,
+        is_active: true,
       };
-      updatedItems = [...items, newItem];
-    }
 
-    setItems(updatedItems);
-    localStorage.setItem("recruitItems", JSON.stringify(updatedItems));
-    handleDialogClose();
+      if (editingItem) {
+        const { error } = await supabase
+          .from('recruit_items')
+          .update(itemData)
+          .eq('id', editingItem.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('recruit_items')
+          .insert([itemData]);
+        if (error) throw error;
+      }
+
+      await loadItems();
+      handleDialogClose();
+    } catch (error) {
+      console.error("저장 실패:", error);
+      alert("저장 중 오류가 발생했습니다.");
+    }
   };
 
-  // 항목 삭제
-  const handleDelete = (id: number) => {
+  // 항목 삭제 (Supabase 연동)
+  const handleDelete = async (id: number) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
 
-    const updatedItems = items.filter((item) => item.id !== id);
-    setItems(updatedItems);
-    localStorage.setItem("recruitItems", JSON.stringify(updatedItems));
+    try {
+      const { error } = await supabase
+        .from('recruit_items')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      await loadItems();
+    } catch (error) {
+      console.error("삭제 실패:", error);
+      alert("삭제 중 오류가 발생했습니다.");
+    }
   };
 
   // 다이얼로그 닫기
@@ -233,6 +315,14 @@ export default function AdminRecruitPage() {
               <p className="text-gray-600">채용, 공모전, 이벤트 정보를 관리하세요</p>
             </div>
             <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={handleManualCrawl}
+                className="border-[#4ACAD4] text-[#4ACAD4] hover:bg-[#4ACAD4]/10"
+              >
+                <RefreshCw size={16} className="mr-2" />
+                정보 업데이트 (크롤링)
+              </Button>
               <Link href="/recruit" target="_blank">
                 <Button variant="outline">
                   <ExternalLink size={16} className="mr-2" />
