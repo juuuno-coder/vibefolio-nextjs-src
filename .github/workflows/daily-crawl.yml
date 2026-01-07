@@ -33,6 +33,12 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/crawl-recruit.js
 
+      - name: Auto-expire old items
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/auto-expire.js
+
       - name: Notify on failure
         if: failure()
-        run: echo "Crawling failed! Check the logs."
+        run: echo "Job failed! Check the logs."
