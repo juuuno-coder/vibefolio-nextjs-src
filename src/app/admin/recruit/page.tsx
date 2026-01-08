@@ -234,6 +234,8 @@ export default function AdminRecruitPage() {
         start_date: formData.start_date || null,
         category_tags: formData.category_tags || null,
         banner_image_url: formData.banner_image_url || null,
+        // 원본 소스 링크 보존
+        source_link: (editingItem as any)?.source_link || null
       };
 
       if (editingItem) {
@@ -241,12 +243,22 @@ export default function AdminRecruitPage() {
           .from('recruit_items')
           .update(itemData)
           .eq('id', editingItem.id);
-        if (error) throw error;
+        
+        if (error) {
+          console.error("Update Error:", error);
+          alert(`수정 중 오류가 발생했습니다: ${error.message}`);
+          return;
+        }
       } else {
         const { error } = await supabase
           .from('recruit_items')
           .insert([itemData]);
-        if (error) throw error;
+        
+        if (error) {
+          console.error("Insert Error:", error);
+          alert(`추가 중 오류가 발생했습니다: ${error.message}`);
+          return;
+        }
       }
 
       await loadItems();
