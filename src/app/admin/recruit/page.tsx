@@ -425,81 +425,82 @@ export default function AdminRecruitPage() {
                       {editingItem ? "항목 수정" : "새 항목 추가"}
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        유형
-                      </label>
-                      <select
-                        value={formData.type}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            type: e.target.value as "job" | "contest" | "event",
-                          })
-                        }
-                        className="w-full border rounded-md px-3 py-2"
-                      >
-                        <option value="job">채용</option>
-                        <option value="contest">공모전</option>
-                        <option value="event">이벤트</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        제목 *
-                      </label>
-                      <Input
-                        placeholder="제목을 입력하세요"
-                        value={formData.title}
-                        onChange={(e) =>
-                          setFormData({ ...formData, title: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        설명 *
-                      </label>
-                      <Textarea
-                        placeholder="설명을 입력하세요"
-                        value={formData.description}
-                        onChange={(e) =>
-                          setFormData({ ...formData, description: e.target.value })
-                        }
-                        rows={4}
-                      />
+                  <div className="space-y-6">
+                    {/* Section 1: Basic Information */}
+                    <div className="space-y-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                      <div className="flex items-center gap-2 mb-2 text-slate-800">
+                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                           <Calendar size={18} className="text-[#4ACAD4]" />
+                        </div>
+                        <h3 className="font-bold text-sm">기본 정보</h3>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-1">
+                          <label className="block text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1.5">유형</label>
+                          <select
+                            value={formData.type}
+                            onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                            className="w-full border rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-[#4ACAD4]/20 outline-none transition-all"
+                          >
+                            <option value="job">채용</option>
+                            <option value="contest">공모전</option>
+                            <option value="event">이벤트</option>
+                          </select>
+                        </div>
+                        <div className="col-span-1">
+                          <label className="block text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1.5">마감일 *</label>
+                          <Input
+                            type="date"
+                            value={formData.date}
+                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                            className="rounded-xl h-10 bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1.5">제목 *</label>
+                        <Input
+                          placeholder="제목을 입력하세요"
+                          value={formData.title}
+                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                          className="rounded-xl h-11 bg-white font-bold"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1.5">설명 *</label>
+                        <Textarea
+                          placeholder="항목에 대한 간단한 설명을 입력하세요"
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          rows={3}
+                          className="rounded-xl bg-white resize-none"
+                        />
+                      </div>
                     </div>
 
-                    {/* 채용 전용 필드 */}
+                    {/* Section 2: Type Specific Details */}
                     {formData.type === "job" && (
-                      <>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            회사명
-                          </label>
-                          <Input
-                            placeholder="회사명을 입력하세요"
-                            value={formData.company}
-                            onChange={(e) =>
-                              setFormData({ ...formData, company: e.target.value })
-                            }
-                          />
+                      <div className="space-y-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                        <div className="flex items-center gap-2 mb-2 text-blue-800">
+                          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                             <Briefcase size={18} className="text-blue-500" />
+                          </div>
+                          <h3 className="font-bold text-sm">채용 상세 정보</h3>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              고용 형태
-                            </label>
+                            <label className="block text-[11px] font-black text-blue-400 uppercase tracking-wider mb-1.5">회사명</label>
+                            <Input placeholder="회사명" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} className="bg-white rounded-xl" />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-black text-blue-400 uppercase tracking-wider mb-1.5">고용 형태</label>
                             <select
                               value={formData.employmentType}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  employmentType: e.target.value,
-                                })
-                              }
-                              className="w-full border rounded-md px-3 py-2"
+                              onChange={e => setFormData({...formData, employmentType: e.target.value})}
+                              className="w-full border rounded-xl px-3 py-2 text-sm bg-white outline-none"
                             >
                               <option value="정규직">정규직</option>
                               <option value="계약직">계약직</option>
@@ -507,221 +508,160 @@ export default function AdminRecruitPage() {
                               <option value="인턴">인턴</option>
                             </select>
                           </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              급여
-                            </label>
-                            <Input
-                              placeholder="예: 연봉 3,500~4,500만원"
-                              value={formData.salary}
-                              onChange={(e) =>
-                                setFormData({ ...formData, salary: e.target.value })
-                              }
-                            />
+                            <label className="block text-[11px] font-black text-blue-400 uppercase tracking-wider mb-1.5">근무 지역</label>
+                            <Input placeholder="서울, 경기 등" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="bg-white rounded-xl" />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-black text-blue-400 uppercase tracking-wider mb-1.5">급여</label>
+                            <Input placeholder="연봉 4,000만원 등" value={formData.salary} onChange={e => setFormData({...formData, salary: e.target.value})} className="bg-white rounded-xl" />
                           </div>
                         </div>
-                      </>
+                      </div>
                     )}
 
-                    {/* 공모전 전용 필드 (고도화) */}
                     {formData.type === "contest" && (
-                      <div className="space-y-4 border-l-4 border-purple-500 pl-4 py-2 bg-purple-50/30 rounded-r-lg">
-                        <h3 className="font-bold text-purple-700 text-sm flex items-center gap-2">
-                          <Award size={16} /> 공모전 상세 정보
-                        </h3>
+                      <div className="space-y-4 p-4 bg-purple-50/50 rounded-2xl border border-purple-100">
+                        <div className="flex items-center gap-2 mb-2 text-purple-800">
+                          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                             <Award size={18} className="text-purple-500" />
+                          </div>
+                          <h3 className="font-bold text-sm">공모전 상세 정보</h3>
+                        </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">상금/혜택</label>
-                            <Input value={formData.prize} onChange={e => setFormData({...formData, prize: e.target.value})} placeholder="예: 대상 500만원" />
+                             <label className="block text-[11px] font-black text-purple-400 uppercase tracking-wider mb-1.5">상금/혜택 요약</label>
+                             <Input value={formData.prize} onChange={e => setFormData({...formData, prize: e.target.value})} placeholder="대상 500만원 등" className="bg-white rounded-xl" />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">응모 대상</label>
-                            <Input value={formData.application_target} onChange={e => setFormData({...formData, application_target: e.target.value})} placeholder="예: 대학생, 일반인" />
+                            <label className="block text-[11px] font-black text-purple-400 uppercase tracking-wider mb-1.5">응모 대상</label>
+                            <Input value={formData.application_target} onChange={e => setFormData({...formData, application_target: e.target.value})} placeholder="대학생, 일반인" className="bg-white rounded-xl" />
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">총 상금</label>
-                            <Input value={formData.total_prize} onChange={e => setFormData({...formData, total_prize: e.target.value})} placeholder="예: 2,000만원" />
+                            <label className="block text-[11px] font-black text-purple-400 uppercase tracking-wider mb-1.5">총 상금 규모</label>
+                            <Input value={formData.total_prize} onChange={e => setFormData({...formData, total_prize: e.target.value})} placeholder="2,000만원" className="bg-white rounded-xl" />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">1등 상금</label>
-                            <Input value={formData.first_prize} onChange={e => setFormData({...formData, first_prize: e.target.value})} placeholder="예: 500만원" />
+                            <label className="block text-[11px] font-black text-purple-400 uppercase tracking-wider mb-1.5">1등 상금</label>
+                            <Input value={formData.first_prize} onChange={e => setFormData({...formData, first_prize: e.target.value})} placeholder="500만원" className="bg-white rounded-xl" />
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">분야 (태그)</label>
-                            <Input value={formData.category_tags} onChange={e => setFormData({...formData, category_tags: e.target.value})} placeholder="예: 영상, 디자인 (쉼표 구분)" />
+                            <label className="block text-[11px] font-black text-purple-400 uppercase tracking-wider mb-1.5">분야 태그</label>
+                            <Input value={formData.category_tags} onChange={e => setFormData({...formData, category_tags: e.target.value})} placeholder="영상, 디자인" className="bg-white rounded-xl" />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">후원/협찬</label>
-                            <Input value={formData.sponsor} onChange={e => setFormData({...formData, sponsor: e.target.value})} placeholder="예: 문화체육관광부" />
+                            <label className="block text-[11px] font-black text-purple-400 uppercase tracking-wider mb-1.5">주최/후원사</label>
+                            <Input value={formData.sponsor} onChange={e => setFormData({...formData, sponsor: e.target.value})} placeholder="문화체육관광부" className="bg-white rounded-xl" />
                           </div>
                         </div>
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          마감일/날짜 *
-                        </label>
-                        <Input
-                          type="date"
-                          value={formData.date}
-                          onChange={(e) =>
-                            setFormData({ ...formData, date: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          장소
-                        </label>
-                        <Input
-                          placeholder="장소를 입력하세요"
-                          value={formData.location}
-                          onChange={(e) =>
-                            setFormData({ ...formData, location: e.target.value })
-                          }
-                        />
-                      </div>
-                    </div>
-
-                    {/* 이미지 관리 섹션 (강화) */}
-                    <div className="space-y-4 pt-4 border-t border-gray-100">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <label className="text-sm font-bold text-gray-700">포스터 이미지 (썸네일)</label>
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="sm" 
-                            className="h-8 text-xs gap-1"
-                            onClick={() => document.getElementById('admin-recruit-thumb')?.click()}
-                          >
-                            <Upload size={12} /> 파일 업로드
-                          </Button>
-                          <input 
-                            type="file" 
-                            id="admin-recruit-thumb" 
-                            className="hidden" 
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              try {
-                                toast.info("포스터 업로드 중...");
-                                const url = await uploadImage(file, 'recruits');
-                                setFormData({...formData, thumbnail: url});
-                                toast.success("포스터 이미지가 적용되었습니다.");
-                              } catch (err) {
-                                toast.error("업로드 실패: " + (err as Error).message);
-                              }
-                            }}
-                          />
+                    {/* Section 3: Visuals and External Link */}
+                    <div className="space-y-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                      <div className="flex items-center gap-2 mb-2 text-slate-800">
+                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                           <ExternalLink size={18} className="text-[#4ACAD4]" />
                         </div>
+                        <h3 className="font-bold text-sm">연결 및 파일 관리</h3>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1.5">공식 홈페이지 링크</label>
                         <Input
-                          placeholder="https://example.com/poster.jpg"
-                          value={formData.thumbnail}
-                          onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                          placeholder="https://주최측-공식-홈페이지-주소.com"
+                          value={formData.link}
+                          onChange={e => setFormData({ ...formData, link: e.target.value })}
+                          className="rounded-xl h-11 bg-white border-[#4ACAD4]/30 focus:border-[#4ACAD4]"
                         />
                       </div>
 
-                      <div className="bg-amber-50/30 p-4 rounded-xl border border-amber-100">
-                        <div className="flex items-center justify-between mb-2">
-                          <label className="text-sm font-bold text-amber-900 flex items-center gap-2">
-                            <Sparkles size={16} /> 상세 페이지 히어로 배너 (와이드)
-                          </label>
-                          <Button 
-                            type="button" 
-                            variant="secondary" 
-                            size="sm" 
-                            className="h-8 text-xs gap-1 bg-white"
-                            onClick={() => document.getElementById('admin-recruit-banner')?.click()}
-                          >
-                            <Upload size={12} /> 파일 업로드
-                          </Button>
-                          <input 
-                            type="file" 
-                            id="admin-recruit-banner" 
-                            className="hidden" 
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              try {
-                                toast.info("배너 업로드 중...");
-                                const url = await uploadImage(file, 'banners');
-                                setFormData({...formData, banner_image_url: url});
-                                toast.success("와이드 배너 이미지가 적용되었습니다.");
-                              } catch (err) {
-                                toast.error("업로드 실패: " + (err as Error).message);
-                              }
-                            }}
-                          />
+                      <div className="grid grid-cols-1 gap-4 pt-2">
+                        <div className="p-3 bg-white rounded-xl border border-slate-100">
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-[11px] font-black text-slate-400 uppercase">포스터 (썸네일)</label>
+                            <Button type="button" variant="outline" size="sm" className="h-7 text-[10px] gap-1 px-2 rounded-lg" onClick={() => document.getElementById('admin-recruit-thumb')?.click()}>
+                              <Upload size={10} /> 파일선택
+                            </Button>
+                            <input type="file" id="admin-recruit-thumb" className="hidden" accept="image/*" onChange={async (e) => {
+                              const file = e.target.files?.[0]; if (!file) return;
+                              try { toast.info("포스터 업로드 중..."); const url = await uploadImage(file, 'recruits');
+                                setFormData({...formData, thumbnail: url}); toast.success("포스터 적용 완료");
+                              } catch (err) { toast.error("업로드 실패"); }
+                            }} />
+                          </div>
+                          <Input placeholder="이미지 URL" value={formData.thumbnail} onChange={e => setFormData({...formData, thumbnail: e.target.value})} className="h-8 text-xs border-none bg-slate-50 p-2" />
                         </div>
-                        <Input
-                          placeholder="배너용 와이드 이미지 URL (16:6 비율 권장)"
-                          value={formData.banner_image_url}
-                          onChange={(e) => setFormData({ ...formData, banner_image_url: e.target.value })}
-                          className="bg-white"
-                        />
+
+                        <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-100/50">
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-[11px] font-black text-amber-600 uppercase flex items-center gap-1">
+                              <Sparkles size={10} /> 히어로 배너 (와이드)
+                            </label>
+                            <Button type="button" variant="secondary" size="sm" className="h-7 text-[10px] gap-1 px-2 rounded-lg bg-white border-amber-100" onClick={() => document.getElementById('admin-recruit-banner')?.click()}>
+                              <Upload size={10} /> 파일선택
+                            </Button>
+                            <input type="file" id="admin-recruit-banner" className="hidden" accept="image/*" onChange={async (e) => {
+                              const file = e.target.files?.[0]; if (!file) return;
+                              try { toast.info("배너 업로드 중..."); const url = await uploadImage(file, 'banners');
+                                setFormData({...formData, banner_image_url: url}); toast.success("배너 적용 완료");
+                              } catch (err) { toast.error("업로드 실패"); }
+                            }} />
+                          </div>
+                          <Input placeholder="16:6 비율 와이드 이미지 URL" value={formData.banner_image_url} onChange={e => setFormData({...formData, banner_image_url: e.target.value})} className="h-8 text-xs border-none bg-white/50 p-2" />
+                        </div>
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        바로가기 링크
-                      </label>
-                      <Input
-                        placeholder="https://example.com"
-                        value={formData.link}
-                        onChange={(e) =>
-                          setFormData({ ...formData, link: e.target.value })
-                        }
-                      />
-                    </div>
-
-                    <div className="pt-4 border-t border-gray-100 mt-4 space-y-4">
+                    {/* Section 4: Promotion Settings */}
+                    <div className="p-4 bg-cyan-50/30 rounded-2xl border border-cyan-100">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-bold text-gray-900">메인 배너 노출</p>
-                          <p className="text-xs text-gray-500">이 항목을 메인 페이지 최상단 배너에 게시합니다.</p>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                             <Sparkles size={18} className="text-[#4ACAD4]" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-sm text-cyan-900">메인 배너 노출 설정</h3>
+                            <p className="text-[10px] text-cyan-600">이 게시물을 메인 최상단 배너 리스트에 포함합니다.</p>
+                          </div>
                         </div>
-                        <input 
-                          type="checkbox"
-                          checked={(formData as any).showAsBanner}
-                          onChange={(e) => setFormData({...formData, showAsBanner: e.target.checked} as any)}
-                          className="w-5 h-5 accent-[#4ACAD4]"
-                        />
-                      </div>
-                      
-                      {(formData as any).showAsBanner && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            배너 노출 우선순위 (낮을수록 앞)
-                          </label>
-                          <Input
-                            type="number"
-                            value={(formData as any).bannerPriority}
-                            onChange={(e) => setFormData({...formData, bannerPriority: parseInt(e.target.value)} as any)}
-                            placeholder="999"
+                        <div className="flex items-center gap-4">
+                           {(formData as any).showAsBanner && (
+                             <div className="flex items-center gap-2">
+                               <span className="text-[10px] font-bold text-cyan-700">우선순위</span>
+                               <input 
+                                 type="number" 
+                                 value={(formData as any).bannerPriority} 
+                                 onChange={e => setFormData({...formData, bannerPriority: parseInt(e.target.value)} as any)}
+                                 className="w-16 h-8 rounded-lg border border-cyan-200 bg-white text-center text-xs font-bold outline-none"
+                               />
+                             </div>
+                           )}
+                           <input 
+                            type="checkbox"
+                            checked={(formData as any).showAsBanner}
+                            onChange={(e) => setFormData({...formData, showAsBanner: e.target.checked} as any)}
+                            className="w-6 h-6 accent-[#4ACAD4] cursor-pointer"
                           />
                         </div>
-                      )}
+                      </div>
                     </div>
 
-                    <div className="flex gap-2 justify-end pt-4">
-                      <Button variant="outline" onClick={handleDialogClose}>
+                    <div className="flex gap-2 justify-end pt-4 border-t border-slate-100 mt-2">
+                      <Button variant="outline" onClick={handleDialogClose} className="rounded-xl px-6">
                         취소
                       </Button>
                       <Button
                         onClick={handleSubmit}
-                        className="bg-[#4ACAD4] hover:bg-[#41a3aa]"
+                        className="bg-[#4ACAD4] hover:bg-[#41a3aa] text-slate-900 font-bold rounded-xl px-8 shadow-lg shadow-[#4ACAD4]/20 transition-all hover:scale-105 active:scale-95"
                       >
-                        {editingItem ? "수정" : "추가"}
+                        {editingItem ? "정보 수정하기" : "항목 추가하기"}
                       </Button>
                     </div>
                   </div>
