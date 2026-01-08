@@ -325,19 +325,25 @@ export default function AdminBannersPage() {
 
   const handleDownload = async (url: string, filename: string) => {
     try {
-      const response = await fetch(url);
+      // CORS 문제 해결을 위해 API 프록시를 통해 다운로드
+      const proxyUrl = `/api/admin/proxy-download?url=${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl);
+      
+      if (!response.ok) throw new Error('Proxy fetch failed');
+      
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.body.appendChild(document.createElement('a'));
       link.href = blobUrl;
       link.download = filename || 'downloaded-image';
-      document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
       window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.error("Download failed:", err);
-      toast.error("이미지 다운로드에 실패했습니다.");
+      // Fallback: 새 탭에서 열기 (직접 다운로드는 안될 수 있음)
+      window.open(url, '_blank');
+      toast.error("직접 다운로드 실패. 이미지를 새 탭에서 열었습니다.");
     }
   };
 
