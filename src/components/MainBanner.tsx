@@ -185,16 +185,16 @@ export function MainBanner() {
     <section className="w-full">
       <Carousel
         opts={{
-          align: "start",
+          align: "center",
           loop: true,
         }}
         className="w-full"
       >
-        <CarouselContent className="w-full flex justify-start gap-4 -ml-4 pt-0 pb-6 px-1">
+        <CarouselContent className="w-full flex justify-start gap-0 -ml-0 pt-0 pb-12 px-1">
           {banners.map((banner, index) => (
             <CarouselItem
               key={banner.id}
-              className="basis-[92vw] md:basis-[45%] lg:basis-[38%] pl-4"
+              className="basis-[88vw] md:basis-[50%] lg:basis-[42%] px-3"
             >
               <Link href={banner.link_url || "#"} className={banner.link_url ? "cursor-pointer" : "cursor-default"}>
                 <Card 
