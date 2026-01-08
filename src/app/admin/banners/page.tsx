@@ -6,24 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Plus, 
-  Trash2, 
-  Edit, 
-  Image as ImageIcon, 
-  ArrowLeft, 
-  Loader2,
-  Eye,
-  EyeOff,
-  GripVertical,
-  Zap,
-  Star,
-  StarOff,
-  ArrowUp,
-  ArrowDown
-} from "lucide-react";
+import { Plus, Trash2, Edit, Image as ImageIcon, ArrowLeft, Loader2, Eye, EyeOff, GripVertical, Zap, Star, StarOff, ArrowUp, ArrowDown, Upload } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import { uploadImage } from "@/lib/supabase/storage";
 import { useAdmin } from "@/hooks/useAdmin";
 import { toast } from "sonner";
 import {
@@ -498,19 +484,54 @@ function EditorModal({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700">이미지 URL *</label>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-black text-slate-800 uppercase tracking-wider">이미지 설정 *</label>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                className="h-9 px-4 rounded-xl border-slate-200 text-xs font-bold hover:bg-slate-50"
+                onClick={() => document.getElementById('image-upload')?.click()}
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <Upload className="mr-2 h-3 w-3" />}
+                직접 업로드
+              </Button>
+              <input 
+                type="file" 
+                id="image-upload" 
+                className="hidden" 
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    toast.info("이미지 업로드 중...");
+                    const url = await uploadImage(file, 'banners');
+                    setFormData({...formData, image_url: url});
+                    toast.success("이미지가 업로드되었습니다.");
+                  } catch (err) {
+                    toast.error("업로드 실패: " + (err as Error).message);
+                  }
+                }}
+              />
+            </div>
             <Input 
               required
-              placeholder="https://..."
-              className="h-12 rounded-xl border-slate-100 bg-slate-50"
+              placeholder="이미지 URL (https://...)"
+              className="h-12 rounded-2xl border-slate-100 bg-slate-50 font-medium placeholder:text-slate-300"
               value={formData.image_url}
               onChange={(e) => setFormData({...formData, image_url: e.target.value})}
             />
             {formData.image_url && (
-              <div className="w-full h-32 rounded-xl bg-slate-100 mt-2 bg-cover bg-center border border-slate-200" 
-                style={{ backgroundImage: `url(${formData.image_url})` }} 
-              />
+              <div className="relative w-full aspect-[16/6] rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 group">
+                <div 
+                  className="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105" 
+                  style={{ backgroundImage: `url(${formData.image_url})` }} 
+                />
+                <div className="absolute inset-0 bg-black/5" />
+              </div>
             )}
           </div>
 
@@ -606,6 +627,28 @@ function EditorModal({
               className="w-5 h-5 rounded border-slate-300 text-[#4ACAD4] focus:ring-[#4ACAD4]"
             />
             <label htmlFor="is_active" className="text-sm font-bold text-slate-600">배너 활성화</label>
+          </div>
+
+          {/* Banner Tip Section */}
+          <div className="p-5 rounded-2xl bg-blue-50/50 border border-blue-100/50 space-y-3">
+             <div className="flex items-center gap-2 text-blue-600">
+                <ImageIcon size={16} className="shrink-0" />
+                <span className="text-xs font-black uppercase tracking-widest">Banner Optimization Tips</span>
+             </div>
+             <ul className="space-y-1.5 text-[11px] text-blue-600/80 font-bold leading-relaxed">
+                <li className="flex items-start gap-2">
+                   <div className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 shrink-0" />
+                   <span><strong className="text-blue-700">권장 비율:</strong> 가로가 긴 와이드 비율 (16:6 ~ 16:9) 이미지가 가장 아름답게 노출됩니다.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                   <div className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 shrink-0" />
+                   <span><strong className="text-blue-700">최적 해상도:</strong> 1920 x 800 px 이상의 고해상도 이미지를 사용하면 레티나 디스플레이에서도 선명합니다.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                   <div className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 shrink-0" />
+                   <span><strong className="text-blue-700">용량 제한:</strong> 빠른 로딩을 위해 <strong className="text-blue-700">1.5MB 미만</strong>의 JPG 또는 WebP 포맷을 권장합니다.</span>
+                </li>
+             </ul>
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">

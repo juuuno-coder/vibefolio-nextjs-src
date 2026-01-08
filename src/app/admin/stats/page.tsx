@@ -42,6 +42,8 @@ export default function AdminStatsPage() {
     weeklyProjects: [] as DailyStat[],
     weeklyUsers: [] as DailyStat[],
     categoryStats: [] as { category: string; count: number }[],
+    projectGrowth: 0,
+    userGrowth: 0,
   });
 
   useEffect(() => {
@@ -100,6 +102,32 @@ export default function AdminStatsPage() {
           .sort((a, b) => a.date.localeCompare(b.date));
       };
 
+      const weeklyProjects = groupByDate(recentProjects || []);
+      const weeklyUsers = groupByDate(recentUsers || []);
+
+      // 성장률 계산 (전체 대비 최근 증감)
+      const prevDateLimit = new Date();
+      prevDateLimit.setDate(prevDateLimit.getDate() - (period * 2));
+      const prevDateLimitStr = prevDateLimit.toISOString();
+
+      const { count: prevProjectCount } = await supabase
+        .from('Project')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', prevDateLimitStr)
+        .lt('created_at', dateLimitStr);
+
+      const { count: prevUserCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', prevDateLimitStr)
+        .lt('created_at', dateLimitStr);
+
+      const currentProjectCount = recentProjects?.length || 0;
+      const currentUserCount = recentUsers?.length || 0;
+
+      const projectGrowth = (prevProjectCount || 0) === 0 ? (currentProjectCount > 0 ? 100 : 0) : Math.round(((currentProjectCount - prevProjectCount!) / prevProjectCount!) * 100);
+      const userGrowth = (prevUserCount || 0) === 0 ? (currentUserCount > 0 ? 100 : 0) : Math.round(((currentUserCount - prevUserCount!) / prevUserCount!) * 100);
+
       // 3. 카테고리별 통계
       const { data: projectsWithCategory } = await supabase
         .from('Project')
@@ -119,9 +147,11 @@ export default function AdminStatsPage() {
         totalUsers: userCount || 0,
         totalRecruits: recruitCount || 0,
         activeBanners: bannerCount || 0,
-        weeklyProjects: groupByDate(recentProjects || []),
-        weeklyUsers: groupByDate(recentUsers || []),
+        weeklyProjects,
+        weeklyUsers,
         categoryStats,
+        projectGrowth,
+        userGrowth,
       });
 
     } catch (err) {
@@ -203,9 +233,9 @@ export default function AdminStatsPage() {
               <TrendingUp className="text-blue-500" />
               PROJECT GROWTH
             </CardTitle>
-            <div className="flex items-center gap-1.5 text-xs font-bold text-blue-500 bg-blue-50 px-3 py-1.5 rounded-full">
-              <ArrowUpRight size={14} />
-              +14% Growth
+            <div className={`flex items-center gap-1.5 text-xs font-bold ${stats.projectGrowth >= 0 ? 'text-blue-500 bg-blue-50' : 'text-red-500 bg-red-50'} px-3 py-1.5 rounded-full`}>
+              {stats.projectGrowth >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+              {stats.projectGrowth >= 0 ? `+${stats.projectGrowth}%` : `${stats.projectGrowth}%`} Growth
             </div>
           </div>
           <div className="flex items-end justify-between h-56 gap-2 px-2">
@@ -239,9 +269,9 @@ export default function AdminStatsPage() {
               <Users className="text-pink-500" />
               USER REGISTRATION
             </CardTitle>
-            <div className="flex items-center gap-1.5 text-xs font-bold text-pink-500 bg-pink-50 px-3 py-1.5 rounded-full">
-              <ArrowUpRight size={14} />
-              +8% Growth
+            <div className={`flex items-center gap-1.5 text-xs font-bold ${stats.userGrowth >= 0 ? 'text-pink-500 bg-pink-50' : 'text-red-500 bg-red-50'} px-3 py-1.5 rounded-full`}>
+              {stats.userGrowth >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+              {stats.userGrowth >= 0 ? `+${stats.userGrowth}%` : `${stats.userGrowth}%`} Growth
             </div>
           </div>
           <div className="flex items-end justify-between h-56 gap-2 px-2">

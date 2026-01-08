@@ -41,6 +41,7 @@ export default function AdminPage() {
     totalNotices: 0,
     totalFaqs: 0,
     totalPopups: 0,
+    projectGrowth: 0,
   });
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [recentProjects, setRecentProjects] = useState<any[]>([]);
@@ -94,6 +95,16 @@ export default function AdminPage() {
           .from('banners')
           .select('*', { count: 'exact', head: true });
 
+        // FAQ 수
+        const { count: faqCount } = await supabase
+          .from('faqs')
+          .select('*', { count: 'exact', head: true });
+
+        // 팝업 수
+        const { count: popupCount } = await supabase
+          .from('popups')
+          .select('*', { count: 'exact', head: true });
+
         // 최근 프로젝트
         const { data: projects } = await supabase
           .from('Project')
@@ -113,19 +124,40 @@ export default function AdminPage() {
 
         setRecentInquiries(recentInqs || []);
 
-        // 주간 데이터 가공 (최근 7일)
+        // 주간 데이터 가공 (최근 7일) - 더미 랜덤값 제거
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         const weeklyStats = [];
+        let currentWeekCount = 0;
+        let lastWeekCount = 0;
+
+        const now = new Date();
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(now.getDate() - 7);
+        const twoWeeksAgo = new Date();
+        twoWeeksAgo.setDate(now.getDate() - 14);
+
         for (let i = 6; i >= 0; i--) {
           const d = new Date();
           d.setDate(d.getDate() - i);
           const dateStr = d.toISOString().split('T')[0];
           const count = (projects || []).filter((p: any) => p.created_at.startsWith(dateStr)).length;
+          currentWeekCount += count;
           weeklyStats.push({ 
             day: days[d.getDay()], 
-            value: count * 100 + Math.floor(Math.random() * 50) // 시각적 재미를 위해 가중치 부여 또는 순수 카운트
+            value: count 
           });
         }
+
+        // 전주 데이터 확인 (성장률 계산용)
+        const { count: prevProjectCount } = await supabase
+          .from('Project')
+          .select('*', { count: 'exact', head: true })
+          .gte('created_at', twoWeeksAgo.toISOString())
+          .lt('created_at', oneWeekAgo.toISOString());
+        
+        lastWeekCount = prevProjectCount || 0;
+        const growth = lastWeekCount === 0 ? (currentWeekCount > 0 ? 100 : 0) : Math.round(((currentWeekCount - lastWeekCount) / lastWeekCount) * 100);
+
         setWeeklyData(weeklyStats);
 
         setStats({
@@ -135,8 +167,9 @@ export default function AdminPage() {
           totalRecruitItems: recruitCount || 0,
           totalBanners: bannerCount || 0,
           totalNotices: noticeCount || 0,
-          totalFaqs: 0,
-          totalPopups: 0,
+          totalFaqs: faqCount || 0,
+          totalPopups: popupCount || 0,
+          projectGrowth: growth,
         });
 
         setRecentProjects(projects || []);
@@ -286,7 +319,11 @@ export default function AdminPage() {
                 <p className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-tight">{item.label}</p>
                 <div className="flex items-baseline gap-2">
                   <p className="text-3xl font-black text-slate-900">{item.value.toLocaleString()}</p>
-                  <span className="text-[10px] font-bold text-green-500 bg-green-50 px-1 rounded">+12%</span>
+                  {i === 0 && (
+                    <span className={`text-[10px] font-bold ${stats.projectGrowth >= 0 ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50'} px-1 rounded`}>
+                      {stats.projectGrowth >= 0 ? `+${stats.projectGrowth}%` : `${stats.projectGrowth}%`}
+                    </span>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -334,8 +371,12 @@ export default function AdminPage() {
           </div>
           
           <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
-            <p className="text-sm font-medium text-slate-500 italic">전주 대비 전체 활동량이 <span className="text-slate-900 font-bold">24% 증가</span>했습니다.</p>
-            <Button variant="ghost" className="text-purple-600 font-bold text-xs hover:bg-purple-50 rounded-xl">상세 리포트 보기</Button>
+            <p className="text-sm font-medium text-slate-500 italic">
+              전주 대비 전체 활동량이 <span className={`font-bold ${stats.projectGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {Math.abs(stats.projectGrowth)}% {stats.projectGrowth >= 0 ? '증가' : '감소'}
+              </span>했습니다.
+            </p>
+            <Button variant="ghost" className="text-purple-600 font-bold text-xs hover:bg-purple-50 rounded-xl" onClick={() => router.push('/admin/stats')}>상세 리포트 보기</Button>
           </div>
         </Card>
 
@@ -344,10 +385,10 @@ export default function AdminPage() {
           <CardTitle className="text-xl font-black mb-8 italic">REAL-TIME STATUS</CardTitle>
           <div className="space-y-8 flex-1">
             {[
-              { label: "진행 중인 프로젝트", count: stats.totalProjects, percent: 85, color: "bg-blue-400" },
-              { label: "미답변 문의사항", count: stats.totalInquiries, percent: 12, color: "bg-amber-400" },
-              { label: "활성 배너 슬롯", count: stats.totalBanners, percent: 60, color: "bg-purple-400" },
-              { label: "새 공지사항", count: stats.totalNotices, percent: 30, color: "bg-green-400" },
+              { label: "진행 중인 프로젝트", count: stats.totalProjects, percent: Math.min(100, (stats.totalProjects / 100) * 100), color: "bg-blue-400" }, // 목표 100개 기준
+              { label: "답변 대기 문의", count: stats.totalInquiries, percent: Math.min(100, (stats.totalInquiries / 10) * 100), color: "bg-amber-400" }, // 목표 0개지만 관리용 비중
+              { label: "활성 배너 슬롯", count: stats.totalBanners, percent: Math.min(100, (stats.totalBanners / 5) * 100), color: "bg-purple-400" }, // 최대 5개 노출 기준
+              { label: "새 공지사항", count: stats.totalNotices, percent: Math.min(100, (stats.totalNotices / 10) * 100), color: "bg-green-400" },
             ].map((item, i) => (
               <div key={i} className="space-y-3">
                 <div className="flex items-center justify-between text-xs">
@@ -379,14 +420,20 @@ export default function AdminPage() {
                {recentProjects.length > 0 ? recentProjects.map((project, idx) => (
                  <div key={idx} className="p-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors group">
                     <div className="flex items-center gap-5">
-                       <div className="w-14 h-14 rounded-2xl bg-slate-100 bg-cover bg-center flex-shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-300" style={{ backgroundImage: `url(${project.urls?.regular || '/globe.svg'})` }} />
+                       <div className="w-14 h-14 rounded-2xl bg-slate-100 bg-cover bg-center flex-shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-300" style={{ backgroundImage: `url(${project.thumbnail_url || '/globe.svg'})` }} />
                        <div>
                          <p className="font-bold text-slate-900 text-sm line-clamp-1 group-hover:text-[#4ACAD4] transition-colors">{project.title || "제목 없음"}</p>
                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">@{project.profiles?.username || "익명"}</p>
                        </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-slate-300">12분 전</span>
+                      <span className="text-[10px] font-bold text-slate-300">{(() => {
+                            const diff = Math.floor((new Date().getTime() - new Date(project.created_at).getTime()) / (1000 * 60));
+                            if (diff < 60) return `${diff}분 전`;
+                            if (diff < 1440) return `${Math.floor(diff / 60)}시간 전`;
+                            return `${Math.floor(diff / 1440)}일 전`;
+                          })()}
+</span>
                       <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-white group-hover:text-slate-900 transition-all cursor-pointer">
                         <ChevronRight size={14} />
                       </div>
@@ -415,7 +462,7 @@ export default function AdminPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <p className="font-bold text-slate-900 text-sm truncate">{inquiry.projectTitle || "일반 문의"}</p>
-                        <span className="text-[10px] font-black text-slate-300 uppercase shrink-0">{new Date(inquiry.date).toLocaleDateString()}</span>
+                        <span className="text-[10px] font-black text-slate-300 uppercase shrink-0">{new Date(inquiry.created_at).toLocaleDateString()}</span>
                       </div>
                       <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed font-medium">{inquiry.message}</p>
                     </div>

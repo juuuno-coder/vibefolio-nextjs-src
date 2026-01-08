@@ -203,34 +203,37 @@ export function MainBanner() {
                 >
                   <CardContent className="h-full p-0 relative">
                     {/* Optimized Image with Next.js Image component */}
-                    <Image 
-                      src={banner.image_url}
-                      alt={banner.title}
-                      fill
-                      priority={index === 0} // First banner loads with priority
-                      sizes="(max-width: 768px) 92vw, 700px"
-                      className="object-cover"
-                      quality={90}
-                      placeholder="blur"
-                      blurDataURL={getBlurDataURL(700, 450)}
-                    />
+                    <div className="absolute inset-0 bg-slate-50">
+                      <Image 
+                        src={banner.image_url || "/placeholder.jpg"}
+                        alt="" // alt를 비워두어 이미지 깨짐 시 텍스트 노출 방지 (디자인 정제)
+                        fill
+                        priority={index === 0}
+                        sizes="(max-width: 768px) 100vw, 1200px"
+                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        quality={90}
+                        onError={(e) => {
+                          // @ts-ignore
+                          e.target.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop";
+                        }}
+                      />
+                    </div>
                     
-                    {/* Modern Overlay (Gradient for depth) */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-10" />
-                    <div className="absolute inset-0 bg-black/5 z-10" />
+                    {/* Modern Overlay - More subtle */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent z-10" />
 
-                    {/* Content Glass Card */}
-                    <div className="absolute bottom-6 left-6 right-6 p-6 md:p-10 bg-white/10 backdrop-blur-3xl border border-white/20 rounded-[32px] z-20 flex flex-col items-start gap-1 group-hover:bg-white/15 transition-all duration-500">
+                    {/* Content Box - Slim & Premium Floating Style */}
+                    <div className="absolute bottom-10 left-8 right-8 md:left-12 md:bottom-12 z-20 flex flex-col items-start gap-1">
                       {banner.subtitle && (
                         <div 
-                          className="px-3 py-1 rounded-full text-[10px] md:text-xs font-black tracking-widest uppercase bg-black text-white w-fit mb-2"
+                          className="px-3 py-1 rounded-full text-[10px] md:text-sm font-black tracking-widest uppercase bg-[#4ACAD4] text-slate-900 w-fit mb-3 shadow-lg shadow-[#4ACAD4]/20"
                         >
                           {banner.subtitle}
                         </div>
                       )}
                       
                       <h2 
-                        className="text-xl md:text-3xl font-black tracking-tight leading-tight mb-2 drop-shadow-sm"
+                        className="text-2xl md:text-5xl font-black tracking-tighter leading-[1.1] mb-4 drop-shadow-xl"
                         style={{ color: banner.text_color }}
                       >
                         {banner.title}
@@ -238,7 +241,7 @@ export function MainBanner() {
 
                       {banner.description && (
                         <p 
-                          className="text-sm md:text-base font-medium opacity-90 max-w-xl line-clamp-1 mb-4"
+                          className="text-sm md:text-lg font-bold opacity-90 max-w-2xl line-clamp-2 mb-8 leading-relaxed"
                           style={{ color: banner.text_color }}
                         >
                           {banner.description}
@@ -247,10 +250,10 @@ export function MainBanner() {
                       
                       {banner.link_url && (
                         <div 
-                          className="flex items-center gap-3 px-6 py-3 rounded-xl bg-white text-black transition-all duration-300 group-hover:scale-105 font-bold text-sm shadow-xl shadow-black/5"
+                          className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-white text-black transition-all duration-500 group-hover:bg-[#4ACAD4] group-hover:text-slate-900 font-black text-sm md:text-base shadow-2xl shadow-black/20"
                         >
                           <span>{banner.button_text || "자세히 보기"}</span>
-                          <ExternalLink size={16} className="group-hover:translate-x-1 transition-transform" />
+                          <ExternalLink size={18} className="group-hover:translate-x-1.5 transition-transform" />
                         </div>
                       )}
                     </div>
