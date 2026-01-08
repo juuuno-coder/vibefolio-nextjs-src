@@ -23,7 +23,20 @@ async function fetchDetailInfo(detailUrl: string): Promise<any> {
     
     let officialUrl = $('.contest-detail .btn-area a:contains("홈페이지 바로가기")').attr('href') ||
                       $('.contest-detail-info a:contains("홈페이지 바로가기")').attr('href') ||
-                      $('a:contains("홈페이지")').filter((_, el) => $(el).text().includes('바로가기')).attr('href');
+                      $('.contest-detail .btn-area a:contains("상세보기")').attr('href') ||
+                      $('.contest-detail .btn-area a:contains("지원하기")').attr('href') ||
+                      $('.contest-detail .btn-area a:contains("공식")').attr('href') ||
+                      $('a:contains("홈페이지")').filter((_, el) => $(el).text().includes('바로가기')).attr('href') ||
+                      $('.contest-detail .btn-area a').first().attr('href'); // 최후의 수단: 첫 번째 버튼
+    
+    // 위비티 내부 링크인 경우 제외 시도 (외부 도메인 우선)
+    if (officialUrl && (officialUrl.includes('wevity.com') || officialUrl.startsWith('/'))) {
+       const externalCandidate = $('.contest-detail .btn-area a').filter((_, el) => {
+         const href = $(el).attr('href') || '';
+         return !href.includes('wevity.com') && href.startsWith('http');
+       }).attr('href');
+       if (externalCandidate) officialUrl = externalCandidate;
+    }
     
     const info: any = { officialLink: officialUrl };
     $('.contest-detail-info li').each((_, el) => {

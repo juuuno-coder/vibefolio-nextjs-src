@@ -994,16 +994,27 @@ function ItemCard({
 
   return (
     <Card className={`group border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[32px] overflow-hidden bg-white flex flex-col h-full ${isExpired ? 'opacity-60' : ''}`}>
-      {/* Thumbnail Area */}
-      <div className="relative overflow-hidden bg-slate-100 min-h-[200px] flex items-center justify-center">
+      {/* Thumbnail Area - Fixed Standard Ratio (Poster Style) */}
+      <div className="relative aspect-[4/5] overflow-hidden bg-slate-50 flex items-center justify-center">
         {item.thumbnail ? (
-          <img 
-            src={item.thumbnail} 
-            alt={item.title} 
-            className="w-full h-auto object-contain transition-transform duration-700"
-          />
+          <>
+            {/* Background Blur for different aspect ratios */}
+            <div className="absolute inset-0 scale-110 blur-2xl opacity-10 pointer-events-none">
+              <img 
+                src={item.thumbnail} 
+                alt="" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            {/* Main Poster Image - Show 100% */}
+            <img 
+              src={item.thumbnail} 
+              alt={item.title} 
+              className="relative z-[1] w-full h-full object-contain p-4 transition-transform duration-700 pointer-events-none"
+            />
+          </>
         ) : (
-          <div className="w-full aspect-[4/5] flex items-center justify-center text-slate-300">
+          <div className="w-full h-full flex items-center justify-center text-slate-200">
             <typeInfo.icon size={48} strokeWidth={1} />
           </div>
         )}
@@ -1037,13 +1048,13 @@ function ItemCard({
         )}
       </div>
 
-      <CardHeader className="p-6 pb-2">
-        <div className="space-y-2">
+      <CardHeader className="p-5 pb-2">
+        <div className="space-y-1.5 h-[68px]"> {/* Fixed height for title alignment */}
           {item.company && (
-            <p className="text-[11px] font-black text-[#4ACAD4] tracking-wider uppercase leading-none">{item.company}</p>
+            <p className="text-[10px] font-black text-[#4ACAD4] tracking-wider uppercase leading-none truncate">{item.company}</p>
           )}
           <CardTitle 
-            className="text-xl font-bold line-clamp-2 leading-tight group-hover:text-[#4ACAD4] transition-colors cursor-pointer"
+            className="text-lg font-bold line-clamp-2 leading-tight group-hover:text-[#4ACAD4] transition-colors cursor-pointer"
             onClick={() => onViewDetail(item)}
           >
             {item.title}
@@ -1051,10 +1062,12 @@ function ItemCard({
         </div>
       </CardHeader>
 
-      <CardContent className="p-6 pt-0 flex flex-col flex-1">
-        <p className="text-sm text-slate-500 mb-6 line-clamp-2 font-medium">
-          {item.description}
-        </p>
+      <CardContent className="p-5 pt-0 flex flex-col flex-1">
+        <div className="h-[40px] mb-4"> {/* Fixed height for description */}
+          <p className="text-xs text-slate-500 line-clamp-2 font-medium leading-relaxed">
+            {item.description}
+          </p>
+        </div>
         
         <div className="mt-auto pt-4 border-t border-slate-50 space-y-2.5">
           <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
