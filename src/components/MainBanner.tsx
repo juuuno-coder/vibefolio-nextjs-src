@@ -234,22 +234,13 @@ export function MainBanner() {
                           {banner.title}
                         </h2>
   
-                         {banner.description && (
+                        {banner.description && (
                           <p 
-                            className="text-[10px] md:text-xs font-bold opacity-80 max-w-2xl line-clamp-1 mb-4 leading-relaxed"
+                            className="text-[10px] md:text-xs font-bold opacity-80 max-w-2xl line-clamp-1 mb-2 leading-relaxed"
                             style={{ color: banner.text_color }}
                           >
                             {banner.description}
                           </p>
-                        )}
-                        
-                         {banner.link_url && (
-                          <div 
-                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-gray-900 transition-all duration-500 group-hover:bg-[#4ACAD4] group-hover:text-slate-900 font-black text-[10px] md:text-xs shadow-xl"
-                          >
-                            <span>{banner.button_text || "자세히 보기"}</span>
-                            <ExternalLink size={12} className="group-hover:translate-x-1 transition-transform" />
-                          </div>
                         )}
                       </div>
                   </CardContent>
