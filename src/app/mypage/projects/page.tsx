@@ -117,7 +117,7 @@ export default function MyProjectsPage() {
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Upload className="text-[#4ACAD4]" size={24} />
+                <Upload className="text-[#16A34A]" size={24} />
                 내 프로젝트
               </h1>
               <p className="text-gray-500 text-sm mt-1">
@@ -127,7 +127,7 @@ export default function MyProjectsPage() {
           </div>
           <Button 
             onClick={() => router.push('/project/upload')}
-            className="bg-[#4ACAD4] hover:bg-[#3ab8c2]"
+            className="bg-[#16A34A] hover:bg-[#3ab8c2]"
           >
             <Upload className="w-4 h-4 mr-2" />
             새 프로젝트
@@ -137,7 +137,7 @@ export default function MyProjectsPage() {
         {/* 콘텐츠 */}
         {loading ? (
           <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4ACAD4]"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#16A34A]"></div>
           </div>
         ) : error ? (
           <div className="text-center py-20">
@@ -157,7 +157,7 @@ export default function MyProjectsPage() {
             </p>
             <Button 
               onClick={() => router.push('/project/upload')}
-              className="bg-[#4ACAD4] hover:bg-[#3ab8c2]"
+              className="bg-[#16A34A] hover:bg-[#3ab8c2]"
             >
               첫 프로젝트 업로드
             </Button>

@@ -19,7 +19,7 @@ interface Popup {
   content: string | null;
   image_url: string | null;
   link_url: string | null;
-  link_text: string;
+  link_text: string | null;
 }
 
 export function PopupModal() {
@@ -40,12 +40,13 @@ export function PopupModal() {
 
   const loadPopup = async () => {
     try {
-      // 활성화되고 기간 내인 팝업 중 첫 번째 가져오기
+      // notices 테이블에서 팝업으로 설정된 최신 공지사항 가져오기
       const { data, error } = await (supabase
-        .from("popups") as any)
+        .from("notices") as any)
         .select("*")
-        .eq("is_active", true)
-        .order("display_order", { ascending: true })
+        .eq("is_popup", true)
+        .eq("is_visible", true)
+        .order("created_at", { ascending: false })
         .limit(1)
         .single();
 

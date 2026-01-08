@@ -100,10 +100,11 @@ export default function AdminPage() {
           .from('faqs')
           .select('*', { count: 'exact', head: true });
 
-        // 팝업 수
+        // 팝업 수 (공지사항 중 팝업으로 설정된 것)
         const { count: popupCount } = await supabase
-          .from('popups')
-          .select('*', { count: 'exact', head: true });
+          .from('notices')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_popup', true);
 
         // 최근 프로젝트
         const { data: projects } = await supabase
@@ -203,15 +204,6 @@ export default function AdminPage() {
       count: stats.totalFaqs,
     },
     {
-      title: "팝업 광고 관리",
-      description: "메인 페이지 팝업 등록 및 관리",
-      icon: Megaphone,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
-      path: "/admin/popups",
-      count: stats.totalPopups,
-    },
-    {
       title: "배너 관리",
       description: "메인 페이지 배너 업로드 및 관리",
       icon: ImageIcon,
@@ -287,7 +279,7 @@ export default function AdminPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-            반가워요, <span className="text-[#4ACAD4]">관리자님!</span> 👋
+            반가워요, <span className="text-[#16A34A]">관리자님!</span> 👋
           </h1>
           <p className="text-slate-500 mt-2 font-medium">오늘의 바이브폴리오 현황을 요약해 드립니다.</p>
         </div>
@@ -337,7 +329,7 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center justify-between mb-8">
               <CardTitle className="text-xl font-black flex items-center gap-2">
-                <BarChart3 className="text-[#4ACAD4]" />
+                <BarChart3 className="text-[#16A34A]" />
                 주간 플랫폼 활성 지수 (Platform Vitality)
               </CardTitle>
               <select className="bg-slate-50 border-none text-[10px] font-bold text-slate-500 rounded-lg px-3 py-1.5 focus:ring-0 cursor-pointer">
@@ -351,11 +343,11 @@ export default function AdminPage() {
                 <div key={i} className="flex-1 flex flex-col items-center gap-3 group">
                    <div className="w-full relative px-2">
                       <div 
-                        className="w-full bg-slate-50 rounded-t-xl group-hover:bg-[#4ACAD4]/10 transition-colors duration-300 flex items-end justify-center overflow-hidden"
+                        className="w-full bg-slate-50 rounded-t-xl group-hover:bg-[#16A34A]/10 transition-colors duration-300 flex items-end justify-center overflow-hidden"
                         style={{ height: '180px' }}
                       >
                          <div 
-                           className="w-full bg-[#4ACAD4]/80 group-hover:bg-[#4ACAD4] transition-all duration-500 ease-out rounded-t-lg"
+                           className="w-full bg-[#16A34A]/80 group-hover:bg-[#16A34A] transition-all duration-500 ease-out rounded-t-lg"
                            style={{ height: `${(d.value / maxVal) * 100}%` }}
                          />
                       </div>
@@ -372,11 +364,11 @@ export default function AdminPage() {
           
           <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
             <p className="text-sm font-medium text-slate-500 italic">
-              플랫폼 활성도가 전주 대비 <span className={`font-bold ${stats.projectGrowth >= 0 ? 'text-[#4ACAD4]' : 'text-red-600'}`}>
+              플랫폼 활성도가 전주 대비 <span className={`font-bold ${stats.projectGrowth >= 0 ? 'text-[#16A34A]' : 'text-red-600'}`}>
                 {Math.abs(stats.projectGrowth)}% {stats.projectGrowth >= 0 ? '개선' : '정체'}
               </span>되었습니다.
             </p>
-            <Button variant="ghost" className="text-[#4ACAD4] font-bold text-xs hover:bg-[#4ACAD4]/5 rounded-xl" onClick={() => router.push('/admin/stats')}>상세 리포트 보기</Button>
+            <Button variant="ghost" className="text-[#16A34A] font-bold text-xs hover:bg-[#16A34A]/5 rounded-xl" onClick={() => router.push('/admin/stats')}>상세 리포트 보기</Button>
           </div>
         </Card>
 
@@ -422,7 +414,7 @@ export default function AdminPage() {
                     <div className="flex items-center gap-5">
                        <div className="w-14 h-14 rounded-2xl bg-slate-100 bg-cover bg-center flex-shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-300" style={{ backgroundImage: `url(${project.thumbnail_url || '/globe.svg'})` }} />
                        <div>
-                         <p className="font-bold text-slate-900 text-sm line-clamp-1 group-hover:text-[#4ACAD4] transition-colors">{project.title || "제목 없음"}</p>
+                         <p className="font-bold text-slate-900 text-sm line-clamp-1 group-hover:text-[#16A34A] transition-colors">{project.title || "제목 없음"}</p>
                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">@{project.profiles?.username || "익명"}</p>
                        </div>
                     </div>
@@ -456,7 +448,7 @@ export default function AdminPage() {
              <div className="divide-y divide-slate-50">
                 {recentInquiries.length > 0 ? recentInquiries.map((inquiry, idx) => (
                   <div key={idx} className="p-5 flex items-start gap-4 group cursor-pointer hover:bg-slate-50/50">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-[#4ACAD4] group-hover:text-white transition-all duration-300">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-[#16A34A] group-hover:text-white transition-all duration-300">
                       <MessageCircle size={20} />
                     </div>
                     <div className="flex-1 min-w-0">

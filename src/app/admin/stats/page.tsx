@@ -206,7 +206,7 @@ export default function AdminStatsPage() {
     return (
       <div className="h-[80vh] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 size={40} className="animate-spin text-[#4ACAD4] mx-auto mb-4" />
+          <Loader2 size={40} className="animate-spin text-[#16A34A] mx-auto mb-4" />
           <p className="text-slate-400 font-bold tracking-tight">상세 통계 데이터를 분석 중입니다...</p>
         </div>
       </div>
@@ -222,7 +222,7 @@ export default function AdminStatsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-            <BarChart3 className="text-[#4ACAD4]" size={36} />
+            <BarChart3 className="text-[#16A34A]" size={36} />
             종합 통계 리포트
           </h1>
           <p className="text-slate-500 mt-2 font-medium">바이브폴리오의 성장 지표를 실시간으로 분석합니다.</p>
@@ -375,26 +375,26 @@ export default function AdminStatsPage() {
            </div>
            
             <div className="relative z-10 h-full flex flex-col">
-              <Badge className="w-fit mb-6 bg-[#4ACAD4] text-slate-900 font-black">AI INSIGHT</Badge>
+              <Badge className="w-fit mb-6 bg-[#16A34A] text-slate-900 font-black">AI INSIGHT</Badge>
               <h3 className="text-2xl font-black mb-6 leading-tight border-b border-white/10 pb-6 break-keep">
                 {insight.title}<br/>
-                <span className="text-[#4ACAD4]">{insight.desc}</span>
+                <span className="text-[#16A34A]">{insight.desc}</span>
               </h3>
               
               <div className="grid grid-cols-2 gap-8 flex-1 content-center">
-                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#4ACAD4]/30 transition-colors">
+                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#16A34A]/30 transition-colors">
                     <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic tracking-tighter">월간 활성 지표</p>
                     <p className="text-2xl font-black">{Math.min(95.5, 80 + (stats.projectGrowth / 2)).toFixed(1)}%</p>
                  </div>
-                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#4ACAD4]/30 transition-colors">
+                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#16A34A]/30 transition-colors">
                     <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic tracking-tighter">평균 체류 시간</p>
                     <p className="text-2xl font-black">4m {Math.floor(Math.random() * 60)}s</p>
                  </div>
-                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#4ACAD4]/30 transition-colors">
+                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#16A34A]/30 transition-colors">
                     <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic tracking-tighter">이탈률</p>
                     <p className="text-2xl font-black">{Math.max(15.2, 25 - (stats.userGrowth / 4)).toFixed(1)}%</p>
                  </div>
-                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#4ACAD4]/30 transition-colors">
+                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#16A34A]/30 transition-colors">
                     <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic tracking-tighter">전환율</p>
                     <p className="text-2xl font-black">{Math.min(20.0, 10 + (stats.projectGrowth / 5)).toFixed(1)}%</p>
                  </div>
@@ -402,7 +402,7 @@ export default function AdminStatsPage() {
               
               <Button 
                 onClick={handleExportCSV}
-                className="mt-8 w-full h-14 rounded-2xl bg-white text-slate-900 hover:bg-[#4ACAD4] transition-all font-black tracking-tighter text-sm shadow-xl hover:shadow-[#4ACAD4]/20"
+                className="mt-8 w-full h-14 rounded-2xl bg-white text-slate-900 hover:bg-[#16A34A] transition-all font-black tracking-tighter text-sm shadow-xl hover:shadow-[#16A34A]/20"
               >
                 상세 데이터 내보내기 (.CSV)
               </Button>

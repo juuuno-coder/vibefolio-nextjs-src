@@ -410,7 +410,7 @@ export default function AdminRecruitPage() {
               <Button 
                 variant="outline" 
                 onClick={handleManualCrawl}
-                className="border-[#4ACAD4] text-[#4ACAD4] hover:bg-[#4ACAD4]/10"
+                className="border-[#16A34A] text-[#16A34A] hover:bg-[#16A34A]/10"
               >
                 <RefreshCw size={16} className="mr-2" />
                 정보 업데이트 (크롤링)
@@ -424,7 +424,7 @@ export default function AdminRecruitPage() {
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
-                    className="bg-[#4ACAD4] hover:bg-[#41a3aa]"
+                    className="bg-[#16A34A] hover:bg-[#41a3aa]"
                     onClick={handleDialogClose}
                   >
                     <Plus size={18} className="mr-2" />
@@ -442,7 +442,7 @@ export default function AdminRecruitPage() {
                     <div className="space-y-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
                       <div className="flex items-center gap-2 mb-2 text-slate-800">
                         <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                           <Calendar size={18} className="text-[#4ACAD4]" />
+                           <Calendar size={18} className="text-[#16A34A]" />
                         </div>
                         <h3 className="font-bold text-sm">기본 정보</h3>
                       </div>
@@ -453,7 +453,7 @@ export default function AdminRecruitPage() {
                           <select
                             value={formData.type}
                             onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                            className="w-full border rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-[#4ACAD4]/20 outline-none transition-all"
+                            className="w-full border rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-[#16A34A]/20 outline-none transition-all"
                           >
                             <option value="job">채용</option>
                             <option value="contest">공모전</option>
@@ -579,7 +579,7 @@ export default function AdminRecruitPage() {
                     <div className="space-y-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
                       <div className="flex items-center gap-2 mb-2 text-slate-800">
                         <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                           <ExternalLink size={18} className="text-[#4ACAD4]" />
+                           <ExternalLink size={18} className="text-[#16A34A]" />
                         </div>
                         <h3 className="font-bold text-sm">연결 및 파일 관리</h3>
                       </div>
@@ -590,7 +590,7 @@ export default function AdminRecruitPage() {
                           placeholder="https://주최측-공식-홈페이지-주소.com"
                           value={formData.link}
                           onChange={e => setFormData({ ...formData, link: e.target.value })}
-                          className="rounded-xl h-11 bg-white border-[#4ACAD4]/30 focus:border-[#4ACAD4]"
+                          className="rounded-xl h-11 bg-white border-[#16A34A]/30 focus:border-[#16A34A]"
                         />
                       </div>
 

@@ -19,9 +19,8 @@ Vibefolio의 디자인 시스템은 **"Clean, Modern, and Premium"**을 핵심 �
 
 Vibefolio는 신뢰감과 창의성을 상징하는 **Green & Mint**를 포인트 컬러로 사용합니다.
 
-- **Primary (Vibrant Green)**: `#16A34A` (`hsl(142, 76%, 36%)`) - 메인 버튼, 핵심 강조 요소.
-- **Accent (Lime Green)**: `#84CC16` (`hsl(84, 81%, 44%)`) - 보조 강조, 배지 포인트.
-- **Point (Mint/Cyan)**: `#4ACAD4` - 공모전/채용 섹션 핵심 포인트.
+- **Primary (Vibe Green)**: `#16A34A` (`hsl(142, 76%, 36%)`) - 메인 버튼, 핵심 강조 요소, 배지 포인트.
+- **Accent (Lime Green)**: `#84CC16` (`hsl(84, 81%, 44%)`) - 보조 강조.
 - **Foreground (Navy Black)**: `#0F172A` (`hsl(222, 47%, 11%)`) - 텍스트, 아이콘 기본값.
 - **Background (Pure White)**: `#FFFFFF` (`hsl(0, 0%, 100%)`) - 기본 배경.
 
@@ -63,19 +62,19 @@ Vibefolio는 국문 가독성의 표준인 **Pretendard**를 메인 서체로 �
 
 ### 버튼 (Buttons - Pill Shape)
 
-- **Primary**: 검정 배경(`bg-[#111]`) + 흰색 글자. 호버 시 Green(`bg-[#15803d]`)으로 변화 및 `translate-y-[-1px]`.
-- **Secondary**: 투명 배경 + 테두리. 호버 시 Mint/Green 포인트 컬러 적용.
+- **Primary**: 검정 배경(`bg-[#111]`) + 흰색 글자. 호버 시 Green(`bg-[#16A34A]`)으로 변화 및 `translate-y-[-1px]`.
+- **Secondary**: 투명 배경 + 테두리. 호버 시 Vibe Green 포인트 컬러 적용.
 - **Action**: `rounded-2xl` 또는 `rounded-full` 형태를 선호합니다.
 
 ### 카드 (Cards)
 
 - **Recruit Item Card**: `aspect-[4/5]` 비율의 이미지를 상단에 가득 채움(`object-cover`). 하단 텍스트 영역 가변 높이 방지를 위한 고정 높이 처리.
-- **Banner Card**: `rounded-[40px]`, `overflow-hidden`, **16:9 (`aspect-video`) 비율 적용**. 내부 텍스트는 좌하단 플로팅 스타일.
+- **Banner Card**: `rounded-[40px]`, `overflow-hidden`, **16:9 (`aspect-video`) 비율 적용**. 내부 텍스트는 좌하단 플로팅 스타일. **한 줄 설명(description_one_line)**을 우선 노출하여 미니멀리즘 유지.
 
 ### 배지 (Badges)
 
 - `rounded-full`, `font-black`, `tracking-widest`.
-- 정보의 성격에 따라 Mint(`#4ACAD4`), Slate, Red(D-Day) 등을 활용.
+- 정보의 성격에 따라 Vibe Green(`#16A34A`), Slate, Red(D-Day) 등을 활용.
 
 ---
 

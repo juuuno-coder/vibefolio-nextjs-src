@@ -48,6 +48,7 @@ interface Banner {
   title: string;
   subtitle: string | null;
   description: string | null;
+  description_one_line: string | null;
   button_text: string | null;
   image_url: string;
   link_url: string | null;
@@ -86,6 +87,7 @@ export default function AdminBannersPage() {
     title: "",
     subtitle: "",
     description: "",
+    description_one_line: "",
     button_text: "자세히 보기",
     image_url: "",
     link_url: "",
@@ -150,6 +152,7 @@ export default function AdminBannersPage() {
         title: banner.title,
         subtitle: banner.subtitle || "",
         description: banner.description || "",
+        description_one_line: banner.description_one_line || "",
         button_text: banner.button_text || "자세히 보기",
         image_url: banner.image_url,
         link_url: banner.link_url || "",
@@ -165,6 +168,7 @@ export default function AdminBannersPage() {
         title: "",
         subtitle: "",
         description: "",
+        description_one_line: "",
         button_text: "자세히 보기",
         image_url: "",
         link_url: "",
@@ -186,6 +190,7 @@ export default function AdminBannersPage() {
         title: formData.title,
         subtitle: formData.subtitle || null,
         description: formData.description || null,
+        description_one_line: formData.description_one_line || null,
         button_text: formData.button_text || '자세히 보기',
         image_url: formData.image_url,
         link_url: formData.link_url || null,
@@ -356,7 +361,7 @@ export default function AdminBannersPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-            <ImageIcon className="text-[#4ACAD4]" size={32} />
+            <ImageIcon className="text-[#16A34A]" size={32} />
             통합 배너 관리
           </h1>
           <p className="text-slate-500 mt-2 font-medium">메인 페이지 상단에 노출될 배너와 홍보 항목을 통합 관리합니다.</p>
@@ -465,7 +470,7 @@ export default function AdminBannersPage() {
                           <div className="relative group/img">
                             <div className="w-16 h-16 rounded-xl bg-slate-100 bg-cover bg-center shadow-inner" style={{ backgroundImage: `url(${item.banner_image_url || item.thumbnail})` }} />
                             {item.banner_image_url && (
-                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#4ACAD4] rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#16A34A] rounded-full flex items-center justify-center border-2 border-white shadow-sm">
                                 <Zap size={8} className="text-white fill-white" />
                               </div>
                             )}
@@ -532,7 +537,7 @@ export default function AdminBannersPage() {
                     <Card key={item.id} className="border-none bg-white shadow-sm rounded-[28px] p-5 hover:shadow-xl transition-all group">
                        <div className="w-full h-32 rounded-2xl bg-slate-100 bg-cover bg-center mb-4 shadow-inner" style={{ backgroundImage: `url(${item.thumbnail})` }} />
                        <Badge variant="outline" className="text-[9px] font-black uppercase mb-2">{item.type}</Badge>
-                       <h4 className="font-bold text-slate-900 group-hover:text-[#4ACAD4] transition-colors mb-2 line-clamp-1">{item.title}</h4>
+                       <h4 className="font-bold text-slate-900 group-hover:text-[#16A34A] transition-colors mb-2 line-clamp-1">{item.title}</h4>
                        <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed mb-5">{item.description}</p>
                        <Button className="w-full h-11 bg-slate-900 text-white rounded-xl font-bold text-sm" onClick={() => togglePromotedBanner(item.id, false)}>
                          배너로 내보내기
@@ -661,9 +666,19 @@ function EditorModal({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700">상세 설명</label>
+            <label className="text-sm font-bold text-slate-700">한 줄 설명 (배너 노출용)</label>
             <Input 
-              placeholder="배너에 표시될 상세 설명 문구"
+              placeholder="배너에 실제 노출될 짧고 강렬한 한 문장"
+              className="h-12 rounded-xl border-slate-100 bg-slate-50"
+              value={formData.description_one_line}
+              onChange={(e) => setFormData({...formData, description_one_line: e.target.value})}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">상세 설명 (관리용)</label>
+            <Input 
+              placeholder="관리자만 확인하는 상세 내용"
               className="h-12 rounded-xl border-slate-100 bg-slate-50"
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
@@ -727,7 +742,7 @@ function EditorModal({
               id="is_active"
               checked={formData.is_active}
               onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-              className="w-5 h-5 rounded border-slate-300 text-[#4ACAD4] focus:ring-[#4ACAD4]"
+              className="w-5 h-5 rounded border-slate-300 text-[#16A34A] focus:ring-[#16A34A]"
             />
             <label htmlFor="is_active" className="text-sm font-bold text-slate-600">배너 활성화</label>
           </div>

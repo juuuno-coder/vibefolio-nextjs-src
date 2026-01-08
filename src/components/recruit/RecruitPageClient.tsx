@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +27,15 @@ import { Plus, Trash2, Edit, Calendar, MapPin, Award, Briefcase, DollarSign, Ext
 import { supabase } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/supabase/storage";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
+// badge removed
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ListFilter, ArrowUpDown } from "lucide-react";
 
 
 interface Item {
@@ -489,9 +497,49 @@ export default function RecruitPage() {
     return `D-${diff}`;
   };
 
-  const jobs = items.filter((e) => e.type === "job");
-  const contests = items.filter((e) => e.type === "contest");
-  const events = items.filter((e) => e.type === "event");
+  const [sortBy, setSortBy] = useState("latest");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+
+  // 데이터 가공 (필터링 및 정렬)
+  const processedItems = useMemo(() => {
+    let result = [...items];
+
+    // 분야 필터링
+    if (categoryFilter !== "all") {
+      result = result.filter(item => 
+        item.category_tags?.split(',').map(t => t.trim()).includes(categoryFilter)
+      );
+    }
+
+    // 정렬
+    if (sortBy === "latest") {
+      result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // 마감임박순 (가장 가까운 날짜가 먼저)
+    } else if (sortBy === "views") {
+      result.sort((a, b) => (b.views_count || 0) - (a.views_count || 0));
+    } else if (sortBy === "created") {
+      // created_at 필드가 있다면 사용하겠지만, 없으므로 id 기준 역순 (최신 등록)
+      result.sort((a, b) => b.id - a.id);
+    }
+
+    return result;
+  }, [items, sortBy, categoryFilter]);
+
+  const allCategories = useMemo(() => {
+    const cats = new Set<string>();
+    items.forEach(item => {
+      if (item.category_tags) {
+        item.category_tags.split(',').forEach(tag => {
+          const trimmedTag = tag.trim();
+          if (trimmedTag) cats.add(trimmedTag);
+        });
+      }
+    });
+    return Array.from(cats).sort();
+  }, [items]);
+
+  const jobs = processedItems.filter((item) => item.type === "job");
+  const contests = processedItems.filter((item) => item.type === "contest");
+  const events = processedItems.filter((item) => item.type === "event");
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -531,7 +579,7 @@ export default function RecruitPage() {
                     {isAdmin ? (editingItem ? "항목 수정" : "새 항목 추가") : "공모전/채용 정보 제보"}
                   </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       유형
@@ -631,8 +679,8 @@ export default function RecruitPage() {
 
                   {/* 공모전 전용 필드 */}
                   {formData.type === "contest" && (
-                    <div className="space-y-4 border-l-4 border-[#4ACAD4] pl-4 py-2 bg-[#4ACAD4]/5 rounded-r-lg">
-                      <h3 className="font-bold text-[#4ACAD4] text-sm flex items-center gap-2">
+                    <div className="space-y-4 border-l-4 border-[#16A34A] pl-4 py-2 bg-[#16A34A]/5 rounded-r-lg">
+                      <h3 className="font-bold text-[#16A34A] text-sm flex items-center gap-2">
                         <Award size={16} /> 공모전 상세 정보
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
@@ -695,32 +743,24 @@ export default function RecruitPage() {
                     </div>
                   </div>
 
-                  {/* 이미지 섹션 (강화) */}
-                  <div className="space-y-4 pt-4 border-t border-slate-100">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                          <Plus size={16} className="text-[#4ACAD4]" /> 포스터 이미지 (썸네일)
-                        </label>
-                        {isAdmin && (
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="sm" 
-                            className="h-8 text-xs gap-1"
-                            onClick={() => document.getElementById('recruit-thumb-upload')?.click()}
-                          >
-                            <Upload size={12} /> 파일 업로드
-                          </Button>
-                        )}
-                        <input 
-                          type="file" 
-                          id="recruit-thumb-upload" 
-                          className="hidden" 
-                          accept="image/*"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
+                  {/* 이미지 섹션 (강화 - 드래그 앤 드롭 UI) */}
+                  <div className="space-y-6 pt-6 border-t border-slate-100">
+                    <div className="space-y-3">
+                      <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                        <Plus size={16} className="text-[#16A34A]" /> 포스터 이미지 (썸네일)
+                      </label>
+                      
+                      <div 
+                        className={`relative group h-48 rounded-[32px] border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center overflow-hidden bg-slate-50 cursor-pointer ${
+                          formData.thumbnail ? 'border-[#16A34A] bg-[#16A34A]/5' : 'border-slate-200 hover:border-[#16A34A] hover:bg-slate-100'
+                        }`}
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-[#16A34A]', 'bg-[#16A34A]/5'); }}
+                        onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('border-[#16A34A]', 'bg-[#16A34A]/5'); }}
+                        onDrop={async (e) => {
+                          e.preventDefault();
+                          e.currentTarget.classList.remove('border-[#16A34A]', 'bg-[#16A34A]/5');
+                          const file = e.dataTransfer.files?.[0];
+                          if (file && file.type.startsWith('image/')) {
                             try {
                               toast.info("포스터 업로드 중...");
                               const url = await uploadImage(file, 'recruits');
@@ -729,39 +769,73 @@ export default function RecruitPage() {
                             } catch (err) {
                               toast.error("업로드 실패: " + (err as Error).message);
                             }
-                          }}
-                        />
+                          }
+                        }}
+                        onClick={() => document.getElementById('recruit-thumb-upload')?.click()}
+                      >
+                        {formData.thumbnail ? (
+                          <>
+                            <img src={formData.thumbnail} alt="Poster" className="absolute inset-0 w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <p className="text-white font-bold flex items-center gap-2">
+                                <Upload size={18} /> 이미지 변경하기 (클릭/드래그)
+                              </p>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-center space-y-2 px-4">
+                            <div className="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center mx-auto text-slate-400 group-hover:text-[#16A34A] transition-colors">
+                              <Upload size={24} />
+                            </div>
+                            <p className="text-xs font-bold text-slate-500">포스터 이미지를 끌어다 놓거나 클릭하여 업로드하세요</p>
+                            <p className="text-[10px] text-slate-400">4:5 비율 권장 (JPG, PNG, WebP)</p>
+                          </div>
+                        )}
                       </div>
+
+                      <input 
+                        type="file" 
+                        id="recruit-thumb-upload" 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            toast.info("포스터 업로드 중...");
+                            const url = await uploadImage(file, 'recruits');
+                            setFormData({...formData, thumbnail: url});
+                            toast.success("포스터 이미지가 적용되었습니다.");
+                          } catch (err) {
+                            toast.error("업로드 실패: " + (err as Error).message);
+                          }
+                        }}
+                      />
                       <Input
-                        placeholder="https://example.com/poster.jpg"
+                        placeholder="또는 이미지 URL 직접 입력 (https://...)"
                         value={formData.thumbnail}
                         onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                        className="h-11 rounded-xl bg-white border-slate-100"
                       />
                     </div>
 
                     {isAdmin && (
-                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                        <div className="flex items-center justify-between mb-2">
-                          <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                            <Sparkles size={16} className="text-amber-500" /> 상세 페이지 히어로 배너 (와이드)
-                          </label>
-                          <Button 
-                            type="button" 
-                            variant="secondary" 
-                            size="sm" 
-                            className="h-8 text-xs gap-1 bg-white"
-                            onClick={() => document.getElementById('recruit-banner-upload')?.click()}
-                          >
-                            <Upload size={12} /> 파일 업로드
-                          </Button>
-                          <input 
-                            type="file" 
-                            id="recruit-banner-upload" 
-                            className="hidden" 
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
+                      <div className="space-y-3">
+                        <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                          <Sparkles size={16} className="text-amber-500" /> 상세 페이지 히어로 배너 (와이드)
+                        </label>
+                        
+                        <div 
+                          className={`relative group h-40 rounded-[32px] border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center overflow-hidden bg-slate-50 cursor-pointer ${
+                            formData.banner_image_url ? 'border-amber-500 bg-amber-50/10' : 'border-slate-200 hover:border-amber-500 hover:bg-slate-100'
+                          }`}
+                          onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-amber-500', 'bg-amber-50/10'); }}
+                          onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('border-amber-500', 'bg-amber-50/10'); }}
+                          onDrop={async (e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove('border-amber-500', 'bg-amber-50/10');
+                            const file = e.dataTransfer.files?.[0];
+                            if (file && file.type.startsWith('image/')) {
                               try {
                                 toast.info("배너 업로드 중...");
                                 const url = await uploadImage(file, 'banners');
@@ -770,16 +844,55 @@ export default function RecruitPage() {
                               } catch (err) {
                                 toast.error("업로드 실패: " + (err as Error).message);
                               }
-                            }}
-                          />
+                            }
+                          }}
+                          onClick={() => document.getElementById('recruit-banner-upload')?.click()}
+                        >
+                          {formData.banner_image_url ? (
+                            <>
+                              <img src={formData.banner_image_url} alt="Banner" className="absolute inset-0 w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <p className="text-white font-bold flex items-center gap-2">
+                                  <Upload size={18} /> 이미지 변경하기 (클릭/드래그)
+                                </p>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-center space-y-2 px-4">
+                              <div className="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center mx-auto text-slate-400 group-hover:text-amber-500 transition-colors">
+                                <Upload size={24} />
+                              </div>
+                              <p className="text-xs font-bold text-slate-500">와이드 이미지를 끌어다 놓거나 클릭하여 업로드하세요</p>
+                              <p className="text-[10px] text-slate-400">16:6 비율 권장 (JPG, PNG, WebP)</p>
+                            </div>
+                          )}
                         </div>
+
+                        <input 
+                          type="file" 
+                          id="recruit-banner-upload" 
+                          className="hidden" 
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              toast.info("배너 업로드 중...");
+                              const url = await uploadImage(file, 'banners');
+                              setFormData({...formData, banner_image_url: url});
+                              toast.success("와이드 배너 이미지가 적용되었습니다.");
+                            } catch (err) {
+                              toast.error("업로드 실패: " + (err as Error).message);
+                            }
+                          }}
+                        />
                         <Input
-                          placeholder="배너용 와이드 이미지 URL (16:6 비율 권장)"
+                          placeholder="또는 와이드 이미지 URL 직접 입력 (https://...)"
                           value={formData.banner_image_url}
                           onChange={(e) => setFormData({ ...formData, banner_image_url: e.target.value })}
-                          className="bg-white"
+                          className="h-11 rounded-xl bg-white border-slate-100"
                         />
-                        <p className="text-[10px] text-slate-400 mt-2 italic">* 상세 페이지 상단에 와이드하게 노출될 이미지를 등록하세요.</p>
+                        <p className="text-[10px] text-slate-400 mt-1 italic leading-tight">* 상세 페이지 상단에 와이드하게 노출될 이미지를 등록하세요.</p>
                       </div>
                     )}
                   </div>
@@ -800,7 +913,7 @@ export default function RecruitPage() {
                       <Button 
                         type="button"
                         variant="outline"
-                        className="shrink-0 border-[#4ACAD4] text-[#4ACAD4] hover:bg-[#4ACAD4]/10 gap-2"
+                        className="shrink-0 border-[#16A34A] text-[#16A34A] hover:bg-[#16A34A]/10 gap-2"
                         onClick={handleExtractInfo}
                         disabled={isExtracting}
                       >
@@ -814,14 +927,14 @@ export default function RecruitPage() {
                   </div>
 
                   <div className="flex gap-2 justify-end pt-4">
-                    <Button variant="outline" onClick={handleDialogClose}>
+                    <Button variant="ghost" onClick={handleDialogClose} className="h-12 px-6 rounded-2xl font-bold text-slate-400">
                       취소
                     </Button>
                     <Button
                       onClick={handleSubmit}
-                      className="bg-green-600 hover:bg-green-700 text-white"
+                      className="h-12 px-8 bg-slate-900 border-none shadow-xl hover:shadow-[#16A34A]/20 hover:bg-[#16A34A] text-white rounded-2xl font-bold transition-all duration-300"
                     >
-                      {isAdmin ? (editingItem ? "수정" : "추가") : "정보 제보하기"}
+                      {isAdmin ? (editingItem ? "정보 수정하기" : "정보 등록하기") : "정보 제보하기"}
                     </Button>
                   </div>
                 </div>
@@ -830,62 +943,73 @@ export default function RecruitPage() {
           </div>
         </div>
 
-        {/* 인기 섹션 (조회수 기준 TOP 3) */}
-        {items.length > 0 && (
-          <div className="mb-12">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white shadow-lg shadow-red-200">
-                <Sparkles size={16} fill="currentColor" />
+        {/* 정렬 및 필터 적용된 탭 */}
+        <Tabs defaultValue="all" className="w-full">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 mt-4">
+            <TabsList className="bg-transparent p-0 h-auto gap-1 border-none flex-wrap justify-start">
+              <TabsTrigger 
+                value="all" 
+                className="rounded-xl px-5 py-2.5 h-auto font-black text-xs uppercase tracking-widest text-slate-400 data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all shadow-none border border-transparent data-[state=active]:border-slate-900"
+              >
+                전체 ({processedItems.length})
+              </TabsTrigger>
+              <TabsTrigger 
+                value="job" 
+                className="rounded-xl px-5 py-2.5 h-auto font-black text-xs uppercase tracking-widest text-slate-400 data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all shadow-none border border-transparent data-[state=active]:border-slate-900"
+              >
+                채용 ({jobs.length})
+              </TabsTrigger>
+              <TabsTrigger 
+                value="contest" 
+                className="rounded-xl px-5 py-2.5 h-auto font-black text-xs uppercase tracking-widest text-slate-400 data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all shadow-none border border-transparent data-[state=active]:border-slate-900"
+              >
+                공모전 ({contests.length})
+              </TabsTrigger>
+              <TabsTrigger 
+                value="event" 
+                className="rounded-xl px-5 py-2.5 h-auto font-black text-xs uppercase tracking-widest text-slate-400 data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all shadow-none border border-transparent data-[state=active]:border-slate-900"
+              >
+                이벤트 ({events.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <div className="flex items-center gap-3">
+              {/* 분야 필터 */}
+              <div className="flex items-center gap-2">
+                <ListFilter size={16} className="text-slate-300" />
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-[120px] h-10 rounded-xl border-slate-100 bg-slate-50 text-[11px] font-black uppercase tracking-wider focus:ring-[#16A34A]/20">
+                    <SelectValue placeholder="분야별" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-100">
+                    <SelectItem value="all" className="text-xs font-bold">전체 분야</SelectItem>
+                    {allCategories.map(cat => (
+                      <SelectItem key={cat} value={cat} className="text-xs font-bold">{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <h2 className="text-xl font-black text-slate-900 tracking-tight">지금 가장 핫한 AI 소식</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[...items]
-                .sort((a, b) => (b.views_count || 0) - (a.views_count || 0))
-                .slice(0, 3)
-                .map((item, index) => (
-                  <Card 
-                    key={item.id} 
-                    className="relative border-none shadow-xl shadow-slate-200/50 rounded-[40px] overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all duration-500 bg-white"
-                    onClick={() => handleViewDetail(item)}
-                  >
-                    <div className="p-8 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-4xl font-black text-slate-100 group-hover:text-[#4ACAD4]/20 transition-colors uppercase leading-none">0{index + 1}</span>
-                        <Badge className="bg-[#4ACAD4]/10 text-[#4ACAD4] border-none px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">
-                           HOT TOPIC
-                        </Badge>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-black text-slate-400 tracking-widest uppercase">{item.company || "TRENDING"}</p>
-                        <h3 className="text-lg font-bold text-slate-900 line-clamp-2 leading-tight">{item.title}</h3>
-                      </div>
-                      <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                        <div className="flex items-center gap-1 text-slate-400 text-[10px] font-bold">
-                          <Eye size={12} /> {item.views_count?.toLocaleString() || 0} 명 확인함
-                        </div>
-                        <ChevronRight size={16} className="text-[#4ACAD4] group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+
+              {/* 정렬 필터 */}
+              <div className="flex items-center gap-2">
+                <ArrowUpDown size={16} className="text-slate-300" />
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[120px] h-10 rounded-xl border-slate-100 bg-slate-50 text-[11px] font-black uppercase tracking-wider focus:ring-[#16A34A]/20">
+                    <SelectValue placeholder="정렬" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-100">
+                    <SelectItem value="latest" className="text-xs font-bold">마감임박순</SelectItem>
+                    <SelectItem value="created" className="text-xs font-bold">최신등록순</SelectItem>
+                    <SelectItem value="views" className="text-xs font-bold">조회수순</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-        )}
 
-        {/* 탭 */}
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="all">전체 ({items.length})</TabsTrigger>
-            <TabsTrigger value="job">채용 ({jobs.length})</TabsTrigger>
-            <TabsTrigger value="contest">공모전 ({contests.length})</TabsTrigger>
-            <TabsTrigger value="event">이벤트 ({events.length})</TabsTrigger>
-          </TabsList>
-
-          {/* 전체 */}
-          <TabsContent value="all">
+          <TabsContent value="all" className="mt-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {items.map((item) => (
+              {processedItems.map((item) => (
                 <ItemCard
                   key={item.id}
                   item={item}
@@ -897,11 +1021,11 @@ export default function RecruitPage() {
                 />
               ))}
             </div>
-            {items.length === 0 && <EmptyState />}
+            {processedItems.length === 0 && <EmptyState />}
           </TabsContent>
 
           {/* 채용 */}
-          <TabsContent value="job">
+          <TabsContent value="job" className="mt-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {jobs.map((item) => (
                 <ItemCard
@@ -919,7 +1043,7 @@ export default function RecruitPage() {
           </TabsContent>
 
           {/* 공모전 */}
-          <TabsContent value="contest">
+          <TabsContent value="contest" className="mt-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {contests.map((item) => (
                 <ItemCard
@@ -937,7 +1061,7 @@ export default function RecruitPage() {
           </TabsContent>
 
           {/* 이벤트 */}
-          <TabsContent value="event">
+          <TabsContent value="event" className="mt-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {events.map((item) => (
                 <ItemCard
@@ -1040,10 +1164,10 @@ function ItemCard({
       <CardHeader className="p-5 pb-2">
         <div className="space-y-1.5 h-[68px]"> {/* Fixed height for title alignment */}
           {item.company && (
-            <p className="text-[10px] font-black text-[#4ACAD4] tracking-wider uppercase leading-none truncate">{item.company}</p>
+            <p className="text-[10px] font-black text-[#16A34A] tracking-wider uppercase leading-none truncate">{item.company}</p>
           )}
           <CardTitle 
-            className="text-lg font-bold line-clamp-2 leading-tight group-hover:text-[#4ACAD4] transition-colors cursor-pointer"
+            className="text-lg font-bold line-clamp-2 leading-tight group-hover:text-[#16A34A] transition-colors cursor-pointer"
             onClick={() => onViewDetail(item)}
           >
             {item.title}
@@ -1062,7 +1186,7 @@ function ItemCard({
           <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
-                <Clock size={12} className="text-[#4ACAD4]" />
+                <Clock size={12} className="text-[#16A34A]" />
                 <span>~ {new Date(item.date).toLocaleDateString("ko-KR")}</span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -1080,7 +1204,7 @@ function ItemCard({
 
           <Button
             variant="ghost"
-            className="w-full h-12 rounded-2xl bg-slate-50 hover:bg-[#4ACAD4] hover:text-slate-900 transition-all duration-300 font-bold text-xs flex items-center justify-center gap-2 group/btn shadow-sm hover:shadow-[#4ACAD4]/25"
+            className="w-full h-12 rounded-2xl bg-slate-50 hover:bg-[#16A34A] hover:text-slate-900 transition-all duration-300 font-bold text-xs flex items-center justify-center gap-2 group/btn shadow-sm hover:shadow-[#16A34A]/25"
             onClick={() => onViewDetail(item)}
             disabled={isExpired}
           >

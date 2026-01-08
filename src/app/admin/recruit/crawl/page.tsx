@@ -127,7 +127,7 @@ export default function AdminRecruitCrawlPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-[#4ACAD4]" />
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-[#16A34A]" />
           <p className="text-gray-600">로딩 중...</p>
         </div>
       </div>
@@ -176,7 +176,7 @@ export default function AdminRecruitCrawlPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-[#4ACAD4]">{statistics.crawled}</div>
+              <div className="text-3xl font-bold text-[#16A34A]">{statistics.crawled}</div>
               <p className="text-xs text-gray-500 mt-1">자동 수집된 항목</p>
             </CardContent>
           </Card>
@@ -231,7 +231,7 @@ export default function AdminRecruitCrawlPage() {
             <Button
               onClick={() => handleManualCrawl('all')}
               disabled={isCrawling}
-              className="bg-[#4ACAD4] hover:bg-[#41a3aa]"
+              className="bg-[#16A34A] hover:bg-[#41a3aa]"
             >
               {isCrawling ? (
                 <>

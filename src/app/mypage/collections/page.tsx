@@ -80,7 +80,7 @@ export default function CollectionsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4ACAD4] mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#16A34A] mx-auto"></div>
           <p className="mt-4 text-gray-600">로딩 중...</p>
         </div>
       </div>
@@ -103,8 +103,8 @@ export default function CollectionsPage() {
               <div key={collection.collection_id}>
                 {/* 컬렉션 헤더 */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-[#4ACAD4] bg-opacity-10 rounded-lg flex items-center justify-center">
-                    <Folder size={20} className="text-[#4ACAD4]" />
+                  <div className="w-10 h-10 bg-[#16A34A] bg-opacity-10 rounded-lg flex items-center justify-center">
+                    <Folder size={20} className="text-[#16A34A]" />
                   </div>
                   <div>
                     <h2 className="text-xl font-bold">{collection.name}</h2>

@@ -21,6 +21,7 @@ interface Banner {
   title: string;
   subtitle: string | null;
   description: string | null;
+  description_one_line?: string | null;
   button_text: string | null;
   image_url: string;
   link_url: string | null;
@@ -182,7 +183,7 @@ export function MainBanner() {
   if (banners.length === 0) return null;
 
   return (
-    <section className="w-full">
+    <section className="w-full pt-6">
       <Carousel
         opts={{
           align: "center",
@@ -198,20 +199,22 @@ export function MainBanner() {
             >
               <Link href={banner.link_url || "#"} className={banner.link_url ? "cursor-pointer" : "cursor-default"}>
                 <Card 
-                  className="w-full aspect-video overflow-hidden hover:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] transition-all duration-700 border-none rounded-[40px] group relative"
+                  className="w-full aspect-video overflow-hidden transition-all duration-500 border border-white/10 rounded-xl group relative bg-slate-950 shadow-lg hover:scale-[1.01]"
                 >
                   <CardContent className="h-full p-0 relative">
                     {/* Optimized Image with Next.js Image component */}
-                    <div className="absolute inset-0 overflow-hidden rounded-[40px]">
+                    <div className="absolute inset-0 overflow-hidden rounded-xl">
                       <img 
                         src={banner.image_url || "/placeholder.jpg"}
                         alt={banner.title} 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                         onError={(e) => {
                           // @ts-ignore
                           e.target.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop";
                         }}
                       />
+                      {/* Aceternity Style Inner Glow / Border */}
+                      <div className="absolute inset-0 ring-1 ring-inset ring-white/10 z-20 pointer-events-none" />
                     </div>
                     
                     {/* Modern Overlay - More subtle */}
@@ -221,25 +224,25 @@ export function MainBanner() {
                       <div className="absolute bottom-6 left-6 right-6 md:left-10 md:bottom-8 z-20 flex flex-col items-start gap-1">
                         {banner.subtitle && (
                           <div 
-                            className="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black tracking-widest uppercase bg-[#4ACAD4] text-slate-900 w-fit mb-1.5 shadow-lg shadow-[#4ACAD4]/20"
+                            className="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black tracking-widest uppercase bg-[#16A34A] text-white w-fit mb-1.5 shadow-lg shadow-[#16A34A]/20"
                           >
                             {banner.subtitle}
                           </div>
                         )}
                         
                          <h2 
-                          className="text-lg md:text-xl font-bold tracking-tight leading-tight mb-2 drop-shadow-xl"
+                          className="text-lg md:text-2xl font-black tracking-tighter leading-tight mb-2 drop-shadow-2xl"
                           style={{ color: banner.text_color }}
                         >
                           {banner.title}
                         </h2>
   
-                        {banner.description && (
+                         {(banner.description_one_line || banner.description) && (
                           <p 
                             className="text-[10px] md:text-xs font-bold opacity-80 max-w-2xl line-clamp-1 mb-2 leading-relaxed"
                             style={{ color: banner.text_color }}
                           >
-                            {banner.description}
+                            {banner.description_one_line || banner.description}
                           </p>
                         )}
                       </div>

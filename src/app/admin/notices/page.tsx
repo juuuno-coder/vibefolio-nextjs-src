@@ -36,6 +36,10 @@ interface Notice {
   content: string;
   is_important: boolean;
   is_visible: boolean;
+  is_popup?: boolean;
+  image_url?: string;
+  link_url?: string;
+  link_text?: string;
   created_at: string;
 }
 
@@ -54,6 +58,10 @@ export default function AdminNoticesPage() {
     content: "",
     is_important: false,
     is_visible: true,
+    is_popup: false,
+    image_url: "",
+    link_url: "",
+    link_text: "자세히 보기",
   });
 
   const loadNotices = async () => {
@@ -91,6 +99,10 @@ export default function AdminNoticesPage() {
         content: notice.content,
         is_important: notice.is_important,
         is_visible: notice.is_visible,
+        is_popup: notice.is_popup || false,
+        image_url: notice.image_url || "",
+        link_url: notice.link_url || "",
+        link_text: notice.link_text || "자세히 보기",
       });
     } else {
       setEditingNotice(null);
@@ -99,6 +111,10 @@ export default function AdminNoticesPage() {
         content: "",
         is_important: false,
         is_visible: true,
+        is_popup: false,
+        image_url: "",
+        link_url: "",
+        link_text: "자세히 보기",
       });
     }
     setIsModalOpen(true);
@@ -211,6 +227,7 @@ export default function AdminNoticesPage() {
                         <CardTitle className="text-xl font-bold text-slate-900">{notice.title}</CardTitle>
                         {!notice.is_visible && <Badge variant="secondary">숨김</Badge>}
                         {notice.is_important && <Badge variant="destructive">중요</Badge>}
+                        {notice.is_popup && <Badge className="bg-purple-500 hover:bg-purple-600">팝업 ON</Badge>}
                       </div>
                       <p className="text-sm text-slate-400">{new Date(notice.created_at).toLocaleDateString()} · 관리자</p>
                     </div>
@@ -269,6 +286,53 @@ export default function AdminNoticesPage() {
                 onChange={(e) => setFormData({...formData, content: e.target.value})}
               />
             </div>
+            
+            <div className="p-4 bg-slate-50 rounded-xl space-y-4 border border-slate-100">
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input 
+                  type="checkbox"
+                  className="w-5 h-5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                  checked={formData.is_popup}
+                  onChange={(e) => setFormData({...formData, is_popup: e.target.checked})}
+                />
+                <span className="text-sm font-bold text-slate-900 group-hover:text-purple-600 transition-colors flex items-center gap-2">
+                  <Megaphone size={16} /> 메인 페이지 팝업으로 띄우기
+                </span>
+              </label>
+
+              {formData.is_popup && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 animate-in fade-in slide-in-from-top-2">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500">팝업 이미지 URL (선택)</label>
+                    <Input 
+                      placeholder="https://..."
+                      className="h-10 text-sm bg-white"
+                      value={formData.image_url}
+                      onChange={(e) => setFormData({...formData, image_url: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500">링크 URL (선택)</label>
+                    <Input 
+                      placeholder="/recruit or https://..."
+                      className="h-10 text-sm bg-white"
+                      value={formData.link_url}
+                      onChange={(e) => setFormData({...formData, link_url: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500">버튼 텍스트</label>
+                    <Input 
+                      placeholder="자세히 보기"
+                      className="h-10 text-sm bg-white"
+                      value={formData.link_text}
+                      onChange={(e) => setFormData({...formData, link_text: e.target.value})}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-6 pt-2">
               <label className="flex items-center gap-3 cursor-pointer group">
                 <input 

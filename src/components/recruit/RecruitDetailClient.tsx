@@ -140,7 +140,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                 <Badge className="bg-white/90 backdrop-blur-md text-slate-900 border-none px-4 py-2 rounded-full text-xs font-black tracking-widest uppercase shadow-lg">
                   {item.type === 'job' ? 'RECRUIT' : item.type === 'contest' ? 'CONTEST' : 'EVENT'}
                 </Badge>
-                <Badge className={`${isExpired ? 'bg-slate-400' : 'bg-[#4ACAD4]'} text-white border-none px-4 py-2 rounded-full text-xs font-black tracking-widest uppercase shadow-lg`}>
+                <Badge className={`${isExpired ? 'bg-slate-400' : 'bg-[#16A34A]'} text-white border-none px-4 py-2 rounded-full text-xs font-black tracking-widest uppercase shadow-lg`}>
                   {dday}
                 </Badge>
               </div>
@@ -149,25 +149,25 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
             <div className="space-y-6 px-2">
               <div className="space-y-3">
                 {item.company && (
-                  <div className="flex items-center gap-2 text-[#4ACAD4] font-black tracking-wider uppercase text-sm">
+                  <div className="flex items-center gap-2 text-[#16A34A] font-black tracking-wider uppercase text-sm">
                     <Building2 size={16} />
                     {item.company}
                   </div>
                 )}
-                <h1 className="text-2xl md:text-4xl font-black tracking-tighter text-slate-900 leading-[1.15] break-keep">
+                <h1 className="text-xl md:text-3xl font-black tracking-tighter text-slate-900 leading-[1.15] break-keep">
                   {item.title}
                 </h1>
               </div>
 
               <div className="p-8 rounded-[40px] bg-white shadow-sm border border-slate-100 space-y-6">
-                <h3 className="text-xl font-bold text-slate-900">상세 정보</h3>
-                <p className="text-slate-600 leading-relaxed whitespace-pre-wrap font-medium text-lg">
+                <h3 className="text-lg font-bold text-slate-900">상세 정보</h3>
+                <p className="text-slate-600 leading-relaxed whitespace-pre-wrap font-medium text-base">
                   {item.description}
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-slate-50">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16A34A] shrink-0">
                       <CalendarDays size={20} />
                     </div>
                     <div>
@@ -181,7 +181,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                   
                   {item.application_target && (
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16A34A] shrink-0">
                         <Briefcase size={20} />
                       </div>
                       <div>
@@ -193,7 +193,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
 
                   {item.category_tags && (
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16A34A] shrink-0">
                         <Award size={20} />
                       </div>
                       <div>
@@ -205,19 +205,19 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
 
                   {item.total_prize && (
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16A34A] shrink-0">
                         <Award size={20} />
                       </div>
                       <div>
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">총 상금</p>
-                        <p className="text-[#4ACAD4] font-bold">{item.total_prize}</p>
+                        <p className="text-[#16A34A] font-bold">{item.total_prize}</p>
                       </div>
                     </div>
                   )}
 
                   {item.first_prize && (
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16A34A] shrink-0">
                         <Award size={20} />
                       </div>
                       <div>
@@ -229,7 +229,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
 
                   {item.sponsor && (
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16A34A] shrink-0">
                         <Building2 size={20} />
                       </div>
                       <div>
@@ -241,7 +241,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
 
                   {item.location && (
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16A34A] shrink-0">
                         <MapPin size={20} />
                       </div>
                       <div>
@@ -259,7 +259,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
           <div className="lg:col-span-4">
             <div className="sticky top-28 space-y-6">
               <div className="p-8 md:p-8 rounded-[40px] bg-slate-900 text-white shadow-xl shadow-slate-200 space-y-6 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#4ACAD4]/20 blur-3xl rounded-full -mr-16 -mt-16" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#16A34A]/20 blur-3xl rounded-full -mr-16 -mt-16" />
                 
                 <div className="space-y-1.5 relative z-10">
                   <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Apply Now</p>
@@ -269,7 +269,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                 <div className="space-y-3 relative z-10">
                   {item.link && (
                     <Button 
-                      className="w-full h-14 rounded-2xl bg-[#4ACAD4] hover:bg-[#3db8c1] text-slate-900 font-black text-base shadow-lg shadow-[#4ACAD4]/10 transition-all duration-300 hover:scale-[1.02]"
+                      className="w-full h-14 rounded-2xl bg-[#16A34A] hover:bg-[#3db8c1] text-slate-900 font-black text-base shadow-lg shadow-[#16A34A]/10 transition-all duration-300 hover:scale-[1.02]"
                       onClick={() => window.open(item.link, '_blank')}
                       disabled={isExpired}
                     >
@@ -303,7 +303,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
               {/* Tips Section */}
               <div className="p-8 rounded-[40px] bg-white border border-slate-100 shadow-sm space-y-4">
                 <p className="text-slate-900 font-black flex items-center gap-2">
-                  <Award className="text-[#4ACAD4]" size={18} />
+                  <Award className="text-[#16A34A]" size={18} />
                   에디터의 팁
                 </p>
                 <div className="text-sm text-slate-500 font-medium leading-relaxed space-y-2">
