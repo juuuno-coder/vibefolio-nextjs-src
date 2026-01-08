@@ -858,7 +858,7 @@ function ItemCard({
           <img 
             src={item.thumbnail} 
             alt={item.title} 
-            className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-700"
+            className="w-full h-auto object-contain transition-transform duration-700"
           />
         ) : (
           <div className="w-full aspect-[4/5] flex items-center justify-center text-slate-300">
@@ -900,7 +900,10 @@ function ItemCard({
           {item.company && (
             <p className="text-[11px] font-black text-[#4ACAD4] tracking-wider uppercase leading-none">{item.company}</p>
           )}
-          <CardTitle className="text-xl font-bold line-clamp-2 leading-tight group-hover:text-[#4ACAD4] transition-colors">
+          <CardTitle 
+            className="text-xl font-bold line-clamp-2 leading-tight group-hover:text-[#4ACAD4] transition-colors cursor-pointer"
+            onClick={() => onViewDetail(item)}
+          >
             {item.title}
           </CardTitle>
         </div>
