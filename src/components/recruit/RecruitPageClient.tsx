@@ -1144,27 +1144,14 @@ function ItemCard({
 
   return (
     <Card className={`group border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[24px] overflow-hidden bg-white flex flex-col h-full ${isExpired ? 'opacity-60' : ''}`}>
-      {/* Thumbnail Area - Restored to Vertical Poster Ratio (3:4) with Ambient Blur Background */}
-      <div className="relative aspect-[3/4] overflow-hidden bg-slate-50 flex items-center justify-center">
+      {/* Thumbnail Area - Aspect Ratio (3:4) with Full Bleed Image (No Zoom) */}
+      <div className="relative aspect-[3/4] overflow-hidden bg-slate-100 flex items-center justify-center">
         {item.thumbnail ? (
-          <>
-            {/* Ambient Background Layer */}
-            <div className="absolute inset-0 z-0 overflow-hidden">
-               <img 
-                src={item.thumbnail} 
-                alt="" 
-                className="w-full h-full object-cover blur-2xl scale-125 opacity-40 saturate-150"
-              />
-              <div className="absolute inset-0 bg-black/5" />
-            </div>
-
-            {/* Main Image Layer */}
-            <img 
-              src={item.thumbnail} 
-              alt={item.title} 
-              className="relative z-10 w-full h-full object-contain transition-transform duration-700 pointer-events-none group-hover:scale-105 drop-shadow-sm"
-            />
-          </>
+          <img 
+            src={item.thumbnail} 
+            alt={item.title} 
+            className="w-full h-full object-cover pointer-events-none"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-300">
             <typeInfo.icon size={40} strokeWidth={1} />
