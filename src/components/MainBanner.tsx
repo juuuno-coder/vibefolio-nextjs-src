@@ -99,7 +99,7 @@ export function MainBanner() {
             subtitle: r.type?.toUpperCase() || "EVENT",
             description: r.description,
             button_text: "자세히 보기",
-            image_url: r.thumbnail || "",
+            image_url: r.banner_image_url || r.thumbnail || "",
             link_url: `/recruit/${r.id}`,
             bg_color: "#000000",
             text_color: "#ffffff",
@@ -195,7 +195,7 @@ export function MainBanner() {
           {banners.map((banner, index) => (
             <CarouselItem
               key={banner.id}
-              className="basis-[92vw] md:basis-[700px] pl-4"
+              className="basis-[85vw] md:basis-1/3 lg:basis-1/4 pl-4"
             >
               <Link href={banner.link_url || "#"} className={banner.link_url ? "cursor-pointer" : "cursor-default"}>
                 <Card 
@@ -226,34 +226,34 @@ export function MainBanner() {
                     <div className="absolute bottom-10 left-8 right-8 md:left-12 md:bottom-12 z-20 flex flex-col items-start gap-1">
                       {banner.subtitle && (
                         <div 
-                          className="px-3 py-1 rounded-full text-[10px] md:text-sm font-black tracking-widest uppercase bg-[#4ACAD4] text-slate-900 w-fit mb-3 shadow-lg shadow-[#4ACAD4]/20"
+                          className="px-2.5 py-1 rounded-full text-[9px] md:text-[11px] font-black tracking-widest uppercase bg-[#4ACAD4] text-slate-900 w-fit mb-2 shadow-lg shadow-[#4ACAD4]/20"
                         >
                           {banner.subtitle}
                         </div>
                       )}
                       
-                      <h2 
-                        className="text-2xl md:text-5xl font-black tracking-tighter leading-[1.1] mb-4 drop-shadow-xl"
+                       <h2 
+                        className="text-xl md:text-3xl font-black tracking-tighter leading-[1.15] mb-3 drop-shadow-xl"
                         style={{ color: banner.text_color }}
                       >
                         {banner.title}
                       </h2>
 
-                      {banner.description && (
+                       {banner.description && (
                         <p 
-                          className="text-sm md:text-lg font-bold opacity-90 max-w-2xl line-clamp-2 mb-8 leading-relaxed"
+                          className="text-[11px] md:text-sm font-bold opacity-90 max-w-2xl line-clamp-2 mb-6 leading-relaxed"
                           style={{ color: banner.text_color }}
                         >
                           {banner.description}
                         </p>
                       )}
                       
-                      {banner.link_url && (
+                       {banner.link_url && (
                         <div 
-                          className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-white text-black transition-all duration-500 group-hover:bg-[#4ACAD4] group-hover:text-slate-900 font-black text-sm md:text-base shadow-2xl shadow-black/20"
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black transition-all duration-500 group-hover:bg-[#4ACAD4] group-hover:text-slate-900 font-black text-xs md:text-sm shadow-2xl shadow-black/20"
                         >
                           <span>{banner.button_text || "자세히 보기"}</span>
-                          <ExternalLink size={18} className="group-hover:translate-x-1.5 transition-transform" />
+                          <ExternalLink size={14} className="group-hover:translate-x-1 transition-transform" />
                         </div>
                       )}
                     </div>

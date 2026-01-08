@@ -42,6 +42,7 @@ interface Item {
   first_prize?: string;
   start_date?: string;
   category_tags?: string;
+  banner_image_url?: string;
 }
 
 export default function RecruitDetailClient({ item }: { item: Item }) {
@@ -98,13 +99,13 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
           
           {/* Left: Image & Main Info */}
           <div className="lg:col-span-8 space-y-8">
-            <div className="relative aspect-[16/10] w-full rounded-[48px] overflow-hidden shadow-2xl bg-white group">
-              {item.thumbnail ? (
+            <div className={`relative ${item.banner_image_url ? 'aspect-[16/6]' : 'aspect-[16/10]'} w-full rounded-[48px] overflow-hidden shadow-2xl bg-white group`}>
+              {(item.banner_image_url || item.thumbnail) ? (
                 <Image 
-                  src={item.thumbnail} 
+                  src={item.banner_image_url || item.thumbnail || ''} 
                   alt={item.title} 
                   fill 
-                  className="object-contain bg-slate-50 transition-transform duration-1000 group-hover:scale-105"
+                  className="object-cover bg-slate-50 transition-transform duration-1000 group-hover:scale-105"
                   priority
                 />
               ) : (

@@ -52,6 +52,7 @@ interface Item {
   first_prize?: string;
   start_date?: string;
   category_tags?: string;
+  banner_image_url?: string;
 }
 
 export default function RecruitPage() {
@@ -741,7 +742,7 @@ export default function RecruitPage() {
 
           {/* 전체 */}
           <TabsContent value="all">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {items.map((item) => (
                 <ItemCard
                   key={item.id}
@@ -759,7 +760,7 @@ export default function RecruitPage() {
 
           {/* 채용 */}
           <TabsContent value="job">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {jobs.map((item) => (
                 <ItemCard
                   key={item.id}
@@ -777,7 +778,7 @@ export default function RecruitPage() {
 
           {/* 공모전 */}
           <TabsContent value="contest">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {contests.map((item) => (
                 <ItemCard
                   key={item.id}
@@ -795,7 +796,7 @@ export default function RecruitPage() {
 
           {/* 이벤트 */}
           <TabsContent value="event">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {events.map((item) => (
                 <ItemCard
                   key={item.id}
@@ -852,15 +853,15 @@ function ItemCard({
   return (
     <Card className={`group border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[32px] overflow-hidden bg-white flex flex-col h-full ${isExpired ? 'opacity-60' : ''}`}>
       {/* Thumbnail Area */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+      <div className="relative overflow-hidden bg-slate-100 min-h-[200px] flex items-center justify-center">
         {item.thumbnail ? (
           <img 
             src={item.thumbnail} 
             alt={item.title} 
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+            className="w-full h-auto object-contain group-hover:scale-105 transition-transform duration-700"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-300">
+          <div className="w-full aspect-[4/5] flex items-center justify-center text-slate-300">
             <typeInfo.icon size={48} strokeWidth={1} />
           </div>
         )}

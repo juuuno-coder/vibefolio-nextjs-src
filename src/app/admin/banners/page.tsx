@@ -6,7 +6,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Edit, Image as ImageIcon, ArrowLeft, Loader2, Eye, EyeOff, GripVertical, Zap, Star, StarOff, ArrowUp, ArrowDown, Upload } from "lucide-react";
+import {
+  Download,
+  Plus,
+  Trash2,
+  Edit,
+  Image as ImageIcon,
+  ArrowLeft,
+  Loader2,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Zap,
+  Star,
+  StarOff,
+  ArrowUp,
+  ArrowDown,
+  Upload
+} from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/supabase/storage";
@@ -53,6 +70,7 @@ interface RecruitItem {
   company?: string | null;
   is_active: boolean;
   is_approved: boolean;
+  banner_image_url?: string | null;
 }
 
 export default function AdminBannersPage() {
@@ -288,6 +306,41 @@ export default function AdminBannersPage() {
     setIsModalOpen(true);
   };
 
+  const handleBannerImageUpload = async (id: number, file: File) => {
+    try {
+      toast.info("와이드 배너 업로드 중...");
+      const url = await uploadImage(file, 'banners');
+      const { error } = await supabase
+        .from('recruit_items')
+        .update({ banner_image_url: url } as any)
+        .eq('id', id);
+      
+      if (error) throw error;
+      toast.success("와이드 배너가 적용되었습니다.");
+      loadPromotedItems();
+    } catch (err) {
+      toast.error("업로드 실패: " + (err as Error).message);
+    }
+  };
+
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename || 'downloaded-image';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Download failed:", err);
+      toast.error("이미지 다운로드에 실패했습니다.");
+    }
+  };
+
   if (adminLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (!isAdmin) return null;
 
@@ -354,20 +407,29 @@ export default function AdminBannersPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                       <Button 
-                         variant="ghost" 
-                         size="icon" 
-                         className="w-12 h-12 rounded-2xl hover:bg-slate-50 text-slate-400 hover:text-slate-900 transition-all"
-                         onClick={() => toggleActive(banner)}
-                       >
-                         {banner.is_active ? <Eye size={20} /> : <EyeOff size={20} />}
-                       </Button>
-                       <Button variant="ghost" size="icon" className="w-12 h-12 rounded-2xl hover:bg-slate-50 text-slate-400 hover:text-slate-900" onClick={() => handleOpenModal(banner)}>
-                         <Edit size={20} />
-                       </Button>
-                       <Button variant="ghost" size="icon" className="w-12 h-12 rounded-2xl hover:bg-red-50 text-red-300 hover:text-red-500" onClick={() => handleDelete(banner.id)}>
-                         <Trash2 size={20} />
-                       </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="w-12 h-12 rounded-2xl hover:bg-blue-50 text-blue-400 hover:text-blue-600"
+                          onClick={() => handleDownload(banner.image_url, `banner_${banner.id}.png`)}
+                          title="이미지 다운로드 (NanoBanana Pro 업로드용)"
+                        >
+                          <Download size={20} />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="w-12 h-12 rounded-2xl hover:bg-slate-50 text-slate-400 hover:text-slate-900 transition-all"
+                          onClick={() => toggleActive(banner)}
+                        >
+                          {banner.is_active ? <Eye size={20} /> : <EyeOff size={20} />}
+                        </Button>
+                        <Button variant="ghost" size="icon" className="w-12 h-12 rounded-2xl hover:bg-slate-50 text-slate-400 hover:text-slate-900" onClick={() => handleOpenModal(banner)}>
+                          <Edit size={20} />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="w-12 h-12 rounded-2xl hover:bg-red-50 text-red-300 hover:text-red-500" onClick={() => handleDelete(banner.id)}>
+                          <Trash2 size={20} />
+                        </Button>
                     </div>
                   </CardHeader>
                 </Card>
@@ -392,24 +454,59 @@ export default function AdminBannersPage() {
               <div className="grid grid-cols-1 gap-4">
                 {allPromotedItems.filter(i => i.show_as_banner).map(item => (
                   <Card key={item.id} className="border-none bg-white shadow-sm rounded-[24px] overflow-hidden group">
-                    <div className="p-4 flex items-center justify-between">
-                       <div className="flex items-center gap-4">
-                         <div className="w-16 h-16 rounded-xl bg-slate-100 bg-cover bg-center shadow-inner" style={{ backgroundImage: `url(${item.thumbnail})` }} />
-                         <div>
-                            <div className="flex items-center gap-2 mb-1">
-                               <Badge variant="outline" className="text-[9px] font-black uppercase text-slate-400">{item.type}</Badge>
-                               <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">순위: {item.banner_priority}</span>
-                            </div>
-                            <p className="font-bold text-slate-900 line-clamp-1">{item.title}</p>
-                         </div>
-                       </div>
-                       <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => updatePromotedPriority(item.id, 'up')}><ArrowUp size={16} /></Button>
-                          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => updatePromotedPriority(item.id, 'down')}><ArrowDown size={16} /></Button>
-                          <Button variant="destructive" size="sm" className="ml-4 rounded-xl font-bold bg-red-50 text-red-500 hover:bg-red-100 border-none shadow-none" onClick={() => togglePromotedBanner(item.id, true)}>
-                            노출 해제
-                          </Button>
-                       </div>
+                     <div className="p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="relative group/img">
+                            <div className="w-16 h-16 rounded-xl bg-slate-100 bg-cover bg-center shadow-inner" style={{ backgroundImage: `url(${item.banner_image_url || item.thumbnail})` }} />
+                            {item.banner_image_url && (
+                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#4ACAD4] rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                                <Zap size={8} className="text-white fill-white" />
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                             <div className="flex items-center gap-2 mb-1">
+                                <Badge variant="outline" className="text-[9px] font-black uppercase text-slate-400">{item.type}</Badge>
+                                <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">순위: {item.banner_priority}</span>
+                                {item.banner_image_url && <Badge className="bg-amber-100 text-amber-600 border-none font-bold text-[9px]">WIDE ACTIVE</Badge>}
+                             </div>
+                             <p className="font-bold text-slate-900 line-clamp-1">{item.title}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <Button 
+                             variant="ghost" 
+                             size="icon" 
+                             className="h-9 w-9 rounded-lg text-emerald-500 hover:bg-emerald-50"
+                             onClick={() => {
+                               const input = document.createElement('input');
+                               input.type = 'file';
+                               input.accept = 'image/*';
+                               input.onchange = (e: any) => {
+                                 const file = e.target.files?.[0];
+                                 if (file) handleBannerImageUpload(item.id, file);
+                               };
+                               input.click();
+                             }}
+                             title="와이드 배너 업로드 (Landscape)"
+                           >
+                             <Upload size={16} />
+                           </Button>
+                           <Button 
+                             variant="ghost" 
+                             size="icon" 
+                             className="h-9 w-9 rounded-lg text-blue-500 hover:bg-blue-50"
+                             onClick={() => handleDownload(item.thumbnail, `promoted_${item.id}.png`)}
+                             title="이미지 다운로드 (NanoBanana Pro 업로드용)"
+                           >
+                             <Download size={16} />
+                           </Button>
+                           <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => updatePromotedPriority(item.id, 'up')}><ArrowUp size={16} /></Button>
+                           <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => updatePromotedPriority(item.id, 'down')}><ArrowDown size={16} /></Button>
+                           <Button variant="destructive" size="sm" className="ml-4 rounded-xl font-bold bg-red-50 text-red-500 hover:bg-red-100 border-none shadow-none" onClick={() => togglePromotedBanner(item.id, true)}>
+                             노출 해제
+                           </Button>
+                        </div>
                     </div>
                   </Card>
                 ))}

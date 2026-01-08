@@ -337,8 +337,8 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center justify-between mb-8">
               <CardTitle className="text-xl font-black flex items-center gap-2">
-                <BarChart3 className="text-purple-500" />
-                주간 프로젝트 업로드 추이
+                <BarChart3 className="text-[#4ACAD4]" />
+                주간 플랫폼 활성 지수 (Platform Vitality)
               </CardTitle>
               <select className="bg-slate-50 border-none text-[10px] font-bold text-slate-500 rounded-lg px-3 py-1.5 focus:ring-0 cursor-pointer">
                 <option>최근 7일</option>
@@ -351,11 +351,11 @@ export default function AdminPage() {
                 <div key={i} className="flex-1 flex flex-col items-center gap-3 group">
                    <div className="w-full relative px-2">
                       <div 
-                        className="w-full bg-slate-50 rounded-t-xl group-hover:bg-purple-50 transition-colors duration-300 flex items-end justify-center overflow-hidden"
+                        className="w-full bg-slate-50 rounded-t-xl group-hover:bg-[#4ACAD4]/10 transition-colors duration-300 flex items-end justify-center overflow-hidden"
                         style={{ height: '180px' }}
                       >
                          <div 
-                           className="w-full bg-slate-900 group-hover:bg-purple-600 transition-all duration-500 ease-out rounded-t-lg"
+                           className="w-full bg-[#4ACAD4]/80 group-hover:bg-[#4ACAD4] transition-all duration-500 ease-out rounded-t-lg"
                            style={{ height: `${(d.value / maxVal) * 100}%` }}
                          />
                       </div>
@@ -372,11 +372,11 @@ export default function AdminPage() {
           
           <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
             <p className="text-sm font-medium text-slate-500 italic">
-              전주 대비 전체 활동량이 <span className={`font-bold ${stats.projectGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {Math.abs(stats.projectGrowth)}% {stats.projectGrowth >= 0 ? '증가' : '감소'}
-              </span>했습니다.
+              플랫폼 활성도가 전주 대비 <span className={`font-bold ${stats.projectGrowth >= 0 ? 'text-[#4ACAD4]' : 'text-red-600'}`}>
+                {Math.abs(stats.projectGrowth)}% {stats.projectGrowth >= 0 ? '개선' : '정체'}
+              </span>되었습니다.
             </p>
-            <Button variant="ghost" className="text-purple-600 font-bold text-xs hover:bg-purple-50 rounded-xl" onClick={() => router.push('/admin/stats')}>상세 리포트 보기</Button>
+            <Button variant="ghost" className="text-[#4ACAD4] font-bold text-xs hover:bg-[#4ACAD4]/5 rounded-xl" onClick={() => router.push('/admin/stats')}>상세 리포트 보기</Button>
           </div>
         </Card>
 
