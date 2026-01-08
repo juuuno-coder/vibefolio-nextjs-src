@@ -1091,7 +1091,7 @@ function ItemCard({
 
           <Button
             variant="ghost"
-            className="w-full h-12 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white transition-all duration-300 font-bold text-xs flex items-center justify-center gap-2 group/btn"
+            className="w-full h-12 rounded-2xl bg-slate-50 hover:bg-[#4ACAD4] hover:text-slate-900 transition-all duration-300 font-bold text-xs flex items-center justify-center gap-2 group/btn shadow-sm hover:shadow-[#4ACAD4]/25"
             onClick={() => onViewDetail(item)}
             disabled={isExpired}
           >
