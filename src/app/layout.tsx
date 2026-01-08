@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AutoLogoutProvider } from "@/components/AutoLogoutProvider";
 import NextTopLoader from 'nextjs-toploader';
 import { RootLayoutContent } from "@/components/layout/RootLayoutContent";
+import RealtimeListener from "@/components/RealtimeListener";
 
 const poppins = Poppins({
   weight: ['400', '500', '600', '700', '800'],
@@ -56,6 +57,7 @@ export default function RootLayout({
         <ClientProviders>
           <AutoLogoutProvider>
             <TooltipProvider>
+              <RealtimeListener />
               <RootLayoutContent>{children}</RootLayoutContent>
               <Toaster position="top-center" />
               <ScrollToTop />
