@@ -23,8 +23,9 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { MainBanner } from "@/components/MainBanner";
-import { Plus, Trash2, Edit, Calendar, MapPin, Award, Briefcase, DollarSign, ExternalLink, Clock, Sparkles, Loader2, Eye, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Edit, Calendar, MapPin, Award, Briefcase, DollarSign, ExternalLink, Clock, Sparkles, Loader2, Eye, ChevronRight, Upload } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { uploadImage } from "@/lib/supabase/storage";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 
@@ -75,6 +76,14 @@ export default function RecruitPage() {
     employmentType: "정규직",
     link: "",
     thumbnail: "",
+    // 추가 상세 정보 필드
+    application_target: "",
+    sponsor: "",
+    total_prize: "",
+    first_prize: "",
+    start_date: "",
+    category_tags: "",
+    banner_image_url: ""
   });
 
   // 관리자 권한 확인
@@ -135,6 +144,14 @@ export default function RecruitPage() {
           link: item.link || undefined,
           thumbnail: item.thumbnail || undefined,
           views_count: item.views_count || 0,
+          // 추가 필드 매핑
+          application_target: item.application_target || undefined,
+          sponsor: item.sponsor || undefined,
+          total_prize: item.total_prize || undefined,
+          first_prize: item.first_prize || undefined,
+          start_date: item.start_date || undefined,
+          category_tags: item.category_tags || undefined,
+          banner_image_url: item.banner_image_url || undefined,
         }));
         setItems(formattedItems);
       } else {
@@ -248,6 +265,14 @@ export default function RecruitPage() {
         thumbnail: formData.thumbnail || null,
         is_approved: isAdmin ? true : false, // 관리자가 아니면 승인 대기
         is_active: true,
+        // 추가 필드 저장
+        application_target: formData.application_target || null,
+        sponsor: formData.sponsor || null,
+        total_prize: formData.total_prize || null,
+        first_prize: formData.first_prize || null,
+        start_date: formData.start_date || null,
+        category_tags: formData.category_tags || null,
+        banner_image_url: formData.banner_image_url || null,
       };
 
       if (editingItem) {
@@ -296,6 +321,13 @@ export default function RecruitPage() {
         employmentType: "정규직",
         link: "",
         thumbnail: "",
+        application_target: "",
+        sponsor: "",
+        total_prize: "",
+        first_prize: "",
+        start_date: "",
+        category_tags: "",
+        banner_image_url: ""
       });
       setEditingItem(null);
       handleDialogClose();
@@ -396,6 +428,13 @@ export default function RecruitPage() {
       employmentType: item.employmentType || "정규직",
       link: item.link || "",
       thumbnail: item.thumbnail || "",
+      application_target: item.application_target || "",
+      sponsor: item.sponsor || "",
+      total_prize: item.total_prize || "",
+      first_prize: item.first_prize || "",
+      start_date: item.start_date || "",
+      category_tags: item.category_tags || "",
+      banner_image_url: item.banner_image_url || ""
     });
     setIsDialogOpen(true);
   };
@@ -416,6 +455,13 @@ export default function RecruitPage() {
       employmentType: "정규직",
       link: "",
       thumbnail: "",
+      application_target: "",
+      sponsor: "",
+      total_prize: "",
+      first_prize: "",
+      start_date: "",
+      category_tags: "",
+      banner_image_url: ""
     });
   };
 
@@ -585,17 +631,40 @@ export default function RecruitPage() {
 
                   {/* 공모전 전용 필드 */}
                   {formData.type === "contest" && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        상금/혜택
-                      </label>
-                      <Input
-                        placeholder="예: 대상 500만원"
-                        value={formData.prize}
-                        onChange={(e) =>
-                          setFormData({ ...formData, prize: e.target.value })
-                        }
-                      />
+                    <div className="space-y-4 border-l-4 border-[#4ACAD4] pl-4 py-2 bg-[#4ACAD4]/5 rounded-r-lg">
+                      <h3 className="font-bold text-[#4ACAD4] text-sm flex items-center gap-2">
+                        <Award size={16} /> 공모전 상세 정보
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">상금/혜택</label>
+                          <Input value={formData.prize} onChange={e => setFormData({...formData, prize: e.target.value})} placeholder="예: 대상 500만원" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">응모 대상</label>
+                          <Input value={formData.application_target} onChange={e => setFormData({...formData, application_target: e.target.value})} placeholder="예: 대학생, 일반인" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">총 상금</label>
+                          <Input value={formData.total_prize} onChange={e => setFormData({...formData, total_prize: e.target.value})} placeholder="예: 2,000만원" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">1등 상금</label>
+                          <Input value={formData.first_prize} onChange={e => setFormData({...formData, first_prize: e.target.value})} placeholder="예: 500만원" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">분야 (태그)</label>
+                          <Input value={formData.category_tags} onChange={e => setFormData({...formData, category_tags: e.target.value})} placeholder="예: 영상, 디자인 (쉼표 구분)" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">후원/협찬</label>
+                          <Input value={formData.sponsor} onChange={e => setFormData({...formData, sponsor: e.target.value})} placeholder="예: 문화체육관광부" />
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -626,20 +695,93 @@ export default function RecruitPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      포스터 이미지 URL
-                    </label>
-                    <Input
-                      placeholder="https://example.com/poster.jpg"
-                      value={formData.thumbnail}
-                      onChange={(e) =>
-                        setFormData({ ...formData, thumbnail: e.target.value })
-                      }
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      홍보 포스터 이미지가 있다면 URL을 입력해주세요 (선택사항)
-                    </p>
+                  {/* 이미지 섹션 (강화) */}
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                          <Plus size={16} className="text-[#4ACAD4]" /> 포스터 이미지 (썸네일)
+                        </label>
+                        {isAdmin && (
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 text-xs gap-1"
+                            onClick={() => document.getElementById('recruit-thumb-upload')?.click()}
+                          >
+                            <Upload size={12} /> 파일 업로드
+                          </Button>
+                        )}
+                        <input 
+                          type="file" 
+                          id="recruit-thumb-upload" 
+                          className="hidden" 
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              toast.info("포스터 업로드 중...");
+                              const url = await uploadImage(file, 'recruits');
+                              setFormData({...formData, thumbnail: url});
+                              toast.success("포스터 이미지가 적용되었습니다.");
+                            } catch (err) {
+                              toast.error("업로드 실패: " + (err as Error).message);
+                            }
+                          }}
+                        />
+                      </div>
+                      <Input
+                        placeholder="https://example.com/poster.jpg"
+                        value={formData.thumbnail}
+                        onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                      />
+                    </div>
+
+                    {isAdmin && (
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                            <Sparkles size={16} className="text-amber-500" /> 상세 페이지 히어로 배너 (와이드)
+                          </label>
+                          <Button 
+                            type="button" 
+                            variant="secondary" 
+                            size="sm" 
+                            className="h-8 text-xs gap-1 bg-white"
+                            onClick={() => document.getElementById('recruit-banner-upload')?.click()}
+                          >
+                            <Upload size={12} /> 파일 업로드
+                          </Button>
+                          <input 
+                            type="file" 
+                            id="recruit-banner-upload" 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              try {
+                                toast.info("배너 업로드 중...");
+                                const url = await uploadImage(file, 'banners');
+                                setFormData({...formData, banner_image_url: url});
+                                toast.success("와이드 배너 이미지가 적용되었습니다.");
+                              } catch (err) {
+                                toast.error("업로드 실패: " + (err as Error).message);
+                              }
+                            }}
+                          />
+                        </div>
+                        <Input
+                          placeholder="배너용 와이드 이미지 URL (16:6 비율 권장)"
+                          value={formData.banner_image_url}
+                          onChange={(e) => setFormData({ ...formData, banner_image_url: e.target.value })}
+                          className="bg-white"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-2 italic">* 상세 페이지 상단에 와이드하게 노출될 이미지를 등록하세요.</p>
+                      </div>
+                    )}
                   </div>
 
                   <div>
