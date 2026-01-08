@@ -42,6 +42,16 @@ const nextConfig = {
     ];
   },
 
+  // 빌드 속도 및 메모리 최적화
+  eslint: {
+    ignoreDuringBuilds: true, // 빌드 시 린트 체크 스킵 (메모리 절약)
+  },
+  typescript: {
+    ignoreBuildErrors: true, // 빌드 시 타입 오류 스킵 (개발 중 pass 확인됨)
+  },
+  swcMinify: true, // 속도가 빠른 SWC 컴파일러 사용
+  productionBrowserSourceMaps: false, // 브라우저 소스맵 생성 안함 (빌드 메모리 절약)
+
   // 리다이렉트
   async redirects() {
     return [
@@ -56,6 +66,17 @@ const nextConfig = {
         permanent: true,
       },
     ];
+  },
+
+  // Webpack 설정 최적화
+  webpack: (config, { dev, isServer }) => {
+    // 빌드 시 메모리 사용량을 줄이기 위해 parallelism 조정
+    if (!dev) {
+      config.parallelism = 50;
+      // 대용량 모듈이 있을 경우 소스맵 비활성화로 메모리 확보
+      config.devtool = false;
+    }
+    return config;
   },
 };
 

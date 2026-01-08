@@ -381,6 +381,11 @@ export default function AdminStatsPage() {
                 <span className="text-[#16A34A]">{insight.desc}</span>
               </h3>
               
+              {/* 
+                 TODO: 아래 지표들은 현재 추정치입니다.
+                 실제 분석 데이터를 표시하려면 Google Analytics, Mixpanel 등 분석 도구 연동이 필요합니다.
+                 연동 후 이 섹션을 실제 API 데이터로 교체하세요.
+              */}
               <div className="grid grid-cols-2 gap-8 flex-1 content-center">
                  <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#16A34A]/30 transition-colors">
                     <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic tracking-tighter">월간 활성 지표</p>
@@ -388,14 +393,17 @@ export default function AdminStatsPage() {
                  </div>
                  <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#16A34A]/30 transition-colors">
                     <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic tracking-tighter">평균 체류 시간</p>
-                    <p className="text-2xl font-black">4m {Math.floor(Math.random() * 60)}s</p>
+                    {/* 추정치 - 실제 분석 도구 연동 필요 */}
+                    <p className="text-2xl font-black">3m 45s</p>
                  </div>
                  <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#16A34A]/30 transition-colors">
                     <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic tracking-tighter">이탈률</p>
+                    {/* 추정치 - 실제 분석 도구 연동 필요 */}
                     <p className="text-2xl font-black">{Math.max(15.2, 25 - (stats.userGrowth / 4)).toFixed(1)}%</p>
                  </div>
                  <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#16A34A]/30 transition-colors">
                     <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic tracking-tighter">전환율</p>
+                    {/* 추정치 - 실제 분석 도구 연동 필요 */}
                     <p className="text-2xl font-black">{Math.min(20.0, 10 + (stats.projectGrowth / 5)).toFixed(1)}%</p>
                  </div>
               </div>

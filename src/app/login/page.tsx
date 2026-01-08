@@ -164,12 +164,12 @@ function LoginContent() {
             </div>
 
             <div className="text-sm">
-              <a
-                href="#"
+              <Link
+                href="/forgot-password"
                 className="font-medium text-green-600 hover:text-green-700"
               >
                 비밀번호 찾기
-              </a>
+              </Link>
             </div>
           </div>
 

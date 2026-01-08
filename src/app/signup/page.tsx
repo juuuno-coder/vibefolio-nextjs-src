@@ -191,8 +191,8 @@ export default function SignupPage() {
         <div className="text-center text-xs text-gray-400">
           <p>
             가입 시{" "}
-            <Link href="#" className="underline">이용약관</Link> 및{" "}
-            <Link href="#" className="underline">개인정보처리방침</Link>에 동의하게 됩니다.
+            <Link href="/policy/terms" className="underline">이용약관</Link> 및{" "}
+            <Link href="/policy/privacy" className="underline">개인정보처리방침</Link>에 동의하게 됩니다.
           </p>
         </div>
       </div>

@@ -104,8 +104,8 @@ export default function PrivacyPolicyPage() {
             <div>
               <h4 className="font-bold text-blue-900 mb-2">개인정보 보호 책임자</h4>
               <p className="text-blue-700 text-sm">
-                성명: 홍길동 팀장 <br />
-                연락처: support@vibefolio.com / 02-1234-5678
+                담당: 바이브폴리오 운영팀 <br />
+                연락처: support@vibefolio.kr
               </p>
             </div>
           </div>

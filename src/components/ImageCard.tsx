@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
 
 // 기본 폴백 이미지
-const FALLBACK_IMAGE = "/placeholder.jpg";
+const FALLBACK_IMAGE = "/placeholder.svg";
 const FALLBACK_AVATAR = "/globe.svg";
 
 // Props 인터페이스 정의

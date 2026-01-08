@@ -17,11 +17,14 @@ import {
   Loader2, 
   CheckCircle,
   XCircle,
-  Star
+  Star,
+  Upload
 } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { useAdmin } from "@/hooks/useAdmin";
+import { uploadImage } from "@/lib/supabase/storage";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -303,9 +306,39 @@ export default function AdminNoticesPage() {
               {formData.is_popup && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 animate-in fade-in slide-in-from-top-2">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500">팝업 이미지 URL (선택)</label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-500">팝업 이미지 (선택)</label>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 text-[10px] gap-1 px-2 rounded-lg"
+                        onClick={() => document.getElementById('notice-popup-image')?.click()}
+                      >
+                        <Upload size={10} /> 파일선택
+                      </Button>
+                      <input 
+                        type="file" 
+                        id="notice-popup-image" 
+                        className="hidden" 
+                        accept="image/*" 
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            toast.info("이미지 업로드 중...");
+                            const url = await uploadImage(file, 'notices');
+                            setFormData({...formData, image_url: url});
+                            toast.success("업로드 완료");
+                          } catch (err) {
+                            console.error("Upload error:", err);
+                            toast.error("업로드 실패");
+                          }
+                        }}
+                      />
+                    </div>
                     <Input 
-                      placeholder="https://..."
+                      placeholder="이미지 URL"
                       className="h-10 text-sm bg-white"
                       value={formData.image_url}
                       onChange={(e) => setFormData({...formData, image_url: e.target.value})}
