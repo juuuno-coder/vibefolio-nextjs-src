@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import { getBlurDataURL } from "@/lib/utils/imageOptimization";
 import {
@@ -203,15 +202,11 @@ export function MainBanner() {
                 >
                   <CardContent className="h-full p-0 relative">
                     {/* Optimized Image with Next.js Image component */}
-                    <div className="absolute inset-0 bg-slate-50">
-                      <Image 
+                    <div className="absolute inset-0 bg-slate-50 overflow-hidden rounded-[40px]">
+                      <img 
                         src={banner.image_url || "/placeholder.jpg"}
-                        alt="" // alt를 비워두어 이미지 깨짐 시 텍스트 노출 방지 (디자인 정제)
-                        fill
-                        priority={index === 0}
-                        sizes="(max-width: 768px) 100vw, 1200px"
-                        className="object-cover transition-transform duration-700"
-                        quality={90}
+                        alt="" 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         onError={(e) => {
                           // @ts-ignore
                           e.target.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop";

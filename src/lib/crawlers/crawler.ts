@@ -82,6 +82,10 @@ async function crawlWevity(): Promise<CrawledItem[]> {
           const totalP = extractValue('총 상금'); if (totalP) info.totalPrize = totalP;
           const firstP = extractValue('1등 상금'); if (firstP) info.firstPrize = firstP;
           
+          // 상금/혜택 요약 (시상내역 우선, 없으면 총 상금)
+          const awardDetail = extractValue('시상내역') || extractValue('상금');
+          if (awardDetail) info.prize = awardDetail;
+
           if (rawText.includes('접수기간')) {
             const period = extractValue('접수기간');
             if (period && period.includes('~')) {
@@ -192,6 +196,7 @@ async function crawlWevity(): Promise<CrawledItem[]> {
         officialLink: detailInfo.officialLink,
         sourceUrl: 'https://www.wevity.com',
         image,
+        prize: detailInfo.prize || detailInfo.totalPrize, // 상금 요약에 시상내역 혹은 총 상금 정보 반영
         applicationTarget: detailInfo.applicationTarget,
         sponsor: detailInfo.sponsor,
         totalPrize: detailInfo.totalPrize,

@@ -997,22 +997,11 @@ function ItemCard({
       {/* Thumbnail Area - Fixed Standard Ratio (Poster Style) */}
       <div className="relative aspect-[4/5] overflow-hidden bg-slate-50 flex items-center justify-center">
         {item.thumbnail ? (
-          <>
-            {/* Background Blur for different aspect ratios */}
-            <div className="absolute inset-0 scale-110 blur-2xl opacity-10 pointer-events-none">
-              <img 
-                src={item.thumbnail} 
-                alt="" 
-                className="w-full h-full object-cover"
-              />
-            </div>
-            {/* Main Poster Image - Show 100% */}
-            <img 
-              src={item.thumbnail} 
-              alt={item.title} 
-              className="relative z-[1] w-full h-full object-contain p-4 transition-transform duration-700 pointer-events-none"
-            />
-          </>
+          <img 
+            src={item.thumbnail} 
+            alt={item.title} 
+            className="w-full h-full object-cover transition-transform duration-700 pointer-events-none group-hover:scale-110"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-200">
             <typeInfo.icon size={48} strokeWidth={1} />

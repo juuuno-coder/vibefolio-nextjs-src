@@ -79,6 +79,10 @@ async function fetchDetailInfo(detailUrl: string): Promise<any> {
       const totalP = extractValue('총 상금'); if (totalP) info.totalPrize = totalP;
       const firstP = extractValue('1등 상금'); if (firstP) info.firstPrize = firstP;
       
+      // 상금/혜택 요약 (시상내역 우선, 없으면 총 상금)
+      const awardDetail = extractValue('시상내역') || extractValue('상금');
+      if (awardDetail) info.prize = awardDetail;
+      
       if (rawText.includes('접수기간')) {
         const period = extractValue('접수기간');
         if (period && period.includes('~')) {
@@ -104,11 +108,11 @@ async function fetchDetailInfo(detailUrl: string): Promise<any> {
 async function migrate() {
   console.log('🔍 Fetching items to upgrade (Recruit Items & Banners)...');
   
-  // 1. Recruit Items 처리
+  // 1. Recruit Items 처리 (prize가 비어있거나 wevity 관련 링크를 가진 항목 대상)
   const { data: recruitItems, error: rError } = await supabase
     .from('recruit_items')
     .select('*')
-    .or('link.like.%wevity.com%,source_link.like.%wevity.com%');
+    .eq('type', 'contest'); // 공모전 전체 대상
 
   if (rError) {
     console.error('Error fetching recruit items:', rError);
@@ -130,6 +134,7 @@ async function migrate() {
             sponsor: detail.sponsor || item.sponsor,
             total_prize: detail.totalPrize || item.total_prize,
             first_prize: detail.firstPrize || item.first_prize,
+            prize: detail.prize || detail.totalPrize || item.prize, // 상금 요약 보정
             start_date: detail.startDate || item.start_date,
             date: detail.date || item.date, // 마감일 보정 반영
             category_tags: detail.categoryTags || item.category_tags,
