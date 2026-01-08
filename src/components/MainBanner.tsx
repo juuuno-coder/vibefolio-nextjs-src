@@ -194,11 +194,11 @@ export function MainBanner() {
           {banners.map((banner, index) => (
             <CarouselItem
               key={banner.id}
-              className="basis-[85vw] md:basis-1/3 lg:basis-1/4 pl-4"
+              className="basis-[85vw] md:basis-[40%] lg:basis-[28%] pl-4"
             >
               <Link href={banner.link_url || "#"} className={banner.link_url ? "cursor-pointer" : "cursor-default"}>
                 <Card 
-                  className="w-full h-[360px] md:h-[480px] overflow-hidden hover:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] transition-all duration-700 border-none rounded-[40px] group relative"
+                  className="w-full aspect-video overflow-hidden hover:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] transition-all duration-700 border-none rounded-[40px] group relative"
                 >
                   <CardContent className="h-full p-0 relative">
                     {/* Optimized Image with Next.js Image component */}
