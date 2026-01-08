@@ -603,9 +603,15 @@ export default function AdminRecruitPage() {
                             </Button>
                             <input type="file" id="admin-recruit-thumb" className="hidden" accept="image/*" onChange={async (e) => {
                               const file = e.target.files?.[0]; if (!file) return;
-                              try { toast.info("포스터 업로드 중..."); const url = await uploadImage(file, 'recruits');
-                                setFormData({...formData, thumbnail: url}); toast.success("포스터 적용 완료");
-                              } catch (err) { toast.error("업로드 실패"); }
+                              try { 
+                                toast.info("포스터 업로드 중..."); 
+                                const url = await uploadImage(file, 'recruits');
+                                setFormData({...formData, thumbnail: url}); 
+                                toast.success("포스터 적용 완료");
+                              } catch (err) { 
+                                console.error("Poster upload failed:", err);
+                                toast.error("포스터 업로드 실패: " + (err as Error).message); 
+                              }
                             }} />
                           </div>
                           <Input placeholder="이미지 URL" value={formData.thumbnail} onChange={e => setFormData({...formData, thumbnail: e.target.value})} className="h-8 text-xs border-none bg-slate-50 p-2" />
@@ -621,9 +627,15 @@ export default function AdminRecruitPage() {
                             </Button>
                             <input type="file" id="admin-recruit-banner" className="hidden" accept="image/*" onChange={async (e) => {
                               const file = e.target.files?.[0]; if (!file) return;
-                              try { toast.info("배너 업로드 중..."); const url = await uploadImage(file, 'banners');
-                                setFormData({...formData, banner_image_url: url}); toast.success("배너 적용 완료");
-                              } catch (err) { toast.error("업로드 실패"); }
+                              try { 
+                                toast.info("배너 업로드 중..."); 
+                                const url = await uploadImage(file, 'banners');
+                                setFormData({...formData, banner_image_url: url}); 
+                                toast.success("배너 적용 완료");
+                              } catch (err) { 
+                                console.error("Banner upload failed:", err);
+                                toast.error("배너 업로드 실패: " + (err as Error).message); 
+                              }
                             }} />
                           </div>
                           <Input placeholder="16:6 비율 와이드 이미지 URL" value={formData.banner_image_url} onChange={e => setFormData({...formData, banner_image_url: e.target.value})} className="h-8 text-xs border-none bg-white/50 p-2" />
