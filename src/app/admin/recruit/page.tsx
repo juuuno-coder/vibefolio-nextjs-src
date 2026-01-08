@@ -29,10 +29,14 @@ import {
   Search,
   MapPin,
   DollarSign,
+  Upload,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/lib/supabase/client";
+import { uploadImage } from "@/lib/supabase/storage";
+import { toast } from "sonner";
 
 interface Item {
   id: number;
@@ -51,6 +55,14 @@ interface Item {
   is_active?: boolean;
   show_as_banner?: boolean;
   banner_priority?: number;
+  // 추가 상세 정보 필드
+  application_target?: string;
+  sponsor?: string;
+  total_prize?: string;
+  first_prize?: string;
+  start_date?: string;
+  category_tags?: string;
+  banner_image_url?: string;
 }
 
 export default function AdminRecruitPage() {
@@ -76,6 +88,14 @@ export default function AdminRecruitPage() {
     thumbnail: "",
     showAsBanner: false,
     bannerPriority: 999,
+    // 추가 필드
+    application_target: "",
+    sponsor: "",
+    total_prize: "",
+    first_prize: "",
+    start_date: "",
+    category_tags: "",
+    banner_image_url: "",
   });
 
   // 아이템 로드 (Supabase 연동)
@@ -112,6 +132,14 @@ export default function AdminRecruitPage() {
         is_active: item.is_active,
         show_as_banner: item.show_as_banner,
         banner_priority: item.banner_priority,
+        // 추가 필드 매핑
+        application_target: item.application_target || "",
+        sponsor: item.sponsor || "",
+        total_prize: item.total_prize || "",
+        first_prize: item.first_prize || "",
+        start_date: item.start_date || "",
+        category_tags: item.category_tags || "",
+        banner_image_url: item.banner_image_url || "",
       }));
       
       setItems(formattedItems);
@@ -198,6 +226,14 @@ export default function AdminRecruitPage() {
         is_active: true,
         show_as_banner: (formData as any).showAsBanner || false,
         banner_priority: (formData as any).bannerPriority || 999,
+        // 추가 필드 저장
+        application_target: formData.application_target || null,
+        sponsor: formData.sponsor || null,
+        total_prize: formData.total_prize || null,
+        first_prize: formData.first_prize || null,
+        start_date: formData.start_date || null,
+        category_tags: formData.category_tags || null,
+        banner_image_url: formData.banner_image_url || null,
       };
 
       if (editingItem) {
@@ -258,6 +294,13 @@ export default function AdminRecruitPage() {
       thumbnail: "",
       showAsBanner: false,
       bannerPriority: 999,
+      application_target: "",
+      sponsor: "",
+      total_prize: "",
+      first_prize: "",
+      start_date: "",
+      category_tags: "",
+      banner_image_url: ""
     });
   };
 
@@ -278,6 +321,13 @@ export default function AdminRecruitPage() {
       thumbnail: item.thumbnail || "",
       showAsBanner: item.show_as_banner || false,
       bannerPriority: item.banner_priority || 999,
+      application_target: item.application_target || "",
+      sponsor: item.sponsor || "",
+      total_prize: item.total_prize || "",
+      first_prize: item.first_prize || "",
+      start_date: item.start_date || "",
+      category_tags: item.category_tags || "",
+      banner_image_url: item.banner_image_url || ""
     });
     setIsDialogOpen(true);
   };
@@ -473,19 +523,42 @@ export default function AdminRecruitPage() {
                       </>
                     )}
 
-                    {/* 공모전 전용 필드 */}
+                    {/* 공모전 전용 필드 (고도화) */}
                     {formData.type === "contest" && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          상금/혜택
-                        </label>
-                        <Input
-                          placeholder="예: 대상 500만원"
-                          value={formData.prize}
-                          onChange={(e) =>
-                            setFormData({ ...formData, prize: e.target.value })
-                          }
-                        />
+                      <div className="space-y-4 border-l-4 border-purple-500 pl-4 py-2 bg-purple-50/30 rounded-r-lg">
+                        <h3 className="font-bold text-purple-700 text-sm flex items-center gap-2">
+                          <Award size={16} /> 공모전 상세 정보
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">상금/혜택</label>
+                            <Input value={formData.prize} onChange={e => setFormData({...formData, prize: e.target.value})} placeholder="예: 대상 500만원" />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">응모 대상</label>
+                            <Input value={formData.application_target} onChange={e => setFormData({...formData, application_target: e.target.value})} placeholder="예: 대학생, 일반인" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">총 상금</label>
+                            <Input value={formData.total_prize} onChange={e => setFormData({...formData, total_prize: e.target.value})} placeholder="예: 2,000만원" />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">1등 상금</label>
+                            <Input value={formData.first_prize} onChange={e => setFormData({...formData, first_prize: e.target.value})} placeholder="예: 500만원" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">분야 (태그)</label>
+                            <Input value={formData.category_tags} onChange={e => setFormData({...formData, category_tags: e.target.value})} placeholder="예: 영상, 디자인 (쉼표 구분)" />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">후원/협찬</label>
+                            <Input value={formData.sponsor} onChange={e => setFormData({...formData, sponsor: e.target.value})} placeholder="예: 문화체육관광부" />
+                          </div>
+                        </div>
                       </div>
                     )}
 
@@ -512,6 +585,88 @@ export default function AdminRecruitPage() {
                           onChange={(e) =>
                             setFormData({ ...formData, location: e.target.value })
                           }
+                        />
+                      </div>
+                    </div>
+
+                    {/* 이미지 관리 섹션 (강화) */}
+                    <div className="space-y-4 pt-4 border-t border-gray-100">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-bold text-gray-700">포스터 이미지 (썸네일)</label>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 text-xs gap-1"
+                            onClick={() => document.getElementById('admin-recruit-thumb')?.click()}
+                          >
+                            <Upload size={12} /> 파일 업로드
+                          </Button>
+                          <input 
+                            type="file" 
+                            id="admin-recruit-thumb" 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              try {
+                                toast.info("포스터 업로드 중...");
+                                const url = await uploadImage(file, 'recruits');
+                                setFormData({...formData, thumbnail: url});
+                                toast.success("포스터 이미지가 적용되었습니다.");
+                              } catch (err) {
+                                toast.error("업로드 실패: " + (err as Error).message);
+                              }
+                            }}
+                          />
+                        </div>
+                        <Input
+                          placeholder="https://example.com/poster.jpg"
+                          value={formData.thumbnail}
+                          onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="bg-amber-50/30 p-4 rounded-xl border border-amber-100">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-bold text-amber-900 flex items-center gap-2">
+                            <Sparkles size={16} /> 상세 페이지 히어로 배너 (와이드)
+                          </label>
+                          <Button 
+                            type="button" 
+                            variant="secondary" 
+                            size="sm" 
+                            className="h-8 text-xs gap-1 bg-white"
+                            onClick={() => document.getElementById('admin-recruit-banner')?.click()}
+                          >
+                            <Upload size={12} /> 파일 업로드
+                          </Button>
+                          <input 
+                            type="file" 
+                            id="admin-recruit-banner" 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              try {
+                                toast.info("배너 업로드 중...");
+                                const url = await uploadImage(file, 'banners');
+                                setFormData({...formData, banner_image_url: url});
+                                toast.success("와이드 배너 이미지가 적용되었습니다.");
+                              } catch (err) {
+                                toast.error("업로드 실패: " + (err as Error).message);
+                              }
+                            }}
+                          />
+                        </div>
+                        <Input
+                          placeholder="배너용 와이드 이미지 URL (16:6 비율 권장)"
+                          value={formData.banner_image_url}
+                          onChange={(e) => setFormData({ ...formData, banner_image_url: e.target.value })}
+                          className="bg-white"
                         />
                       </div>
                     </div>
@@ -686,62 +841,86 @@ export default function AdminRecruitPage() {
                     return (
                       <div
                         key={item.id}
-                        className={`flex items-center justify-between p-4 bg-gray-50 rounded-lg ${
+                        className={`flex items-start gap-4 p-5 bg-white border border-gray-100 rounded-[24px] shadow-sm hover:shadow-md transition-all ${
                           isExpired ? "opacity-60" : ""
                         }`}
                       >
-                        <div className="flex-1">
+                        {/* 썸네일 미리보기 (왼쪽) */}
+                        <div 
+                          className="w-24 h-32 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-50 flex items-center justify-center cursor-pointer group/thumb relative"
+                          onClick={() => handleEdit(item)}
+                        >
+                          {item.thumbnail ? (
+                            <img 
+                              src={item.thumbnail} 
+                              alt="" 
+                              className="w-full h-full object-cover transition-transform group-hover/thumb:scale-110"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center gap-1 text-gray-300">
+                               <Plus size={20} />
+                               <span className="text-[10px] font-bold">IMAGE</span>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/5 opacity-0 group-hover/thumb:opacity-100 transition-opacity" />
+                        </div>
+
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
                             <span
-                              className={`px-2 py-1 rounded text-xs font-medium ${typeInfo.color}`}
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tight ${typeInfo.color}`}
                             >
                               {typeInfo.label}
                             </span>
                             {item.employmentType && (
-                              <span className="px-2 py-1 rounded text-xs font-medium bg-gray-200 text-gray-700">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500">
                                 {item.employmentType}
                               </span>
                             )}
                             <span
-                              className={`px-2 py-1 rounded text-xs font-bold ${
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
                                 isExpired
-                                  ? "bg-gray-200 text-gray-500"
+                                  ? "bg-gray-100 text-gray-400"
                                   : dday === "D-Day"
                                   ? "bg-red-500 text-white"
-                                  : "bg-[#4ACAD4]/20 text-[#4ACAD4]"
+                                  : "bg-[#4ACAD4]/10 text-[#4ACAD4]"
                               }`}
                             >
                               {dday}
                             </span>
                           </div>
-                          <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                          <h3 
+                            className="font-bold text-gray-900 text-lg mb-1 flex items-center gap-2 cursor-pointer hover:text-[#4ACAD4] transition-colors leading-tight"
+                            onClick={() => handleEdit(item)}
+                          >
                             {item.title}
                             {!item.is_approved && (
                               <span className="px-1.5 py-0.5 rounded-md bg-yellow-100 text-yellow-700 text-[10px] font-black uppercase">PENDING</span>
                             )}
                           </h3>
-                          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                            {item.company && <span>{item.company}</span>}
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400 font-medium">
+                            {item.company && <span className="text-gray-600 font-bold">{item.company}</span>}
                             {item.location && (
                               <span className="flex items-center gap-1">
-                                <MapPin size={14} />
+                                <MapPin size={12} className="text-gray-300" />
                                 {item.location}
                               </span>
                             )}
                             {item.salary && (
                               <span className="flex items-center gap-1">
-                                <DollarSign size={14} />
+                                <DollarSign size={12} className="text-gray-300" />
                                 {item.salary}
                               </span>
                             )}
                             {item.prize && (
-                              <span className="flex items-center gap-1">
-                                <Award size={14} />
+                              <span className="flex items-center gap-1 text-[#4ACAD4]">
+                                <Award size={12} />
                                 {item.prize}
                               </span>
                             )}
-                            <span>
-                              마감: {new Date(item.date).toLocaleDateString("ko-KR")}
+                            <span className="flex items-center gap-1">
+                                <Calendar size={12} className="text-gray-300" />
+                                마감: {new Date(item.date).toLocaleDateString("ko-KR")}
                             </span>
                           </div>
                         </div>
