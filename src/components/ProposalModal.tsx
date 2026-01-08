@@ -70,6 +70,21 @@ export function ProposalModal({
       const data = await res.json();
       
       if (res.ok) {
+        // 알림 생성
+        try {
+          const { createNotification } = await import("@/hooks/useNotifications");
+          await createNotification({
+            userId: receiverId,
+            type: "system", // 제안은 시스템/상호작용 알림으로 분류
+            title: "새로운 제안이 도착했습니다!",
+            message: `'${formData.title}' 제안을 확인해보세요.`,
+            link: "/mypage", // 제안 목록은 마이페이지에서 확인 가능
+            senderId: session.user.id,
+          });
+        } catch (err) {
+          console.error("알림 생성 실패:", err);
+        }
+
         alert(data.message || "제안이 전송되었습니다!");
         setFormData({ title: "", content: "", contact: "" });
         onOpenChange(false);

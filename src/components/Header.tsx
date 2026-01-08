@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NotificationBell } from "./NotificationBell";
 
 export function Header({ 
   onSetCategory 
@@ -191,17 +192,19 @@ export function Header({
                   <div className="w-20" /> // 로딩 중일 때 깜빡임 방지용 빈 공간
                ) : isAuthenticated && user ? (
                   // 로그인 상태
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="outline-none rounded-full ring-2 ring-transparent ring-offset-2 hover:ring-gray-200 transition-all">
-                        <Avatar className="w-9 h-9 cursor-pointer border border-gray-200">
-                          <AvatarImage src={userProfile?.profile_image_url} />
-                           <AvatarFallback className="bg-gray-100 text-black font-bold">
-                             {userProfile?.username?.charAt(0) || "U"}
-                           </AvatarFallback>
-                        </Avatar>
-                      </button>
-                    </DropdownMenuTrigger>
+                  <div className="flex items-center gap-2 md:gap-4">
+                    <NotificationBell />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="outline-none rounded-full ring-2 ring-transparent ring-offset-2 hover:ring-gray-200 transition-all">
+                          <Avatar className="w-9 h-9 cursor-pointer border border-gray-200">
+                            <AvatarImage src={userProfile?.profile_image_url} />
+                             <AvatarFallback className="bg-gray-100 text-black font-bold">
+                               {userProfile?.username?.charAt(0) || "U"}
+                             </AvatarFallback>
+                          </Avatar>
+                        </button>
+                      </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-60 mt-2 rounded-xl border border-gray-100 shadow-xl bg-white p-2">
                         <div className="px-3 py-3 border-b border-gray-50 mb-1">
                            <p className="font-bold text-sm text-black truncate">{userProfile?.username}</p>
@@ -218,8 +221,9 @@ export function Header({
                        <DropdownMenuItem onClick={handleLogout} className="rounded-lg cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:bg-red-50 focus:text-red-700">
                           <LogOut className="mr-2 h-4 w-4" /> 로그아웃
                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                     </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                ) : (
                   // 비로그인 상태
                   <div className="flex items-center gap-1">

@@ -5,6 +5,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { createNotification } from "@/hooks/useNotifications";
 import { Heart, Eye, Share2, Bookmark, ArrowLeft, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
@@ -186,6 +187,19 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
       const avatarUrl = user.user_metadata.avatar_url || "/default-avatar.png";
 
       await addComment(projectId, user.id, newComment, username, avatarUrl);
+      
+      // 알림 생성 (자신의 게시물이 아닐 때만)
+      if (project && project.user_id !== user.id) {
+        await createNotification({
+          userId: project.user_id,
+          type: "comment",
+          title: "새로운 댓글!",
+          message: `${username}님이 댓글을 남겼습니다: "${newComment.substring(0, 20)}..."`,
+          link: `/project/${projectId}`,
+          senderId: user.id,
+        });
+      }
+
       setNewComment("");
       // Refetch comments to display the new one
       const updatedComments = await getProjectComments(projectId);

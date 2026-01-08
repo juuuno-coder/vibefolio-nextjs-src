@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
 import { useState, useEffect } from "react";
+import { createNotification } from "@/hooks/useNotifications";
 
 /**
  * 프로젝트 좋아요 관련 기능을 제공하는 커스텀 훅
@@ -51,6 +52,30 @@ export function useLikes(projectId?: string, initialLikes: number = 0) {
           .from("Like" as any)
           .insert({ project_id: projectId, user_id: userId } as any);
         if (error) throw error;
+
+        // 알림 생성 (자신의 게시물이 아닐 때만)
+        try {
+          // 1. 프로젝트 정보 및 소유자 조회
+          const { data: project } = await supabase
+            .from("Project" as any)
+            .select("user_id, title")
+            .eq("project_id", Number(projectId))
+            .single() as any;
+
+          if (project && project.user_id !== userId) {
+            // 2. 알림 저장
+            await createNotification({
+              userId: project.user_id,
+              type: "like",
+              title: "새로운 좋아요!",
+              message: `내 프로젝트 '${project.title}'에 새로운 좋아요가 달렸습니다.`,
+              link: `/project/${projectId}`,
+              senderId: userId,
+            });
+          }
+        } catch (err) {
+          console.error("알림 생성 무시됨 (비치명적):", err);
+        }
       }
     },
     onMutate: async ({ currentIsLiked }) => {
