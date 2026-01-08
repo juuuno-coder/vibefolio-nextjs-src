@@ -513,11 +513,37 @@ export default function RecruitPage() {
 
     // 정렬
     if (sortBy === "latest") {
-      result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // 마감임박순 (가장 가까운 날짜가 먼저)
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      result.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        
+        // 마감 여부 체크 (오늘 날짜보다 이전이면 마감)
+        // a.date가 '2024-01-01'일 때, new Date('2024-01-01')은 00:00:00이므로
+        // now(오늘 00:00:00)보다 작으면 마감된 것으로 간주 (단, 당일은 마감 아님)
+        // 정확한 비교를 위해 시간 제거 후 비교
+        const isExpiredA = dateA < now;
+        const isExpiredB = dateB < now;
+
+        // 1. 마감 여부가 다르면: 마감 안 된 것(false)이 우선(-1)
+        if (isExpiredA !== isExpiredB) {
+          return isExpiredA ? 1 : -1;
+        }
+
+        // 2. 둘 다 마감 안 되었으면: 마감 임박 순 (날짜 오름차순)
+        if (!isExpiredA) {
+          return dateA.getTime() - dateB.getTime();
+        }
+
+        // 3. 둘 다 마감 되었으면: 최근 마감된 것이 먼저 보이도록 (날짜 내림차순)
+        return dateB.getTime() - dateA.getTime();
+      });
     } else if (sortBy === "views") {
       result.sort((a, b) => (b.views_count || 0) - (a.views_count || 0));
     } else if (sortBy === "created") {
-      // created_at 필드가 있다면 사용하겠지만, 없으므로 id 기준 역순 (최신 등록)
+      // created_at이 있으면 그것으로, 없으면 ID 역순
       result.sort((a, b) => b.id - a.id);
     }
 
@@ -1117,18 +1143,18 @@ function ItemCard({
   const isExpired = dday === '마감';
 
   return (
-    <Card className={`group border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[32px] overflow-hidden bg-white flex flex-col h-full ${isExpired ? 'opacity-60' : ''}`}>
-      {/* Thumbnail Area - Fixed Standard Ratio (Poster Style) */}
-      <div className="relative aspect-[4/5] overflow-hidden bg-slate-50 flex items-center justify-center">
+    <Card className={`group border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[24px] overflow-hidden bg-white flex flex-col h-full ${isExpired ? 'opacity-60' : ''}`}>
+      {/* Thumbnail Area - Changed to Video Aspect Ratio (16:9) to prevent excessive vertical height */}
+      <div className="relative aspect-video overflow-hidden bg-slate-100 flex items-center justify-center p-2">
         {item.thumbnail ? (
           <img 
             src={item.thumbnail} 
             alt={item.title} 
-            className="w-full h-full object-cover transition-transform duration-700 pointer-events-none group-hover:scale-110"
+            className="w-full h-full object-contain transition-transform duration-700 pointer-events-none group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-200">
-            <typeInfo.icon size={48} strokeWidth={1} />
+          <div className="w-full h-full flex items-center justify-center text-slate-300">
+            <typeInfo.icon size={32} strokeWidth={1.5} />
           </div>
         )}
         

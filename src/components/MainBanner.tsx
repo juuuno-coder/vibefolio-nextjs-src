@@ -198,56 +198,41 @@ export function MainBanner() {
               className="basis-[88vw] md:basis-[50%] lg:basis-[42%] px-3"
             >
               <Link href={banner.link_url || "#"} className={banner.link_url ? "cursor-pointer" : "cursor-default"}>
-                <Card 
-                  className="w-full aspect-video overflow-hidden transition-all duration-500 border border-white/10 rounded-xl group relative bg-slate-950 shadow-lg hover:scale-[1.01]"
+                <div 
+                  className="w-full aspect-video overflow-hidden rounded-xl relative group isolate"
                 >
-                  <CardContent className="h-full p-0 relative">
-                    {/* Optimized Image with Next.js Image component */}
-                    <div className="absolute inset-0 overflow-hidden rounded-xl">
-                      <img 
-                        src={banner.image_url || "/placeholder.jpg"}
-                        alt={banner.title} 
-                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                        onError={(e) => {
-                          // @ts-ignore
-                          e.target.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop";
-                        }}
-                      />
-                      {/* Aceternity Style Inner Glow / Border */}
-                      <div className="absolute inset-0 ring-1 ring-inset ring-white/10 z-20 pointer-events-none" />
-                    </div>
-                    
-                    {/* Modern Overlay - More subtle */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent z-10" />
+                  <div className="absolute inset-0 z-0">
+                    <img 
+                      src={banner.image_url || "/placeholder.jpg"}
+                      alt={banner.title} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      onError={(e) => {
+                        // @ts-ignore
+                        e.target.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop";
+                      }}
+                    />
+                    {/* Simple Gradient Overlay for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
+                  </div>
 
-                      {/* Content Box - Slim & Premium Floating Style */}
-                      <div className="absolute bottom-6 left-6 right-6 md:left-10 md:bottom-8 z-20 flex flex-col items-start gap-1">
-                        {banner.subtitle && (
-                          <div 
-                            className="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black tracking-widest uppercase bg-[#16A34A] text-white w-fit mb-1.5 shadow-lg shadow-[#16A34A]/20"
-                          >
-                            {banner.subtitle}
-                          </div>
-                        )}
-                        
-                         <h2 
-                          className="text-lg md:text-2xl font-black tracking-tighter leading-tight mb-2 drop-shadow-2xl"
-                          style={{ color: banner.text_color }}
-                        >
-                          {banner.title}
-                        </h2>
-  
-                         {(banner.description_one_line || banner.description) && (
-                          <p 
-                            className="text-[10px] md:text-xs font-bold opacity-80 max-w-2xl line-clamp-1 mb-2 leading-relaxed"
-                            style={{ color: banner.text_color }}
-                          >
-                            {banner.description_one_line || banner.description}
-                          </p>
-                        )}
-                      </div>
-                  </CardContent>
-                </Card>
+                  <div className="absolute bottom-0 left-0 w-full p-6 md:p-8 z-10 flex flex-col items-start justify-end h-full">
+                    {banner.subtitle && (
+                      <span className="inline-block px-2 py-1 mb-2 text-[10px] font-bold tracking-wider text-white uppercase bg-black/30 backdrop-blur-sm rounded-md border border-white/10">
+                        {banner.subtitle}
+                      </span>
+                    )}
+                    
+                    <h2 className="text-xl md:text-2xl font-bold text-white mb-2 leading-tight tracking-tight drop-shadow-md">
+                      {banner.title}
+                    </h2>
+
+                    {(banner.description_one_line || banner.description) && (
+                      <p className="text-xs md:text-sm text-slate-200 line-clamp-1 max-w-2xl font-medium drop-shadow-sm">
+                        {banner.description_one_line || banner.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </Link>
             </CarouselItem>
           ))}
