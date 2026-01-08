@@ -14,6 +14,14 @@ export interface CrawledItem {
   thumbnail?: string;
   image?: string;
   sourceUrl: string;
+  
+  // 상세 정보 추가
+  applicationTarget?: string;
+  sponsor?: string;
+  totalPrize?: string;
+  firstPrize?: string;
+  startDate?: string;
+  categoryTags?: string;
 }
 
 export interface CrawlResult {

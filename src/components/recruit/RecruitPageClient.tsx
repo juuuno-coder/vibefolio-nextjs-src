@@ -45,6 +45,13 @@ interface Item {
   is_approved?: boolean;
   is_active?: boolean;
   views_count?: number;
+  // 추가 필드
+  application_target?: string;
+  sponsor?: string;
+  total_prize?: string;
+  first_prize?: string;
+  start_date?: string;
+  category_tags?: string;
 }
 
 export default function RecruitPage() {

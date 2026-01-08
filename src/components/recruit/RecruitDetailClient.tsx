@@ -34,6 +34,14 @@ interface Item {
   thumbnail?: string;
   views_count?: number;
   created_at?: string;
+  
+  // 추가 필드
+  application_target?: string;
+  sponsor?: string;
+  total_prize?: string;
+  first_prize?: string;
+  start_date?: string;
+  category_tags?: string;
 }
 
 export default function RecruitDetailClient({ item }: { item: Item }) {
@@ -86,22 +94,28 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 mt-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Left: Image & Main Info */}
-          <div className="lg:col-span-7 space-y-8">
+          <div className="lg:col-span-8 space-y-8">
             <div className="relative aspect-[16/10] w-full rounded-[48px] overflow-hidden shadow-2xl bg-white group">
               {item.thumbnail ? (
                 <Image 
                   src={item.thumbnail} 
                   alt={item.title} 
                   fill 
-                  className="object-cover transition-transform duration-1000 group-hover:scale-105"
+                  className="object-contain bg-slate-50 transition-transform duration-1000 group-hover:scale-105"
                   priority
                 />
               ) : (
-                <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-200">
-                  {item.type === 'contest' ? <Award size={120} strokeWidth={1} /> : <Briefcase size={120} strokeWidth={1} />}
+                <div className="w-full h-full bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col items-center justify-center text-slate-200 gap-6">
+                  <div className="w-24 h-24 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center shadow-inner">
+                    {item.type === 'contest' ? <Award size={48} strokeWidth={1.5} className="text-slate-300" /> : <Briefcase size={48} strokeWidth={1.5} className="text-slate-300" />}
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-slate-400 font-black text-[10px] tracking-[0.3em] uppercase opacity-60">Visual Pending</span>
+                    <span className="text-slate-300 font-bold text-xs">포스터 이미지를 준비 중입니다</span>
+                  </div>
                 </div>
               )}
               
@@ -123,7 +137,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                     {item.company}
                   </div>
                 )}
-                <h1 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">
+                <h1 className="text-2xl md:text-4xl font-black tracking-tighter text-slate-900 leading-[1.15] break-keep">
                   {item.title}
                 </h1>
               </div>
@@ -137,14 +151,77 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-slate-50">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
-                      <Clock size={20} />
+                      <CalendarDays size={20} />
                     </div>
                     <div>
-                      <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">마감일</p>
-                      <p className="text-slate-800 font-bold">{new Date(item.date).toLocaleDateString("ko-KR", { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                      <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">접수 기간</p>
+                      <p className="text-slate-800 font-bold">
+                        {item.start_date ? `${new Date(item.start_date).toLocaleDateString("ko-KR")} ~ ` : ""}
+                        {new Date(item.date).toLocaleDateString("ko-KR")}
+                      </p>
                     </div>
                   </div>
                   
+                  {item.application_target && (
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
+                        <Briefcase size={20} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">응모 대상</p>
+                        <p className="text-slate-800 font-bold">{item.application_target}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {item.category_tags && (
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
+                        <Award size={20} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">분야</p>
+                        <p className="text-slate-800 font-bold">{item.category_tags}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {item.total_prize && (
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
+                        <Award size={20} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">총 상금</p>
+                        <p className="text-[#4ACAD4] font-bold">{item.total_prize}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {item.first_prize && (
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
+                        <Award size={20} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">1등 상금</p>
+                        <p className="text-slate-800 font-bold">{item.first_prize}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {item.sponsor && (
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
+                        <Building2 size={20} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">후원/협찬</p>
+                        <p className="text-slate-800 font-bold">{item.sponsor}</p>
+                      </div>
+                    </div>
+                  )}
+
                   {item.location && (
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
@@ -156,76 +233,50 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                       </div>
                     </div>
                   )}
-
-                  {item.prize && (
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
-                        <Award size={20} />
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">상금/혜택</p>
-                        <p className="text-slate-800 font-bold">{item.prize}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {(item.salary || item.employment_type) && (
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#4ACAD4] shrink-0">
-                        <Briefcase size={20} />
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">조건</p>
-                        <p className="text-slate-800 font-bold">
-                          {item.employment_type} {item.salary && `| ${item.salary}`}
-                        </p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
           </div>
 
           {/* Right: CTA Section */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-4">
             <div className="sticky top-28 space-y-6">
-              <div className="p-8 md:p-10 rounded-[48px] bg-slate-900 text-white shadow-2xl shadow-slate-200 space-y-8 relative overflow-hidden">
+              <div className="p-8 md:p-8 rounded-[40px] bg-slate-900 text-white shadow-xl shadow-slate-200 space-y-6 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#4ACAD4]/20 blur-3xl rounded-full -mr-16 -mt-16" />
                 
-                <div className="space-y-2 relative z-10">
-                  <p className="text-slate-400 font-bold text-sm">지금 바로 도전하세요</p>
-                  <h2 className="text-2xl font-black">더 자세한 내용을 확인하시겠습니까?</h2>
+                <div className="space-y-1.5 relative z-10">
+                  <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Apply Now</p>
+                  <h2 className="text-xl font-black leading-tight">더 자세한 내용을 확인하시겠습니까?</h2>
                 </div>
 
                 <div className="space-y-3 relative z-10">
                   {item.link && (
                     <Button 
-                      className="w-full h-16 rounded-2xl bg-[#4ACAD4] hover:bg-[#3db8c1] text-white font-black text-lg shadow-xl shadow-[#4ACAD4]/20 transition-all duration-300 hover:scale-[1.02]"
+                      className="w-full h-14 rounded-2xl bg-[#4ACAD4] hover:bg-[#3db8c1] text-slate-900 font-black text-base shadow-lg shadow-[#4ACAD4]/10 transition-all duration-300 hover:scale-[1.02]"
                       onClick={() => window.open(item.link, '_blank')}
                       disabled={isExpired}
                     >
                       공식 홈페이지 바로가기
-                      <ChevronRight className="ml-2" />
+                      <ChevronRight className="ml-1" size={18} />
                     </Button>
                   )}
-                  <p className="text-center text-slate-500 text-xs font-medium">
+                  <p className="text-center text-slate-500 text-[10px] font-bold">
                     클릭 시 주최측 공식 홈페이지로 이동합니다.
                   </p>
                 </div>
 
-                <div className="pt-6 border-t border-slate-800 space-y-4 relative z-10">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-400 font-medium flex items-center gap-2">
-                       <Eye size={14} /> 조회수
+                <div className="pt-5 border-t border-slate-800 space-y-3 relative z-10">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500 font-bold flex items-center gap-2 uppercase tracking-tighter">
+                       <Eye size={12} /> Views
                     </span>
-                    <span className="font-bold">{item.views_count?.toLocaleString() || 0}</span>
+                    <span className="font-black text-slate-300">{item.views_count?.toLocaleString() || 0}</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-400 font-medium flex items-center gap-2">
-                      <CalendarDays size={14} /> 제보일
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500 font-bold flex items-center gap-2 uppercase tracking-tighter">
+                      <CalendarDays size={12} /> Posted
                     </span>
-                    <span className="font-bold">
+                    <span className="font-black text-slate-300">
                       {item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}
                     </span>
                   </div>

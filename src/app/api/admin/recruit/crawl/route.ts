@@ -62,6 +62,12 @@ export async function POST(request: NextRequest) {
             location: item.location,
             prize: item.prize,
             salary: item.salary,
+            application_target: item.applicationTarget,
+            sponsor: item.sponsor,
+            total_prize: item.totalPrize,
+            first_prize: item.firstPrize,
+            start_date: item.startDate,
+            category_tags: item.categoryTags,
             is_approved: true,
             is_active: true,
             crawled_at: new Date().toISOString()

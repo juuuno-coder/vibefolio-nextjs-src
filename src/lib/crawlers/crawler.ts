@@ -45,26 +45,49 @@ async function crawlWevity(): Promise<CrawledItem[]> {
     const $ = cheerio.load(html);
     
     // 상세 정보 파싱을 위한 헬퍼 함수
-    const fetchOfficialLink = async (detailUrl: string): Promise<string | undefined> => {
+    const fetchDetailInfo = async (detailUrl: string) => {
       try {
         const detailRes = await fetch(detailUrl, { 
           headers: { 
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' 
           } 
         });
-        if (!detailRes.ok) return undefined;
+        if (!detailRes.ok) return {};
         const detailHtml = await detailRes.text();
         const $detail = cheerio.load(detailHtml);
         
-        // 위비티 상세페이지에서 공식 홈페이지 주소 찾기
-        // 보통 '홈페이지 바로가기' 버튼이 .btn-area a 또는 특정 위치에 있음
+        // 1. 공식 홈페이지 주소
         let officialUrl = $detail('.contest-detail .btn-area a:contains("홈페이지 바로가기")').attr('href') ||
                           $detail('.contest-detail-info a:contains("홈페이지 바로가기")').attr('href') ||
-                          $detail('a:contains("홈페이지")').filter((_, el) => $(el).text().includes('바로가기')).attr('href');
+                          $detail('a:contains("홈페이지")').filter((_, el) => $detail(el).text().includes('바로가기')).attr('href');
         
-        return officialUrl;
+        // 2. 상세 정보 테이블 파싱
+        const info: any = { officialLink: officialUrl };
+        $detail('.contest-detail-info li').each((_, el) => {
+          const text = $detail(el).text();
+          if (text.includes('분야')) info.categoryTags = text.replace('분야', '').trim();
+          if (text.includes('대상')) info.applicationTarget = text.replace('대상', '').trim();
+          if (text.includes('주최/주관')) info.company = text.replace('주최/주관', '').trim();
+          if (text.includes('후원/협찬')) info.sponsor = text.replace('후원/협찬', '').trim();
+          if (text.includes('총 상금')) info.totalPrize = text.replace('총 상금', '').trim();
+          if (text.includes('1등 상금')) info.firstPrize = text.replace('1등 상금', '').trim();
+          if (text.includes('접수기간')) {
+            const period = text.replace('접수기간', '').trim();
+            if (period.includes('~')) {
+              info.startDate = period.split('~')[0].trim();
+            }
+          }
+        });
+
+        // 3. 포스터 이미지 (메인 페이지보다 상세페이지가 더 정확할 수 있음)
+        const posterImg = $detail('.thumb img').attr('src');
+        if (posterImg) {
+          info.image = posterImg.startsWith('http') ? posterImg : `https://www.wevity.com${posterImg.startsWith('/') ? '' : '/'}${posterImg}`;
+        }
+
+        return info;
       } catch (e) {
-        return undefined;
+        return {};
       }
     };
 
@@ -86,25 +109,22 @@ async function crawlWevity(): Promise<CrawledItem[]> {
         link = `https://www.wevity.com${link.startsWith('/') ? '' : '/'}${link}`;
       }
       
-      let image = $li.find('.thumb img, .img img, .thumb-box img, .poster img').attr('src');
-      if (image) {
-        if (!image.startsWith('http')) {
-          image = `https://www.wevity.com${image.startsWith('/') ? '' : '/'}${image}`;
-        }
-        image = image.replace('_s.jpg', '.jpg').replace('_s.png', '.png');
-      }
+      // 2단계: 상세 페이지에서 풍부한 정보 가져오기
+      const detailInfo = await fetchDetailInfo(link);
 
+      let image = detailInfo.image || $li.find('.thumb img, .img img, .thumb-box img, .poster img').attr('src');
+      if (image && !image.startsWith('http')) {
+        image = `https://www.wevity.com${image.startsWith('/') ? '' : '/'}${image}`;
+      }
+      
       if (!image || image.includes('no_image') || image.includes('spacer.gif')) {
         image = getThemedPlaceholder(title, 'contest');
       }
       
       const dday = $li.find('.dday, .hide-dday, .date').first().text().trim();
-      const category = $li.find('.cat, .hide-cat, .category').first().text().trim();
-      const company = $li.find('.organ, .company, .sub-text').first().text().trim() || '주최측 미상';
+      const category = detailInfo.categoryTags || $li.find('.cat, .hide-cat, .category').first().text().trim();
+      const company = detailInfo.company || $li.find('.organ, .company, .sub-text').first().text().trim() || '주최측 미상';
       
-      // 2단계: 상세 페이지에서 공식 링크 가져오기 (비동기 병렬 처리 대상)
-      const officialLink = await fetchOfficialLink(link);
-
       items.push({
         title,
         description: category || '공모전 정보를 확인하세요.',
@@ -112,10 +132,17 @@ async function crawlWevity(): Promise<CrawledItem[]> {
         date: dday || '상시모집',
         company: company,
         location: '온라인/기타',
-        link: link, // 소스 원본 (위비티)
-        officialLink: officialLink, // 주최측 공식 사이트
+        link: link, 
+        officialLink: detailInfo.officialLink,
         sourceUrl: 'https://www.wevity.com',
         image,
+        // 추가 필드
+        applicationTarget: detailInfo.applicationTarget,
+        sponsor: detailInfo.sponsor,
+        totalPrize: detailInfo.totalPrize,
+        firstPrize: detailInfo.firstPrize,
+        startDate: detailInfo.startDate,
+        categoryTags: detailInfo.categoryTags,
       });
     }
     
