@@ -190,7 +190,7 @@ export function MainBanner() {
         }}
         className="w-full"
       >
-        <CarouselContent className="w-full flex justify-start gap-0 -ml-0 pt-0 pb-6">
+        <CarouselContent className="w-full flex justify-start gap-0 -ml-0 pt-0 pb-0">
           {banners.map((banner, index) => (
             <CarouselItem
               key={banner.id}
@@ -202,11 +202,11 @@ export function MainBanner() {
                 >
                   <CardContent className="h-full p-0 relative">
                     {/* Optimized Image with Next.js Image component */}
-                    <div className="absolute inset-0 bg-slate-50 overflow-hidden rounded-[40px]">
+                    <div className="absolute inset-0 overflow-hidden rounded-[40px]">
                       <img 
                         src={banner.image_url || "/placeholder.jpg"}
-                        alt="" 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        alt={banner.title} 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         onError={(e) => {
                           // @ts-ignore
                           e.target.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop";
