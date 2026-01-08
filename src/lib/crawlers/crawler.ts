@@ -56,30 +56,42 @@ async function crawlWevity(): Promise<CrawledItem[]> {
         const detailHtml = await detailRes.text();
         const $detail = cheerio.load(detailHtml);
         
-        // 1. 공식 홈페이지 주소
+        // 1. 공식 홈페이지 주소 및 버튼 추출 고도화
         let officialUrl = $detail('.contest-detail .btn-area a:contains("홈페이지 바로가기")').attr('href') ||
                           $detail('.contest-detail-info a:contains("홈페이지 바로가기")').attr('href') ||
+                          $detail('.contest-detail .btn-area a:contains("상세보기")').attr('href') ||
                           $detail('a:contains("홈페이지")').filter((_, el) => $detail(el).text().includes('바로가기')).attr('href');
         
-        // 2. 상세 정보 테이블 파싱
+        // 2. 상세 정보 테이블 파싱 (정규식 기반으로 콜론 및 라벨 제거)
         const info: any = { officialLink: officialUrl };
         $detail('.contest-detail-info li').each((_, el) => {
-          const text = $detail(el).text();
-          if (text.includes('분야')) info.categoryTags = text.replace('분야', '').trim();
-          if (text.includes('대상')) info.applicationTarget = text.replace('대상', '').trim();
-          if (text.includes('주최/주관')) info.company = text.replace('주최/주관', '').trim();
-          if (text.includes('후원/협찬')) info.sponsor = text.replace('후원/협찬', '').trim();
-          if (text.includes('총 상금')) info.totalPrize = text.replace('총 상금', '').trim();
-          if (text.includes('1등 상금')) info.firstPrize = text.replace('1등 상금', '').trim();
-          if (text.includes('접수기간')) {
-            const period = text.replace('접수기간', '').trim();
-            if (period.includes('~')) {
-              info.startDate = period.split('~')[0].trim();
+          const rawText = $detail(el).text().replace(/\s+/g, ' ').trim();
+          
+          // "라벨 : 내용" 형태에서 라벨 이후의 값만 깔끔하게 추출
+          const extractValue = (label: string) => {
+            if (rawText.includes(label)) {
+              return rawText.split(label)[1]?.replace(/^[:\s]+/, '').trim();
+            }
+            return null;
+          };
+
+          const category = extractValue('분야'); if (category) info.categoryTags = category;
+          const target = extractValue('대상'); if (target) info.applicationTarget = target;
+          const host = extractValue('주최/주관'); if (host) info.company = host;
+          const sponsor = extractValue('후원/협찬'); if (sponsor) info.sponsor = sponsor;
+          const totalP = extractValue('총 상금'); if (totalP) info.totalPrize = totalP;
+          const firstP = extractValue('1등 상금'); if (firstP) info.firstPrize = firstP;
+          
+          if (rawText.includes('접수기간')) {
+            const period = extractValue('접수기간');
+            if (period && period.includes('~')) {
+              const startPart = period.split('~')[0].trim();
+              info.startDate = formatDateString(startPart);
             }
           }
         });
 
-        // 3. 포스터 이미지 (메인 페이지보다 상세페이지가 더 정확할 수 있음)
+        // 3. 포스터 이미지
         const posterImg = $detail('.thumb img').attr('src');
         if (posterImg) {
           info.image = posterImg.startsWith('http') ? posterImg : `https://www.wevity.com${posterImg.startsWith('/') ? '' : '/'}${posterImg}`;
@@ -91,12 +103,54 @@ async function crawlWevity(): Promise<CrawledItem[]> {
       }
     };
 
+    /**
+     * "25.12.31" 또는 "2025-12-31" 형태의 날짜를 "YYYY-MM-DD"로 변환
+     */
+    function formatDateString(str: string): string | null {
+      if (!str) return null;
+      const cleaned = str.replace(/[^\d.]/g, '').replace(/^\.+|\.+$/g, '');
+      const parts = cleaned.split('.');
+      
+      let year, month, day;
+      
+      if (parts.length === 3) {
+        year = parts[0];
+        month = parts[1].padStart(2, '0');
+        day = parts[2].padStart(2, '0');
+        if (year.length === 2) year = '20' + year;
+      } else if (parts.length === 2) {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        month = parts[0].padStart(2, '0');
+        day = parts[1].padStart(2, '0');
+        
+        // 지능형 연도 추론
+        year = currentYear.toString();
+        const testDate = new Date(`${year}-${month}-${day}`);
+        
+        // 현재로부터 180일 이상 과거이거나 미래인 경우 연도 보정
+        // 예: 현재 26년 1월인데 12월 날짜면 25년으로 판단
+        if (now.getMonth() < 3 && parseInt(month) > 9) {
+          year = (currentYear - 1).toString();
+        } else if (now.getMonth() > 9 && parseInt(month) < 3) {
+          year = (currentYear + 1).toString();
+        }
+      } else {
+        // 날짜 형식이 아니면 (예: "D-Day", "상시") 유효한 날짜가 아니므로 null 반환
+        return null;
+      }
+      
+      const result = `${year}-${month}-${day}`;
+      // 유효한 ISO 날짜인지 최종 확인
+      return isNaN(Date.parse(result)) ? null : result;
+    }
+
     const items: CrawledItem[] = [];
     const listElements = $('.list li, .contest-list li').toArray();
 
     // 1단계: 목록에서 기본 정보 수집
     for (const el of listElements) {
-      if (items.length >= 10) break; // 성능을 위해 상위 10개만 상세 링크 시도
+      if (items.length >= 20) break; // 상세 수집 범위 확대 (10 -> 20)
 
       const $li = $(el);
       const $titleLink = $li.find('.tit a, .hide-tit a, a.subject, .title a').first();
@@ -109,7 +163,6 @@ async function crawlWevity(): Promise<CrawledItem[]> {
         link = `https://www.wevity.com${link.startsWith('/') ? '' : '/'}${link}`;
       }
       
-      // 2단계: 상세 페이지에서 풍부한 정보 가져오기
       const detailInfo = await fetchDetailInfo(link);
 
       let image = detailInfo.image || $li.find('.thumb img, .img img, .thumb-box img, .poster img').attr('src');
@@ -121,7 +174,10 @@ async function crawlWevity(): Promise<CrawledItem[]> {
         image = getThemedPlaceholder(title, 'contest');
       }
       
-      const dday = $li.find('.dday, .hide-dday, .date').first().text().trim();
+      // 날짜 파싱 고도화
+      const rawDate = $li.find('.dday, .hide-dday, .date, .last-date').first().text().trim();
+      const formattedDate = formatDateString(rawDate);
+      
       const category = detailInfo.categoryTags || $li.find('.cat, .hide-cat, .category').first().text().trim();
       const company = detailInfo.company || $li.find('.organ, .company, .sub-text').first().text().trim() || '주최측 미상';
       
@@ -129,14 +185,13 @@ async function crawlWevity(): Promise<CrawledItem[]> {
         title,
         description: category || '공모전 정보를 확인하세요.',
         type: 'contest',
-        date: dday || '상시모집',
+        date: formattedDate || '상시모집',
         company: company,
         location: '온라인/기타',
         link: link, 
         officialLink: detailInfo.officialLink,
         sourceUrl: 'https://www.wevity.com',
         image,
-        // 추가 필드
         applicationTarget: detailInfo.applicationTarget,
         sponsor: detailInfo.sponsor,
         totalPrize: detailInfo.totalPrize,

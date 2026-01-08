@@ -10,6 +10,40 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+/**
+ * "25.12.31" 또는 "2025-12-31" 형태의 날짜를 "YYYY-MM-DD"로 변환
+ */
+function formatDateString(str: string): string {
+  if (!str) return str;
+  const cleaned = str.replace(/[^\d.]/g, '').replace(/^\.+|\.+$/g, '');
+  const parts = cleaned.split('.');
+  
+  let year, month, day;
+  
+  if (parts.length === 3) {
+    year = parts[0];
+    month = parts[1].padStart(2, '0');
+    day = parts[2].padStart(2, '0');
+    if (year.length === 2) year = '20' + year;
+  } else if (parts.length === 2) {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    month = parts[0].padStart(2, '0');
+    day = parts[1].padStart(2, '0');
+    year = currentYear.toString();
+    const testDate = new Date(`${year}-${month}-${day}`);
+    if (testDate.getTime() < now.getTime() - (1000 * 60 * 60 * 24 * 90)) {
+       if (now.getMonth() < 3 && parseInt(month) > 9) {
+         year = (currentYear - 1).toString();
+       }
+    }
+  } else {
+    return str;
+  }
+  
+  return `${year}-${month}-${day}`;
+}
+
 async function fetchDetailInfo(detailUrl: string): Promise<any> {
   try {
     const res = await fetch(detailUrl, {
@@ -26,31 +60,32 @@ async function fetchDetailInfo(detailUrl: string): Promise<any> {
                       $('.contest-detail .btn-area a:contains("상세보기")').attr('href') ||
                       $('.contest-detail .btn-area a:contains("지원하기")').attr('href') ||
                       $('.contest-detail .btn-area a:contains("공식")').attr('href') ||
-                      $('a:contains("홈페이지")').filter((_, el) => $(el).text().includes('바로가기')).attr('href') ||
-                      $('.contest-detail .btn-area a').first().attr('href'); // 최후의 수단: 첫 번째 버튼
-    
-    // 위비티 내부 링크인 경우 제외 시도 (외부 도메인 우선)
-    if (officialUrl && (officialUrl.includes('wevity.com') || officialUrl.startsWith('/'))) {
-       const externalCandidate = $('.contest-detail .btn-area a').filter((_, el) => {
-         const href = $(el).attr('href') || '';
-         return !href.includes('wevity.com') && href.startsWith('http');
-       }).attr('href');
-       if (externalCandidate) officialUrl = externalCandidate;
-    }
+                      $('a:contains("홈페이지")').filter((_, el) => $(el).text().includes('바로가기')).attr('href');
     
     const info: any = { officialLink: officialUrl };
     $('.contest-detail-info li').each((_, el) => {
-      const text = $(el).text();
-      if (text.includes('분야')) info.categoryTags = text.replace('분야', '').trim();
-      if (text.includes('대상')) info.applicationTarget = text.replace('대상', '').trim();
-      if (text.includes('주최/주관')) info.company = text.replace('주최/주관', '').trim();
-      if (text.includes('후원/협찬')) info.sponsor = text.replace('후원/협찬', '').trim();
-      if (text.includes('총 상금')) info.totalPrize = text.replace('총 상금', '').trim();
-      if (text.includes('1등 상금')) info.firstPrize = text.replace('1등 상금', '').trim();
-      if (text.includes('접수기간')) {
-        const period = text.replace('접수기간', '').trim();
-        if (period.includes('~')) {
-          info.startDate = period.split('~')[0].trim();
+      const rawText = $(el).text().replace(/\s+/g, ' ').trim();
+      const extractValue = (label: string) => {
+        if (rawText.includes(label)) {
+          return rawText.split(label)[1]?.replace(/^[:\s]+/, '').trim();
+        }
+        return null;
+      };
+
+      const category = extractValue('분야'); if (category) info.categoryTags = category;
+      const target = extractValue('대상'); if (target) info.applicationTarget = target;
+      const host = extractValue('주최/주관'); if (host) info.company = host;
+      const sponsor = extractValue('후원/협찬'); if (sponsor) info.sponsor = sponsor;
+      const totalP = extractValue('총 상금'); if (totalP) info.totalPrize = totalP;
+      const firstP = extractValue('1등 상금'); if (firstP) info.firstPrize = firstP;
+      
+      if (rawText.includes('접수기간')) {
+        const period = extractValue('접수기간');
+        if (period && period.includes('~')) {
+          const startPart = period.split('~')[0].trim();
+          info.startDate = formatDateString(startPart);
+          const endPart = period.split('~')[1].trim();
+          info.date = formatDateString(endPart); // 마감일 보정용
         }
       }
     });
@@ -96,6 +131,7 @@ async function migrate() {
             total_prize: detail.totalPrize || item.total_prize,
             first_prize: detail.firstPrize || item.first_prize,
             start_date: detail.startDate || item.start_date,
+            date: detail.date || item.date, // 마감일 보정 반영
             category_tags: detail.categoryTags || item.category_tags,
             company: detail.company || item.company
           })
