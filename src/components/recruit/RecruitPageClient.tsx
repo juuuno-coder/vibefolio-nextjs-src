@@ -1144,17 +1144,17 @@ function ItemCard({
 
   return (
     <Card className={`group border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[24px] overflow-hidden bg-white flex flex-col h-full ${isExpired ? 'opacity-60' : ''}`}>
-      {/* Thumbnail Area - Changed to Video Aspect Ratio (16:9) to prevent excessive vertical height */}
-      <div className="relative aspect-video overflow-hidden bg-slate-100 flex items-center justify-center p-2">
+      {/* Thumbnail Area - Restored to Vertical Poster Ratio (3:4) for better display of posters */}
+      <div className="relative aspect-[3/4] overflow-hidden bg-slate-100 flex items-center justify-center">
         {item.thumbnail ? (
           <img 
             src={item.thumbnail} 
             alt={item.title} 
-            className="w-full h-full object-contain transition-transform duration-700 pointer-events-none group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-700 pointer-events-none group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-300">
-            <typeInfo.icon size={32} strokeWidth={1.5} />
+            <typeInfo.icon size={40} strokeWidth={1} />
           </div>
         )}
         
