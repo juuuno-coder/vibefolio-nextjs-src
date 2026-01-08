@@ -190,7 +190,7 @@ export function MainBanner() {
         }}
         className="w-full"
       >
-        <CarouselContent className="w-full flex justify-start gap-0 -ml-0 pt-0 pb-12 px-1">
+        <CarouselContent className="w-full flex justify-start gap-0 -ml-0 pt-0 pb-6">
           {banners.map((banner, index) => (
             <CarouselItem
               key={banner.id}
@@ -217,41 +217,41 @@ export function MainBanner() {
                     {/* Modern Overlay - More subtle */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent z-10" />
 
-                    {/* Content Box - Slim & Premium Floating Style */}
-                    <div className="absolute bottom-10 left-8 right-8 md:left-12 md:bottom-12 z-20 flex flex-col items-start gap-1">
-                      {banner.subtitle && (
-                        <div 
-                          className="px-2.5 py-1 rounded-full text-[9px] md:text-[11px] font-black tracking-widest uppercase bg-[#4ACAD4] text-slate-900 w-fit mb-2 shadow-lg shadow-[#4ACAD4]/20"
-                        >
-                          {banner.subtitle}
-                        </div>
-                      )}
-                      
-                       <h2 
-                        className="text-xl md:text-3xl font-black tracking-tighter leading-[1.15] mb-3 drop-shadow-xl"
-                        style={{ color: banner.text_color }}
-                      >
-                        {banner.title}
-                      </h2>
-
-                       {banner.description && (
-                        <p 
-                          className="text-[11px] md:text-sm font-bold opacity-90 max-w-2xl line-clamp-2 mb-6 leading-relaxed"
+                      {/* Content Box - Slim & Premium Floating Style */}
+                      <div className="absolute bottom-6 left-6 right-6 md:left-10 md:bottom-8 z-20 flex flex-col items-start gap-1">
+                        {banner.subtitle && (
+                          <div 
+                            className="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black tracking-widest uppercase bg-[#4ACAD4] text-slate-900 w-fit mb-1.5 shadow-lg shadow-[#4ACAD4]/20"
+                          >
+                            {banner.subtitle}
+                          </div>
+                        )}
+                        
+                         <h2 
+                          className="text-lg md:text-xl font-bold tracking-tight leading-tight mb-2 drop-shadow-xl"
                           style={{ color: banner.text_color }}
                         >
-                          {banner.description}
-                        </p>
-                      )}
-                      
-                       {banner.link_url && (
-                        <div 
-                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black transition-all duration-500 group-hover:bg-[#4ACAD4] group-hover:text-slate-900 font-black text-xs md:text-sm shadow-2xl shadow-black/20"
-                        >
-                          <span>{banner.button_text || "자세히 보기"}</span>
-                          <ExternalLink size={14} className="group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      )}
-                    </div>
+                          {banner.title}
+                        </h2>
+  
+                         {banner.description && (
+                          <p 
+                            className="text-[10px] md:text-xs font-bold opacity-80 max-w-2xl line-clamp-1 mb-4 leading-relaxed"
+                            style={{ color: banner.text_color }}
+                          >
+                            {banner.description}
+                          </p>
+                        )}
+                        
+                         {banner.link_url && (
+                          <div 
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-gray-900 transition-all duration-500 group-hover:bg-[#4ACAD4] group-hover:text-slate-900 font-black text-[10px] md:text-xs shadow-xl"
+                          >
+                            <span>{banner.button_text || "자세히 보기"}</span>
+                            <ExternalLink size={12} className="group-hover:translate-x-1 transition-transform" />
+                          </div>
+                        )}
+                      </div>
                   </CardContent>
                 </Card>
               </Link>
