@@ -194,7 +194,7 @@ export function MainBanner() {
           {banners.map((banner, index) => (
             <CarouselItem
               key={banner.id}
-              className="basis-[85vw] md:basis-[40%] lg:basis-[28%] pl-4"
+              className="basis-[92vw] md:basis-[45%] lg:basis-[38%] pl-4"
             >
               <Link href={banner.link_url || "#"} className={banner.link_url ? "cursor-pointer" : "cursor-default"}>
                 <Card 
