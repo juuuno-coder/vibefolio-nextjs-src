@@ -65,8 +65,13 @@ const fieldCategories = [
   { id: "other", label: "기타" },
 ];
 
+import { useSearchParams } from "next/navigation";
+
 export default function TiptapUploadPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('edit');
+
   // Step 1: Content (Editor), Step 2: Info (Settings)
   const [step, setStep] = useState<'content' | 'info'>('content');
   const [title, setTitle] = useState("");
@@ -105,9 +110,45 @@ export default function TiptapUploadPage() {
         return;
       }
       setUserId(user.id);
-      // ... (rest of init logic remains same until next hook)
 
-      // 로컬스토리지에서 임시 저장된 데이터 복구
+      // 수정 모드일 경우 데이터 로드
+      if (editId) {
+        try {
+          const res = await fetch(`/api/projects/${editId}`);
+          if (!res.ok) throw new Error("프로젝트를 불러올 수 없습니다.");
+          const { project } = await res.json();
+          
+          if (project) {
+            // 본인 프로젝트인지 확인 (API에서 안 막으면 여기서라도)
+            if (project.user_id !== user.id) {
+               toast.error("수정 권한이 없습니다.");
+               router.push("/");
+               return;
+            }
+
+            setTitle(project.title || "");
+            setSummary(project.description || ""); // DB 컬럼 확인 필요하지만 일단 description 매핑
+            setContent(project.content_text || "");
+            setCoverPreview(project.thumbnail_url || project.image_url);
+            
+            if (project.custom_data) {
+              try {
+                const custom = typeof project.custom_data === 'string' ? JSON.parse(project.custom_data) : project.custom_data;
+                if (custom.genres) setSelectedGenres(custom.genres);
+                if (custom.fields) setSelectedFields(custom.fields);
+              } catch (e) {
+                console.error("Custom data parse error", e);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Load project error:", error);
+          toast.error("프로젝트 정보를 불러오는데 실패했습니다.");
+        }
+        return; // 수정 모드면 임시저장 불러오기 패스
+      }
+
+      // 로컬스토리지에서 임시 저장된 데이터 복구 (신규 작성 시에만)
       const savedDraft = localStorage.getItem('project_draft');
       if (savedDraft) {
         try {
@@ -145,11 +186,19 @@ export default function TiptapUploadPage() {
     };
     
     init();
-  }, [router]);
+  }, [router, editId]);
 
-  // 자동 저장 (30초마다)
+  // 에디터 내용 동기화 (수정 모드 로딩 후)
   useEffect(() => {
-    if (content) {
+    if (editor && content && !editor.getText()) { // 에디터가 비어있고 컨텐츠가 로드되었을 때만
+       editor.commands.setContent(content);
+    }
+  }, [editor, content]);
+
+  // 자동 저장 (30초마다) - 수정 모드 아닐 때만? or 수정 모드여도 draft 별도 저장?
+  // 헷갈릴 수 있으니 수정 모드일 때는 자동저장 끄거나 별도 키 사용. 일단 둠.
+  useEffect(() => {
+    if (content && !editId) { // 수정 모드 아닐 때만 로컬 draft 저장
       const interval = setInterval(() => {
         const draft = {
           title,
@@ -167,8 +216,8 @@ export default function TiptapUploadPage() {
 
       return () => clearInterval(interval);
     }
-  }, [title, content, selectedGenres, selectedFields]);
-
+  }, [title, content, selectedGenres, selectedFields, editId]);
+  
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -225,7 +274,7 @@ export default function TiptapUploadPage() {
       toast.error('프로젝트 제목을 입력해주세요.');
       return;
     }
-    if (!coverImage && !settings?.coverUrl) { // 이미 모달에서 업로드된 경우 포함
+    if (!coverImage && !settings?.coverUrl && !coverPreview) { // 이미 모달에서 업로드된 경우 포함 + 수정 모드(coverPreview 있음)
       toast.error('커버 이미지를 선택해주세요.');
       return;
     }
@@ -240,29 +289,34 @@ export default function TiptapUploadPage() {
       if (!userId) throw new Error('로그인이 필요합니다.');
 
       // 커버 이미지 업로드 (새로 선택한 경우만)
-      let coverUrl = settings?.coverUrl;
+      let coverUrl = settings?.coverUrl || (editId ? coverPreview : null);
       if (!coverUrl && coverImage) {
         coverUrl = await uploadImage(coverImage);
       }
+      // 커버 이미지를 바꾸지 않았다면 coverPreview(기존 URL) 사용
 
-      // 프로젝트 생성
+      // 프로젝트 생성/수정
       const category_id = GENRE_TO_CATEGORY_ID[finalGenres[0]] || 1;
+      
+      const url = editId ? `/api/projects/${editId}` : '/api/projects';
+      const method = editId ? 'PUT' : 'POST';
 
-      const response = await fetch('/api/projects', {
-        method: 'POST',
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: userId,
           category_id,
           title: finalTitle,
-          summary: finalSummary,
+          summary: finalSummary, // API에서 처리하는지 확인 필요, 없으면 무시됨
+          description: finalSummary, // description으로도 보냄 (API 호환성)
           content_text: content, // Tiptap HTML content
-          thumbnail_url: coverUrl,
+          thumbnail_url: coverUrl, // URL Update
           rendering_type: 'rich_text',
           custom_data: JSON.stringify({
             genres: finalGenres,
             fields: finalFields,
-            tags: finalTags, // 태그 리스트 저장
+            tags: finalTags, 
           }),
         }),
       });
@@ -271,9 +325,11 @@ export default function TiptapUploadPage() {
       if (!response.ok) throw new Error(data.error || '서버 에러');
 
       // 임시 저장 데이터 삭제
-      localStorage.removeItem('project_draft');
+      if (!editId) {
+         localStorage.removeItem('project_draft');
+      }
 
-      toast.success('프로젝트가 성공적으로 발행되었습니다!');
+      toast.success(editId ? '프로젝트가 수정되었습니다!' : '프로젝트가 성공적으로 발행되었습니다!');
       router.push('/');
     } catch (error: any) {
       console.error('Submit Error:', error);

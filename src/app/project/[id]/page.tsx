@@ -78,33 +78,83 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
   const fetchProjectData = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Fetch project details from Supabase 'Project' table
+      // Fetch project details with profile
       const { data: projectData, error: projectError } = await supabase
-        .from("Project") // projects -> Project
-        .select("*")
-        .eq("project_id", Number(projectId)) // id -> project_id
-        .single() as any;
+        .from("Project")
+        .select(`
+          *,
+          profiles:user_id (
+            username,
+            profile_image_url
+          )
+        `)
+        .eq("project_id", Number(projectId))
+        .single();
 
       if (projectError || !projectData) {
         throw new Error("Project not found.");
       }
-      setProject({ ...projectData, id: projectData.project_id, category: projectData.category_id });
+
+      // Transform data to match Project interface
+      const rawData = projectData as any;
+      const transformedProject: Project = {
+        id: String(rawData.project_id),
+        title: rawData.title,
+        description: rawData.description || rawData.content_text, // Use content_text as fallback
+        alt_description: rawData.description || rawData.content_text,
+        created_at: rawData.created_at,
+        width: rawData.width || 800,
+        height: rawData.height || 600,
+        category: String(rawData.category_id),
+        tags: rawData.tags || [],
+        user_id: rawData.user_id,
+        likes: 0, // Will be fetched separately
+        views: 0, // Will be fetched separately
+        urls: {
+          full: rawData.image_url || rawData.thumbnail_url || "/placeholder.jpg",
+          regular: rawData.thumbnail_url || "/placeholder.jpg",
+        },
+        user: {
+          username: rawData.profiles?.username || "Unknown",
+          profile_image: {
+            small: rawData.profiles?.profile_image_url || "/default-avatar.png",
+            large: rawData.profiles?.profile_image_url || "/default-avatar.png",
+          },
+        },
+      };
+
+      setProject(transformedProject);
 
       // Fetch related projects
       const { data: relatedData } = await supabase
-        .from("Project") // projects -> Project
-        .select("*")
-        .eq("category_id", projectData.category_id) // category -> category_id
-        .neq("project_id", Number(projectId)) // id -> project_id
+        .from("Project")
+        .select("*, profiles:user_id(username, profile_image_url)")
+        .eq("category_id", rawData.category_id)
+        .neq("project_id", Number(projectId))
         .limit(4);
-      setRelatedProjects((relatedData || []).map((p: any) => ({ ...p, id: p.project_id })));
+
+      setRelatedProjects((relatedData || []).map((p: any) => ({
+        ...p,
+        id: String(p.project_id),
+        urls: {
+          full: p.image_url || p.thumbnail_url || "/placeholder.jpg",
+          regular: p.thumbnail_url || "/placeholder.jpg",
+        },
+        user: {
+          username: p.profiles?.username || "Unknown",
+          profile_image: {
+            small: p.profiles?.profile_image_url || "/default-avatar.png",
+            large: p.profiles?.profile_image_url || "/default-avatar.png",
+          },
+        }
+      })));
 
       // Record the view
       if (user) {
         await recordView(projectId);
       }
 
-      // Fetch likes, bookmarks, views, and comments in parallel
+      // Fetch likes, bookmarks, views, and comments
       const [likeCount, viewCount, comments] = await Promise.all([
         getProjectLikeCount(Number(projectId)),
         getProjectViewCount(Number(projectId)),
@@ -114,7 +164,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
       setViewCount(viewCount);
       setComments(comments);
 
-      // Check like and bookmark status if user is logged in
+      // Check like and bookmark status
       if (user) {
         const [liked, bookmarked] = await Promise.all([
           isProjectLiked(projectId),
@@ -125,7 +175,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
       }
     } catch (error) {
       console.error("Failed to load project data:", error);
-      setProject(null); // Ensure project is null on error
+      setProject(null);
     } finally {
       setIsLoading(false);
     }

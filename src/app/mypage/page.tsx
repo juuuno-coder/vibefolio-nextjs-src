@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus } from "lucide-react";
+import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
 import { ProposalCard } from "@/components/ProposalCard";
@@ -530,12 +530,15 @@ export default function MyPage() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.jpg'; }}
                         />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                          <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white" onClick={() => router.push(`/project/${project.id}`)}>
-                            <Eye className="w-4 h-4 mr-1" /> 보기
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 px-2">
+                          <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white h-9 px-3 text-xs" onClick={() => router.push(`/project/${project.id}`)}>
+                            <Eye className="w-3.5 h-3.5 mr-1" /> 보기
                           </Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleDeleteProject(project.id)}>
-                            <Trash2 className="w-4 h-4 mr-1" /> 삭제
+                          <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white h-9 px-3 text-xs" onClick={() => router.push(`/project/upload?edit=${project.id}`)}>
+                            <Edit className="w-3.5 h-3.5 mr-1" /> 수정
+                          </Button>
+                          <Button size="sm" variant="destructive" className="h-9 px-3 text-xs" onClick={() => handleDeleteProject(project.id)}>
+                            <Trash2 className="w-3.5 h-3.5 mr-1" /> 삭제
                           </Button>
                         </div>
                       </div>
