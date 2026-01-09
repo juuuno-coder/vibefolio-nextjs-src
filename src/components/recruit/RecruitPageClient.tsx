@@ -1108,6 +1108,18 @@ export default function RecruitPage() {
     </div>
   );
 }
+// 출처 분석 유틸리티
+const getSourceFromLink = (link?: string) => {
+  if (!link) return null;
+  if (link.includes('ipmarket.or.kr') || link.includes('idearo')) return '모두의 아이디어';
+  if (link.includes('saramin')) return '사람인';
+  if (link.includes('jobkorea')) return '잡코리아';
+  if (link.includes('wanted')) return '원티드';
+  if (link.includes('linkareer')) return '링커리어';
+  if (link.includes('pureal')) return '퓨리얼';
+  if (link.includes('mss.go.kr')) return '중소벤처기업부';
+  return null;
+};
 
 // 항목 카드 컴포넌트
 function ItemCard({
@@ -1189,9 +1201,16 @@ function ItemCard({
 
       <CardHeader className="p-5 pb-2">
         <div className="space-y-1.5 h-[68px]"> {/* Fixed height for title alignment */}
-          {item.company && (
-            <p className="text-[10px] font-black text-[#16A34A] tracking-wider uppercase leading-none truncate">{item.company}</p>
-          )}
+          <div className="flex items-center gap-2">
+            {item.company && (
+              <p className="text-[10px] font-black text-[#16A34A] tracking-wider uppercase leading-none truncate max-w-[120px]">{item.company}</p>
+            )}
+            {getSourceFromLink(item.link) && (
+              <span className="text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-400 rounded-md font-bold tracking-tight">
+                via {getSourceFromLink(item.link)}
+              </span>
+            )}
+          </div>
           <CardTitle 
             className="text-lg font-bold line-clamp-2 leading-tight group-hover:text-[#16A34A] transition-colors cursor-pointer"
             onClick={() => onViewDetail(item)}
