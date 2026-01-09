@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2 } from "lucide-react";
+import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
 import { ProposalCard } from "@/components/ProposalCard";
@@ -510,6 +510,17 @@ export default function MyPage() {
             {activeTab === 'projects' && (
               projects.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
+                  {/* 프로젝트 등록 카드 */}
+                  <div 
+                    onClick={() => router.push('/project/upload')}
+                    className="bg-white rounded-xl border-2 border-dashed border-gray-200 hover:border-green-400 overflow-hidden hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center justify-center min-h-[280px]"
+                  >
+                    <div className="w-16 h-16 rounded-full bg-gray-50 group-hover:bg-green-50 flex items-center justify-center mb-4 transition-colors">
+                      <Plus className="w-8 h-8 text-gray-300 group-hover:text-green-500 transition-colors" />
+                    </div>
+                    <p className="text-gray-400 group-hover:text-green-600 font-medium transition-colors">새 프로젝트 등록</p>
+                  </div>
+                  
                   {projects.map((project) => (
                     <div key={project.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow group">
                       <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
