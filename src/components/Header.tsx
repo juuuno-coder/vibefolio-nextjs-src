@@ -12,7 +12,9 @@ import {
   LayoutDashboard,
   Bell,
   ChevronDown,
-  Zap
+  Zap,
+  Plus,
+  Upload
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -193,6 +195,14 @@ export function Header({
                ) : isAuthenticated && user ? (
                   // 로그인 상태
                   <div className="flex items-center gap-2 md:gap-4">
+                    {/* 프로젝트 등록 버튼 */}
+                    <Button 
+                      onClick={() => router.push('/project/upload')}
+                      className="hidden lg:flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-full px-4 h-9 text-sm font-medium shadow-sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                      프로젝트 등록
+                    </Button>
                     <NotificationBell />
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -210,6 +220,9 @@ export function Header({
                            <p className="font-bold text-sm text-black truncate">{userProfile?.username}</p>
                            <p className="text-xs text-black/60 truncate">{user.email}</p>
                         </div>
+                       <DropdownMenuItem onClick={() => router.push('/project/upload')} className="rounded-lg cursor-pointer text-green-600 hover:bg-green-50 focus:bg-green-50 font-medium">
+                         <Upload className="mr-2 h-4 w-4" /> 프로젝트 등록
+                       </DropdownMenuItem>
                        <DropdownMenuItem onClick={() => router.push('/mypage')} className="rounded-lg cursor-pointer text-black hover:bg-gray-100 focus:bg-gray-100">
                          <UserIcon className="mr-2 h-4 w-4" /> 마이페이지
                        </DropdownMenuItem>
@@ -282,6 +295,9 @@ export function Header({
                             <span className="text-xs text-gray-500">{user.email}</span>
                          </div>
                      </div>
+                     <Link href="/project/upload" onClick={() => setIsMobileMenuOpen(false)} className="text-green-600 font-bold bg-green-50 px-3 py-2 rounded-lg inline-flex items-center w-fit">
+                       <Plus className="mr-2 h-4 w-4" /> 프로젝트 등록
+                     </Link>
                      <Link href="/mypage" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-700 font-medium py-1">마이페이지</Link>
                      {isAdmin && (
                        <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-indigo-600 font-bold bg-indigo-50 px-3 py-2 rounded-lg inline-flex items-center w-fit">
