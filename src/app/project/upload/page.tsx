@@ -274,10 +274,7 @@ export default function TiptapUploadPage() {
       toast.error('프로젝트 제목을 입력해주세요.');
       return;
     }
-    if (!coverImage && !settings?.coverUrl && !coverPreview) { // 이미 모달에서 업로드된 경우 포함 + 수정 모드(coverPreview 있음)
-      toast.error('커버 이미지를 선택해주세요.');
-      return;
-    }
+    
     if (finalGenres.length === 0) {
       toast.error('최소 1개의 장르를 선택해주세요.');
       return;
@@ -288,12 +285,33 @@ export default function TiptapUploadPage() {
     try {
       if (!userId) throw new Error('로그인이 필요합니다.');
 
-      // 커버 이미지 업로드 (새로 선택한 경우만)
+      // 1. 커버 이미지 URL 결정
       let coverUrl = settings?.coverUrl || (editId ? coverPreview : null);
-      if (!coverUrl && coverImage) {
+
+      // 2. 새 커버 이미지가 있으면 업로드
+      if (coverImage) {
         coverUrl = await uploadImage(coverImage);
       }
-      // 커버 이미지를 바꾸지 않았다면 coverPreview(기존 URL) 사용
+
+      // 3. 커버 이미지가 없고 본문이 있다면, 본문 첫 번째 이미지 추출 (자동 썸네일)
+      if (!coverUrl && content) {
+        try {
+          const doc = new DOMParser().parseFromString(content, 'text/html');
+          const firstImg = doc.querySelector('img');
+          if (firstImg) {
+            coverUrl = firstImg.getAttribute('src');
+          }
+        } catch (e) {
+          console.error('Thumbnail extraction failed:', e);
+        }
+      }
+
+      // 4. 최종적으로도 썸네일이 없으면 에러
+      if (!coverUrl) {
+         toast.error('커버 이미지를 선택하거나 본문에 이미지를 포함해주세요.');
+         setIsSubmitting(false);
+         return;
+      }
 
       // 프로젝트 생성/수정
       const category_id = GENRE_TO_CATEGORY_ID[finalGenres[0]] || 1;
