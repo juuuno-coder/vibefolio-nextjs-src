@@ -71,6 +71,16 @@ async function handleCrawl() {
         if (!existing) {
           const mainLink = item.officialLink || item.link;
           const sourceLink = item.link;
+          
+          // 날짜 유효성 검사 - 유효하지 않은 날짜는 null로 처리
+          const isValidDate = (dateStr: string) => {
+            if (!dateStr || dateStr === '상시' || dateStr === '상시모집') return false;
+            const parsed = Date.parse(dateStr);
+            return !isNaN(parsed);
+          };
+          
+          const validDate = isValidDate(item.date) ? item.date : null;
+          const validStartDate = item.startDate && isValidDate(item.startDate) ? item.startDate : null;
 
           const { error: insertError } = await supabaseAdmin
             .from('recruit_items')
@@ -78,7 +88,7 @@ async function handleCrawl() {
               title: item.title,
               description: item.description,
               type: item.type,
-              date: item.date || new Date().toISOString().split('T')[0],
+              date: validDate,
               company: item.company,
               link: mainLink,
               source_link: sourceLink,
@@ -90,7 +100,7 @@ async function handleCrawl() {
               sponsor: item.sponsor,
               total_prize: item.totalPrize,
               first_prize: item.firstPrize,
-              start_date: item.startDate,
+              start_date: validStartDate,
               category_tags: item.categoryTags,
               is_approved: false,  // 관리자 승인 대기
               is_active: false,    // 승인 전 비활성
