@@ -74,8 +74,8 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
         onClick={onClick}
         {...rest}
       >
-        {/* 이미지 영역 */}
-        <div className="relative overflow-hidden rounded-xl">
+        {/* 이미지 영역 - 4:3 비율 고정 */}
+        <div className="relative overflow-hidden rounded-t-xl aspect-[4/3] bg-gray-50">
           {/* 인기 프로젝트 뱃지 (좋아요 100개 이상) */}
           {likes >= 100 && (
             <div className="absolute top-3 left-3 z-10 bg-yellow-400 text-yellow-950 text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
@@ -84,16 +84,16 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
           )}
           
             {imgError ? (
-            <div className="w-full aspect-square bg-gray-100 flex items-center justify-center">
-              <ImageIcon className="w-12 h-12 text-gray-300" />
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              <ImageIcon className="w-12 h-12" />
             </div>
           ) : (
             <OptimizedImage
               src={imageUrl}
               alt={altText}
-              className="w-full h-auto object-cover transition-transform duration-300 group-hover:brightness-105"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               width={800}
-              height={800}
+              height={600}
             />
           )}
         </div>

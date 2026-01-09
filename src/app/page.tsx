@@ -314,11 +314,11 @@ function HomeContent() {
               </div>
             )}
 
-            {/* 프로젝트 리스트 */}
+            {/* 프로젝트 리스트 (Grid Layout) */}
             {sortedProjects.length > 0 ? (
-              <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-y-8 gap-x-6">
                 {sortedProjects.map((project) => (
-                  <div key={project.id} className="break-inside-avoid mb-4">
+                  <div key={project.id} className="w-full">
                     <ImageCard
                       onClick={() => handleProjectClick(project)}
                       props={project}
