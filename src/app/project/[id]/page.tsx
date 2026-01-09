@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { createNotification } from "@/hooks/useNotifications";
-import { Heart, Eye, Share2, Bookmark, ArrowLeft, ExternalLink } from "lucide-react";
+import { Heart, Eye, Share2, Bookmark, ArrowLeft, ExternalLink, MessageCircle, MessageSquare, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
 import { addCommas } from "@/lib/format/comma";
@@ -40,6 +40,7 @@ interface Project {
   };
   user: {
     username: string;
+    bio?: string;
     profile_image: {
       small: string;
       large: string;
@@ -54,7 +55,8 @@ interface Project {
   height: number;
   category: string;
   tags?: string[];
-  user_id: string; // Add user_id to Project interface
+  user_id: string;
+  rendering_type?: string;
 }
 
 export default function ProjectDetailPage({ params }: { params: { id: string } }) {
@@ -356,221 +358,215 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
         </div>
       </div>
 
-      {/* 메인 콘텐츠 */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* 프로젝트 이미지 */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-8 shadow-subtle">
-          <img
-            src={project.urls.full}
-            alt={project.alt_description || "프로젝트 이미지"}
-            className="w-full h-auto object-contain max-h-[80vh]"
-          />
-        </div>
+      {/* 메인 콘텐츠 (노트폴리오 스타일 리뉴얼) */}
+      <div className="w-full bg-white min-h-screen">
+        
+        {/* 1. 이미지 및 상세 내용 섹션 */}
+        <div className="max-w-[1240px] mx-auto px-4 md:px-6 py-8 md:py-12">
+           {/* 프로젝트 이미지 (흰색 배경 위) */}
+           <div className="bg-gray-50/50 rounded-xl border border-gray-100 overflow-hidden mb-12 shadow-sm flex items-center justify-center min-h-[400px]">
+             <img
+               src={project.urls.full}
+               alt={project.alt_description || "프로젝트 이미지"}
+               className="w-full h-auto object-contain max-h-[85vh] mx-auto"
+             />
+           </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* 왼쪽: 프로젝트 정보 */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* 제목 및 설명 */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-subtle">
-              <h1 className="text-3xl md:text-4xl font-bold text-primary mb-4">
+           {/* 프로젝트 설명 및 태그 */}
+           <div className="max-w-4xl mx-auto px-2 mb-16">
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight break-keep">
                 {project.title || "제목 없음"}
               </h1>
-              <p className="text-secondary text-lg leading-relaxed">
+              <p className="text-lg text-gray-700 leading-8 whitespace-pre-wrap mb-10 break-keep">
                 {project.description || project.alt_description || "설명이 없습니다."}
               </p>
 
-              {/* 태그 */}
-              {project.tags && project.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-6">
-                  {project.tags.map((tag, index) => (
-                    <span key={index} className="tag">
-                      {tag}
-                    </span>
-                  ))}
+              {/* 태그 리스트 & 라이선스 */}
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between pt-8 border-t border-gray-100 gap-6">
+                 <div className="flex flex-wrap gap-2">
+                   {project.tags && project.tags.length > 0 ? (
+                     project.tags.map((tag, index) => (
+                       <span key={index} className="px-3 py-1.5 bg-gray-100/80 text-gray-600 text-sm rounded-full font-medium hover:bg-gray-200 transition-colors cursor-pointer">
+                         {tag}
+                       </span>
+                     ))
+                   ) : (
+                     <span className="text-gray-400 text-sm">등록된 태그가 없습니다.</span>
+                   )}
+                 </div>
+                 <div className="flex items-center gap-3 text-gray-400">
+                    {/* CCL Mockups (Text/CSS) */}
+                    <div className="flex gap-1" title="Creative Commons License: CC BY-NC-ND">
+                        <div className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-[10px] font-bold cursor-help hover:border-gray-500 hover:text-gray-600 transition-colors">CC</div>
+                        <div className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-[10px] font-bold cursor-help hover:border-gray-500 hover:text-gray-600 transition-colors">BY</div>
+                        <div className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-[10px] font-bold cursor-help hover:border-gray-500 hover:text-gray-600 transition-colors">NC</div>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+
+        {/* 2. 하단 액션 바 (검은색 배경) - 노트폴리오 스타일 핵심 */}
+        <div className="w-full bg-[#18181b] text-white py-20 border-t border-gray-800">
+           <div className="max-w-4xl mx-auto px-4 text-center">
+               {/* Action Buttons */}
+               <div className="flex flex-row items-center justify-center gap-4 mb-10">
+                  <Button 
+                    onClick={handleLike}
+                    className={`h-14 px-8 rounded-full text-lg font-bold transition-all shadow-lg hover:scale-105 gap-2 border-0 ${
+                      isLiked ? 'bg-[#ff4e4e] hover:bg-[#e04545] text-white' : 'bg-[#333] hover:bg-[#444] text-white'
+                    }`}
+                  >
+                    <Heart className={isLiked ? "fill-current" : ""} size={22} strokeWidth={isLiked ? 0 : 2.5} />
+                    {isLiked ? '좋아요 취소' : '작업 좋아요'}
+                  </Button>
+                  
+                  <Button 
+                    onClick={handleBookmark}
+                    className={`h-14 px-8 rounded-full text-lg font-bold transition-all shadow-lg hover:scale-105 gap-2 bg-white text-black hover:bg-gray-200 border-0`}
+                  >
+                    <Bookmark className={isBookmarked ? "fill-current" : ""} size={22} strokeWidth={2.5} />
+                    {isBookmarked ? '컬렉션 저장됨' : '컬렉션 저장'}
+                  </Button>
+               </div>
+
+               {/* Badge & Title */}
+               <div className="mb-4">
+                  <span className="inline-block px-3 py-1 bg-[#00d084] text-black text-xs font-bold rounded mb-4">
+                    VIBEFOLIO PICK 선정
+                  </span>
+                  <h2 className="text-2xl md:text-3xl font-bold mb-3">{project.title}</h2>
+               </div>
+               
+               {/* Meta Info */}
+               <div className="text-gray-400 text-sm mb-8 flex items-center justify-center gap-3">
+                  <span>{dayjs(project.created_at).fromNow()}</span>
+                  <span className="w-0.5 h-3 bg-gray-600"></span>
+                  <span>{project.category || "General"}</span>
+                  {project.rendering_type && (
+                    <>
+                      <span className="w-0.5 h-3 bg-gray-600"></span>
+                      <span>{project.rendering_type}</span>
+                    </>
+                  )}
+               </div>
+
+               {/* Stats Icons */}
+               <div className="flex items-center justify-center gap-8 text-gray-500">
+                  <div className="flex items-center gap-2" title="조회수">
+                     <Eye size={20} />
+                     <span className="text-lg font-medium text-gray-300">{addCommas(viewCount)}</span>
+                  </div>
+                  <div className="flex items-center gap-2" title="좋아요">
+                     <Heart size={20} />
+                     <span className="text-lg font-medium text-gray-300">{addCommas(likeCount)}</span>
+                  </div>
+                  <div className="flex items-center gap-2" title="댓글">
+                     <MessageCircle size={20} />
+                     <span className="text-lg font-medium text-gray-300">{comments.length}</span>
+                  </div>
+               </div>
+           </div>
+        </div>
+
+        {/* 3. 작성자 프로필 섹션 */}
+        <div className="max-w-2xl mx-auto px-4 py-20 text-center border-b border-gray-100">
+            <div className="mb-6 relative inline-block group cursor-pointer">
+              <div className="absolute inset-0 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-full blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
+              <img 
+                src={project.user.profile_image.large} 
+                alt={project.user.username}
+                className="relative w-28 h-28 rounded-full border-4 border-white shadow-lg mx-auto object-cover"
+              />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">{project.user.username}</h3>
+            <p className="text-gray-500 mb-8 max-w-md mx-auto leading-relaxed">
+                창작의 즐거움을 나누는 크리에이터입니다.
+                {/* Intro data if available */}
+            </p>
+            
+            <div className="flex items-center justify-center gap-3">
+                <Button variant="outline" className="h-11 px-8 rounded-full border-gray-300 hover:bg-gray-50 gap-2 text-base">
+                  <Plus size={18} /> 팔로우
+                </Button>
+                <Button className="h-11 px-8 rounded-full bg-[#00d084] hover:bg-[#00b874] text-white border-0 gap-2 font-bold text-base shadow-md">
+                  <MessageSquare size={18} /> 제안하기
+                </Button>
+            </div>
+        </div>
+
+        {/* 4. 댓글 섹션 (간소화) */}
+        <div className="max-w-3xl mx-auto px-6 py-16 border-b border-gray-100">
+            <h3 className="text-xl font-bold mb-8 flex items-center gap-2">
+              댓글 <span className="text-green-600">{comments.length}</span>
+            </h3>
+            
+            {/* Input */}
+            <div className="flex gap-4 mb-10">
+                <div className="flex-1">
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="작품에 대한 감상평을 남겨주세요..."
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all resize-none text-gray-800 placeholder:text-gray-400"
+                    rows={2}
+                  />
+                  <div className="flex justify-end mt-2">
+                     <Button 
+                        onClick={handleAddComment} 
+                        disabled={!newComment.trim()} 
+                        size="sm" 
+                        className="rounded-full bg-black hover:bg-gray-800 text-white transition-colors"
+                     >
+                        작성하기
+                     </Button>
+                  </div>
+                </div>
+            </div>
+
+             {/* List */}
+            <div className="space-y-6">
+              {comments.length > 0 ? (
+                comments.map((comment) => (
+                  <div key={comment.id} className="flex gap-4 group">
+                      <img src={comment.userAvatar} className="w-10 h-10 rounded-full object-cover border border-gray-100 mt-1" />
+                      <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                              <span className="font-bold text-sm text-gray-900">{comment.username}</span>
+                              <span className="text-xs text-gray-400">{dayjs(comment.createdAt).format("YYYY.MM.DD")}</span>
+                              {user && user.id === comment.user_id && (
+                                 <button onClick={() => handleDeleteComment(comment.id)} className="ml-auto text-xs text-gray-300 hover:text-red-500 transition-colors">삭제</button>
+                              )}
+                          </div>
+                          <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                      </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-10 text-gray-400 bg-gray-50 rounded-xl">
+                   첫 번째 댓글의 주인공이 되어보세요!
                 </div>
               )}
             </div>
-
-            {/* 프로젝트 정보 */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-subtle">
-              <h2 className="text-xl font-bold text-primary mb-4">프로젝트 정보</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-secondary mb-1">게시일</p>
-                  <p className="text-primary font-medium">
-                    {dayjs(project.created_at).format("YYYY년 MM월 DD일")}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-secondary mb-1">카테고리</p>
-                  <p className="text-primary font-medium">
-                    {project.category === "korea" ? "전체" : project.category === "ai" ? "AI" : "영상/모션그래픽"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-secondary mb-1">이미지 크기</p>
-                  <p className="text-primary font-medium">
-                    {project.width} × {project.height}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-secondary mb-1">조회수</p>
-                  <p className="text-primary font-medium">
-                    {addCommas(viewCount)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* 댓글 섹션 */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-subtle">
-              <h2 className="text-xl font-bold text-primary mb-4">
-                댓글 ({comments.length})
-              </h2>
-
-              {/* 댓글 작성 */}
-              <div className="mb-6">
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="댓글을 입력하세요..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-black resize-none"
-                  rows={3}
-                />
-                <div className="flex justify-end mt-2">
-                  <Button onClick={handleAddComment} className="btn-primary" disabled={!user}>
-                    댓글 작성
-                  </Button>
-                </div>
-              </div>
-
-              {/* 댓글 목록 */}
-              <div className="space-y-4">
-                {comments.length > 0 ? (
-                  comments.map((comment) => (
-                    <div
-                      key={comment.id}
-                      className="border-b border-gray-200 pb-4 last:border-0"
-                    >
-                      <div className="flex items-start gap-3">
-                        <img
-                          src={comment.userAvatar}
-                          alt={comment.username}
-                          className="w-10 h-10 rounded-full avatar"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-primary">
-                                {comment.username}
-                              </span>
-                              <span className="text-xs text-secondary">
-                                {dayjs(comment.createdAt).format("YYYY.MM.DD HH:mm")}
-                              </span>
-                            </div>
-                            {user && user.id === comment.user_id && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteComment(comment.id)}
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                              >
-                                삭제
-                              </Button>
-                            )}
-                          </div>
-                          <p className="text-secondary">{comment.content}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-secondary text-center py-8">
-                    첫 번째 댓글을 작성해보세요!
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* 오른쪽: 작성자 정보 및 통계 */}
-          <div className="space-y-6">
-            {/* 작성자 정보 */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-subtle sticky top-32">
-              <div className="flex items-center gap-4 mb-6">
-                <img
-                  src={project.user.profile_image.large}
-                  alt={project.user.username}
-                  className="w-16 h-16 rounded-full avatar"
-                />
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-primary">
-                    {project.user.username}
-                  </h3>
-                  <p className="text-sm text-secondary">크리에이터</p>
-                </div>
-              </div>
-
-              <Button className="w-full btn-primary mb-4">
-                팔로우
-              </Button>
-
-              <Button variant="outline" className="w-full btn-secondary">
-                메시지 보내기
-              </Button>
-
-              {/* 통계 */}
-              <div className="mt-6 pt-6 border-t border-gray-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-secondary">
-                    <Heart size={16} />
-                    <span className="text-sm">좋아요</span>
-                  </div>
-                  <span className="font-medium text-primary">
-                    {addCommas(likeCount)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-secondary">
-                    <Eye size={16} />
-                    <span className="text-sm">조회수</span>
-                  </div>
-                  <span className="font-medium text-primary">
-                    {addCommas(viewCount)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-secondary">
-                    <Share2 size={16} />
-                    <span className="text-sm">공유</span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleShare}
-                    className="text-primary hover:text-primary"
-                  >
-                    <ExternalLink size={14} />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* 관련 프로젝트 */}
+        {/* 5. 관련 프로젝트 (기존 로직 활용 + 디자인 개선) */}
         {relatedProjects.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold text-primary mb-6">
-              관련 프로젝트
+          <div className="max-w-[1400px] mx-auto px-6 py-20 pb-32">
+            <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center justify-between">
+              <span>관련 프로젝트</span>
+              <Button variant="ghost" size="sm" className="text-gray-400 hover:text-black hover:bg-gray-100 rounded-full">더 보기</Button>
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedProjects.map((relatedProject) => (
-                <ImageCard key={relatedProject.id} props={relatedProject} />
+                <div key={relatedProject.id} className="transform transition-all duration-300 hover:-translate-y-1">
+                  <ImageCard props={relatedProject} />
+                </div>
               ))}
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
