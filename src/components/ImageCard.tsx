@@ -31,12 +31,13 @@ interface ImageCardProps {
     width?: number;
     height?: number;
   } | null;
+  className?: string;
   onClick?: () => void;
 }
 
 // forwardRef를 사용하여 컴포넌트를 래핑
 export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
-  ({ props, onClick, ...rest }, ref) => {
+  ({ props, onClick, className, ...rest }, ref) => {
     const [imgError, setImgError] = useState(false);
     const [avatarError, setAvatarError] = useState(false);
     const { user } = useAuth();
@@ -69,14 +70,14 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
 
     return (
       <div
-        className="masonry-item behance-card cursor-pointer group rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:border-green-200 hover:-translate-y-1 transition-all duration-300"
         ref={ref}
+        className={`relative group cursor-pointer break-inside-avoid ${className}`}
         onClick={onClick}
         {...rest}
       >
         {/* 이미지 영역 - 4:3 비율 고정 */}
-        <div className="relative overflow-hidden rounded-t-xl aspect-[4/3] bg-gray-50">
-          {/* 인기 프로젝트 뱃지 (좋아요 100개 이상) */}
+        <div className="relative overflow-hidden rounded-xl aspect-[4/3] bg-gray-100 shadow-sm">
+          {/* 인기 프로젝트 뱃지 */}
           {likes >= 100 && (
             <div className="absolute top-3 left-3 z-10 bg-yellow-400 text-yellow-950 text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
                <span>🏆</span> <span>POPULAR</span>
@@ -84,52 +85,33 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
           )}
           
             {imgError ? (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
+            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
               <ImageIcon className="w-12 h-12" />
             </div>
           ) : (
-            <OptimizedImage
-              src={imageUrl}
-              alt={altText}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              width={800}
-              height={600}
-            />
+            <>
+              {/* 이미지: 호버 시 확대 없이 밝기만 살짝 증가 */}
+              <OptimizedImage
+                src={imageUrl}
+                alt={altText}
+                className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-110"
+                width={800}
+                height={600}
+              />
+              {/* 오버레이 그라데이션 및 제목 */}
+              <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/60 to-transparent pointer-events-none flex flex-col justify-end p-4">
+                 <h3 className="text-white font-bold text-lg drop-shadow-md truncate leading-snug">
+                   {props.title || "제목 없음"}
+                 </h3>
+                 {/* 부가 정보(작성자 등)는 깔끔함을 위해 호버 시에만 살짝 보여주거나 생략할 수 있음. 여기서는 요청대로 '제목만' 강조 */}
+                 <div className="flex items-center gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span className="text-white/80 text-xs font-medium drop-shadow-sm flex items-center gap-1">
+                      by {props.user?.username || 'user'}
+                    </span>
+                 </div>
+              </div>
+            </>
           )}
-        </div>
-
-        {/* 카드 정보 (하단) */}
-        <div className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="relative w-8 h-8 rounded-full overflow-hidden bg-gray-100">
-                <OptimizedImage
-                  src={avatarError ? FALLBACK_AVATAR : avatarUrl}
-                  alt="@PROFILE_IMAGE"
-                  fill
-                  className="object-cover"
-                  width={32}
-                  height={32}
-                />
-              </div>
-              <p className="text-sm font-medium text-primary">{username}</p>
-            </div>
-            <div className="flex items-center gap-3 text-secondary">
-              <div 
-                className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={handleLikeClick}
-              >
-                <Heart className={cn("w-4 h-4", isLiked ? "fill-red-500 text-red-500" : "text-red-400")} />
-                <span className="text-sm font-semibold text-gray-700">{addCommas(displayLikes)}</span>
-              </div>
-              {views !== undefined && (
-                  <div className="flex items-center gap-1.5">
-                  <BarChart3 className="w-4 h-4 text-blue-400" />
-                  <span className="text-sm font-semibold text-gray-700">{addCommas(views)}</span>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       </div>
     );
