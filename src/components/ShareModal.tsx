@@ -14,6 +14,12 @@ import { faCopy, faCheck, faLink } from "@fortawesome/free-solid-svg-icons";
 import { faComment } from "@fortawesome/free-solid-svg-icons";
 import { faXTwitter, faThreads } from "@fortawesome/free-brands-svg-icons";
 
+declare global {
+  interface Window {
+    Kakao: any;
+  }
+}
+
 interface ShareModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -60,20 +66,57 @@ export function ShareModal({
   const cleanTitle = stripHtml(title);
   const cleanDescription = stripHtml(description);
 
-  // 카카오톡 공유
+  // 카카오톡 공유 (SDK 사용)
   const shareKakao = () => {
-    // 인텐트 기반 카카오 공유 URL (PC/모바일 공용)
-    const kakaoUrl = `https://sharer.kakao.com/talk/friends/picker/link?url=${encodeURIComponent(url)}`;
-    window.open(kakaoUrl, "_blank", "width=600,height=700");
+    if (typeof window === "undefined" || !window.Kakao) {
+      alert("카카오톡 SDK가 로드되지 않았습니다.");
+      return;
+    }
+
+    // .env에서 키 가져오기
+    const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_API_KEY;
+    if (!kakaoKey) {
+      // 키가 없으면 기존 웹 공유(sharer)로 시도
+      const kakaoUrl = `https://sharer.kakao.com/talk/friends/picker/link?url=${encodeURIComponent(url)}`;
+      window.open(kakaoUrl, "_blank", "width=600,height=700");
+      return;
+    }
+
+    if (!window.Kakao.isInitialized()) {
+      window.Kakao.init(kakaoKey);
+    }
+
+    window.Kakao.Share.sendDefault({
+      objectType: 'feed',
+      content: {
+        title: cleanTitle,
+        description: cleanDescription,
+        imageUrl: imageUrl || 'https://vibefolio.net/og-image.png',
+        link: {
+          mobileWebUrl: url,
+          webUrl: url,
+        },
+      },
+      buttons: [
+        {
+          title: '자세히 보기',
+          link: {
+            mobileWebUrl: url,
+            webUrl: url,
+          },
+        },
+      ],
+    });
   };
 
   // 트위터(X) 공유
   const shareTwitter = () => {
     const text = `${cleanTitle}\n${cleanDescription}`.slice(0, 200);
+    // x.com 도메인 사용 권장
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       text
     )}&url=${encodeURIComponent(url)}`;
-    window.open(twitterUrl, "_blank", "width=600,height=600");
+    window.open(twitterUrl, "_blank", "width=600,height=600,noopener,noreferrer");
   };
 
   // Threads 공유
