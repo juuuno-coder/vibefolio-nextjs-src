@@ -735,82 +735,43 @@ export function ProjectDetailModalV2({
                       </div>
                    </div>
 
-                   {/* Profile Section */}
-                   <div className="bg-gray-50 py-16 border-b border-gray-200">
+                   {/* Profile Section - 사이즈 축소 */}
+                   <div className="bg-gray-50 py-12 border-b border-gray-100">
                        <div className="max-w-xl mx-auto px-4 text-center">
-                           <div className="mb-4 inline-block relative cursor-pointer group" onClick={() => window.location.href=`/creator/${project.user.username}`}>
-                              <Avatar className="w-24 h-24 border-4 border-white shadow-md mx-auto">
-                                <AvatarImage src={project.user.profile_image.large} />
+                           <div className="mb-3 inline-block relative cursor-pointer group" onClick={() => window.location.href=`/creator/${project.user.username}`}>
+                              <Avatar className="w-16 h-16 border-2 border-white shadow-sm mx-auto">
+                                <AvatarImage src={project.user.profile_image.large} className="object-cover" />
                                 <AvatarFallback><FontAwesomeIcon icon={faUser} /></AvatarFallback>
                               </Avatar>
                            </div>
-                           <h3 className="text-2xl font-bold text-gray-900 mb-2">{project.user.username}</h3>
-                           <p className="text-gray-500 mb-8">크리에이티브한 작업을 공유합니다.</p>
+                           <h3 className="text-xl font-bold text-gray-900 mb-1">{project.user.username}</h3>
+                           <p className="text-sm text-gray-500 mb-6">크리에이티브한 작업을 공유합니다.</p>
                            
-                           <div className="flex items-center justify-center gap-3">
+                           <div className="flex items-center justify-center gap-2">
                               {isLoggedIn && project.userId && currentUserId !== project.userId && (
-                                <Button onClick={handleFollow} variant="outline" className="h-11 px-8 rounded-full border-gray-300 bg-white hover:bg-gray-100 gap-2">
+                                <Button onClick={handleFollow} variant="outline" className="h-9 px-6 rounded-full border-gray-300 bg-white hover:bg-gray-100 gap-2 text-sm">
                                   {following ? '팔로잉' : '+ 팔로우'}
                                 </Button>
                               )}
-                              <Button onClick={() => isLoggedIn ? setProposalModalOpen(true) : setLoginModalOpen(true)} className="h-11 px-8 rounded-full bg-[#00d084] hover:bg-[#00b874] text-white border-0 gap-2 font-bold shadow-sm">
-                                <FontAwesomeIcon icon={faPaperPlane} className="w-4 h-4" /> 제안하기
+                              <Button onClick={() => isLoggedIn ? setProposalModalOpen(true) : setLoginModalOpen(true)} className="h-9 px-6 rounded-full bg-[#00d084] hover:bg-[#00b874] text-white border-0 gap-2 font-bold text-sm shadow-sm">
+                                <FontAwesomeIcon icon={faPaperPlane} className="w-3 h-3" /> 제안하기
                               </Button>
                            </div>
                        </div>
                    </div>
 
-                   {/* Comments Section (Bottom) */}
-                   <div className="max-w-3xl mx-auto px-8 py-16">
-                       <h3 className="text-xl font-bold mb-8">댓글 <span className="text-green-600">{comments.length}</span></h3>
-                       
-                       {/* Input */}
-                       <div className="mb-10">
-                           <textarea
-                             value={newComment}
-                             onChange={(e) => setNewComment(e.target.value)}
-                             placeholder={isLoggedIn ? "작품에 대한 감상평을 남겨주세요..." : "로그인 후 댓글을 작성할 수 있습니다."}
-                             disabled={!isLoggedIn}
-                             className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all resize-none min-h-[80px]"
-                             onKeyDown={(e) => {
-                               if (e.key === 'Enter' && !e.shiftKey) {
-                                 e.preventDefault();
-                                 handleCommentSubmit();
-                               }
-                             }}
-                           />
-                           <div className="flex justify-end mt-2">
-                              <Button onClick={handleCommentSubmit} disabled={!isLoggedIn || !newComment.trim() || loading.comment} className="rounded-full bg-black hover:bg-gray-800 text-white">
-                                 {loading.comment ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : '댓글 작성'}
-                              </Button>
-                           </div>
-                       </div>
-
-                       {/* Comment List */}
-                       <div className="space-y-6">
-                          {comments.length > 0 ? (
-                            comments.map((comment) => (
-                               <CommentItem 
-                                 key={comment.comment_id || comment.id} 
-                                 comment={comment} 
-                                 onReply={(id, username) => setReplyingTo({ id, username })} 
-                                 onDelete={handleDeleteComment} 
-                                 currentUserId={currentUserId} 
-                                 depth={0} 
-                               />
-                            ))
-                          ) : (
-                            <div className="text-center py-10 bg-gray-50 rounded-lg text-gray-400 text-sm">첫 댓글의 주인공이 되어보세요!</div>
-                          )}
-                       </div>
-                   </div>
+                   {/* 하단 댓글 영역 삭제됨 (요청사항 반영) */}
                 </div>
               </div>
             </div>
 
             {/* 액션바 - 데스크톱 (기존 우측 사이드바 복원) */}
             <div className="h-full bg-transparent flex flex-col items-center py-8 gap-4">
-              <button onClick={() => { window.location.href = `/creator/${project.user.username}`; }} className="flex flex-col items-center gap-1 group cursor-pointer mb-2">
+              <button 
+                onClick={() => { window.location.href = `/creator/${project.user.username}`; }} 
+                className="flex flex-col items-center gap-1 group cursor-pointer mb-2"
+                title="프로필로 이동"
+              >
                 <Avatar className={`w-12 h-12 border-2 bg-white transition-all shadow-md group-hover:scale-105 ${following ? 'border-green-600' : 'border-white group-hover:border-green-600'}`}>
                   <AvatarImage src={project.user.profile_image.large} />
                   <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-4 h-4" /></AvatarFallback>
@@ -846,30 +807,81 @@ export function ProjectDetailModalV2({
               </button>
             </div>
 
-            {/* 댓글 패널 (우측 사이드바 기능용 - 기존 유지) */}
+            {/* 댓글 패널 (우측 사이드바 기능용) */}
             {commentsPanelOpen && (
-              <div className="w-[30%] h-full bg-white flex flex-col border-l border-gray-200 ml-4 rounded-t-xl overflow-hidden">
-                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="w-[30%] h-full bg-white flex flex-col border-l border-gray-200 ml-4 rounded-t-xl overflow-hidden shadow-xl">
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white z-10">
                   <h3 className="font-bold text-sm">댓글 ({comments.length})</h3>
                   <button onClick={() => setCommentsPanelOpen(false)} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
                     <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
                   </button>
                 </div>
-                {/* ... 내부 내용은 중복되지만 우측 패널 기능 유지를 위해 렌더링 ... */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                   {/* 컴포넌트 재사용으로 간략히 처리 */}
-                   {comments.map((comment) => (
-                      <CommentItem key={comment.id + 'panel'} comment={comment} onReply={(id, username) => setReplyingTo({ id, username })} onDelete={handleDeleteComment} currentUserId={currentUserId} depth={0} />
-                   ))}
+
+                {/* 1줄 설명 (Summary) - 댓글 상단에 위치 */}
+                {project.summary && (
+                  <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                     <div className="flex items-start gap-2">
+                        <FontAwesomeIcon icon={faUser} className="w-3 h-3 mt-1 text-gray-400" />
+                        <div>
+                           <p className="text-xs font-bold text-gray-700 mb-0.5">작가의 한마디</p>
+                           <p className="text-sm text-gray-800 leading-relaxed text-pretty">
+                             {project.summary}
+                           </p>
+                        </div>
+                     </div>
+                  </div>
+                )}
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
+                   {comments.length > 0 ? (
+                       comments.map((comment) => (
+                          <CommentItem key={comment.id + 'panel'} comment={comment} onReply={(id, username) => setReplyingTo({ id, username })} onDelete={handleDeleteComment} currentUserId={currentUserId} depth={0} />
+                       ))
+                   ) : (
+                       <div className="flex flex-col items-center justify-center h-40 text-gray-400 text-sm">
+                          <FontAwesomeIcon icon={faComment} className="w-8 h-8 mb-2 opacity-20" />
+                          <p>첫 댓글을 남겨보세요!</p>
+                       </div>
+                   )}
                 </div>
-                 {/* 입력창 생략 (하단바 유도 or 중복 렌더링) -> 중복 렌더링 유지 */}
-                 {isLoggedIn && (
-                   <div className="p-3 border-t border-gray-100">
+                 
+                 {isLoggedIn ? (
+                   <div className="p-3 border-t border-gray-100 bg-white">
+                      {replyingTo && (
+                        <div className="flex items-center justify-between text-xs text-green-600 mb-2 px-1">
+                          <span>@{replyingTo.username}님에게 답글 작성 중</span>
+                          <button onClick={() => setReplyingTo(null)} className="hover:underline">취소</button>
+                        </div>
+                      )}
                       <div className="flex gap-2">
-                        <input type="text" value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleCommentSubmit()} placeholder="댓글 작성..." className="flex-1 px-2 py-1.5 text-xs border border-gray-200 rounded" />
-                        <Button onClick={handleCommentSubmit} size="sm" className="bg-green-600 text-xs px-3">작성</Button>
+                        <textarea 
+                          value={newComment} 
+                          onChange={(e) => setNewComment(e.target.value)} 
+                          onKeyDown={(e) => {
+                             if(e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleCommentSubmit();
+                             }
+                          }}
+                          placeholder="댓글 작성..." 
+                          className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-green-500 resize-none h-[42px] leading-tight" 
+                        />
+                        <Button 
+                          onClick={handleCommentSubmit} 
+                          size="sm" 
+                          disabled={loading.comment || !newComment.trim()}
+                          className="bg-green-600 hover:bg-green-700 text-white h-[42px] px-4 rounded-lg"
+                        >
+                          <FontAwesomeIcon icon={faPaperPlane} className="w-3 h-3" />
+                        </Button>
                       </div>
                    </div>
+                 ) : (
+                    <div className="p-4 border-t border-gray-100 bg-gray-50 text-center">
+                       <button onClick={() => setLoginModalOpen(true)} className="text-xs text-green-600 font-bold hover:underline">
+                          로그인 후 댓글을 남겨주세요
+                       </button>
+                    </div>
                  )}
               </div>
             )}
