@@ -66,7 +66,7 @@ function LoginContent() {
           redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
             access_type: 'offline', // 리프레시 토큰 발급
-            prompt: 'consent', // 강제 로그인 창 표시 (테스트용)
+            // prompt: 'consent', // 테스트용 속성 제거 (모바일 호환성)
           },
         },
       });
