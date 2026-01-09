@@ -132,20 +132,16 @@ function stripHtml(html: string) {
   return html.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim();
 }
 
-// HTML 엔티티 디코딩 함수 (강력한 버전)
+// HTML 엔티티 디코딩 함수 (태그 유지 버전)
 function unescapeHtml(html: string) {
   if (typeof window === 'undefined' || !html) return html;
   try {
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    return doc.documentElement.textContent || "";
+    // 1. textarea를 이용한 엔티티 디코딩 (&lt; -> <)
+    const txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
   } catch (e) {
-    // Fallback for simple cases
-    return html
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&amp;/g, "&");
+    return html;
   }
 }
 
@@ -495,23 +491,8 @@ export function ProjectDetailModalV2({
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               {project.rendering_type === 'rich_text' ? (
                 <div 
-                  className="prose prose-sm max-w-full p-6 mx-auto bg-white"
-                  dangerouslySetInnerHTML={{ 
-                    __html: (() => {
-                      let content = project.description || '';
-                      const decode = (str: string) => {
-                        if (typeof window === 'undefined') return str;
-                        const txt = document.createElement("textarea");
-                        txt.innerHTML = str;
-                        return txt.value;
-                      };
-                      let decoded = decode(content);
-                      if (decoded.includes('&lt;') || decoded.includes('&gt;')) {
-                        decoded = decode(decoded);
-                      }
-                      return decoded;
-                    })()
-                  }}
+                  className="prose prose-sm max-w-full p-6 mx-auto bg-white whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{ __html: unescapeHtml(project.description || '') }}
                 />
               ) : (
                 <img
@@ -674,7 +655,7 @@ export function ProjectDetailModalV2({
                 <div className="p-8 flex flex-col items-center min-h-[400px]">
                   {project.rendering_type === 'rich_text' ? (
                     <div 
-                      className="prose prose-lg max-w-4xl w-full bg-white p-4"
+                      className="prose prose-lg max-w-4xl w-full bg-white p-4 whitespace-pre-wrap"
                       dangerouslySetInnerHTML={{ __html: unescapeHtml(project.description || '') }}
                     />
                   ) : (
