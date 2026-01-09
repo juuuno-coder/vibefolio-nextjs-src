@@ -69,13 +69,13 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
 
     return (
       <div
-        className="masonry-item behance-card cursor-pointer group"
+        className="masonry-item behance-card cursor-pointer group rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:border-green-200 hover:-translate-y-1 transition-all duration-300"
         ref={ref}
         onClick={onClick}
         {...rest}
       >
         {/* 이미지 영역 */}
-        <div className="relative overflow-hidden image-hover">
+        <div className="relative overflow-hidden rounded-xl">
           {/* 인기 프로젝트 뱃지 (좋아요 100개 이상) */}
           {likes >= 100 && (
             <div className="absolute top-3 left-3 z-10 bg-yellow-400 text-yellow-950 text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
@@ -91,31 +91,11 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
             <OptimizedImage
               src={imageUrl}
               alt={altText}
-              className="w-full h-auto object-cover"
+              className="w-full h-auto object-cover transition-transform duration-300 group-hover:brightness-105"
               width={800}
               height={800}
             />
           )}
-          
-          {/* 호버 시 나타나는 정보 */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-            <div className="flex items-center gap-6 text-white">
-              {/* 하트 버튼 (이미지 오버레이) */}
-              <div
-                className="flex items-center gap-2 cursor-pointer hover:scale-110 transition-transform"
-                onClick={handleLikeClick}
-              >
-                <Heart className={cn("w-5 h-5", isLiked ? 'fill-red-500 text-red-500' : '')} />
-                <span className="font-medium">{addCommas(displayLikes)}</span>
-              </div>
-              {views !== undefined && (
-                  <div className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5" />
-                  <span className="font-medium text-lg">{addCommas(views)}</span>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* 카드 정보 (하단) */}
