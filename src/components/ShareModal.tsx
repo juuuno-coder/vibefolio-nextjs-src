@@ -121,9 +121,10 @@ export function ShareModal({
 
   // Threads 공유
   const shareThreads = () => {
-    const text = `${cleanTitle}\n${cleanDescription}\n${url}`.slice(0, 500);
+    // URL을 텍스트 끝에 명시적으로 추가하여 미리보기가 잘 뜨도록 유도
+    const text = `${cleanTitle}\n${cleanDescription}\n\n${url}`.slice(0, 500);
     const threadsUrl = `https://www.threads.net/intent/post?text=${encodeURIComponent(text)}`;
-    window.open(threadsUrl, "_blank", "width=600,height=700");
+    window.open(threadsUrl, "_blank", "width=600,height=750,noopener,noreferrer");
   };
 
   // 네이티브 공유 (모바일)
