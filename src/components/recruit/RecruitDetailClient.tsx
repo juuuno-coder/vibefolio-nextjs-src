@@ -102,7 +102,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
           
           {/* Left: Image & Main Info */}
           <div className="lg:col-span-8 space-y-8">
-            <div className={`relative ${item.banner_image_url ? 'aspect-[21/9] md:aspect-[16/6]' : 'aspect-[16/10] md:aspect-[16/9]'} w-full rounded-[48px] overflow-hidden shadow-2xl bg-white group`}>
+            <div className="relative aspect-video w-full rounded-[48px] overflow-hidden shadow-2xl bg-white group">
               {(item.banner_image_url || item.thumbnail) ? (
                 <>
                   {/* 포스터일 경우 배경 블러 효과 추가 */}
@@ -120,7 +120,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                     src={item.banner_image_url || item.thumbnail || ''} 
                     alt={item.title} 
                     fill 
-                    className={`${item.banner_image_url ? 'object-cover' : 'object-contain p-8 md:p-12'} transition-transform duration-1000 group-hover:scale-105`}
+                    className={`${item.banner_image_url ? 'object-cover' : 'object-contain p-8 md:p-12'} transition-transform duration-1000`}
                     priority
                   />
                   {!item.banner_image_url && (
@@ -261,19 +261,19 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
           {/* Right: CTA Section */}
           <div className="lg:col-span-4">
             <div className="sticky top-28 space-y-6">
-              <div className="p-8 md:p-8 rounded-[40px] bg-slate-900 text-white shadow-xl shadow-slate-200 space-y-6 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#16A34A]/20 blur-3xl rounded-full -mr-16 -mt-16" />
+              <div className="p-8 md:p-8 rounded-[40px] bg-white text-slate-900 shadow-xl shadow-slate-100 border border-slate-100 space-y-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 blur-3xl rounded-full -mr-16 -mt-16" />
                 
                 <div className="space-y-1.5 relative z-10">
-                  <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Apply Now</p>
-                  <h2 className="text-xl font-black leading-tight">더 자세한 내용을 확인하시겠습니까?</h2>
+                  <p className="text-[#16A34A] font-bold text-xs uppercase tracking-widest">Apply Now</p>
+                  <h2 className="text-lg font-black leading-tight">지금 바로 지원하세요</h2>
                 </div>
 
                 <div className="space-y-3 relative z-10">
                   {/* 첨부파일 섹션 */}
                   {item.attachments && item.attachments.length > 0 && (
-                    <div className="space-y-3 pb-4 border-b border-slate-800 relative z-10">
-                      <p className="text-slate-400 font-bold text-xs uppercase tracking-widest flex items-center gap-2">
+                    <div className="space-y-3 pb-4 border-b border-slate-100 relative z-10">
+                      <p className="text-slate-500 font-bold text-xs uppercase tracking-widest flex items-center gap-2">
                          <FileText size={12} /> Documents
                       </p>
                       <div className="space-y-2">
@@ -281,14 +281,14 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                           <Button
                             key={idx}
                             variant="ghost"
-                            className="w-full h-auto py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-left flex items-center justify-between group"
+                            className="w-full h-auto py-3 px-4 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-100 text-left flex items-center justify-between group"
                             onClick={() => window.open(file.url, '_blank')}
                           >
                             <div className="flex flex-col min-w-0 pr-2">
-                               <span className="text-slate-200 text-xs font-bold truncate max-w-[200px]">{file.name}</span>
+                               <span className="text-slate-900 text-xs font-bold truncate max-w-[200px]">{file.name}</span>
                                <span className="text-slate-500 text-[10px] font-medium">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
                             </div>
-                            <Download size={14} className="text-slate-500 group-hover:text-white transition-colors shrink-0" />
+                            <Download size={14} className="text-slate-400 group-hover:text-slate-900 transition-colors shrink-0" />
                           </Button>
                         ))}
                       </div>
@@ -297,31 +297,31 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
 
                   {item.link && (
                     <Button 
-                      className="w-full h-14 rounded-2xl bg-[#16A34A] hover:bg-[#3db8c1] text-slate-900 font-black text-base shadow-lg shadow-[#16A34A]/10 transition-all duration-300 hover:scale-[1.02]"
+                      className="w-full h-14 rounded-2xl bg-[#16A34A] hover:bg-[#15803d] text-white font-black text-base shadow-lg shadow-[#16A34A]/20 transition-all duration-300 hover:scale-[1.02]"
                       onClick={() => window.open(item.link, '_blank')}
                       disabled={isExpired}
                     >
-                      공식 홈페이지 바로가기
+                      {item.type === 'job' ? '채용 신청하기' : item.type === 'contest' ? '공모전 신청하기' : '참여하기'}
                       <ChevronRight className="ml-1" size={18} />
                     </Button>
                   )}
-                  <p className="text-center text-slate-500 text-[10px] font-bold">
-                    클릭 시 주최측 공식 홈페이지로 이동합니다.
+                  <p className="text-center text-slate-400 text-[10px] font-bold">
+                    클릭 시 공식 홈페이지 또는 신청 페이지로 이동합니다.
                   </p>
                 </div>
 
-                <div className="pt-5 border-t border-slate-800 space-y-3 relative z-10">
+                <div className="pt-5 border-t border-slate-100 space-y-3 relative z-10">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-500 font-bold flex items-center gap-2 uppercase tracking-tighter">
                        <Eye size={12} /> Views
                     </span>
-                    <span className="font-black text-slate-300">{item.views_count?.toLocaleString() || 0}</span>
+                    <span className="font-black text-slate-900">{item.views_count?.toLocaleString() || 0}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-500 font-bold flex items-center gap-2 uppercase tracking-tighter">
                       <CalendarDays size={12} /> Posted
                     </span>
-                    <span className="font-black text-slate-300">
+                    <span className="font-black text-slate-900">
                       {item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}
                     </span>
                   </div>
