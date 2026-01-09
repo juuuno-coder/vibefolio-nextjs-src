@@ -176,6 +176,7 @@ export function ProjectDetailModalV2({
     follow: false,
   });
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [otherProjects, setOtherProjects] = useState<any[]>([]);
 
   useEffect(() => {
     if (!project || !open) return;
@@ -255,6 +256,23 @@ export function ProjectDetailModalV2({
            }
         } catch (e) {
            setAuthorBio("크리에이티브한 작업을 공유합니다.");
+        }
+      }
+
+      // 6. 작성자의 다른 프로젝트 조회
+      if (project.userId) {
+        try {
+          const { data: others } = await supabase
+            .from('Project')
+            .select('project_id, title, thumbnail_url')
+            .eq('user_id', project.userId)
+            .neq('project_id', project.id)
+            .order('created_at', { ascending: false })
+            .limit(4);
+          
+          setOtherProjects(others || []);
+        } catch (e) {
+          console.error("Other projects fetch error:", e);
         }
       }
     };
@@ -670,6 +688,27 @@ export function ProjectDetailModalV2({
                 <p className="font-bold text-base">{project.user.username}</p>
                 <p className="text-sm text-gray-500 mb-4 text-center">{authorBio}</p>
               </div>
+
+              {/* 작성자의 다른 프로젝트 (모바일) */}
+              {otherProjects.length > 0 && (
+                <div className="px-4 py-6 bg-gray-50 border-t border-gray-100">
+                  <h3 className="text-sm font-bold text-gray-900 mb-4">이 크리에이터의 다른 프로젝트</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {otherProjects.map((p) => (
+                      <a key={p.project_id} href={`/project/${p.project_id}`} className="block group">
+                        <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 mb-2">
+                          <img 
+                            src={p.thumbnail_url || '/placeholder.jpg'} 
+                            alt={p.title} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                        </div>
+                        <p className="text-xs font-medium text-gray-900 truncate">{p.title}</p>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 하단 고정 버튼들 */}
@@ -842,6 +881,29 @@ export function ProjectDetailModalV2({
                        </div>
                    </div>
 
+                   {/* 작성자의 다른 프로젝트 (데스크톱) */}
+                   {otherProjects.length > 0 && (
+                     <div className="bg-white py-12 border-b border-gray-100">
+                       <div className="max-w-4xl mx-auto px-6">
+                         <h3 className="text-lg font-bold text-gray-900 mb-6 text-center">이 크리에이터의 다른 프로젝트</h3>
+                         <div className="grid grid-cols-4 gap-6">
+                           {otherProjects.map((p) => (
+                             <a key={p.project_id} href={`/project/${p.project_id}`} className="block group cursor-pointer">
+                               <div className="aspect-[4/3] rounded-lg overflow-hidden bg-gray-100 mb-3 shadow-sm group-hover:shadow-md transition-all">
+                                 <img 
+                                   src={p.thumbnail_url || '/placeholder.jpg'} 
+                                   alt={p.title} 
+                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                 />
+                               </div>
+                               <p className="text-sm font-medium text-gray-900 truncate text-center group-hover:text-green-600 transition-colors">{p.title}</p>
+                             </a>
+                           ))}
+                         </div>
+                       </div>
+                     </div>
+                   )}
+                   
                    {/* 하단 댓글 영역 삭제됨 (요청사항 반영) */}
                 </div>
               </div>
