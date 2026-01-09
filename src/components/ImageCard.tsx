@@ -98,20 +98,45 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
                 width={800}
                 height={600}
               />
-              {/* 오버레이 그라데이션 및 제목 */}
-              <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/60 to-transparent pointer-events-none flex flex-col justify-end p-4">
-                 <h3 className="text-white font-bold text-lg drop-shadow-md truncate leading-snug">
-                   {props.title || "제목 없음"}
-                 </h3>
-                 {/* 부가 정보(작성자 등)는 깔끔함을 위해 호버 시에만 살짝 보여주거나 생략할 수 있음. 여기서는 요청대로 '제목만' 강조 */}
-                 <div className="flex items-center gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="text-white/80 text-xs font-medium drop-shadow-sm flex items-center gap-1">
-                      by {props.user?.username || 'user'}
-                    </span>
-                 </div>
-              </div>
             </>
           )}
+        </div>
+
+        {/* 하단 정보 영역 (복원) */}
+        <div className="pt-3 px-1">
+          {/* 제목 */}
+          <h3 className="font-bold text-gray-900 text-[15px] mb-2 truncate group-hover:text-green-600 transition-colors">
+            {props.title || "제목 없음"}
+          </h3>
+          
+          <div className="flex items-center justify-between">
+            {/* 좌측: 작성자 (작게) */}
+            <div className="flex items-center gap-1.5 min-w-0">
+               <div className="relative w-5 h-5 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
+                  <OptimizedImage 
+                    src={props.user?.profile_image?.small || FALLBACK_AVATAR} 
+                    alt={props.user?.username || 'user'}
+                    fill
+                    className="object-cover"
+                  />
+               </div>
+               <span className="text-xs text-gray-500 truncate">
+                 {props.user?.username || 'Unknown'}
+               </span>
+            </div>
+            
+            {/* 우측: 좋아요 / 조회수 */}
+            <div className="flex items-center gap-3 text-xs text-gray-400 flex-shrink-0">
+               <div className="flex items-center gap-1" title={`좋아요 ${displayLikes}`}>
+                  <Heart className={`w-3.5 h-3.5 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
+                  <span>{addCommas(displayLikes)}</span>
+               </div>
+               <div className="flex items-center gap-1" title={`조회수 ${views}`}>
+                  <BarChart3 className="w-3.5 h-3.5" />
+                  <span>{addCommas(views || 0)}</span>
+               </div>
+            </div>
+          </div>
         </div>
       </div>
     );
