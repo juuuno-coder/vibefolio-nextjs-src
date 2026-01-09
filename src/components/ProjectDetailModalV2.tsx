@@ -167,6 +167,8 @@ export function ProjectDetailModalV2({
   const [viewsCount, setViewsCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [authorBio, setAuthorBio] = useState("");
+
   const [loading, setLoading] = useState({
     like: false,
     bookmark: false,
@@ -174,6 +176,105 @@ export function ProjectDetailModalV2({
     follow: false,
   });
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!project || !open) return;
+
+    // 초기값 세팅
+    setLikesCount(project.likes || 0);
+    setViewsCount(project.views || 0);
+
+    const checkUserAndFetchData = async () => {
+      // 1. 세션 및 사용자 정보
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentId = session?.user?.id || null;
+      setIsLoggedIn(!!session);
+      setCurrentUserId(currentId);
+
+      // 2. 좋아요 체크
+      if (currentId) {
+        const { data: likeData } = await supabase
+          .from('project_likes')
+          .select('id')
+          .eq('project_id', project.id) // project.id가 있어야 함
+          .eq('user_id', currentId)
+          .single();
+        setLiked(!!likeData);
+
+        // 3. 팔로우 체크
+        if (project.userId && project.userId !== currentId) {
+          const { data: followData } = await supabase
+            .from('follows')
+            .select('id')
+            .eq('follower_id', currentId)
+            .eq('following_id', project.userId)
+            .single();
+          setFollowing(!!followData);
+        }
+      }
+
+      // 4. 댓글 조회
+      const { data: commentsData, error: commentsError } = await supabase
+        .from('comments')
+        .select(`
+          id,
+          content,
+          created_at,
+          user_id,
+          user:profiles(username, profile_image_url)
+        `)
+        .eq('project_id', project.id)
+        .order('created_at', { ascending: false });
+
+      if (commentsData) {
+        // 기존 상태 타입에 맞춰 매핑
+        const mappedComments = commentsData.map((c: any) => ({
+          comment_id: c.id,
+          user_id: c.user_id,
+          user_name: c.user?.username || 'Unknown',
+          user_image: c.user?.profile_image_url || null,
+          content: c.content,
+          created_at: c.created_at,
+        }));
+        setComments(mappedComments);
+      }
+
+      // 5. 작성자 Bio 조회 (신규 기능)
+      if (project.userId) {
+        try {
+           const { data: profileData } = await supabase
+             .from('profiles')
+             .select('bio')
+             .eq('id', project.userId)
+             .single();
+           
+           if (profileData && profileData.bio) {
+             setAuthorBio(profileData.bio);
+           } else {
+             setAuthorBio("크리에이티브한 작업을 공유합니다.");
+           }
+        } catch (e) {
+           setAuthorBio("크리에이티브한 작업을 공유합니다.");
+        }
+      }
+    };
+
+    checkUserAndFetchData();
+  }, [project, open]);
+
+  // ... (다음 함수들)
+
+  // ...
+
+  // JSX 수정 (데스크톱 - 이전 단계에서 위치 변경됨)
+  // ...
+  <p className="text-sm text-gray-500 mb-6">{authorBio}</p>
+  // ...
+
+  // JSX 수정 (모바일 - 584행 근처)
+  // ...
+  <p className="text-sm text-gray-500 mb-4">{authorBio}</p>
+  // ...
 
   // ESC 키 핸들러
   useEffect(() => {
@@ -567,7 +668,7 @@ export function ProjectDetailModalV2({
                   <AvatarFallback><FontAwesomeIcon icon={faUser} className="w-6 h-6" /></AvatarFallback>
                 </Avatar>
                 <p className="font-bold text-base">{project.user.username}</p>
-                <p className="text-sm text-gray-500 mb-4">-</p>
+                <p className="text-sm text-gray-500 mb-4 text-center">{authorBio}</p>
               </div>
             </div>
 
@@ -726,7 +827,7 @@ export function ProjectDetailModalV2({
                               </Avatar>
                            </div>
                            <h3 className="text-xl font-bold text-gray-900 mb-1">{project.user.username}</h3>
-                           <p className="text-sm text-gray-500 mb-6">크리에이티브한 작업을 공유합니다.</p>
+                           <p className="text-sm text-gray-500 mb-6">{authorBio}</p>
                            
                            <div className="flex items-center justify-center gap-2">
                               {isLoggedIn && project.userId && currentUserId !== project.userId && (
