@@ -121,7 +121,7 @@ export default function MyPage() {
         if (activeTab === 'projects') {
           const { data } = await supabase
             .from('Project')
-            .select('project_id, title, thumbnail_url, likes_count, views_count, created_at')
+            .select('project_id, title, thumbnail_url, likes_count, views_count, created_at, description, rendering_type, alt_description')
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
           
@@ -132,6 +132,9 @@ export default function MyPage() {
             likes: p.likes_count || 0,
             views: p.views_count || 0,
             created_at: p.created_at,
+            description: p.description || '',
+            rendering_type: p.rendering_type || 'image',
+            alt_description: p.alt_description || '',
           })));
           
         } else if (activeTab === 'likes') {
@@ -531,7 +534,18 @@ export default function MyPage() {
                           onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.jpg'; }}
                         />
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 px-2">
-                          <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white h-9 px-3 text-xs" onClick={() => router.push(`/project/${project.id}`)}>
+                          <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white h-9 px-3 text-xs" onClick={() => {
+                             setSelectedProject({
+                               ...project,
+                               userId: userId,
+                               urls: { full: project.thumbnail_url, regular: project.thumbnail_url },
+                               user: {
+                                 username: userProfile?.username || 'User',
+                                 profile_image: { small: userProfile?.profile_image_url || '/globe.svg', large: userProfile?.profile_image_url || '/globe.svg' }
+                               }
+                             });
+                             setModalOpen(true);
+                          }}>
                             <Eye className="w-3.5 h-3.5 mr-1" /> 보기
                           </Button>
                           <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white h-9 px-3 text-xs" onClick={() => router.push(`/project/upload?edit=${project.id}`)}>
