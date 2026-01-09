@@ -24,7 +24,21 @@
 - File size limit: 10MB
 - Allowed MIME types: `image/*`
 
-## 3. 버킷 정책 설정 (선택사항)
+## 3. notices 버킷 생성 (공지사항/팝업 이미지용)
+
+- Name: `notices`
+- Public bucket: ✅ **체크**
+- File size limit: 5MB
+- Allowed MIME types: `image/*`
+
+## 4. recruits 버킷 생성 (채용/공모전 포스터용)
+
+- Name: `recruits`
+- Public bucket: ✅ **체크**
+- File size limit: 5MB
+- Allowed MIME types: `image/*`
+
+## 5. 버킷 정책 설정 (선택사항)
 
 각 버킷의 **Policies** 탭에서:
 

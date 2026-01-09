@@ -68,8 +68,8 @@ export async function POST(request: NextRequest) {
             first_prize: item.firstPrize,
             start_date: item.startDate,
             category_tags: item.categoryTags,
-            is_approved: true,
-            is_active: true,
+            is_approved: false,
+            is_active: false,
             crawled_at: new Date().toISOString()
           }]);
 

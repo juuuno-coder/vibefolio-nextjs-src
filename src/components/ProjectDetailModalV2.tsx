@@ -566,7 +566,7 @@ export function ProjectDetailModalV2({
                 <div className="flex items-center gap-4 text-sm text-gray-500">
                   <span className="flex items-center gap-1">
                     <FontAwesomeIcon icon={faEye} className="w-4 h-4" />
-                    {project.views || 0}
+                    {viewsCount}
                   </span>
                   <span className="flex items-center gap-1">
                     <FontAwesomeIcon icon={faHeart} className="w-4 h-4" />
@@ -646,7 +646,24 @@ export function ProjectDetailModalV2({
                   </Avatar>
                   <div>
                     <p className="font-medium text-sm">{project.user.username}</p>
-                    <p className="text-xs text-gray-500">{dayjs(project.created_at).format('YYYY.MM.DD')}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-[10px] text-gray-500">{dayjs(project.created_at).format('YYYY.MM.DD')}</p>
+                      <span className="text-[10px] text-gray-300">|</span>
+                      <div className="flex items-center gap-3 text-[10px] text-gray-500 font-medium">
+                        <span className="flex items-center gap-1">
+                          <FontAwesomeIcon icon={faEye} className="w-3 h-3 opacity-60" />
+                          {viewsCount}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <FontAwesomeIcon icon={faHeart} className="w-3 h-3 opacity-60 text-red-400" />
+                          {likesCount}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <FontAwesomeIcon icon={faComment} className="w-3 h-3 opacity-60" />
+                          {comments.length}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </button>
               </div>

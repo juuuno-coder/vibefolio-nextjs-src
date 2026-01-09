@@ -1,18 +1,32 @@
 "use client";
 
-import { useState } from "react";
-import { Bell, Check, Trash2, Heart, MessageCircle, UserPlus, AtSign, Info } from "lucide-react";
+import { useState, useEffect } from "react";
+import { 
+  Bell, 
+  Check, 
+  Heart, 
+  MessageCircle, 
+  UserPlus, 
+  AtSign, 
+  Info, 
+  Settings, 
+  Briefcase, 
+  Rocket 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNotifications, Notification } from "@/hooks/useNotifications";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useAdmin } from "@/hooks/useAdmin";
+import { DEFAULT_NOTIFICATION_SETTINGS, NotificationSettings } from "./RealtimeListener";
 
 // 알림 타입별 아이콘
 const notificationIcons = {
@@ -50,38 +64,38 @@ function NotificationItem({ notification, onRead }: NotificationItemProps) {
       className={cn(
         "flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors",
         notification.read
-          ? "bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800"
-          : "bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30"
+          ? "bg-transparent hover:bg-gray-50"
+          : "bg-green-50/50 hover:bg-green-100/50"
       )}
       onClick={() => !notification.read && onRead(notification.id)}
     >
       <div
         className={cn(
           "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
-          notification.type === "like" && "bg-red-100 text-red-500",
-          notification.type === "comment" && "bg-blue-100 text-blue-500",
-          notification.type === "follow" && "bg-green-100 text-green-500",
-          notification.type === "mention" && "bg-purple-100 text-purple-500",
-          notification.type === "system" && "bg-gray-100 text-gray-500"
+          notification.type === "like" && "bg-red-50 text-red-500",
+          notification.type === "comment" && "bg-blue-50 text-blue-500",
+          notification.type === "follow" && "bg-green-50 text-green-500",
+          notification.type === "mention" && "bg-purple-50 text-purple-500",
+          notification.type === "system" && "bg-gray-50 text-gray-500"
         )}
       >
         <Icon className="w-4 h-4" />
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+        <p className="text-sm font-semibold text-gray-900 truncate">
           {notification.title}
         </p>
-        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+        <p className="text-xs text-gray-500 truncate mt-0.5">
           {notification.message}
         </p>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+        <p className="text-[10px] text-gray-400 mt-1">
           {formatTime(notification.createdAt)}
         </p>
       </div>
 
       {!notification.read && (
-        <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0 mt-2" />
+        <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0 mt-2 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
       )}
     </div>
   );
@@ -101,7 +115,29 @@ export function NotificationBell() {
     markAsRead,
     markAllAsRead,
   } = useNotifications();
+  const { isAdmin } = useAdmin();
   const [open, setOpen] = useState(false);
+  const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
+
+  // 설정 로드
+  useEffect(() => {
+    const saved = localStorage.getItem("notification_settings");
+    if (saved) {
+      try {
+        setSettings({ ...DEFAULT_NOTIFICATION_SETTINGS, ...JSON.parse(saved) });
+      } catch (e) {
+        console.error("Failed to parse settings", e);
+      }
+    }
+  }, [open]); // 열릴 때마다 최신화
+
+  const updateSetting = (key: keyof NotificationSettings, value: boolean) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    localStorage.setItem("notification_settings", JSON.stringify(newSettings));
+    // RealtimeListener에 변경 알림
+    window.dispatchEvent(new CustomEvent("notificationSettingsChanged"));
+  };
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -109,13 +145,13 @@ export function NotificationBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative w-9 h-9 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-          aria-label="알림"
+          className="relative w-10 h-10 rounded-full hover:bg-gray-100 transition-all active:scale-95"
+          aria-label="알림 센터"
         >
-          <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <Bell className={cn("w-[22px] h-[22px]", unreadCount > 0 ? "text-green-600 fill-green-50" : "text-gray-600")} />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-              {unreadCount > 9 ? "9+" : unreadCount}
+            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold ring-2 ring-white">
+              {unreadCount > 9 ? "9" : unreadCount}
             </span>
           )}
         </Button>
@@ -123,60 +159,158 @@ export function NotificationBell() {
 
       <DropdownMenuContent
         align="end"
-        className="w-80 max-h-[480px] overflow-y-auto"
+        className="w-[360px] p-0 overflow-hidden rounded-2xl border-gray-100 shadow-2xl bg-white/95 backdrop-blur-xl"
+        sideOffset={8}
       >
-        {/* 헤더 */}
-        <div className="flex items-center justify-between p-3 border-b">
-          <h3 className="font-semibold text-gray-900 dark:text-white">알림</h3>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-gray-500 hover:text-gray-700"
-              onClick={markAllAsRead}
-            >
-              <Check className="w-3 h-3 mr-1" />
-              모두 읽음
-            </Button>
-          )}
-        </div>
-
-        {/* 알림 목록 */}
-        <div className="divide-y divide-gray-100 dark:divide-gray-800">
-          {isLoading ? (
-            <div className="p-8 text-center text-gray-500">
-              <div className="animate-spin w-6 h-6 border-2 border-gray-300 border-t-green-500 rounded-full mx-auto" />
-            </div>
-          ) : notifications.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <Bell className="w-10 h-10 mx-auto mb-3 opacity-50" />
-              <p className="text-sm">알림이 없습니다</p>
-            </div>
-          ) : (
-            notifications.slice(0, 10).map((notification) => (
-              <NotificationItem
-                key={notification.id}
-                notification={notification}
-                onRead={markAsRead}
-              />
-            ))
-          )}
-        </div>
-
-        {/* 더보기 */}
-        {notifications.length > 10 && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link
-                href="/mypage/notifications"
-                className="w-full text-center text-sm text-gray-500 hover:text-green-600"
+        <Tabs defaultValue="activity" className="w-full">
+          <div className="px-4 pt-4 pb-2 flex items-center justify-between border-b border-gray-50">
+            <TabsList className="bg-gray-100/50 p-1 h-9 rounded-xl">
+              <TabsTrigger value="activity" className="rounded-lg px-4 h-7 text-xs font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                활동
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="rounded-lg px-4 h-7 text-xs font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                설정
+              </TabsTrigger>
+            </TabsList>
+            
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-[11px] text-gray-500 hover:text-green-600 font-bold"
+                onClick={markAllAsRead}
               >
-                모든 알림 보기
-              </Link>
-            </DropdownMenuItem>
-          </>
-        )}
+                <Check className="w-3.5 h-3.5 mr-1" />
+                모두 읽음
+              </Button>
+            </div>
+          </div>
+
+          <TabsContent value="activity" className="m-0 focus-visible:outline-none">
+            <div className="max-h-[420px] overflow-y-auto custom-scrollbar p-2">
+              {isLoading ? (
+                <div className="p-12 text-center">
+                  <div className="animate-spin w-6 h-6 border-2 border-gray-200 border-t-green-500 rounded-full mx-auto" />
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="p-12 text-center">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Bell className="w-8 h-8 text-gray-300" />
+                  </div>
+                  <p className="text-sm font-bold text-gray-400">새로운 알림이 없습니다</p>
+                  <p className="text-xs text-gray-300 mt-1">소식을 기다리고 있어요!</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {notifications.slice(0, 20).map((notification) => (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      onRead={markAsRead}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            {notifications.length > 5 && (
+              <div className="p-3 border-t border-gray-50 bg-gray-50/30 text-center">
+                <Link
+                  href="/mypage/notifications"
+                  className="text-xs font-bold text-gray-500 hover:text-green-600 transition-colors"
+                >
+                  과거 알림 모두 보기
+                </Link>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="settings" className="m-0 focus-visible:outline-none">
+            <div className="p-5 space-y-6 max-h-[420px] overflow-y-auto custom-scrollbar">
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">일반 알림</h4>
+                
+                <div className="flex items-center justify-between group">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
+                      <Rocket className="w-3.5 h-3.5 text-blue-500" /> 신규 프로젝트
+                    </Label>
+                    <p className="text-[10px] text-gray-400">내 관심사 일치 시에만 수신</p>
+                  </div>
+                  <Switch 
+                    checked={settings.projects}
+                    onCheckedChange={(v) => updateSetting('projects', v)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
+                      <Briefcase className="w-3.5 h-3.5 text-green-500" /> 연결하기 (Recruit)
+                    </Label>
+                    <p className="text-[10px] text-gray-400">공모전/채용 관심 분야 알림</p>
+                  </div>
+                  <Switch 
+                    checked={settings.recruit}
+                    onCheckedChange={(v) => updateSetting('recruit', v)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
+                    <Heart className="w-3.5 h-3.5 text-red-500" /> 내 포스트 좋아요
+                  </Label>
+                  <Switch 
+                    checked={settings.likes}
+                    onCheckedChange={(v) => updateSetting('likes', v)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
+                    <MessageCircle className="w-3.5 h-3.5 text-orange-500" /> 제안 및 소통
+                  </Label>
+                  <Switch 
+                    checked={settings.proposals}
+                    onCheckedChange={(v) => updateSetting('proposals', v)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
+                    <Info className="w-3.5 h-3.5 text-slate-400" /> 서비스 공지
+                  </Label>
+                  <Switch 
+                    checked={settings.notices}
+                    onCheckedChange={(v) => updateSetting('notices', v)}
+                  />
+                </div>
+              </div>
+
+              {isAdmin && (
+                <div className="pt-5 border-t border-gray-100 space-y-4">
+                  <h4 className="text-[10px] font-black text-green-600 uppercase tracking-widest bg-green-50 w-fit px-2 py-0.5 rounded-full">Admin Section</h4>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-bold text-gray-700">고객 1:1 문의</Label>
+                    <Switch 
+                      checked={settings.adminInquiries}
+                      onCheckedChange={(v) => updateSetting('adminInquiries', v)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-bold text-gray-700">신규 회원 가입</Label>
+                    <Switch 
+                      checked={settings.adminSignups}
+                      onCheckedChange={(v) => updateSetting('adminSignups', v)}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="p-3 bg-gray-50/50 text-center border-t border-gray-100">
+               <p className="text-[10px] text-gray-400">설정된 알림만 실시간으로 수신됩니다.</p>
+            </div>
+          </TabsContent>
+        </Tabs>
       </DropdownMenuContent>
     </DropdownMenu>
   );

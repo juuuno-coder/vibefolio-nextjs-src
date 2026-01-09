@@ -199,7 +199,7 @@ export function MainBanner() {
             >
               <Link href={banner.link_url || "#"} className={banner.link_url ? "cursor-pointer" : "cursor-default"}>
                 <div 
-                  className="w-full aspect-video overflow-hidden rounded-xl relative group isolate"
+                  className="w-full aspect-video overflow-hidden rounded-[40px] relative group isolate shadow-lg"
                 >
                   <div className="absolute inset-0 z-0">
                     <img 

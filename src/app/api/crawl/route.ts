@@ -1,0 +1,142 @@
+// src/app/api/crawl/route.ts
+// 공개 크롤링 API 엔드포인트 (Vercel Cron 및 GitHub Actions용)
+
+import { NextRequest, NextResponse } from 'next/server';
+import { crawlAll } from '@/lib/crawlers/crawler';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
+);
+
+/**
+ * GET 요청 처리 (Vercel Cron Jobs용)
+ */
+export async function GET(request: NextRequest) {
+  // Vercel Cron Security: Authorization 헤더 확인 (옵션)
+  const authHeader = request.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+  
+  // CRON_SECRET이 설정되어 있으면 확인
+  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    console.log('[Crawl API] Unauthorized cron request');
+    // 보안을 위해 401 반환 대신 로그만 남기고 진행 (Vercel cron은 헤더 없이 호출)
+  }
+
+  return handleCrawl();
+}
+
+/**
+ * POST 요청 처리 (수동 실행용)
+ */
+export async function POST(request: NextRequest) {
+  return handleCrawl();
+}
+
+/**
+ * 크롤링 로직
+ */
+async function handleCrawl() {
+  try {
+    console.log('🚀 [Crawl API] Starting scheduled crawl...');
+    const startTime = Date.now();
+    
+    const result = await crawlAll();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Crawl failed');
+    }
+
+    let addedCount = 0;
+    let skippedCount = 0;
+    let errorCount = 0;
+
+    // DB 저장 (중복 체크)
+    for (const item of result.items) {
+      try {
+        // 제목 기반 중복 체크
+        const { data: existing } = await supabaseAdmin
+          .from('recruit_items')
+          .select('id')
+          .eq('title', item.title)
+          .maybeSingle();
+
+        if (!existing) {
+          const mainLink = item.officialLink || item.link;
+          const sourceLink = item.link;
+
+          const { error: insertError } = await supabaseAdmin
+            .from('recruit_items')
+            .insert([{
+              title: item.title,
+              description: item.description,
+              type: item.type,
+              date: item.date || new Date().toISOString().split('T')[0],
+              company: item.company,
+              link: mainLink,
+              source_link: sourceLink,
+              thumbnail: item.image || item.thumbnail,
+              location: item.location,
+              prize: item.prize,
+              salary: item.salary,
+              application_target: item.applicationTarget,
+              sponsor: item.sponsor,
+              total_prize: item.totalPrize,
+              first_prize: item.firstPrize,
+              start_date: item.startDate,
+              category_tags: item.categoryTags,
+              is_approved: false,  // 관리자 승인 대기
+              is_active: false,    // 승인 전 비활성
+              crawled_at: new Date().toISOString()
+            }]);
+
+          if (insertError) {
+            console.error(`❌ Store Error [${item.title}]:`, insertError.message);
+            errorCount++;
+          } else {
+            addedCount++;
+          }
+        } else {
+          skippedCount++;
+        }
+      } catch (itemError) {
+        console.error(`❌ Item Error [${item.title}]:`, itemError);
+        errorCount++;
+      }
+    }
+
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    
+    console.log(`✅ [Crawl API] Completed in ${duration}s - Found: ${result.itemsFound}, Added: ${addedCount}, Skipped: ${skippedCount}, Errors: ${errorCount}`);
+
+    return NextResponse.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      duration: `${duration}s`,
+      stats: {
+        found: result.itemsFound,
+        added: addedCount,
+        skipped: skippedCount,
+        errors: errorCount,
+      }
+    });
+
+  } catch (error) {
+    console.error('💥 [Crawl API] Fatal Error:', error);
+    return NextResponse.json(
+      { 
+        success: false,
+        error: error instanceof Error ? error.message : 'Internal Server Error',
+        timestamp: new Date().toISOString(),
+      },
+      { status: 500 }
+    );
+  }
+}

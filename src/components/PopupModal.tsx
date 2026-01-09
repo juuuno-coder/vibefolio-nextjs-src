@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,8 +17,10 @@ import Image from "next/image";
 interface Popup {
   id: number;
   title: string;
-  content: string | null;
+  content: string;
   image_url: string | null;
+  is_important: boolean;
+  is_visible: boolean;
   link_url: string | null;
   link_text: string | null;
 }
@@ -107,44 +110,56 @@ export function PopupModal() {
         )}
 
         {/* Content */}
-        <div className="p-7">
-          <DialogHeader className="mb-6 text-left">
-            <div className="text-sm font-semibold text-blue-600 mb-2">🎉 NOTICE</div>
-            <DialogTitle className="text-2xl font-bold text-gray-900 leading-tight">
+        <div className="p-8">
+          <DialogHeader className="mb-8 text-left">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="px-2 py-0.5 bg-green-100 text-[#16A34A] text-[10px] font-black uppercase tracking-widest rounded-md">
+                NOTICE
+              </div>
+              {popup.is_important && (
+                <div className="px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-black uppercase tracking-widest rounded-md">
+                  URGENT
+                </div>
+              )}
+            </div>
+            <DialogTitle className="text-2xl md:text-3xl font-black text-slate-900 leading-[1.2] tracking-tight">
               {popup.title}
             </DialogTitle>
+            <DialogDescription className="text-slate-600 font-medium leading-relaxed mt-4 line-clamp-6 text-base">
+              {popup.content}
+            </DialogDescription>
           </DialogHeader>
 
-          {popup.content && (
-            <p className="text-gray-600 leading-relaxed mb-8 whitespace-pre-wrap text-[15px]">
-              {popup.content}
-            </p>
-          )}
-
-          <DialogFooter className="flex-col sm:flex-col gap-3">
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-3">
             {popup.link_url && (
-              <Button asChild className="w-full h-12 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-blue-100 transition-all hover:scale-[1.02] text-base">
-                <Link href={popup.link_url} onClick={handleClose}>
-                  {popup.link_text || '자세히 보기'}
-                </Link>
+              <Button 
+                className="w-full h-14 bg-slate-900 hover:bg-[#16A34A] text-white rounded-2xl font-black transition-all duration-300 shadow-xl shadow-slate-200"
+                onClick={() => window.open(popup.link_url as string, "_blank")}
+              >
+                {popup.link_text || "자세히 보기"}
               </Button>
             )}
             
-            <div className="flex items-center justify-between w-full mt-2 px-1">
+            <div className="flex items-center justify-between mt-2 px-1">
               <button
                 onClick={handleHideToday}
-                className="text-xs text-gray-400 hover:text-gray-600 transition-colors py-2"
+                className="text-[11px] font-bold text-slate-400 hover:text-[#16A34A] transition-colors flex items-center gap-2 group"
               >
-                다시 보지 않기
+                <div className="w-4 h-4 rounded border border-slate-200 flex items-center justify-center group-hover:border-[#16A34A] transition-colors">
+                  <div className="w-2 h-2 rounded-sm bg-transparent group-hover:bg-[#16A34A]/30 transition-colors" />
+                </div>
+                오늘 하루 보지 않기
               </button>
+              
               <button
                 onClick={handleClose}
-                className="text-xs text-gray-400 hover:text-gray-600 transition-colors py-2 px-2"
+                className="text-[11px] font-black text-slate-300 hover:text-slate-900 uppercase tracking-widest transition-colors"
               >
                 닫기
               </button>
             </div>
-          </DialogFooter>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
