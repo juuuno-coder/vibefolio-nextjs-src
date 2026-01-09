@@ -280,21 +280,7 @@ export function ProjectDetailModalV2({
     checkUserAndFetchData();
   }, [project, open]);
 
-  // ... (다음 함수들)
 
-  // ...
-
-  // JSX 수정 (데스크톱 - 이전 단계에서 위치 변경됨)
-  // ...
-  <p className="text-sm text-gray-500 mb-6">{authorBio}</p>
-  // ...
-
-  // JSX 수정 (모바일 - 584행 근처)
-  // ...
-  <p className="text-sm text-gray-500 mb-4">{authorBio}</p>
-  // ...
-
-  // ESC 키 핸들러
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
