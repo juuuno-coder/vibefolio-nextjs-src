@@ -23,9 +23,9 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { MainBanner } from "@/components/MainBanner";
-import { Plus, Trash2, Edit, Calendar, MapPin, Award, Briefcase, DollarSign, ExternalLink, Clock, Sparkles, Loader2, Eye, ChevronRight, Upload } from "lucide-react";
+import { Plus, Trash2, Edit, Calendar, MapPin, Award, Briefcase, DollarSign, ExternalLink, Clock, Sparkles, Loader2, Eye, ChevronRight, Upload, FileText, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
-import { uploadImage } from "@/lib/supabase/storage";
+import { uploadImage, uploadFile } from "@/lib/supabase/storage";
 import { toast } from "sonner";
 // badge removed
 import {
@@ -62,6 +62,7 @@ interface Item {
   start_date?: string;
   category_tags?: string;
   banner_image_url?: string;
+  attachments?: { name: string; url: string; size: number; type: string }[];
 }
 
 export default function RecruitPage() {
@@ -91,7 +92,8 @@ export default function RecruitPage() {
     first_prize: "",
     start_date: "",
     category_tags: "",
-    banner_image_url: ""
+    banner_image_url: "",
+    attachments: [] as { name: string; url: string; size: number; type: string }[]
   });
 
   // 관리자 권한 확인
@@ -160,6 +162,7 @@ export default function RecruitPage() {
           start_date: item.start_date || undefined,
           category_tags: item.category_tags || undefined,
           banner_image_url: item.banner_image_url || undefined,
+          attachments: item.attachments || [],
         }));
         setItems(formattedItems);
       } else {
@@ -335,7 +338,8 @@ export default function RecruitPage() {
         first_prize: "",
         start_date: "",
         category_tags: "",
-        banner_image_url: ""
+        banner_image_url: "",
+        attachments: []
       });
       setEditingItem(null);
       handleDialogClose();
@@ -442,7 +446,8 @@ export default function RecruitPage() {
       first_prize: item.first_prize || "",
       start_date: item.start_date || "",
       category_tags: item.category_tags || "",
-      banner_image_url: item.banner_image_url || ""
+      banner_image_url: item.banner_image_url || "",
+      attachments: item.attachments || []
     });
     setIsDialogOpen(true);
   };
@@ -469,7 +474,8 @@ export default function RecruitPage() {
       first_prize: "",
       start_date: "",
       category_tags: "",
-      banner_image_url: ""
+      banner_image_url: "",
+      attachments: []
     });
   };
 
@@ -921,6 +927,90 @@ export default function RecruitPage() {
                         <p className="text-[10px] text-slate-400 mt-1 italic leading-tight">* 상세 페이지 상단에 와이드하게 노출될 이미지를 등록하세요.</p>
                       </div>
                     )}
+                  </div>
+
+                  {/* 파일 첨부 영역 */}
+                  <div className="space-y-3 pt-2">
+                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                       <FileText size={16} className="text-slate-500" /> 공고문 파일 첨부 (최대 10개, 개당 20MB)
+                    </label>
+                    <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        {formData.attachments && formData.attachments.length > 0 && (
+                            <div className="flex flex-col gap-2">
+                                {formData.attachments.map((file, idx) => (
+                                    <div key={idx} className="flex items-center justify-between bg-white px-3 py-2 rounded-lg text-xs font-medium text-slate-700 border border-slate-100 shadow-sm">
+                                        <div className="flex items-center gap-2 overflow-hidden">
+                                            <FileText size={14} className="text-[#16A34A] shrink-0" />
+                                            <span className="truncate max-w-[200px]">{file.name}</span>
+                                            <span className="text-slate-400 shrink-0">({(file.size / 1024 / 1024).toFixed(2)}MB)</span>
+                                        </div>
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                const newFiles = [...(formData.attachments || [])];
+                                                newFiles.splice(idx, 1);
+                                                setFormData({...formData, attachments: newFiles});
+                                            }}
+                                            className="text-slate-400 hover:text-red-500 p-1"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="file"
+                                id="file-upload"
+                                multiple
+                                className="hidden"
+                                onChange={async (e) => {
+                                    const files = Array.from(e.target.files || []);
+                                    if (files.length === 0) return;
+                                    
+                                    const currentCount = formData.attachments?.length || 0;
+                                    if (currentCount + files.length > 10) {
+                                        toast.error("파일은 최대 10개까지만 업로드 가능합니다.");
+                                        return;
+                                    }
+
+                                    for (const file of files) {
+                                        if (file.size > 20 * 1024 * 1024) {
+                                            toast.error(`${file.name} 파일이 20MB를 초과합니다.`);
+                                            continue;
+                                        }
+                                        try {
+                                            toast.info(`${file.name} 업로드 중...`);
+                                            // 'recruit_files' 버킷 사용 (없으면 에러)
+                                            const uploaded = await uploadFile(file, 'recruit_files'); 
+                                            
+                                            setFormData(prev => ({
+                                                ...prev, 
+                                                attachments: [...(prev.attachments || []), uploaded]
+                                            }));
+                                            toast.success(`${file.name} 업로드 완료`);
+                                        } catch (err: any) {
+                                            console.error(err);
+                                            toast.error(`업로드 실패: ${err.message}. 버킷(recruit_files)이 생성되었는지 확인해주세요.`);
+                                        }
+                                    }
+                                    e.target.value = ''; // 초기화
+                                }}
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => document.getElementById('file-upload')?.click()}
+                                className="h-10 border-dashed border-slate-300 text-slate-500 hover:text-[#16A34A] hover:border-[#16A34A] w-full"
+                                disabled={(formData.attachments?.length || 0) >= 10}
+                            >
+                                <Plus size={16} className="mr-2" /> 파일 추가하기
+                            </Button>
+                        </div>
+                        <p className="text-[10px] text-slate-400 text-center">PDF, HWP, DOCX 등 공고문 파일 권장</p>
+                    </div>
                   </div>
 
                   <div>

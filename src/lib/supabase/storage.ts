@@ -138,3 +138,39 @@ export async function uploadImageFromUrl(
     return url; // 실패 시 원본 URL 반환 (graceful fallback)
   }
 }
+
+/**
+ * 공고문 등 일반 파일을 업로드하고 메타데이터를 반환
+ */
+export async function uploadFile(
+  file: File,
+  bucket: string = 'recruit_files'
+): Promise<{ url: string; name: string; size: number; type: string }> {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const safeFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `attachments/${safeFileName}`;
+
+    const { error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file, {
+        upsert: false,
+      });
+
+    if (error) throw error;
+
+    const { data: publicUrlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(filePath);
+
+    return {
+      url: publicUrlData.publicUrl,
+      name: file.name,
+      size: file.size,
+      type: file.type
+    };
+  } catch (error: any) {
+    console.error('File upload failed:', error);
+    throw new Error(`파일 업로드 실패: ${error.message}`);
+  }
+}

@@ -14,7 +14,9 @@ import {
   Clock,
   Share2,
   Eye,
-  CalendarDays
+  CalendarDays,
+  Download,
+  FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +45,7 @@ interface Item {
   start_date?: string;
   category_tags?: string;
   banner_image_url?: string;
+  attachments?: { name: string; url: string; size: number; type: string }[];
 }
 
 export default function RecruitDetailClient({ item }: { item: Item }) {
@@ -267,6 +270,31 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                 </div>
 
                 <div className="space-y-3 relative z-10">
+                  {/* 첨부파일 섹션 */}
+                  {item.attachments && item.attachments.length > 0 && (
+                    <div className="space-y-3 pb-4 border-b border-slate-800 relative z-10">
+                      <p className="text-slate-400 font-bold text-xs uppercase tracking-widest flex items-center gap-2">
+                         <FileText size={12} /> Documents
+                      </p>
+                      <div className="space-y-2">
+                        {item.attachments.map((file, idx) => (
+                          <Button
+                            key={idx}
+                            variant="ghost"
+                            className="w-full h-auto py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-left flex items-center justify-between group"
+                            onClick={() => window.open(file.url, '_blank')}
+                          >
+                            <div className="flex flex-col min-w-0 pr-2">
+                               <span className="text-slate-200 text-xs font-bold truncate max-w-[200px]">{file.name}</span>
+                               <span className="text-slate-500 text-[10px] font-medium">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                            </div>
+                            <Download size={14} className="text-slate-500 group-hover:text-white transition-colors shrink-0" />
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {item.link && (
                     <Button 
                       className="w-full h-14 rounded-2xl bg-[#16A34A] hover:bg-[#3db8c1] text-slate-900 font-black text-base shadow-lg shadow-[#16A34A]/10 transition-all duration-300 hover:scale-[1.02]"
