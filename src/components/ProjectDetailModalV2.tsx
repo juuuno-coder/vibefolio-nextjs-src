@@ -622,9 +622,9 @@ export function ProjectDetailModalV2({
                   </button>
                   <button 
                     onClick={handleCollectionClick}
-                    className="w-12 h-12 rounded-full border border-gray-200 bg-white hover:bg-gray-100 text-gray-600 flex items-center justify-center transition-colors"
+                    className="w-10 h-10 rounded-full border border-gray-200 bg-white hover:bg-gray-100 text-gray-600 flex items-center justify-center transition-colors"
                   >
-                    <FontAwesomeIcon icon={faFolder} className="w-5 h-5" />
+                    <FontAwesomeIcon icon={bookmarked ? faBookmark : faBookmarkRegular} className="w-5 h-5" />
                   </button>
                   <button 
                     onClick={() => setCommentsPanelOpen(true)}
@@ -803,64 +803,64 @@ export function ProjectDetailModalV2({
                 {/* 2. 하단 리뉴얼 섹션 (노트폴리오 스타일) - 본문 끝나고 나타남 */}
                 <div className="w-full mt-24 border-t border-gray-100">
                    {/* Black Action Bar */}
-                   <div className="w-full bg-[#18181b] text-white py-16">
+                   <div className="w-full bg-[#18181b] text-white py-10">
                       <div className="max-w-3xl mx-auto px-4 text-center">
-                          <div className="flex items-center justify-center gap-4 mb-10">
+                          <div className="flex items-center justify-center gap-4 mb-8">
                              <Button 
                                onClick={handleLike}
-                               className={`h-14 px-8 rounded-full text-lg font-bold transition-all shadow-lg hover:scale-105 gap-2 border-0 ${
+                               className={`h-11 px-6 rounded-full text-base font-bold transition-all shadow-md hover:scale-105 gap-2 border-0 ${
                                  liked ? 'bg-[#ff4e4e] hover:bg-[#e04545] text-white' : 'bg-[#333] hover:bg-[#444] text-white'
                                }`}
                              >
-                                <FontAwesomeIcon icon={liked ? faHeart : faHeartRegular} className="w-5 h-5" />
+                                <FontAwesomeIcon icon={liked ? faHeart : faHeartRegular} className="w-4 h-4" />
                                 {liked ? '좋아요 취소' : '작업 좋아요'}
                              </Button>
                              <Button 
-                               onClick={handleBookmark} 
-                               className={`h-14 px-8 rounded-full text-lg font-bold transition-all shadow-lg hover:scale-105 gap-2 bg-white text-black hover:bg-gray-200 border-0`}
+                               onClick={handleCollectionClick} 
+                               className={`h-11 px-6 rounded-full text-base font-bold transition-all shadow-md hover:scale-105 gap-2 bg-white text-black hover:bg-gray-200 border-0`}
                              >
-                                <FontAwesomeIcon icon={bookmarked ? faBookmark : faBookmarkRegular} className="w-5 h-5" />
+                                <FontAwesomeIcon icon={bookmarked ? faBookmark : faBookmarkRegular} className="w-4 h-4" />
                                 {bookmarked ? '컬렉션 저장됨' : '컬렉션 저장'}
                              </Button>
                           </div>
                           
-                          <div className="inline-block px-3 py-1 bg-[#00d084] text-black text-xs font-bold rounded mb-4">
+                          <div className="inline-block px-3 py-1 bg-green-500 text-white text-xs font-bold rounded mb-3">
                              VIBEFOLIO PICK
                           </div>
-                          <h2 className="text-2xl font-bold mb-3">{project.title}</h2>
+                          <h2 className="text-xl font-bold mb-3">{project.title}</h2>
                           
-                          <div className="flex items-center justify-center gap-8 text-gray-500 mt-8">
+                          <div className="flex items-center justify-center gap-6 text-gray-500 mt-6">
                              <div className="flex items-center gap-2">
-                                <FontAwesomeIcon icon={faEye} className="w-5 h-5" />
-                                <span className="text-lg font-medium text-gray-300">{addCommas(viewsCount)}</span>
+                                <FontAwesomeIcon icon={faEye} className="w-4 h-4" />
+                                <span className="text-base font-medium text-gray-300">{addCommas(viewsCount)}</span>
                              </div>
                              <div className="flex items-center gap-2">
-                                <FontAwesomeIcon icon={faHeart} className="w-5 h-5" />
-                                <span className="text-lg font-medium text-gray-300">{addCommas(likesCount)}</span>
+                                <FontAwesomeIcon icon={faHeart} className="w-4 h-4" />
+                                <span className="text-base font-medium text-gray-300">{addCommas(likesCount)}</span>
                              </div>
                           </div>
                       </div>
                    </div>
 
                    {/* Profile Section - 사이즈 축소 */}
-                   <div className="bg-gray-50 py-12 border-b border-gray-100">
+                   <div className="bg-gray-50 py-10 border-b border-gray-100">
                        <div className="max-w-xl mx-auto px-4 text-center">
                            <div className="mb-3 inline-block relative cursor-pointer group" onClick={() => window.location.href=`/creator/${project.user.username}`}>
-                              <Avatar className="w-16 h-16 border-2 border-white shadow-sm mx-auto">
+                              <Avatar className="w-14 h-14 border-2 border-white shadow-sm mx-auto">
                                 <AvatarImage src={project.user.profile_image.large} className="object-cover" />
                                 <AvatarFallback><FontAwesomeIcon icon={faUser} /></AvatarFallback>
                               </Avatar>
                            </div>
-                           <h3 className="text-xl font-bold text-gray-900 mb-1">{project.user.username}</h3>
-                           <p className="text-sm text-gray-500 mb-6">{authorBio}</p>
+                           <h3 className="text-lg font-bold text-gray-900 mb-1">{project.user.username}</h3>
+                           <p className="text-sm text-gray-500 mb-6">{authorBio || "크리에이티브한 작업을 공유합니다."}</p>
                            
                            <div className="flex items-center justify-center gap-2">
                               {isLoggedIn && project.userId && currentUserId !== project.userId && (
-                                <Button onClick={handleFollow} variant="outline" className="h-9 px-6 rounded-full border-gray-300 bg-white hover:bg-gray-100 gap-2 text-sm">
+                                <Button onClick={handleFollow} variant="outline" className="h-9 px-5 rounded-full border-gray-300 bg-white hover:bg-gray-100 gap-2 text-sm">
                                   {following ? '팔로잉' : '+ 팔로우'}
                                 </Button>
                               )}
-                              <Button onClick={() => isLoggedIn ? setProposalModalOpen(true) : setLoginModalOpen(true)} className="h-9 px-6 rounded-full bg-[#00d084] hover:bg-[#00b874] text-white border-0 gap-2 font-bold text-sm shadow-sm">
+                              <Button onClick={() => isLoggedIn ? setProposalModalOpen(true) : setLoginModalOpen(true)} className="h-9 px-5 rounded-full bg-[#00d084] hover:bg-[#00b874] text-white border-0 gap-2 font-bold text-sm shadow-sm">
                                 <FontAwesomeIcon icon={faPaperPlane} className="w-3 h-3" /> 제안하기
                               </Button>
                            </div>
