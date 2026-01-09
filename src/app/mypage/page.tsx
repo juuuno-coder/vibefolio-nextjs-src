@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera } from "lucide-react";
+import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
 import { ProposalCard } from "@/components/ProposalCard";
@@ -10,6 +10,15 @@ import { ProjectDetailModalV2 } from "@/components/ProjectDetailModalV2";
 import { ProposalDetailModal } from "@/components/ProposalDetailModal";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/AuthContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 type TabType = 'projects' | 'likes' | 'collections' | 'proposals' | 'comments';
 
@@ -36,6 +45,11 @@ export default function MyPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<any>(null);
   const [proposalModalOpen, setProposalModalOpen] = useState(false);
+  
+  // 회원탈퇴 관련 상태
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { user: authUser, userProfile: authProfile, loading: authLoading } = useAuth();
   
@@ -300,6 +314,52 @@ export default function MyPage() {
     }
   };
 
+  // 회원탈퇴 처리
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "회원탈퇴") {
+      alert("'회원탈퇴'를 정확히 입력해주세요.");
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
+      const response = await fetch('/api/auth/delete-account', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '회원탈퇴에 실패했습니다.');
+      }
+
+      // 로그아웃 처리
+      await supabase.auth.signOut();
+      
+      alert('계정이 성공적으로 삭제되었습니다. 이용해주셔서 감사합니다.');
+      router.push('/');
+      
+    } catch (error) {
+      console.error('회원탈퇴 실패:', error);
+      alert(error instanceof Error ? error.message : '회원탈퇴에 실패했습니다.');
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
+      setDeleteConfirmText("");
+    }
+  };
+
   // 초기 로딩 화면
   if (!initialized) {
     return (
@@ -367,9 +427,17 @@ export default function MyPage() {
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{userProfile?.username || '사용자'}</h1>
                 <p className="text-gray-500 text-sm md:text-base mt-1">{userProfile?.email}</p>
               </div>
-              <div className="md:pb-2">
+              <div className="md:pb-2 flex gap-2">
                 <Button variant="outline" onClick={() => router.push('/mypage/profile')} className="w-full md:w-auto">
                   <Settings className="w-4 h-4 mr-2" /> 프로필 설정
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setDeleteModalOpen(true)} 
+                  className="text-gray-400 hover:text-red-500 hover:bg-red-50"
+                  title="회원탈퇴"
+                >
+                  <UserMinus className="w-4 h-4" />
                 </Button>
               </div>
             </div>
@@ -566,6 +634,81 @@ export default function MyPage() {
       {/* 모달 */}
       <ProjectDetailModalV2 open={modalOpen} onOpenChange={setModalOpen} project={selectedProject} />
       <ProposalDetailModal open={proposalModalOpen} onOpenChange={setProposalModalOpen} proposal={selectedProposal} />
+      
+      {/* 회원탈퇴 확인 모달 */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl text-red-600">회원탈퇴</DialogTitle>
+                <DialogDescription className="text-sm text-gray-500">
+                  이 작업은 되돌릴 수 없습니다.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <h4 className="font-semibold text-red-800 mb-2">⚠️ 삭제되는 데이터</h4>
+              <ul className="text-sm text-red-700 space-y-1">
+                <li>• 업로드한 모든 프로젝트</li>
+                <li>• 좋아요, 댓글, 팔로우 기록</li>
+                <li>• 컬렉션 및 저장된 항목</li>
+                <li>• 받은 제안 및 메시지</li>
+                <li>• 프로필 정보</li>
+              </ul>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                탈퇴를 확인하려면 <span className="font-bold text-red-600">"회원탈퇴"</span>를 입력하세요
+              </label>
+              <Input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="회원탈퇴"
+                className="border-gray-300 focus:border-red-500 focus:ring-red-500"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setDeleteConfirmText("");
+              }}
+              disabled={isDeleting}
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={deleteConfirmText !== "회원탈퇴" || isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  처리 중...
+                </>
+              ) : (
+                <>
+                  <UserMinus className="w-4 h-4 mr-2" />
+                  회원탈퇴
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
