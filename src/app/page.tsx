@@ -300,7 +300,7 @@ function HomeContent() {
           currentFields={selectedFields}
         />
         
-        <div className="max-w-[1800px] mx-auto px-4 md:px-8 pb-20">
+        <div className="max-w-[1800px] mx-auto px-4 md:px-8 pb-20 pt-8">
             {/* 검색어 표시 */}
             {searchQuery && (
               <div className="pt-10 mb-10 flex items-center justify-between border-b border-gray-100 pb-6 transition-all animate-in fade-in slide-in-from-top-2">
