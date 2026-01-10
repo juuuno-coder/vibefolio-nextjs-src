@@ -23,9 +23,23 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/lib/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
-interface DailyStat {
+interface DailyTableData {
   date: string;
-  count: number;
+  visits: number;
+  users: number;
+  projects: number;
+  recruits: number;
+}
+
+interface ActivityLog {
+  id: number;
+  action: string;
+  target_type: string;
+  details: any;
+  ip_address: string;
+  created_at: string;
+  user?: { email: string };
+  user_email?: string; // 
 }
 
 export default function AdminStatsPage() {
@@ -39,12 +53,10 @@ export default function AdminStatsPage() {
     totalUsers: 0,
     totalRecruits: 0,
     activeBanners: 0,
-    weeklyProjects: [] as DailyStat[],
-    weeklyUsers: [] as DailyStat[],
-    categoryStats: [] as { category: string; count: number }[],
-    projectGrowth: 0,
-    userGrowth: 0,
+    dailyData: [] as DailyTableData[],
+    logs: [] as ActivityLog[],
   });
+  const [activeTab, setActiveTab] = useState<'daily' | 'logs'>('daily');
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
@@ -65,94 +77,67 @@ export default function AdminStatsPage() {
       const { count: recruitCount } = await supabase.from('recruit_items').select('*', { count: 'exact', head: true });
       const { count: bannerCount } = await supabase.from('banners').select('*', { count: 'exact', head: true, is_active: true } as any);
 
-      // 2. 주간/월간 트렌드 (최근 데이터 가져와서 클라이언트에서 가공)
-      const dateLimit = new Date();
-      dateLimit.setDate(dateLimit.getDate() - period);
-      const dateLimitStr = dateLimit.toISOString();
-
-      const { data: recentProjects } = await supabase
-        .from('Project')
-        .select('created_at')
-        .gte('created_at', dateLimitStr);
-
-      const { data: recentUsers } = await supabase
-        .from('profiles')
-        .select('created_at')
-        .gte('created_at', dateLimitStr);
-
-      // 날짜별 그룹화 함수
-      const groupByDate = (data: any[]) => {
-        const groups: { [key: string]: number } = {};
-        // 초기화 (최근 n일치 0으로 세팅)
-        for (let i = 0; i < period; i++) {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          groups[d.toISOString().split('T')[0]] = 0;
-        }
-        
-        data.forEach(item => {
-          const date = item.created_at.split('T')[0];
-          if (groups[date] !== undefined) {
-            groups[date]++;
-          }
-        });
-
-        return Object.entries(groups)
-          .map(([date, count]) => ({ date, count }))
-          .sort((a, b) => a.date.localeCompare(b.date));
-      };
-
-      const weeklyProjects = groupByDate(recentProjects || []);
-      const weeklyUsers = groupByDate(recentUsers || []);
-
-      // 성장률 계산 (전체 대비 최근 증감)
-      const prevDateLimit = new Date();
-      prevDateLimit.setDate(prevDateLimit.getDate() - (period * 2));
-      const prevDateLimitStr = prevDateLimit.toISOString();
-
-      const { count: prevProjectCount } = await supabase
-        .from('Project')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', prevDateLimitStr)
-        .lt('created_at', dateLimitStr);
-
-      const { count: prevUserCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', prevDateLimitStr)
-        .lt('created_at', dateLimitStr);
-
-      const currentProjectCount = recentProjects?.length || 0;
-      const currentUserCount = recentUsers?.length || 0;
-
-      const projectGrowth = (prevProjectCount || 0) === 0 ? (currentProjectCount > 0 ? 100 : 0) : Math.round(((currentProjectCount - prevProjectCount!) / prevProjectCount!) * 100);
-      const userGrowth = (prevUserCount || 0) === 0 ? (currentUserCount > 0 ? 100 : 0) : Math.round(((currentUserCount - prevUserCount!) / prevUserCount!) * 100);
-
-      // 3. 카테고리별 통계
-      const { data: projectsWithCategory } = await supabase
-        .from('Project')
-        .select('category_id');
+      // 2. 일별 데이터 취합 (최근 30일 고정)
+      const days = period === 7 ? 7 : 30;
+      const dailyData: DailyTableData[] = [];
       
-      const catCount: { [key: string]: number } = {};
-      projectsWithCategory?.forEach(p => {
-        const cat = p.category_id || 'Uncategorized';
-        catCount[cat] = (catCount[cat] || 0) + 1;
-      });
-      const categoryStats = Object.entries(catCount)
-        .map(([category, count]) => ({ category, count }))
-        .sort((a, b) => b.count - a.count);
+      for (let i = 0; i < days; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        const queryDateStart = `${dateStr}T00:00:00`;
+        const queryDateEnd = `${dateStr}T23:59:59`;
 
-      setStats({
-        totalProjects: projectCount || 0,
-        totalUsers: userCount || 0,
-        totalRecruits: recruitCount || 0,
-        activeBanners: bannerCount || 0,
-        weeklyProjects,
-        weeklyUsers,
-        categoryStats,
-        projectGrowth,
-        userGrowth,
-      });
+        const [visitRes, userRes, projectRes, recruitRes] = await Promise.all([
+          (supabase as any).from('site_stats').select('visits').eq('date', dateStr).single(),
+          supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
+          supabase.from('Project').select('project_id', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
+          supabase.from('recruit_items').select('id', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
+        ]);
+
+        dailyData.push({
+          date: dateStr,
+          visits: visitRes.data?.visits || 0,
+          users: userRes.count || 0,
+          projects: projectRes.count || 0,
+          recruits: recruitRes.count || 0,
+        });
+      }
+
+      // 3. 로그 조회
+      try {
+        const { data: logsData } = await (supabase as any)
+          .from('activity_logs')
+          .select(`
+            id, action, target_type, details, ip_address, created_at,
+            user_id
+          `)
+          .order('created_at', { ascending: false })
+          .limit(50);
+          
+        // user_id로 이메일 매핑 (auth.users 조인은 관리자 클라이언트 필요하므로, 여기서는 profiles 정도만 가능하거나 생략. 
+        // 일단 user_id만 보여주고, 추후 profiles 조회)
+        // 여기서는 간단히 logsData만 세팅 (user정보는 null 처리)
+
+        setStats({
+          totalProjects: projectCount || 0,
+          totalUsers: userCount || 0,
+          totalRecruits: recruitCount || 0,
+          activeBanners: bannerCount || 0,
+          dailyData,
+          logs: logsData || [],
+        });
+      } catch (logErr) {
+        console.error("Log fetch error:", logErr);
+         setStats({
+          totalProjects: projectCount || 0,
+          totalUsers: userCount || 0,
+          totalRecruits: recruitCount || 0,
+          activeBanners: bannerCount || 0,
+          dailyData,
+          logs: [],
+        });
+      }
 
     } catch (err) {
       console.error("Stats fetch error:", err);
@@ -162,11 +147,13 @@ export default function AdminStatsPage() {
   };
 
   const handleExportCSV = () => {
-    const headers = ["카테고리/분야", "프로젝트 수", "비중(%)"];
-    const rows = stats.categoryStats.map(cat => [
-      cat.category,
-      cat.count.toString(),
-      `${Math.round((cat.count / stats.totalProjects) * 100)}%`
+    const headers = ["날짜", "방문자수", "가입자수", "프로젝트 등록", "채용 공고"];
+    const rows = stats.dailyData.map(d => [
+      d.date,
+      d.visits.toString(),
+      d.users.toString(),
+      d.projects.toString(),
+      d.recruits.toString(),
     ]);
     
     // 한글 깨짐 방지를 위한 BOM 추가
@@ -181,27 +168,8 @@ export default function AdminStatsPage() {
     document.body.removeChild(link);
   };
 
-  const getAIInsight = () => {
-    if (stats.projectGrowth > 20) {
-      return {
-        title: "폭발적인 데이터 성장세가 감지되었습니다!",
-        desc: "최근 프로젝트 업로드량이 급증하고 있습니다. 인기 카테고리 기획전 배너를 노출하여 리텐션을 극대화하세요."
-      };
-    }
-    if (stats.userGrowth > 15) {
-      return {
-        title: "신규 유입자가 안정적인 궤도에 진입했습니다.",
-        desc: "사용자 리텐션 향상을 위한 새로운 배너 캠페인 및 웰컴 이벤트를 추천합니다."
-      };
-    }
-    return {
-      title: "현재 데이터 증가량이 안정적인 궤도에 있습니다.",
-      desc: "지속적인 성장을 위해 비인기 분야의 공모전을 유치하거나 프로모션을 검토를 권장합니다."
-    };
-  };
-
-  const insight = getAIInsight();
-
+  // const getAIInsight = ... 삭제됨
+  
   if (adminLoading || loading) {
     return (
       <div className="h-[80vh] flex items-center justify-center">
@@ -213,10 +181,9 @@ export default function AdminStatsPage() {
     );
   }
 
-  const projectMax = Math.max(...stats.weeklyProjects.map(d => d.count), 1);
-  const userMax = Math.max(...stats.weeklyUsers.map(d => d.count), 1);
-
   return (
+
+
     <div className="space-y-10 pb-20 max-w-[1400px] mx-auto pt-8 px-4">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -266,157 +233,108 @@ export default function AdminStatsPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* Project Trend */}
-        <Card className="border-none shadow-sm rounded-[32px] p-8 bg-white">
-          <div className="flex items-center justify-between mb-10">
-            <CardTitle className="text-xl font-black flex items-center gap-2 italic">
-              <TrendingUp className="text-blue-500" />
-              프로젝트 성장 지표
-            </CardTitle>
-            <div className={`flex items-center gap-1.5 text-xs font-bold ${stats.projectGrowth >= 0 ? 'text-blue-500 bg-blue-50' : 'text-red-500 bg-red-50'} px-3 py-1.5 rounded-full`}>
-              {stats.projectGrowth >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-              {stats.projectGrowth >= 0 ? `+${stats.projectGrowth}%` : `${stats.projectGrowth}%`} 성장
-            </div>
-          </div>
-          <div className="flex items-end justify-between h-56 gap-2 px-2">
-            {stats.weeklyProjects.map((d, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-3 group relative">
-                <div 
-                  className="w-full bg-slate-50 rounded-t-lg group-hover:bg-blue-50 transition-colors duration-300 flex items-end justify-center overflow-hidden" 
-                  style={{ height: '100%' }}
-                >
-                  <div 
-                    className="w-[70%] bg-blue-500/80 group-hover:bg-blue-600 transition-all duration-500 rounded-t-md" 
-                    style={{ height: `${(d.count / projectMax) * 100}%` }}
-                  />
-                </div>
-                {/* Tooltip */}
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 whitespace-nowrap">
-                   {d.count} Projects
-                </div>
-                <span className="text-[9px] font-bold text-slate-300 transform -rotate-45 md:rotate-0 mt-1">
-                  {d.date.slice(5)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* User Trend */}
-        <Card className="border-none shadow-sm rounded-[32px] p-8 bg-white">
-          <div className="flex items-center justify-between mb-10">
-            <CardTitle className="text-xl font-black flex items-center gap-2 italic">
-              <Users className="text-pink-500" />
-              회원 가입 현황
-            </CardTitle>
-            <div className={`flex items-center gap-1.5 text-xs font-bold ${stats.userGrowth >= 0 ? 'text-pink-500 bg-pink-50' : 'text-red-500 bg-red-50'} px-3 py-1.5 rounded-full`}>
-              {stats.userGrowth >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-              {stats.userGrowth >= 0 ? `+${stats.userGrowth}%` : `${stats.userGrowth}%`} 성장
-            </div>
-          </div>
-          <div className="flex items-end justify-between h-56 gap-2 px-2">
-            {stats.weeklyUsers.map((d, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-3 group relative">
-                <div 
-                  className="w-full bg-slate-50 rounded-t-lg group-hover:bg-pink-50 transition-colors duration-300 flex items-end justify-center overflow-hidden" 
-                  style={{ height: '100%' }}
-                >
-                  <div 
-                    className="w-[70%] bg-pink-500/80 group-hover:bg-pink-600 transition-all duration-500 rounded-t-md" 
-                    style={{ height: `${(d.count / userMax) * 100}%` }}
-                  />
-                </div>
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 whitespace-nowrap">
-                   {d.count} Users
-                </div>
-                <span className="text-[9px] font-bold text-slate-300 transform -rotate-45 md:rotate-0 mt-1">
-                  {d.date.slice(5)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </Card>
+      <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 mb-8 w-fit mx-auto md:w-full md:grid md:grid-cols-2">
+        <button 
+          onClick={() => setActiveTab('daily')}
+          className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'daily' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+        >
+          📅 일별 상세 통계
+        </button>
+        <button 
+          onClick={() => setActiveTab('logs')}
+          className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'logs' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+        >
+          🕵️ 시스템 활동 로그
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* Category Distribution */}
-        <Card className="lg:col-span-1 border-none shadow-sm rounded-[32px] p-8 bg-white overflow-hidden">
-            <CardTitle className="text-xl font-black mb-8 flex items-center gap-2">
-              <PieChartIcon className="text-amber-500" />
-              분야별 프로젝트 분포
-            </CardTitle>
-           <div className="space-y-5">
-              {stats.categoryStats.slice(0, 6).map((cat, i) => (
-                <div key={i}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-slate-600 uppercase tracking-tight">{cat.category}</span>
-                    <span className="text-xs font-black italic">{Math.round((cat.count / stats.totalProjects) * 100)}%</span>
-                  </div>
-                  <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full transition-all duration-1000 ${
-                        i % 4 === 0 ? 'bg-blue-400' :
-                        i % 4 === 1 ? 'bg-pink-400' :
-                        i % 4 === 2 ? 'bg-amber-400' : 'bg-green-400'
-                      }`} 
-                      style={{ width: `${(cat.count / stats.totalProjects) * 100}%` }} 
-                    />
-                  </div>
-                </div>
-              ))}
-           </div>
+      {activeTab === 'daily' && (
+        <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
+          <div className="p-8 pb-4 flex items-center justify-between">
+             <CardTitle className="text-xl font-black italic">DAILY STATISTICS</CardTitle>
+             <Button variant="outline" size="sm" onClick={handleExportCSV} className="text-xs">
+                데이터 내보내기 (.CSV)
+             </Button>
+          </div>
+          <div className="overflow-x-auto">
+             <table className="w-full text-sm text-left">
+               <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] tracking-wider">
+                 <tr>
+                   <th className="px-6 py-4">Date</th>
+                   <th className="px-6 py-4">Visits</th>
+                   <th className="px-6 py-4">Sign ups</th>
+                   <th className="px-6 py-4">Projects</th>
+                   <th className="px-6 py-4">Recruits</th>
+                 </tr>
+               </thead>
+               <tbody className="divide-y divide-slate-100">
+                 {stats.dailyData.map((row, i) => (
+                   <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                     <td className="px-6 py-4 font-bold text-slate-700">{row.date}</td>
+                     <td className="px-6 py-4 text-slate-600">{row.visits}</td>
+                     <td className="px-6 py-4">
+                       <span className={`px-2 py-1 rounded text-xs font-bold ${row.users > 0 ? 'bg-pink-100 text-pink-600' : 'bg-slate-100 text-slate-400'}`}>
+                         +{row.users}
+                       </span>
+                     </td>
+                     <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${row.projects > 0 ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
+                         +{row.projects}
+                       </span>
+                     </td>
+                     <td className="px-6 py-4 text-slate-600">+{row.recruits}</td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
+          </div>
         </Card>
+      )}
 
-        {/* Data Quality / Reports */}
-        <Card className="lg:col-span-2 border-none shadow-sm rounded-[32px] p-8 bg-slate-900 text-white relative overflow-hidden">
-           <div className="absolute top-0 right-0 p-10 opacity-10">
-             <BarChart3 size={120} />
-           </div>
-           
-            <div className="relative z-10 h-full flex flex-col">
-              <Badge className="w-fit mb-6 bg-[#16A34A] text-slate-900 font-black">AI INSIGHT</Badge>
-              <h3 className="text-2xl font-black mb-6 leading-tight border-b border-white/10 pb-6 break-keep">
-                {insight.title}<br/>
-                <span className="text-[#16A34A]">{insight.desc}</span>
-              </h3>
-              
-              {/* 
-                 TODO: 아래 지표들은 현재 추정치입니다.
-                 실제 분석 데이터를 표시하려면 Google Analytics, Mixpanel 등 분석 도구 연동이 필요합니다.
-                 연동 후 이 섹션을 실제 API 데이터로 교체하세요.
-              */}
-              <div className="grid grid-cols-2 gap-8 flex-1 content-center">
-                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#16A34A]/30 transition-colors">
-                    <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic tracking-tighter">월간 활성 지표</p>
-                    <p className="text-2xl font-black">{Math.min(95.5, 80 + (stats.projectGrowth / 2)).toFixed(1)}%</p>
-                 </div>
-                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#16A34A]/30 transition-colors">
-                    <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic tracking-tighter">평균 체류 시간</p>
-                    {/* 추정치 - 실제 분석 도구 연동 필요 */}
-                    <p className="text-2xl font-black">3m 45s</p>
-                 </div>
-                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#16A34A]/30 transition-colors">
-                    <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic tracking-tighter">이탈률</p>
-                    {/* 추정치 - 실제 분석 도구 연동 필요 */}
-                    <p className="text-2xl font-black">{Math.max(15.2, 25 - (stats.userGrowth / 4)).toFixed(1)}%</p>
-                 </div>
-                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group hover:border-[#16A34A]/30 transition-colors">
-                    <p className="text-xs font-bold text-slate-500 mb-2 uppercase italic tracking-tighter">전환율</p>
-                    {/* 추정치 - 실제 분석 도구 연동 필요 */}
-                    <p className="text-2xl font-black">{Math.min(20.0, 10 + (stats.projectGrowth / 5)).toFixed(1)}%</p>
-                 </div>
-              </div>
-              
-              <Button 
-                onClick={handleExportCSV}
-                className="mt-8 w-full h-14 rounded-2xl bg-white text-slate-900 hover:bg-[#16A34A] transition-all font-black tracking-tighter text-sm shadow-xl hover:shadow-[#16A34A]/20"
-              >
-                상세 데이터 내보내기 (.CSV)
-              </Button>
-            </div>
+      {activeTab === 'logs' && (
+        <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
+          <div className="p-8 pb-4 flex items-center justify-between">
+             <CardTitle className="text-xl font-black italic">SYSTEM ACTIVITY LOGS</CardTitle>
+             <Badge variant="secondary" className="text-[10px] font-bold">최근 50건</Badge>
+          </div>
+          <div className="overflow-x-auto">
+             <table className="w-full text-sm text-left">
+               <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] tracking-wider">
+                 <tr>
+                   <th className="px-6 py-4">Time</th>
+                   <th className="px-6 py-4">Action</th>
+                   <th className="px-6 py-4">Target</th>
+                   <th className="px-6 py-4">User Details</th>
+                   <th className="px-6 py-4">IP</th>
+                 </tr>
+               </thead>
+               <tbody className="divide-y divide-slate-100">
+                 {stats.logs.length > 0 ? stats.logs.map((log, i) => (
+                   <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                     <td className="px-6 py-4 font-medium text-slate-500 text-xs">
+                        {new Date(log.created_at).toLocaleString()}
+                     </td>
+                     <td className="px-6 py-4 text-slate-900 font-bold">
+                        <span className="px-2 py-1 bg-slate-100 rounded text-xs">{log.action}</span>
+                     </td>
+                     <td className="px-6 py-4 text-slate-600 uppercase text-xs font-bold">{log.target_type}</td>
+                     <td className="px-6 py-4 text-slate-600 text-xs max-w-[200px] truncate">
+                        {JSON.stringify(log.details)}
+                     </td>
+                     <td className="px-6 py-4 text-slate-400 text-xs font-mono">{log.ip_address || '-'}</td>
+                   </tr>
+                 )) : (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-slate-400 font-bold italic">
+                        기록된 로그가 없습니다.
+                      </td>
+                    </tr>
+                 )}
+               </tbody>
+             </table>
+          </div>
         </Card>
-      </div>
+      )}
 
       <div className="flex justify-center pt-10">
         <Link href="/admin">
