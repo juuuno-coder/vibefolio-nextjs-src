@@ -40,6 +40,11 @@ const CATEGORIES = [
   { id: 13, name: "파인아트" },
 ];
 
+const stripHtml = (html: string) => {
+  if (!html) return "";
+  return html.replace(/<[^>]*>?/gm, '');
+};
+
 export default function AdminProjectsPage() {
   const router = useRouter();
   const { isAdmin, isLoading: adminLoading } = useAdmin();
@@ -389,7 +394,7 @@ export default function AdminProjectsPage() {
                           {project.title || "제목 없음"}
                         </h3>
                         <p className="text-sm text-gray-600 mb-2 line-clamp-1">
-                          {project.content_text || "설명 없음"}
+                          {project.summary || project.description || stripHtml(project.content_text) || "설명 없음"}
                         </p>
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                           <span>@{project.User?.username || "익명"}</span>
