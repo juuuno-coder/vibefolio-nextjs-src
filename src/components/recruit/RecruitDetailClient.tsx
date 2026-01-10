@@ -45,11 +45,15 @@ interface Item {
   start_date?: string;
   category_tags?: string;
   banner_image_url?: string;
+  images?: string[]; // 상세 이미지 목록
   attachments?: { name: string; url: string; size: number; type: string }[];
 }
 
 export default function RecruitDetailClient({ item }: { item: Item }) {
   const router = useRouter();
+
+  // 이미지 표시 우선순위: 배너 > 상세 이미지[0] > 썸네일
+  const displayImage = item.banner_image_url || (item.images && item.images.length > 0 ? item.images[0] : null) || item.thumbnail || '';
 
   const getDday = (dateStr: string) => {
     const today = new Date();
@@ -102,31 +106,15 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
           
           {/* Left: Image & Main Info */}
           <div className="lg:col-span-8 space-y-8">
-            <div className="relative aspect-video w-full rounded-[48px] overflow-hidden shadow-2xl bg-white group">
-              {(item.banner_image_url || item.thumbnail) ? (
-                <>
-                  {/* 포스터일 경우 배경 블러 효과 추가 */}
-                  {!item.banner_image_url && item.thumbnail && (
-                    <div className="absolute inset-0 scale-110 blur-3xl opacity-20">
-                      <Image 
-                        src={item.thumbnail} 
-                        alt="" 
-                        fill 
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  <Image 
-                    src={item.banner_image_url || item.thumbnail || ''} 
-                    alt={item.title} 
-                    fill 
-                    className={`${item.banner_image_url ? 'object-cover' : 'object-contain p-8 md:p-12'} transition-transform duration-1000`}
-                    priority
-                  />
-                  {!item.banner_image_url && (
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-50/50 to-transparent pointer-events-none" />
-                  )}
-                </>
+            <div className="relative aspect-video w-full rounded-[48px] overflow-hidden shadow-2xl bg-white group border border-slate-100">
+              {displayImage ? (
+                <Image 
+                  src={displayImage} 
+                  alt={item.title} 
+                  fill 
+                  className="object-cover transition-transform duration-1000"
+                  priority
+                />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col items-center justify-center text-slate-200 gap-6">
                   <div className="w-24 h-24 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center shadow-inner">
