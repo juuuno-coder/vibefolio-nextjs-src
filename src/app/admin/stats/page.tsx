@@ -42,6 +42,16 @@ interface ActivityLog {
   user_email?: string; // 
 }
 
+interface ReferrerStat {
+  name: string;
+  count: number;
+}
+
+interface DeviceStat {
+  mobile: number;
+  desktop: number;
+}
+
 export default function AdminStatsPage() {
   const router = useRouter();
   const { isAdmin, isLoading: adminLoading } = useAdmin();
@@ -55,8 +65,10 @@ export default function AdminStatsPage() {
     activeBanners: 0,
     dailyData: [] as DailyTableData[],
     logs: [] as ActivityLog[],
+    topReferrers: [] as ReferrerStat[],
+    deviceStats: { mobile: 0, desktop: 0 } as DeviceStat,
   });
-  const [activeTab, setActiveTab] = useState<'daily' | 'logs'>('daily');
+  const [activeTab, setActiveTab] = useState<'daily' | 'logs' | 'analytics'>('daily');
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
@@ -70,6 +82,9 @@ export default function AdminStatsPage() {
 
   const fetchDetailedStats = async () => {
     setLoading(true);
+    let logsData: ActivityLog[] = [];
+    let visitData: any[] = [];
+
     try {
       // 1. 기본 카운트
       const { count: projectCount } = await supabase.from('Project').select('*', { count: 'exact', head: true });
@@ -106,7 +121,7 @@ export default function AdminStatsPage() {
 
       // 3. 로그 조회
       try {
-        const { data: logsData } = await (supabase as any)
+        const { data } = await (supabase as any)
           .from('activity_logs')
           .select(`
             id, action, target_type, details, ip_address, created_at,
@@ -115,29 +130,63 @@ export default function AdminStatsPage() {
           .order('created_at', { ascending: false })
           .limit(50);
           
-        // user_id로 이메일 매핑 (auth.users 조인은 관리자 클라이언트 필요하므로, 여기서는 profiles 정도만 가능하거나 생략. 
-        // 일단 user_id만 보여주고, 추후 profiles 조회)
-        // 여기서는 간단히 logsData만 세팅 (user정보는 null 처리)
-
-        setStats({
-          totalProjects: projectCount || 0,
-          totalUsers: userCount || 0,
-          totalRecruits: recruitCount || 0,
-          activeBanners: bannerCount || 0,
-          dailyData,
-          logs: logsData || [],
-        });
+        logsData = data || [];
       } catch (logErr) {
         console.error("Log fetch error:", logErr);
-         setStats({
-          totalProjects: projectCount || 0,
-          totalUsers: userCount || 0,
-          totalRecruits: recruitCount || 0,
-          activeBanners: bannerCount || 0,
-          dailyData,
-          logs: [],
-        });
       }
+
+      // 4. Analytics (방문 분석)
+      let topReferrers: ReferrerStat[] = [];
+      let deviceStats = { mobile: 0, desktop: 0 };
+
+      try {
+        const { data } = await (supabase as any)
+          .from('visit_logs')
+          .select('referrer, device_type')
+          .order('visited_at', { ascending: false })
+          .limit(500); // 최근 500건 분석
+
+        visitData = data || [];
+
+        const refMap: Record<string, number> = {};
+        const devMap = { mobile: 0, desktop: 0 };
+
+        visitData?.forEach((v: any) => {
+          // Device
+          const dtype = v.device_type === 'mobile' ? 'mobile' : 'desktop';
+          devMap[dtype]++;
+
+          // Referrer (Domain)
+          let ref = v.referrer || 'Direct';
+          try {
+            if (ref.startsWith('http')) {
+              const url = new URL(ref);
+              ref = url.hostname.replace('www.', '');
+            }
+          } catch (e) {}
+          refMap[ref] = (refMap[ref] || 0) + 1;
+        });
+
+        topReferrers = Object.entries(refMap)
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10);
+        
+        deviceStats = devMap;
+      } catch (anaErr) {
+        console.error("Analytics fetch error:", anaErr);
+      }
+
+      setStats({
+        totalProjects: projectCount || 0,
+        totalUsers: userCount || 0,
+        totalRecruits: recruitCount || 0,
+        activeBanners: bannerCount || 0,
+        dailyData,
+        logs: logsData,
+        topReferrers,
+        deviceStats,
+      });
 
     } catch (err) {
       console.error("Stats fetch error:", err);
@@ -233,12 +282,18 @@ export default function AdminStatsPage() {
         ))}
       </div>
 
-      <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 mb-8 w-fit mx-auto md:w-full md:grid md:grid-cols-2">
+      <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 mb-8 w-fit mx-auto md:w-full md:grid md:grid-cols-3">
         <button 
           onClick={() => setActiveTab('daily')}
           className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'daily' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
         >
           📅 일별 상세 통계
+        </button>
+        <button 
+          onClick={() => setActiveTab('analytics')}
+          className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'analytics' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+        >
+          📈 유입/기기 분석
         </button>
         <button 
           onClick={() => setActiveTab('logs')}
@@ -289,6 +344,73 @@ export default function AdminStatsPage() {
              </table>
           </div>
         </Card>
+      )}
+
+      {activeTab === 'analytics' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+           {/* Device Ratio */}
+           <Card className="lg:col-span-1 border-none shadow-sm rounded-[32px] overflow-hidden bg-white p-8">
+              <CardTitle className="text-xl font-black italic mb-6">Device Share</CardTitle>
+              <div className="flex flex-col items-center justify-center h-64">
+                <div className="flex gap-8 items-end mb-8 w-full px-8 h-40">
+                   <div className="flex-1 flex flex-col items-center gap-2 group">
+                      <div className="w-full bg-slate-100 rounded-t-xl relative overflow-hidden h-full flex items-end">
+                         <div 
+                           className="w-full bg-blue-500 group-hover:bg-blue-600 transition-colors" 
+                           style={{ height: `${(stats.deviceStats.desktop / (stats.deviceStats.desktop + stats.deviceStats.mobile || 1)) * 100}%` }}
+                         />
+                      </div>
+                      <span className="font-bold text-slate-600">PC ({(stats.deviceStats.desktop / (stats.deviceStats.desktop + stats.deviceStats.mobile || 1) * 100).toFixed(0)}%)</span>
+                   </div>
+                   <div className="flex-1 flex flex-col items-center gap-2 group">
+                      <div className="w-full bg-slate-100 rounded-t-xl relative overflow-hidden h-full flex items-end">
+                         <div 
+                           className="w-full bg-pink-500 group-hover:bg-pink-600 transition-colors" 
+                           style={{ height: `${(stats.deviceStats.mobile / (stats.deviceStats.desktop + stats.deviceStats.mobile || 1)) * 100}%` }}
+                         />
+                      </div>
+                      <span className="font-bold text-slate-600">Mobile ({(stats.deviceStats.mobile / (stats.deviceStats.desktop + stats.deviceStats.mobile || 1) * 100).toFixed(0)}%)</span>
+                   </div>
+                </div>
+                <p className="text-xs text-slate-400 font-medium">* 최근 500명 방문자 기준</p>
+              </div>
+           </Card>
+
+           {/* Referrer Ranking */}
+           <Card className="lg:col-span-2 border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
+             <div className="p-8 pb-4 flex items-center justify-between">
+                <CardTitle className="text-xl font-black italic">TOP REFERRERS</CardTitle>
+             </div>
+             <div className="overflow-x-auto">
+               <table className="w-full text-sm text-left">
+                 <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] tracking-wider">
+                   <tr>
+                     <th className="px-6 py-4 w-16">Rank</th>
+                     <th className="px-6 py-4">Source (Domain)</th>
+                     <th className="px-6 py-4">Visits</th>
+                     <th className="px-6 py-4">Ratio</th>
+                   </tr>
+                 </thead>
+                 <tbody className="divide-y divide-slate-100">
+                   {stats.topReferrers.length > 0 ? stats.topReferrers.map((ref, i) => (
+                     <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                       <td className="px-6 py-4 font-black text-slate-300 text-lg italic">#{i + 1}</td>
+                       <td className="px-6 py-4 text-slate-900 font-bold">{ref.name}</td>
+                       <td className="px-6 py-4 text-slate-600 font-medium">{ref.count.toLocaleString()}</td>
+                       <td className="px-6 py-4">
+                         <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                           <div className="h-full bg-slate-900" style={{ width: `${(ref.count / 500) * 100}%` }} />
+                         </div>
+                       </td>
+                     </tr>
+                   )) : (
+                      <tr><td colSpan={4} className="p-8 text-center text-slate-400">데이터가 충분하지 않습니다.</td></tr>
+                   )}
+                 </tbody>
+               </table>
+             </div>
+           </Card>
+        </div>
       )}
 
       {activeTab === 'logs' && (
