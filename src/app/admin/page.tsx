@@ -128,39 +128,52 @@ export default function AdminPage() {
 
         setRecentInquiries(recentInqs || []);
 
-        // 주간 데이터 가공 (최근 7일) - 더미 랜덤값 제거
+        // 주간 데이터 (최근 7일) - 실제 데이터 병렬 조회
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         const weeklyStats = [];
-        let currentWeekCount = 0;
-        let lastWeekCount = 0;
-
-        const now = new Date();
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(now.getDate() - 7);
-        const twoWeeksAgo = new Date();
-        twoWeeksAgo.setDate(now.getDate() - 14);
+        let currentWeekProjectCount = 0; // 성장률 계산용
 
         for (let i = 6; i >= 0; i--) {
           const d = new Date();
           d.setDate(d.getDate() - i);
           const dateStr = d.toISOString().split('T')[0];
-          const count = (projects || []).filter((p: any) => p.created_at.startsWith(dateStr)).length;
-          currentWeekCount += count;
-          weeklyStats.push({ 
-            day: days[d.getDay()], 
-            value: count 
+          const queryDateStart = `${dateStr}T00:00:00`;
+          const queryDateEnd = `${dateStr}T23:59:59`;
+
+          // 4가지 지표 병렬 조회
+          const [visitRes, userRes, projectRes, recruitRes] = await Promise.all([
+            (supabase as any).from('site_stats').select('visits').eq('date', dateStr).single(),
+            supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
+            supabase.from('Project').select('project_id', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
+            supabase.from('recruit_items').select('id', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
+          ]);
+          
+          const pCount = projectRes.count || 0;
+          currentWeekProjectCount += pCount;
+
+          weeklyStats.push({
+            day: days[d.getDay()],
+            visits: visitRes.data?.visits || 0,
+            users: userRes.count || 0,
+            projects: pCount,
+            recruits: recruitRes.count || 0,
           });
         }
-
-        // 전주 데이터 확인 (성장률 계산용)
-        const { count: prevProjectCount } = await supabase
+        
+        // 성장률 계산을 위한 지난주 데이터 (프로젝트 기준)
+        const prevWeekStart = new Date();
+        prevWeekStart.setDate(prevWeekStart.getDate() - 14);
+        const prevWeekEnd = new Date();
+        prevWeekEnd.setDate(prevWeekEnd.getDate() - 8);
+        
+        const { count: lastWeekCount } = await supabase
           .from('Project')
           .select('*', { count: 'exact', head: true })
-          .gte('created_at', twoWeeksAgo.toISOString())
-          .lt('created_at', oneWeekAgo.toISOString());
-        
-        lastWeekCount = prevProjectCount || 0;
-        const growth = lastWeekCount === 0 ? (currentWeekCount > 0 ? 100 : 0) : Math.round(((currentWeekCount - lastWeekCount) / lastWeekCount) * 100);
+          .gte('created_at', prevWeekStart.toISOString())
+          .lt('created_at', prevWeekEnd.toISOString());
+
+        // 성장률 계산 (기존 로직 유지)
+        const growth = (lastWeekCount || 0) === 0 ? (currentWeekProjectCount > 0 ? 100 : 0) : Math.round(((currentWeekProjectCount - (lastWeekCount || 0)) / (lastWeekCount || 0)) * 100);
 
         setWeeklyData(weeklyStats);
 
@@ -286,7 +299,7 @@ export default function AdminPage() {
     );
   }
 
-  const maxVal = Math.max(...weeklyData.map(d => d.value), 1);
+  // const maxVal = Math.max(...weeklyData.map(d => d.value), 1); // 삭제
 
   return (
     <div className="space-y-10 pb-20">
@@ -353,27 +366,99 @@ export default function AdminPage() {
               </select>
             </div>
             
-            <div className="flex items-end justify-between gap-4 h-48 mt-10 px-4">
-              {(weeklyData.length > 0 ? weeklyData : Array(7).fill({day: '-', value: 0})).map((d, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-3 group">
-                   <div className="w-full relative px-2">
-                      <div 
-                        className="w-full bg-slate-50 rounded-t-xl group-hover:bg-[#16A34A]/10 transition-colors duration-300 flex items-end justify-center overflow-hidden"
-                        style={{ height: '180px' }}
-                      >
-                         <div 
-                           className="w-full bg-[#16A34A]/80 group-hover:bg-[#16A34A] transition-all duration-500 ease-out rounded-t-lg"
-                           style={{ height: `${(d.value / maxVal) * 100}%` }}
+            {/* Combined Chart (Bar + Lines) */}
+            <div className="w-full h-64 mt-6 relative">
+              {(() => {
+                 const data = weeklyData.length > 0 ? weeklyData : Array(7).fill({day: '-', visits:0, users:0, projects:0, recruits:0});
+                 // 1. Max Scales
+                 const maxVisits = Math.max(...data.map((d: any) => d.visits), 10); // 막대용 (최소 10)
+                 const maxOthers = Math.max(...data.map((d: any) => Math.max(d.users, d.projects, d.recruits)), 5); // 선 그래프용 (최소 5)
+
+                 return (
+                   <div className="w-full h-full relative font-bold text-[10px] text-slate-400">
+                     {/* 범례 */}
+                     <div className="absolute top-0 right-0 flex items-center gap-3">
+                       <div className="flex items-center gap-1"><div className="w-2 h-2 bg-slate-200"></div> 방문자</div>
+                       <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-pink-500"></div> 가입</div>
+                       <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-indigo-500"></div> 프로젝트</div>
+                       <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500"></div> 채용/공모</div>
+                     </div>
+
+                     {/* SVG Chart */}
+                     <svg viewBox="0 0 100 50" preserveAspectRatio="none" className="w-full h-full overflow-visible">
+                       {/* Grid Lines (Horizontal) */}
+                       {[0, 25, 50, 75, 100].map(y => ( <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="#f1f5f9" strokeWidth="0.5" /> ))}
+
+                       {/* Bars (Visits) */}
+                       {data.map((d: any, i: number) => {
+                         const barHeight = (d.visits / maxVisits) * 50;
+                         return (
+                           <rect 
+                             key={`bar-${i}`}
+                             x={i * (100/7) + 2} 
+                             y={50 - barHeight} 
+                             width={(100/7) - 4} 
+                             height={barHeight} 
+                             fill="#e2e8f0" 
+                             rx="1"
+                             className="hover:fill-slate-300 transition-all"
+                           >
+                             <title>{d.visits} View</title>
+                           </rect>
+                         );
+                       })}
+
+                       {/* Lines (Others) using polyline */}
+                         {/* Users (Pink) */}
+                         <polyline 
+                           fill="none" 
+                           stroke="#ec4899" 
+                           strokeWidth="1" 
+                           strokeLinecap="round"
+                           strokeLinejoin="round"
+                           points={data.map((d: any, i: number) => `${i * (100/7) + (100/7)/2},${50 - (d.users / maxOthers) * 50}`).join(" ")}
                          />
-                      </div>
-                      {/* Tooltip on hover */}
-                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                        {d.value}건
-                      </div>
+                         {/* Projects (Indigo) */}
+                         <polyline 
+                           fill="none" 
+                           stroke="#6366f1" 
+                           strokeWidth="1" 
+                           strokeLinecap="round"
+                           strokeLinejoin="round"
+                           points={data.map((d: any, i: number) => `${i * (100/7) + (100/7)/2},${50 - (d.projects / maxOthers) * 50}`).join(" ")}
+                         />
+                         {/* Recruits (Green) */}
+                         <polyline 
+                           fill="none" 
+                           stroke="#22c55e" 
+                           strokeWidth="1" 
+                           strokeLinecap="round"
+                           strokeLinejoin="round"
+                           points={data.map((d: any, i: number) => `${i * (100/7) + (100/7)/2},${50 - (d.recruits / maxOthers) * 50}`).join(" ")}
+                         />
+
+                        {/* Points (Dots) for interactive feel */}
+                        {data.map((d: any, i: number) => (
+                           <g key={`dots-${i}`}>
+                             {/* User Dot */}
+                             <circle cx={i * (100/7) + (100/7)/2} cy={50 - (d.users / maxOthers) * 50} r="1" fill="#ec4899" className="hover:r-2 transition-all"><title>가입: {d.users}</title></circle>
+                             {/* Project Dot */}
+                             <circle cx={i * (100/7) + (100/7)/2} cy={50 - (d.projects / maxOthers) * 50} r="1" fill="#6366f1" className="hover:r-2 transition-all"><title>프로젝트: {d.projects}</title></circle>
+                             {/* Recruit Dot */}
+                             <circle cx={i * (100/7) + (100/7)/2} cy={50 - (d.recruits / maxOthers) * 50} r="1" fill="#22c55e" className="hover:r-2 transition-all"><title>채용: {d.recruits}</title></circle>
+                           </g>
+                        ))}
+                     </svg>
+
+                     {/* X-axis Labels */}
+                     <div className="flex justify-between mt-2 px-1">
+                       {data.map((d: any, i: number) => (
+                         <div key={i} className="flex-1 text-center">{d.day}</div>
+                       ))}
+                     </div>
                    </div>
-                   <span className="text-xs font-bold text-slate-400 group-hover:text-slate-900 transition-colors">{d.day}</span>
-                </div>
-              ))}
+                 );
+              })()}
             </div>
           </div>
           
