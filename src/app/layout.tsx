@@ -10,6 +10,7 @@ import { AutoLogoutProvider } from "@/components/AutoLogoutProvider";
 import NextTopLoader from 'nextjs-toploader';
 import { RootLayoutContent } from "@/components/layout/RootLayoutContent";
 import RealtimeListener from "@/components/RealtimeListener";
+import { VisitTracker } from "@/components/VisitTracker";
 
 const poppins = Poppins({
   weight: ['400', '500', '600', '700', '800'],
@@ -50,6 +51,10 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <link rel="preconnect" href="https://vibefolio.com" />
         <link rel="dns-prefetch" href="https://vibefolio.com" />
+        {/* Naver Search Advisor */}
+        {process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION && (
+          <meta name="naver-site-verification" content={process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION} />
+        )}
       </head>
       <body
         className={`${poppins.variable} ${notoSansKr.variable} font-sans antialiased bg-white min-h-screen custom-scrollbar overscroll-none`}
@@ -60,6 +65,24 @@ export default function RootLayout({
           crossOrigin="anonymous"
           strategy="lazyOnload"
         />
+        {/* Google Analytics (GA4) */}
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
+              `}
+            </Script>
+          </>
+        )}
+        <VisitTracker />
         <NextTopLoader color="#000000" showSpinner={false} />
         <ClientProviders>
           <AutoLogoutProvider>
