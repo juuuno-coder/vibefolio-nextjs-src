@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import TiptapEditor from "@/components/editor/TiptapEditor";
 import { EditorSidebar } from "@/components/editor/EditorSidebar";
-import { EmbedModal, AssetModal, StyleModal, CTAButtonModal, SettingsModal } from "@/components/editor/EditorBlocks";
+import { EmbedModal, AssetModal, Asset, StyleModal, CTAButtonModal, SettingsModal } from "@/components/editor/EditorBlocks";
 import { PhotoGridModal, GridLayout } from "@/components/editor/PhotoGridModal";
 import { LightroomModal } from "@/components/editor/LightroomModal";
 import '@/components/editor/tiptap.css';
@@ -98,6 +98,7 @@ export default function TiptapUploadPage() {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [photoGridModalOpen, setPhotoGridModalOpen] = useState(false);
   const [lightroomModalOpen, setLightroomModalOpen] = useState(false);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [projectBgColor, setProjectBgColor] = useState("#FFFFFF");
   const [contentSpacing, setContentSpacing] = useState(60);
 
@@ -336,6 +337,7 @@ export default function TiptapUploadPage() {
             fields: finalFields,
             tags: finalTags, 
           }),
+          assets: assets,
         }),
       });
 
@@ -850,7 +852,8 @@ export default function TiptapUploadPage() {
       <AssetModal
         isOpen={assetModalOpen}
         onClose={() => setAssetModalOpen(false)}
-        onFileSelect={handleAssetFileSelect}
+        assets={assets}
+        onAssetsChange={setAssets}
       />
       <StyleModal
         isOpen={styleModalOpen}

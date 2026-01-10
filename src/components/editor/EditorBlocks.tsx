@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { X, Image, MonitorPlay, Code, Figma, Box, Video } from "lucide-react";
+import { X, Image, MonitorPlay, Code, Figma, Box, Video, Upload, Trash2, FileText, CheckCircle, Loader2, AlertCircle } from "lucide-react";
+import { uploadFile } from "@/lib/supabase/storage";
 import { Button } from "@/components/ui/button";
 
 interface EmbedModalProps {
@@ -205,64 +206,201 @@ export function TextBlockToolbar() {
   );
 }
 
+// 에셋 데이터 타입 정의
+export interface Asset {
+  name: string;
+  url: string;
+  size: number;
+  type: string;
+}
+
 // 에셋 첨부 모달
 interface AssetModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onFileSelect: (files: FileList) => void;
+  assets: Asset[];
+  onAssetsChange: (assets: Asset[]) => void;
 }
 
-export function AssetModal({ isOpen, onClose, onFileSelect }: AssetModalProps) {
+export function AssetModal({ isOpen, onClose, assets = [], onAssetsChange }: AssetModalProps) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
   if (!isOpen) return null;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      onFileSelect(e.target.files);
-      onClose();
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      await processFiles(e.dataTransfer.files);
     }
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      await processFiles(e.target.files);
+    }
+  };
+
+  const processFiles = async (fileList: FileList) => {
+    setUploading(true);
+    const newAssets: Asset[] = [];
+    
+    // 최대 5개 제한 체크
+    if (assets.length + fileList.length > 5) {
+      alert("최대 5개의 자산만 첨부할 수 있습니다.");
+      setUploading(false);
+      return;
+    }
+
+    try {
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        if (file.size > 500 * 1024 * 1024) { // 500MB Limit
+            alert(`파일 ${file.name}의 크기가 500MB를 초과합니다.`);
+            continue;
+        }
+
+        // Upload to Supabase ('project_assets' bucket recommended, falling back if logic inside uploadFile handles it)
+        // Note: uploadFile implementation needs to support 'project_assets' bucket or similar.
+        // Assuming uploadFile defaults to 'recruit_files' but we can pass bucket name.
+        const result = await uploadFile(file, 'project_assets'); 
+        newAssets.push(result);
+      }
+      
+      onAssetsChange([...assets, ...newAssets]);
+    } catch (error) {
+      console.error("Upload failed", error);
+      alert("파일 업로드 중 오류가 발생했습니다.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeAsset = (index: number) => {
+    const newAssets = [...assets];
+    newAssets.splice(index, 1);
+    onAssetsChange(newAssets);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl mx-4 animate-in zoom-in-95 duration-200">
-        <div className="flex items-start justify-between p-6 border-b border-gray-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl mx-4 animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="flex items-start justify-between p-8 border-b border-gray-50 bg-white sticky top-0 z-10">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">다운로드 가능한 자산을 내 프로젝트에 첨부</h2>
-            <p className="text-sm text-gray-500 mt-1">다른 사람들이 다운로드할 수 있도록 무료 또는 프리미엄 자산 공유</p>
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">다운로드 가능한 자산 첨부</h2>
+            <p className="text-sm text-gray-500 mt-2">다른 사용자들이 내 프로젝트 소스나 리소스를 다운로드할 수 있게 공유하세요.</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-6 h-6 text-gray-400" />
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-3">새 자산 추가</p>
-            <div className="flex items-center gap-4">
-              <label className="px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer transition-colors font-medium text-gray-700">
-                파일 선택...
-                <input type="file" className="hidden" multiple onChange={handleFileChange} accept=".jpg,.jpeg,.png,.svg,.psd,.ai,.pdf,.ttf,.zip,.abr,.pat" />
-              </label>
-              <p className="text-xs text-gray-500">
-                지원되는 파일 유형: JPG, PNG, SVG, PSD, AI, PDF, TTF, ZIP, ABR, PAT 등. 최대 크기 500MB.{" "}
-                <a href="#" className="text-blue-500 hover:underline">콘텐츠 가이드라인 및 허용되는 파일 유형</a>
-              </p>
+        <div className="p-8 space-y-8 overflow-y-auto custom-scrollbar">
+          {/* Upload Area */}
+          <div className="space-y-4">
+             <div className="flex items-center justify-between">
+                <p className="text-sm font-bold text-gray-900 uppercase tracking-widest">새 자산 추가</p>
+                <span className="text-xs font-medium text-gray-400 text-right">
+                    JPG, PNG, PSD, AI, PDF, ZIP 등<br/>최대 500MB
+                </span>
+             </div>
+            
+            <div 
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`relative group border-2 border-dashed rounded-2xl p-10 text-center transition-all duration-300 ${
+                    isDragging ? "border-green-500 bg-green-50/50 scale-[0.99]" : "border-slate-200 hover:border-slate-300 bg-slate-50/30 hover:bg-slate-50"
+                }`}
+            >
+                {uploading ? (
+                    <div className="flex flex-col items-center justify-center py-4">
+                        <Loader2 className="w-10 h-10 text-green-500 animate-spin mb-4" />
+                        <p className="text-sm font-bold text-slate-700">파일을 업로드하고 있습니다...</p>
+                        <p className="text-xs text-slate-400 mt-1">잠시만 기다려주세요.</p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                            <Upload className="w-8 h-8 text-slate-400 group-hover:text-green-500 transition-colors" />
+                        </div>
+                        <p className="text-lg font-bold text-slate-700 mb-2">
+                            파일을 여기로 드래그하거나 클릭하여 선택
+                        </p>
+                        <p className="text-sm text-slate-400 max-w-sm mx-auto">
+                            프로젝트와 관련된 소스 파일, 고화질 이미지 등을 공유할 수 있습니다.
+                        </p>
+                        <input 
+                            type="file" 
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                            multiple 
+                            onChange={handleFileSelect} 
+                            disabled={uploading}
+                        />
+                    </>
+                )}
             </div>
           </div>
 
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">첨부된 자산</p>
-            <div className="h-40 border border-gray-200 rounded-xl p-4 text-center flex items-center justify-center text-gray-400">
-              <p className="text-sm">
-                추가된 자산이 없습니다. 사람들이 구매하거나 무료로 다운로드할 수 있도록 프로젝트당 최대 5개의 자산을 추가할 수 있습니다.
-              </p>
+          {/* Attached Assets List */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <p className="text-sm font-bold text-gray-900 uppercase tracking-widest">첨부된 자산 목록</p>
+                <span className="text-xs font-medium bg-slate-100 text-slate-600 px-2 py-1 rounded-md">
+                    {assets.length} / 5
+                </span>
+            </div>
+            
+            {assets.length === 0 ? (
+                <div className="h-32 border border-slate-200 border-dashed rounded-xl flex flex-col items-center justify-center text-slate-400 bg-slate-50/50">
+                    <FileText className="w-8 h-8 opacity-20 mb-2" />
+                    <p className="text-sm">추가된 자산이 없습니다.</p>
+                </div>
+            ) : (
+                <div className="grid gap-3">
+                    {assets.map((asset, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-xl shadow-sm hover:shadow-md transition-all group">
+                            <div className="flex items-center gap-4 overflow-hidden">
+                                <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0 text-slate-500 font-bold text-xs uppercase">
+                                    {asset.type.split('/')[1] || 'FILE'}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-bold text-slate-800 truncate">{asset.name}</p>
+                                    <p className="text-xs text-slate-400">{(asset.size / 1024 / 1024).toFixed(2)} MB</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => removeAsset(idx)}
+                                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
+            <div className="bg-slate-50 p-4 rounded-xl flex gap-3 text-xs text-slate-500 border border-slate-100">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-slate-400" />
+                <p>업로드된 파일은 누구나 다운로드할 수 있습니다. 저작권에 문제가 없는 파일만 공유해 주세요.</p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 p-6 border-t border-gray-100">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8">완료</Button>
-          <Button variant="ghost" onClick={onClose} className="text-gray-500">취소</Button>
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-50 bg-white">
+          <Button onClick={onClose} className="bg-slate-900 hover:bg-slate-800 text-white px-8 h-12 rounded-xl font-bold shadow-lg shadow-slate-200 transition-all active:scale-95">
+             완료 및 저장
+          </Button>
         </div>
       </div>
     </div>
