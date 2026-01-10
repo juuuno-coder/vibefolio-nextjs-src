@@ -106,24 +106,6 @@ export default function TiptapEditor({
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3],
-          HTMLAttributes: {
-            class: 'block-indicator block-heading',
-          },
-        },
-        paragraph: {
-          HTMLAttributes: {
-            class: 'block-indicator block-paragraph',
-          },
-        },
-        codeBlock: {
-          HTMLAttributes: {
-            class: 'block-indicator block-code',
-          },
-        },
-        blockquote: {
-          HTMLAttributes: {
-            class: 'block-indicator block-quote',
-          },
         },
       }),
       CustomImageExtension.configure({
@@ -141,7 +123,7 @@ export default function TiptapEditor({
         width: 640,
         height: 360,
         HTMLAttributes: {
-          class: 'block-indicator block-video rounded-xl my-4',
+          class: 'rounded-xl my-4',
         },
       }),
       Placeholder.configure({
