@@ -34,6 +34,7 @@ export default function AdminPage() {
   const router = useRouter();
   const { isAdmin, isLoading: isAdminLoading, userId } = useAdmin();
   const [stats, setStats] = useState({
+    todayVisits: 0,
     totalProjects: 0,
     totalUsers: 0,
     totalInquiries: 0,
@@ -44,6 +45,7 @@ export default function AdminPage() {
     totalPopups: 0,
     projectGrowth: 0,
   });
+  const [activeTab, setActiveTab] = useState<'projects' | 'inquiries'>('projects');
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [recentProjects, setRecentProjects] = useState<any[]>([]);
   const [recentInquiries, setRecentInquiries] = useState<any[]>([]);
@@ -162,7 +164,19 @@ export default function AdminPage() {
 
         setWeeklyData(weeklyStats);
 
+        // 오늘 방문자수 조회
+        let todayVisits = 0;
+        try {
+          const { data: visitData } = await (supabase as any)
+            .from('site_stats')
+            .select('visits')
+            .eq('date', new Date().toISOString().split('T')[0])
+            .single();
+          todayVisits = visitData?.visits || 0;
+        } catch (e) { console.warn('site_stats error', e); }
+
         setStats({
+          todayVisits,
           totalProjects: projectCount || 0,
           totalUsers: userCount || 0,
           totalInquiries: inquiryCount || 0,
@@ -256,7 +270,7 @@ export default function AdminPage() {
       color: "text-indigo-500",
       bgColor: "bg-indigo-50",
       path: "/admin/stats",
-      count: null,
+      count: 0,
     },
   ];
 
@@ -295,10 +309,10 @@ export default function AdminPage() {
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "전체 프로젝트", value: stats.totalProjects, icon: FileText, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "누적 사용자", value: stats.totalUsers, icon: Users, color: "text-pink-600", bg: "bg-pink-50" },
-          { label: "새 문의사항", value: stats.totalInquiries, icon: MessageCircle, color: "text-orange-600", bg: "bg-orange-50" },
-          { label: "진행 중인 이벤트", value: stats.totalRecruitItems, icon: Briefcase, color: "text-green-600", bg: "bg-green-50" },
+          { label: "오늘 방문자수", value: stats.todayVisits, icon: Eye, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "전체 회원수", value: stats.totalUsers, icon: Users, color: "text-pink-600", bg: "bg-pink-50" },
+          { label: "프로젝트 등록수", value: stats.totalProjects, icon: FileText, color: "text-indigo-600", bg: "bg-indigo-50" },
+          { label: "채용/공모 등록수", value: stats.totalRecruitItems, icon: Briefcase, color: "text-green-600", bg: "bg-green-50" },
         ].map((item, i) => (
           <Card key={i} className="border-none shadow-sm hover:shadow-md transition-shadow duration-300 rounded-[24px] overflow-hidden">
             <CardContent className="p-6">
@@ -331,7 +345,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between mb-8">
               <CardTitle className="text-xl font-black flex items-center gap-2">
                 <BarChart3 className="text-[#16A34A]" />
-                주간 플랫폼 활성 지수 (Platform Vitality)
+                주간 프로젝트 등록 현황
               </CardTitle>
               <select className="bg-slate-50 border-none text-[10px] font-bold text-slate-500 rounded-lg px-3 py-1.5 focus:ring-0 cursor-pointer">
                 <option>최근 7일</option>
@@ -373,99 +387,79 @@ export default function AdminPage() {
           </div>
         </Card>
 
-        {/* Real-time Status */}
-        <Card className="border-none shadow-sm rounded-[32px] overflow-hidden p-8 flex flex-col bg-slate-900 text-white">
-          <CardTitle className="text-xl font-black mb-8 italic">REAL-TIME STATUS</CardTitle>
-          <div className="space-y-8 flex-1">
-            {[
-              { label: "진행 중인 프로젝트", count: stats.totalProjects, percent: Math.min(100, (stats.totalProjects / 100) * 100), color: "bg-blue-400" }, // 목표 100개 기준
-              { label: "답변 대기 문의", count: stats.totalInquiries, percent: Math.min(100, (stats.totalInquiries / 10) * 100), color: "bg-amber-400" }, // 목표 0개지만 관리용 비중
-              { label: "활성 배너 슬롯", count: stats.totalBanners, percent: Math.min(100, (stats.totalBanners / 5) * 100), color: "bg-purple-400" }, // 최대 5개 노출 기준
-              { label: "새 공지사항", count: stats.totalNotices, percent: Math.min(100, (stats.totalNotices / 10) * 100), color: "bg-green-400" },
-            ].map((item, i) => (
-              <div key={i} className="space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-500 tracking-wider uppercase">{item.label}</span>
-                  <span className="font-black text-[14px]">{item.count}</span>
-                </div>
-                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div className={`h-full ${item.color} rounded-full transition-all duration-1000`} style={{ width: `${item.percent}%` }} />
-                </div>
-              </div>
-            ))}
+        {/* Recent Activities (Combined Tab) */}
+        <Card className="border-none shadow-sm rounded-[32px] overflow-hidden p-6 flex flex-col bg-white h-full min-h-[400px]">
+          <div className="flex items-center justify-between mb-6">
+            <CardTitle className="text-lg font-black italic">RECENT ACTIVITIES</CardTitle>
+            <div className="flex bg-slate-100 p-1 rounded-xl">
+              <button 
+                onClick={() => setActiveTab('projects')}
+                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
+                  activeTab === 'projects' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                PROJECTS
+              </button>
+              <button 
+                onClick={() => setActiveTab('inquiries')}
+                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
+                  activeTab === 'inquiries' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                INQUIRIES {recentInquiries.length > 0 && <span className="ml-1 w-1.5 h-1.5 inline-block rounded-full bg-red-500"></span>}
+              </button>
+            </div>
           </div>
-          <Button className="mt-10 w-full h-14 rounded-2xl bg-white text-slate-900 hover:bg-slate-100 font-black tracking-tighter shadow-xl shadow-black/20 text-sm">
-            설정 및 도구
-            <Settings size={18} className="ml-2 animate-spin-slow" />
-          </Button>
-        </Card>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mt-12">
-        {/* Recent Projects Table */}
-        <div className="space-y-4">
-           <div className="flex items-center justify-between px-2">
-             <h3 className="text-xl font-black text-slate-900">최근 등록된 프로젝트</h3>
-             <Link href="/admin/projects" className="text-xs font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest">View All</Link>
-           </div>
-           <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
-             <div className="divide-y divide-slate-50">
-               {recentProjects.length > 0 ? recentProjects.map((project, idx) => (
-                 <div key={idx} className="p-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors group">
-                    <div className="flex items-center gap-5">
-                       <div className="w-14 h-14 rounded-2xl bg-slate-100 bg-cover bg-center flex-shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-300" style={{ backgroundImage: `url(${project.thumbnail_url || '/globe.svg'})` }} />
-                       <div>
-                         <p className="font-bold text-slate-900 text-sm line-clamp-1 group-hover:text-[#16A34A] transition-colors">{project.title || "제목 없음"}</p>
-                         <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">@{project.profiles?.username || "익명"}</p>
-                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-slate-300">{(() => {
-                            const diff = Math.floor((new Date().getTime() - new Date(project.created_at).getTime()) / (1000 * 60));
-                            if (diff < 60) return `${diff}분 전`;
-                            if (diff < 1440) return `${Math.floor(diff / 60)}시간 전`;
-                            return `${Math.floor(diff / 1440)}일 전`;
-                          })()}
-</span>
-                      <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-white group-hover:text-slate-900 transition-all cursor-pointer">
-                        <ChevronRight size={14} />
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+            {activeTab === 'projects' ? (
+              <div className="space-y-4">
+                {recentProjects.length > 0 ? recentProjects.map((project, idx) => (
+                   <div key={idx} className="flex items-center gap-4 group cursor-pointer hover:bg-slate-50 p-2 rounded-xl transition-colors">
+                      <div className="w-12 h-12 rounded-xl bg-slate-100 bg-cover bg-center flex-shrink-0 border border-slate-100" style={{ backgroundImage: `url(${project.thumbnail_url || '/globe.svg'})` }} />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-slate-900 text-xs truncate group-hover:text-[#16A34A] transition-colors">{project.title || "제목 없음"}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                           <span className="text-[10px] text-slate-400 font-bold">@{project.profiles?.username || "익명"}</span>
+                           <span className="text-[9px] text-slate-300">|</span>
+                           <span className="text-[10px] text-slate-400">{new Date(project.created_at).toLocaleDateString()}</span>
+                        </div>
                       </div>
-                    </div>
-                 </div>
-               )) : (
-                 <div className="p-16 text-center text-slate-300 font-bold italic tracking-tighter">최근 활동이 없습니다.</div>
-               )}
-             </div>
-           </Card>
-        </div>
-
-        {/* Recent Inquiries List */}
-        <div className="space-y-4">
-           <div className="flex items-center justify-between px-2">
-             <h3 className="text-xl font-black text-slate-900">새로운 문의사항</h3>
-             <Link href="/admin/inquiries" className="text-xs font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest">Check List</Link>
-           </div>
-           <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
-             <div className="divide-y divide-slate-50">
-                {recentInquiries.length > 0 ? recentInquiries.map((inquiry, idx) => (
-                  <div key={idx} className="p-5 flex items-start gap-4 group cursor-pointer hover:bg-slate-50/50">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-[#16A34A] group-hover:text-white transition-all duration-300">
-                      <MessageCircle size={20} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="font-bold text-slate-900 text-sm truncate">{inquiry.projectTitle || "일반 문의"}</p>
-                        <span className="text-[10px] font-black text-slate-300 uppercase shrink-0">{new Date(inquiry.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed font-medium">{inquiry.message}</p>
-                    </div>
-                  </div>
+                      <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-900" />
+                   </div>
                 )) : (
-                  <div className="p-16 text-center text-slate-300 font-bold italic tracking-tighter">새로운 문의사항이 없습니다.</div>
+                  <div className="text-center py-12 text-slate-300 text-xs">최근 등록된 프로젝트가 없습니다.</div>
                 )}
-             </div>
-           </Card>
-        </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentInquiries.length > 0 ? recentInquiries.map((inq, idx) => (
+                   <div key={idx} className="flex items-start gap-3 group cursor-pointer hover:bg-slate-50 p-2 rounded-xl transition-colors">
+                      <div className="mt-1 w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
+                        <MessageCircle size={14} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <p className="font-bold text-slate-900 text-xs truncate max-w-[120px]">{inq.title || "문의"}</p>
+                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${inq.status === 'resolved' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
+                            {inq.status === 'resolved' ? '완료' : '대기'}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1 line-clamp-2">{inq.content || "내용 없음"}</p>
+                        <span className="text-[9px] text-slate-300 mt-1 block">{new Date(inq.created_at).toLocaleDateString()}</span>
+                      </div>
+                   </div>
+                )) : (
+                  <div className="text-center py-12 text-slate-300 text-xs">새로운 문의사항이 없습니다.</div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <Link href={activeTab === 'projects' ? '/admin/projects' : '/admin/inquiries'} className="mt-6 w-full py-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-900 text-xs font-bold text-center transition-colors flex items-center justify-center gap-2">
+            전체 보기 <ChevronRight size={12} />
+          </Link>
+        </Card>
       </div>
     </div>
   );
