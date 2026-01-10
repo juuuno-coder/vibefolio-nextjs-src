@@ -1247,12 +1247,15 @@ function ItemCard({
   return (
     <Card className={`group border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[24px] overflow-hidden bg-white flex flex-col h-full ${isExpired ? 'opacity-60' : ''}`}>
       {/* Thumbnail Area - Aspect Ratio (3:4) with Full Bleed Image (No Zoom) */}
-      <div className="relative aspect-[3/4] overflow-hidden bg-slate-100 flex items-center justify-center">
+      <div 
+        className="relative aspect-[3/4] overflow-hidden bg-slate-100 flex items-center justify-center cursor-pointer group/image"
+        onClick={() => onViewDetail(item)}
+      >
         {item.thumbnail ? (
           <img 
             src={item.thumbnail} 
             alt={item.title} 
-            className="w-full h-full object-cover pointer-events-none"
+            className="w-full h-full object-cover pointer-events-none transition-transform duration-500 group-hover/image:scale-105"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-300">
@@ -1261,7 +1264,7 @@ function ItemCard({
         )}
         
         {/* Status Badge */}
-        <div className="absolute top-4 left-4 flex gap-2 z-10">
+        <div className="absolute top-4 left-4 flex gap-2 z-10 pointer-events-none">
           <span className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase border ${typeInfo.color} backdrop-blur-md bg-white/80 shadow-sm`}>
             {typeInfo.label}
           </span>
@@ -1279,10 +1282,20 @@ function ItemCard({
         {/* Action Buttons (Overlay for Admin) */}
         {isAdmin && (
           <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-            <Button size="icon" variant="secondary" className="w-8 h-8 rounded-full bg-white/90 hover:bg-white text-slate-600 shadow-sm" onClick={() => onEdit(item)}>
+            <Button 
+              size="icon" 
+              variant="secondary" 
+              className="w-8 h-8 rounded-full bg-white/90 hover:bg-white text-slate-600 shadow-sm" 
+              onClick={(e) => { e.stopPropagation(); onEdit(item); }}
+            >
               <Edit size={14} />
             </Button>
-            <Button size="icon" variant="destructive" className="w-8 h-8 rounded-full bg-red-500/90 hover:bg-red-500 text-white shadow-sm border-none" onClick={() => onDelete(item.id)}>
+            <Button 
+              size="icon" 
+              variant="destructive" 
+              className="w-8 h-8 rounded-full bg-red-500/90 hover:bg-red-500 text-white shadow-sm border-none" 
+              onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
+            >
               <Trash2 size={14} />
             </Button>
           </div>
