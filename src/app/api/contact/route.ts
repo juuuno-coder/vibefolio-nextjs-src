@@ -36,6 +36,27 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
+
+    // 로그 기록
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+    
+    // Non-blocking logging
+    (async () => {
+      try {
+        await (supabase as any).from('activity_logs').insert({
+           action: 'CREATE_INQUIRY',
+           target_type: 'INQUIRY',
+           target_id: data && data[0]?.id ? String(data[0].id) : null,
+           details: { title, name, email },
+           ip_address: ip,
+           user_agent: userAgent
+        });
+      } catch (logError) {
+        console.warn('Failed to log inquiry activity:', logError);
+      }
+    })();
+
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error('Contact API Error:', error);
