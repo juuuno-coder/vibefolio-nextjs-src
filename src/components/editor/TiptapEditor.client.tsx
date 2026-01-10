@@ -36,6 +36,8 @@ import {
   Video,
   Grid,
   Code as CodeIcon,
+  List,
+  ListOrdered
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { uploadImage } from '@/lib/supabase/storage';
@@ -264,6 +266,9 @@ export default function TiptapEditor({
   
   return (
     <div className="relative min-h-[800px] w-full max-w-[850px] mx-auto editor-container">
+      {/* 0. Top Fixed Toolbar (Added for UX improvement) */}
+      <EditorToolbar editor={editor} />
+      
       {/* 1. 플로팅 메뉴 (빈 줄에서 나타남) */}
 
 
@@ -484,6 +489,81 @@ export default function TiptapEditor({
         accept="image/*"
         className="hidden"
       />
+    </div>
+  );
+}
+
+function EditorToolbar({ editor }: { editor: Editor | null }) {
+  if (!editor) return null;
+  
+  return (
+    <div className="sticky top-4 z-40 bg-white/90 backdrop-blur-md border border-slate-200 rounded-2xl px-3 py-2 flex flex-wrap gap-1.5 items-center mb-8 shadow-sm transition-all w-full max-w-[850px]">
+      
+      {/* Headings */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-3 font-bold text-slate-600 hover:bg-slate-100 hover:text-slate-900 rounded-lg">
+            <Type size={16} />
+            <span className="text-xs">스타일</span>
+            <ChevronDown className="w-3 h-3 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="bg-white border-slate-200 min-w-[140px] p-1 shadow-lg rounded-xl">
+          <DropdownMenuItem onClick={() => editor.chain().focus().setParagraph().run()} className="cursor-pointer rounded-lg text-sm font-medium p-2 hover:bg-slate-50">본문</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className="cursor-pointer rounded-lg text-lg font-black p-2 hover:bg-slate-50">제목 1</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className="cursor-pointer rounded-lg text-base font-bold p-2 hover:bg-slate-50">제목 2</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className="cursor-pointer rounded-lg text-sm font-bold p-2 hover:bg-slate-50">제목 3</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <div className="w-px h-5 bg-slate-200 mx-1" />
+
+       {/* Alignment */}
+      <div className="flex bg-slate-100 rounded-lg p-0.5">
+          <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().setTextAlign('left').run()} className={`h-7 w-7 p-0 rounded-md transition-all ${editor.isActive({ textAlign: 'left' }) ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>
+            <AlignLeft className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().setTextAlign('center').run()} className={`h-7 w-7 p-0 rounded-md transition-all ${editor.isActive({ textAlign: 'center' }) ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>
+            <AlignCenter className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().setTextAlign('right').run()} className={`h-7 w-7 p-0 rounded-md transition-all ${editor.isActive({ textAlign: 'right' }) ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>
+            <AlignRight className="w-4 h-4" />
+          </Button>
+      </div>
+
+      <div className="w-px h-5 bg-slate-200 mx-1" />
+
+      {/* Bold/Italic/Underline */}
+      <div className="flex bg-slate-100 rounded-lg p-0.5">
+          <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleBold().run()} className={`h-7 w-7 p-0 rounded-md transition-all ${editor.isActive('bold') ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>
+            <Bold className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleItalic().run()} className={`h-7 w-7 p-0 rounded-md transition-all ${editor.isActive('italic') ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>
+            <Italic className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleUnderline().run()} className={`h-7 w-7 p-0 rounded-md transition-all ${editor.isActive('underline') ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>
+            <UnderlineIcon className="w-4 h-4" />
+          </Button>
+      </div>
+
+       <div className="w-px h-5 bg-slate-200 mx-1" />
+
+       {/* Lists */}
+       <div className="flex bg-slate-100 rounded-lg p-0.5">
+          <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleBulletList().run()} className={`h-7 w-7 p-0 rounded-md transition-all ${editor.isActive('bulletList') ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>
+            <List className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`h-7 w-7 p-0 rounded-md transition-all ${editor.isActive('orderedList') ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>
+            <ListOrdered className="w-4 h-4" />
+          </Button>
+      </div>
+      
+      <div className="flex-1" />
+      
+      <p className="text-[10px] text-slate-400 font-medium px-2">
+        {editor.storage.characterCount?.characters() || 0}자
+      </p>
+
     </div>
   );
 }
