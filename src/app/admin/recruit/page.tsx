@@ -31,11 +31,12 @@ import {
   DollarSign,
   Upload,
   Sparkles,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/lib/supabase/client";
-import { uploadImage } from "@/lib/supabase/storage";
+import { uploadImage, uploadFile } from "@/lib/supabase/storage";
 import { toast } from "sonner";
 
 interface Item {
@@ -63,6 +64,7 @@ interface Item {
   start_date?: string;
   category_tags?: string;
   banner_image_url?: string;
+  attachments?: { name: string; url: string; size: number; type: string }[];
 }
 
 export default function AdminRecruitPage() {
@@ -96,6 +98,7 @@ export default function AdminRecruitPage() {
     start_date: "",
     category_tags: "",
     banner_image_url: "",
+    attachments: [] as { name: string; url: string; size: number; type: string }[],
   });
 
   // 아이템 로드 (Supabase 연동)
@@ -140,6 +143,7 @@ export default function AdminRecruitPage() {
         start_date: item.start_date || "",
         category_tags: item.category_tags || "",
         banner_image_url: item.banner_image_url || "",
+        attachments: item.attachments || [],
       }));
       
       setItems(formattedItems);
@@ -234,6 +238,7 @@ export default function AdminRecruitPage() {
         start_date: formData.start_date || null,
         category_tags: formData.category_tags || null,
         banner_image_url: formData.banner_image_url || null,
+        attachments: formData.attachments || [],
         // 원본 소스 링크 보존
         source_link: (editingItem as any)?.source_link || null
       };
@@ -312,7 +317,8 @@ export default function AdminRecruitPage() {
       first_prize: "",
       start_date: "",
       category_tags: "",
-      banner_image_url: ""
+      banner_image_url: "",
+      attachments: []
     });
   };
 
@@ -339,7 +345,8 @@ export default function AdminRecruitPage() {
       first_prize: item.first_prize || "",
       start_date: item.start_date || "",
       category_tags: item.category_tags || "",
-      banner_image_url: item.banner_image_url || ""
+      banner_image_url: item.banner_image_url || "",
+      attachments: item.attachments || []
     });
     setIsDialogOpen(true);
   };
@@ -639,6 +646,88 @@ export default function AdminRecruitPage() {
                             }} />
                           </div>
                           <Input placeholder="16:6 비율 와이드 이미지 URL" value={formData.banner_image_url} onChange={e => setFormData({...formData, banner_image_url: e.target.value})} className="h-8 text-xs border-none bg-white/50 p-2" />
+                        </div>
+                      </div>
+
+                      {/* 파일 첨부 영역 */}
+                      <div className="space-y-3 pt-4 border-t border-slate-100 mt-4">
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                           <FileText size={14} /> 공고문 파일 첨부 (최대 10개, 개당 20MB)
+                        </label>
+                        <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            {formData.attachments && formData.attachments.length > 0 && (
+                                <div className="flex flex-col gap-2">
+                                    {formData.attachments.map((file, idx) => (
+                                        <div key={idx} className="flex items-center justify-between bg-white px-3 py-2 rounded-lg text-xs font-medium text-slate-700 border border-slate-100 shadow-sm">
+                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                <FileText size={14} className="text-[#16A34A] shrink-0" />
+                                                <span className="truncate max-w-[200px]">{file.name}</span>
+                                                <span className="text-slate-400 shrink-0">({(file.size / 1024 / 1024).toFixed(2)}MB)</span>
+                                            </div>
+                                            <button 
+                                                type="button"
+                                                onClick={() => {
+                                                    const newFiles = [...(formData.attachments || [])];
+                                                    newFiles.splice(idx, 1);
+                                                    setFormData({...formData, attachments: newFiles});
+                                                }}
+                                                className="text-slate-400 hover:text-red-500 p-1"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="file"
+                                    id="admin-file-upload"
+                                    multiple
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                        const files = Array.from(e.target.files || []);
+                                        if (files.length === 0) return;
+                                        
+                                        const currentCount = formData.attachments?.length || 0;
+                                        if (currentCount + files.length > 10) {
+                                            toast.error("파일은 최대 10개까지만 업로드 가능합니다.");
+                                            return;
+                                        }
+
+                                        for (const file of files) {
+                                            if (file.size > 20 * 1024 * 1024) {
+                                                toast.error(`${file.name} 파일이 20MB를 초과합니다.`);
+                                                continue;
+                                            }
+                                            try {
+                                                toast.info(`${file.name} 업로드 중...`);
+                                                const uploaded = await uploadFile(file, 'recruit_files'); 
+                                                
+                                                setFormData(prev => ({
+                                                    ...prev, 
+                                                    attachments: [...(prev.attachments || []), uploaded]
+                                                }));
+                                                toast.success(`${file.name} 업로드 완료`);
+                                            } catch (err) {
+                                                console.error(err);
+                                                toast.error(`업로드 실패: ${((err as any).message)}`);
+                                            }
+                                        }
+                                        e.target.value = ''; 
+                                    }}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => document.getElementById('admin-file-upload')?.click()}
+                                    className="h-9 text-xs border-dashed border-slate-300 text-slate-500 hover:text-[#16A34A] hover:border-[#16A34A] w-full"
+                                    disabled={(formData.attachments?.length || 0) >= 10}
+                                >
+                                    <Plus size={14} className="mr-2" /> 파일 추가하기
+                                </Button>
+                            </div>
                         </div>
                       </div>
                     </div>
