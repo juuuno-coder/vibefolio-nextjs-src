@@ -46,6 +46,7 @@ export default function AdminPage() {
     projectGrowth: 0,
   });
   const [activeTab, setActiveTab] = useState<'projects' | 'inquiries'>('projects');
+  const [hoveredChartData, setHoveredChartData] = useState<any | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [recentProjects, setRecentProjects] = useState<any[]>([]);
   const [recentInquiries, setRecentInquiries] = useState<any[]>([]);
@@ -367,7 +368,10 @@ export default function AdminPage() {
             </div>
             
             {/* Combined Chart (Bar + Lines) */}
-            <div className="w-full h-64 mt-6 relative">
+            <div 
+              className="w-full h-64 mt-6 relative"
+              onMouseLeave={() => setHoveredChartData(null)}
+            >
               {(() => {
                  const data = weeklyData.length > 0 ? weeklyData : Array(7).fill({day: '-', visits:0, users:0, projects:0, recruits:0});
                  // 1. Max Scales
@@ -437,29 +441,54 @@ export default function AdminPage() {
                            points={data.map((d: any, i: number) => `${i * (100/7) + (100/7)/2},${50 - (d.recruits / maxOthers) * 50}`).join(" ")}
                          />
 
-                        {/* Points (Dots) for interactive feel */}
-                        {data.map((d: any, i: number) => (
-                           <g key={`dots-${i}`}>
-                             {/* User Dot */}
-                             <circle cx={i * (100/7) + (100/7)/2} cy={50 - (d.users / maxOthers) * 50} r="1" fill="#ec4899" className="hover:r-2 transition-all"><title>가입: {d.users}</title></circle>
-                             {/* Project Dot */}
-                             <circle cx={i * (100/7) + (100/7)/2} cy={50 - (d.projects / maxOthers) * 50} r="1" fill="#6366f1" className="hover:r-2 transition-all"><title>프로젝트: {d.projects}</title></circle>
-                             {/* Recruit Dot */}
-                             <circle cx={i * (100/7) + (100/7)/2} cy={50 - (d.recruits / maxOthers) * 50} r="1" fill="#22c55e" className="hover:r-2 transition-all"><title>채용: {d.recruits}</title></circle>
-                           </g>
-                        ))}
-                     </svg>
+                     {/* Interaction Layer (Full height columns) */}
+                     {data.map((d: any, i: number) => (
+                       <rect
+                         key={`touch-${i}`}
+                         x={i * (100/7)}
+                         y="0"
+                         width={100/7}
+                         height="50"
+                         fill="transparent"
+                         className="cursor-pointer hover:fill-slate-900/5 transition-colors"
+                         onMouseEnter={() => setHoveredChartData({ ...d, index: i })}
+                       />
+                     ))}
+                   </svg>
 
-                     {/* X-axis Labels */}
-                     <div className="flex justify-between mt-2 px-1">
-                       {data.map((d: any, i: number) => (
-                         <div key={i} className="flex-1 text-center">{d.day}</div>
-                       ))}
+                   {/* Hover Tooltip (Absolute Position) */}
+                   {hoveredChartData && (
+                     <div 
+                       className="absolute bg-slate-900 text-white text-[10px] p-3 rounded-xl shadow-xl z-50 pointer-events-none transition-all duration-200 ease-out transform -translate-x-1/2 -translate-y-2"
+                       style={{ 
+                         left: `${hoveredChartData.index * (100/7) + (100/7)/2}%`, 
+                         top: '10%' // 차트 중간쯤이나 위쪽에 표시. 막대 높이에 따라 유동적으로 하면 좋지만 고정 위치가 깔끔함.
+                       }}
+                     >
+                       <p className="font-bold text-slate-300 mb-2 border-b border-white/10 pb-1 text-center whitespace-nowrap">
+                         {hoveredChartData.day}요일 ({hoveredChartData.date?.slice(5)})
+                       </p>
+                       <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-left min-w-[100px]">
+                         <div className="flex items-center justify-between"><span className="text-slate-400">방문</span> <span className="font-bold">{hoveredChartData.visits}</span></div>
+                         <div className="flex items-center justify-between"><span className="text-pink-400">가입</span> <span className="font-bold">{hoveredChartData.users}</span></div>
+                         <div className="flex items-center justify-between"><span className="text-indigo-400">등록</span> <span className="font-bold">{hoveredChartData.projects}</span></div>
+                         <div className="flex items-center justify-between"><span className="text-green-400">공모</span> <span className="font-bold">{hoveredChartData.recruits}</span></div>
+                       </div>
+                       {/* 화살표 */}
+                       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-slate-900"></div>
                      </div>
+                   )}
+
+                   {/* X-axis Labels */}
+                   <div className="flex justify-between mt-2 px-1">
+                     {data.map((d: any, i: number) => (
+                       <div key={i} className={`flex-1 text-center transition-colors ${hoveredChartData?.index === i ? 'text-slate-900 font-bold scale-110' : ''}`}>{d.day}</div>
+                     ))}
                    </div>
-                 );
-              })()}
-            </div>
+                 </div>
+               );
+            })()}
+          </div>
           </div>
           
           <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
