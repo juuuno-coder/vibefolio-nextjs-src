@@ -1255,13 +1255,16 @@ function ItemCard({
           <img 
             src={item.thumbnail} 
             alt={item.title} 
-            className="w-full h-full object-cover pointer-events-none transition-transform duration-500 group-hover/image:scale-105"
+            className="w-full h-full object-cover pointer-events-none transition-transform duration-500"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-300">
             <typeInfo.icon size={40} strokeWidth={1} />
           </div>
         )}
+        
+        {/* Shine Effect Overlay */}
+        <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300 pointer-events-none" />
         
         {/* Status Badge */}
         <div className="absolute top-4 left-4 flex gap-2 z-10 pointer-events-none">
