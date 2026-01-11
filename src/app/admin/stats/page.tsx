@@ -96,10 +96,13 @@ export default function AdminStatsPage() {
       const days = period === 7 ? 7 : 30;
       const dailyData: DailyTableData[] = [];
       
+      const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+      
       for (let i = 0; i < days; i++) {
         const d = new Date();
         d.setDate(d.getDate() - i);
         const dateStr = d.toISOString().split('T')[0];
+        const dayLabel = weekDays[new Date(dateStr).getUTCDay()];
         const queryDateStart = `${dateStr}T00:00:00`;
         const queryDateEnd = `${dateStr}T23:59:59`;
 
@@ -111,7 +114,7 @@ export default function AdminStatsPage() {
         ]);
 
         dailyData.push({
-          date: dateStr,
+          date: `${dateStr} (${dayLabel})`,
           visits: visitRes.data?.visits || 0,
           users: userRes.count || 0,
           projects: projectRes.count || 0,
