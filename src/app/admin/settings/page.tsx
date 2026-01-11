@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/supabase/storage";
 import { useAdmin } from "@/hooks/useAdmin";
+import { logActivity } from "@/lib/utils/logger";
 
 interface SiteConfig {
   key: string;
@@ -87,6 +88,14 @@ export default function AdminSettingsPage() {
         .upsert(updates);
 
       if (error) throw error;
+
+      await logActivity({
+        action: 'UPDATE',
+        targetType: 'SETTINGS',
+        details: { items: Object.keys(config) },
+        userId: (await supabase.auth.getUser()).data.user?.id || '',
+        userEmail: (await supabase.auth.getUser()).data.user?.email
+      });
 
       toast.success('설정이 저장되었습니다.');
     } catch (error) {

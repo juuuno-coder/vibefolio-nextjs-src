@@ -28,6 +28,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/supabase/storage";
 import { useAdmin } from "@/hooks/useAdmin";
+import { logActivity } from "@/lib/utils/logger";
 import { toast } from "sonner";
 import {
   Tabs,
@@ -206,9 +207,29 @@ export default function AdminBannersPage() {
           .update(submitData)
           .eq("id", editingBanner.id);
         if (error) throw error;
+        
+        await logActivity({
+          action: 'UPDATE',
+          targetType: 'BANNER',
+          targetId: editingBanner.id,
+          details: { title: submitData.title },
+          userId: (await supabase.auth.getUser()).data.user?.id || '',
+          userEmail: (await supabase.auth.getUser()).data.user?.email
+        });
       } else {
-        const { error } = await (supabase.from("banners") as any).insert([submitData]);
+        const { error, data } = await (supabase.from("banners") as any).insert([submitData]).select();
         if (error) throw error;
+
+        if (data && data[0]) {
+           await logActivity({
+            action: 'CREATE',
+            targetType: 'BANNER',
+            targetId: data[0].id,
+            details: { title: submitData.title },
+            userId: (await supabase.auth.getUser()).data.user?.id || '',
+            userEmail: (await supabase.auth.getUser()).data.user?.email
+          });
+        }
       }
       
       setIsModalOpen(false);
@@ -227,6 +248,14 @@ export default function AdminBannersPage() {
     try {
       const { error } = await (supabase.from("banners") as any).delete().eq("id", id);
       if (error) throw error;
+      
+      await logActivity({
+        action: 'DELETE',
+        targetType: 'BANNER',
+        targetId: id,
+        userId: (await supabase.auth.getUser()).data.user?.id || '',
+        userEmail: (await supabase.auth.getUser()).data.user?.email
+      });
       loadBanners();
       toast.success("배너가 삭제되었습니다.");
     } catch (err) {
