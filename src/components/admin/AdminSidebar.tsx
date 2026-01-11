@@ -15,7 +15,8 @@ import {
   Bell,
   Settings,
   ArrowLeft,
-  ChevronRight
+  ChevronRight,
+  Presentation
 } from "lucide-react";
 
 const menuItems = [
@@ -78,6 +79,12 @@ const menuItems = [
     path: "/admin/settings",
     icon: Settings,
     color: "text-slate-600"
+  },
+  {
+    title: "IR 자료 관리",
+    path: "/admin/ir",
+    icon: Presentation,
+    color: "text-orange-500"
   }
 ];
 
