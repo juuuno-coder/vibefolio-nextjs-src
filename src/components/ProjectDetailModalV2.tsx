@@ -195,7 +195,7 @@ export function ProjectDetailModalV2({
       // 2. 좋아요 체크
       if (currentId) {
         const { data: likeData } = await supabase
-          .from('project_likes')
+          .from('like')
           .select('id')
           .eq('project_id', project.id) // project.id가 있어야 함
           .eq('user_id', currentId)
@@ -205,7 +205,7 @@ export function ProjectDetailModalV2({
         // 3. 팔로우 체크
         if (project.userId && project.userId !== currentId) {
           const { data: followData } = await supabase
-            .from('follows')
+            .from('Follow')
             .select('id')
             .eq('follower_id', currentId)
             .eq('following_id', project.userId)
@@ -216,7 +216,7 @@ export function ProjectDetailModalV2({
 
       // 4. 댓글 조회
       const { data: commentsData, error: commentsError } = await supabase
-        .from('comments')
+        .from('comment')
         .select(`
           id,
           content,
@@ -224,7 +224,7 @@ export function ProjectDetailModalV2({
           user_id,
           user:profiles(username, profile_image_url)
         `)
-        .eq('project_id', project.id)
+        .eq('project_id', parseInt(project.id))
         .order('created_at', { ascending: false });
 
       if (commentsData) {
@@ -266,7 +266,7 @@ export function ProjectDetailModalV2({
             .from('Project')
             .select('project_id, title, thumbnail_url')
             .eq('user_id', project.userId)
-            .neq('project_id', project.id)
+            .neq('project_id', parseInt(project.id))
             .order('created_at', { ascending: false })
             .limit(4);
           

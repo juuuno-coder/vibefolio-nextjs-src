@@ -38,22 +38,29 @@ export async function generateMetadata(): Promise<Metadata> {
   let ogImage = "";
 
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    const { data } = await supabase.from('site_config').select('*');
-    
-    if (data) {
-      const config: any = {};
-      data.forEach((item: any) => config[item.key] = item.value);
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn('[Layout] Missing Supabase environment variables. using default metadata.');
+    } else {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      // site_config 테이블이 없을 수 있으므로 에러 핸들링
+      const { data, error } = await supabase.from('site_config').select('*');
       
-      if (config.seo_title) title = config.seo_title;
-      if (config.seo_description) description = config.seo_description;
-      if (config.seo_og_image) ogImage = config.seo_og_image;
+      if (error) {
+        console.error('[Layout] site_config fetch error (ignoring):', error.message);
+      } else if (data) {
+        const config: any = {};
+        data.forEach((item: any) => config[item.key] = item.value);
+        
+        if (config.seo_title) title = config.seo_title;
+        if (config.seo_description) description = config.seo_description;
+        if (config.seo_og_image) ogImage = config.seo_og_image;
+      }
     }
   } catch (e) {
-    console.error('Metadata fetch failed:', e);
+    console.error('Metadata fetch critical failure:', e);
   }
 
   return {
