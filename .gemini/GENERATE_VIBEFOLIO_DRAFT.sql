@@ -1,15 +1,15 @@
 -- 1. Team 5를 'Vibefolio (5조)'로 변경하고 IR Deck 정보 업데이트
 UPDATE ir_decks
 SET team_name = 'Vibefolio (5조)',
-    title = 'Vibefolio - 경험을 잇다, 기회를 짓다',
-    description = '예비 창업가와 전문가를 잇는 디지털 창업 가속화 및 포트폴리오 플랫폼'
-WHERE team_name = 'Team 5';
+    title = 'Vibefolio - AI 창작자들을 위한 전용 놀이터',
+    description = '바이브코더(AI Creator)를 위한 포트폴리오 아카이빙 및 커뮤니티 플랫폼'
+WHERE team_name = 'Vibefolio (5조)';
 
 -- 2. 기존 슬라이드 초기화 (Vibefolio 덱)
 DELETE FROM ir_slides 
 WHERE deck_id = (SELECT id FROM ir_decks WHERE team_name = 'Vibefolio (5조)');
 
--- 3. 회의록 기반 상세 IR 슬라이드 생성
+-- 3. 1차 발표자료 기반 상세 IR 슬라이드 생성
 INSERT INTO ir_slides (deck_id, order_index, layout_type, title, content, speaker_notes)
 VALUES
 -- 0. Cover
@@ -18,71 +18,71 @@ VALUES
     0,
     'cover',
     'Vibefolio',
-    '경험을 잇다, 기회를 짓다.\n\n빈틈은 메우고 경험은 채우는,\n우리들의 스타트업 케미스트리.',
-    '안녕하십니까, 5조 발표자입니다. 예비 창업가와 전문가의 핵심 역량 불균형을 해결하여 초기 기업의 생존율을 높이는 ‘Vibefolio’를 소개합니다.'
+    'AI 활용 창작자, "바이브코더"를 위한\n단 하나의 포트폴리오 플랫폼',
+    '안녕하십니까, 5조 발표자입니다. 저희는 급증하는 AI 창작자들, 즉 "바이브코더"들이 마음껏 놀 수 있는 전용 놀이터, Vibefolio를 소개합니다.'
 ),
--- 1. Problem (Pain Point: 핵심 역량 불균형)
+-- 1. Concept (우리의 질문)
 (
     (SELECT id FROM ir_decks WHERE team_name = 'Vibefolio (5조)'),
     1,
-    'basic',
-    'Problem: 핵심 역량의 불균형 (The Imbalance)',
-    '### 초기 창업 팀의 딜레마\n\n1. **기획자(Visionary)**: 아이디어와 BM은 있지만, 이를 실현할 기술(Coding) 역량이 부재함.\n2. **개발자(Architect)**: 기술 구현력은 뛰어나지만, "어떤 서비스"를 만들어야 시장성이 있는지 모름.\n3. **디자이너(Artist)**: 심미적 역량은 있으나, 실제 사용자 데이터와 기술적 구현 경험이 부족함.\n\n> "기획자는 개발자를 못 구해서, 개발자는 무엇을 만들지 몰라서 멈춰있습니다."',
-    '저희는 이를 "Core Competency Imbalance"라고 정의했습니다. 기획자는 기술 구현을 못해 아이디어 단계에서 멈추고, 개발자는 단순 외주 코더로 전락하는 현실입니다.'
+    'big_number',
+    'Project Question',
+    '### "우리에게 가장 필요한 플랫폼은 무엇일까?"\n\n1. 각자의 프로젝트를 효과적으로 홍보할 수 있는 곳\n2. MVP로 빠르게 유저를 모으고 반응을 확인할 수 있는 곳\n3. **바이브코딩**으로 만든 결과물을 인정받을 수 있는 곳',
+    '저희는 이 프로젝트를 시작하며 스스로에게 질문을 던졌습니다. 우리 같은 1인 개발자, 바이브코더들에게 진짜 필요한 공간은 어디일까요?'
 ),
--- 2. Solution (Vibefolio Platform)
+-- 2. Market Problem (기존 플랫폼의 한계)
 (
     (SELECT id FROM ir_decks WHERE team_name = 'Vibefolio (5조)'),
     2,
-    'image_right',
-    'Solution: 초연결 협업 플랫폼',
-    '### Vibefolio가 제시하는 해결책\n\n- **실체 있는 매칭**: 단순 이력서가 아닌, 실제 프로젝트(포트폴리오) 기반의 매칭\n- **바이브 코딩의 보완**: AI 코딩의 한계(할루시네이션 등)를 기획자가 감독할 수 있도록 프로세스화\n- **품앗이 문화의 IT화**: 서로의 부족한 역량을 재능 교환(Credit) 및 지분 협업으로 해결',
-    '바이브폴리오는 단순한 채용 사이트가 아닙니다. 기획자의 아이디어를 개발자의 기술로, 개발자의 기술을 디자이너의 감각으로 연결하는 "스타트업 케미스트리" 플랫폼입니다.'
+    'swot',
+    'Why New Platform?',
+    '### 기존 플랫폼(Behance, Notefolio)의 페인 포인트\n\n- **AI에 대한 시선**: 순수 예술가나 기존 창작자들은 AI 창작물을 "쉽게 만든 것"으로 간주하거나 좋지 않게 보는 경향이 있음.\n- **평가의 모호함**: AI 비중이 높으면 실력을 인정받기 어렵고, 커뮤니티 내에서 소외됨.\n- **정보의 부재**: 어떤 모델, 어떤 프롬프트를 썼는지 기술적인 정보 공유가 활발하지 않음.',
+    '기존의 훌륭한 플랫폼들이 많지만, AI 창작물을 올리기엔 눈치가 보입니다. "이거 딸깍 해서 만든 거 아니야?"라는 시선 때문이죠.'
 ),
--- 3. Persona & Target (3-Types)
+-- 3. Solution (Vibefolio)
 (
     (SELECT id FROM ir_decks WHERE team_name = 'Vibefolio (5조)'),
     3,
-    'grid',
-    'Who is our Target?',
-    '### 세 가지 핵심 페르소나\n\n- **Persona A (Visionary)**: BM 중심 기획가. 기술 파트너가 절실함.\n- **Persona B (Architect)**: 기술 중심 개발자. 시장성 있는 아이템과 공동 창업 기회를 원함.\n- **Persona C (Artist)**: UX 전문가. 실제 서비스 런칭 경험을 통한 커리어 도약을 희망함.',
-    '저희는 이 세 그룹을 유기적으로 연결합니다. 기획자는 CTO를 얻고, 개발자는 나만의 서비스를 갖게 되며, 디자이너는 살아있는 포트폴리오를 얻습니다.'
+    'image_left',
+    'Solution: AI 창작자의 놀이터',
+    '### Vibefolio가 제시하는 해결책\n\n- **전용 놀이터**: AI 사용 여부가 감점 요인이 아닌, 오히려 권장되는 커뮤니티\n- **기술 정보 공유**: 어떤 Model을 썼는지, 어떤 Prompt로 생성했는지 공유하고 학습하는 문화\n- **명확한 정체성**: "AI 활용 창작자(Vibe Coder)"라는 새로운 아이덴티티 부여',
+    '그래서 저희는 AI 창작들을 위한 전용 놀이터를 만들기로 했습니다. 이곳에서는 프롬프트와 모델 정보를 공유하는 것이 곧 실력이고 기여입니다.'
 ),
--- 4. Market Value (Why Now?)
+-- 4. Key Feature 1 (Archive)
 (
     (SELECT id FROM ir_decks WHERE team_name = 'Vibefolio (5조)'),
     4,
-    'basic',
-    'Market Value & Impact',
-    '### 왜 지금인가?\n\n1. **개발 비용 절감**: 초기 자본 없는 창업가들이 외주 비용 없이 팀 빌딩 가능\n2. **실패 비용 최소화**: 혼자 고민하다 망하는 것이 아닌, 전문가 집단(Peer Group)의 빠른 피드백과 검증\n3. **1인 창조기업 생태계**: 파편화된 IT 인재들을 하나의 구심점으로 모아 "자생적 창업 커뮤니티" 형성',
-    '외주 비용 때문에 포기했던 아이디어들이 Vibefolio 안에서는 "기여(Contribute)" 문화를 통해 실현됩니다. 이는 일자리 창출의 선순환으로 이어집니다.'
+    'grid',
+    'Key Feature: Project Archiving',
+    '### 프로젝트의 완벽한 포트폴리오화\n\n- **등록 (Upload)**: 카테고리별 분류 및 상세 정보 입력\n- **목록 (Masonry Grid)**: 갤러리 형태의 직관적인 디자인 탐색\n- **상세 (Detail)**: 사용한 AI 툴, 기여도, 기획 의도 등을 상세히 기록',
+    '단순한 이미지 나열이 아닙니다. 프로젝트의 기획부터 결과물까지, 하나의 완결된 스토리로 아카이빙할 수 있는 기능을 제공합니다.'
 ),
--- 5. Business Model (BM)
+-- 5. Key Feature 2 (Profile)
 (
     (SELECT id FROM ir_decks WHERE team_name = 'Vibefolio (5조)'),
     5,
-    'grid',
-    'Business Model',
-    '### 수익화 전략 (4-Track)\n\n1. **Social Currency (Credit)**: 상호 기여 시 크레딧 발급 -> 유료 아이템/상담 결제 시 소모\n2. **인재 매칭 수수료**: 검증된 포트폴리오 기반 인재 파견 및 채용 성사 수수료\n3. **교육 (Mini MBA)**: 기획/개발/마케팅 실무 교육 (유료 세미나/클래스)\n4. **기업 연계 해커톤**: 기업 API 활용 해커톤 개최 스폰서십',
-    '초기에는 크레딧 시스템으로 트래픽을 모으고, 이후 검증된 인재 풀을 활용한 HR 매칭과 교육 사업으로 수익을 극대화합니다.'
+    'image_right',
+    'Key Feature: Creator Profile',
+    '### 창작자의 브랜드가 되는 프로필\n\n- **Dashboard**: 내가 올린 프로젝트, 받은 좋아요, 팔로원 현황 한눈에 파악\n- **Interaction**: 팔로잉/팔로워 시스템을 통한 크리에이터 간 네트워킹\n- **My Gallery**: 나만의 작품을 전시하는 퍼스널 브랜딩 공간',
+    '개인 프로필 페이지는 그 자체로 훌륭한 이력서가 됩니다. 좋아요와 팔로워 수는 창작자의 영향력을 증명하는 지표가 될 것입니다.'
 ),
--- 6. Product Roadmap
+-- 6. Tech Stack
 (
     (SELECT id FROM ir_decks WHERE team_name = 'Vibefolio (5조)'),
     6,
-    'swot',
-    'Roadmap: From Project to Career',
-    '### 2026 실행 계획\n\n- **Q1 (Build)**: MVP 런칭, 노트폴리오/비핸스 벤치마킹한 기본 아카이빙 기능 구현\n- **Q2 (Connect)**: 대학생/코딩스쿨 제휴를 통한 초기 유저(Seed) 확보 및 해커톤 개최\n- **Q3 (Expand)**: 크레딧 시스템 도입 및 프리미엄(Pro) 멤버십 런칭',
-    '현재 1단계인 아카이빙 기능 구현은 완료되었습니다. 이제 대학 및 교육 기관과 연계하여 초기 유저를 공격적으로 확보할 계획입니다.'
+    'basic',
+    'Tech Stack & Architecture',
+    '### Built with Vibe Coding\n\n- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS\n- **Backend**: Supabase (Auth, Database, Storage)\n- **Deployment**: Vercel\n- **Design**: Shadcn UI, Lucid Icons',
+    '이 모든 플랫폼은 바이브 코딩 기술을 활용하여 1인 ~ 소규모 팀으로 빠르게 구축되었습니다.'
 ),
--- 7. Team (The Dream Team)
+-- 7. Team
 (
     (SELECT id FROM ir_decks WHERE team_name = 'Vibefolio (5조)'),
     7,
     'grid',
     'Team Vibefolio (5조)',
-    '### 우리는 이미 증명했습니다\n\n- **기획/PM (이동엽, 안승빈)**: 페르소나 정의 및 BM 설계, 기능 명세 고도화\n- **Frontend/Design (이준호, 이승훈)**: Shadcn UI 기반 반응형 웹 구축, UX 시나리오 설계\n- **Backend/API (선효섭, 신지호)**: Supabase DB 설계, API 명세 및 데이터 파이프라인 구축',
-    '저희 5조는 기획, 디자인, 개발의 밸런스가 완벽한 팀입니다. 이 프로젝트 자체가 Vibefolio의 성공 가능성을 증명하는 첫 번째 사례입니다.'
+    '### The Builders\n\n- **선효섭**: Backend / API Design\n- **신지호**: Database / QA\n- **안승빈**: PM / Strategy\n- **이동엽**: Planning / Content\n- **이승훈**: UI/UX Design\n- **이준호**: Frontend / Branding',
+    '저희 6명은 각자의 전문성을 바탕으로 이 프로젝트를 완성해 나가고 있습니다.'
 ),
 -- 8. Closing
 (
@@ -90,6 +90,6 @@ VALUES
     8,
     'cover',
     'Vibefolio',
-    '함께할 때 더 빛나는 우리의 Vibe.\n감사합니다.\n\nContact: 5team@vibefolio.net',
-    '경청해 주셔서 감사합니다. 질문 있으신가요?'
+    'AI 창작의 가치가 인정받는 곳,\nVibefolio에서 시작하세요.\n\n감사합니다.',
+    '경청해 주셔서 감사합니다. Vibefolio에서 여러분의 영감을 펼치세요.'
 );
