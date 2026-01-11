@@ -7,7 +7,7 @@ export function VisitTracker() {
   const pathname = usePathname();
 
   useEffect(() => {
-    const hasVisited = sessionStorage.getItem("vibefolio_session_visit");
+    const hasVisited = sessionStorage.getItem("vibefolio_session_visit_v1");
     
     if (!hasVisited) {
        // 방문 기록 및 상세 정보 전송
@@ -21,7 +21,7 @@ export function VisitTracker() {
        })
          .then(res => {
             if (res.ok) {
-                sessionStorage.setItem("vibefolio_session_visit", "true");
+                sessionStorage.setItem("vibefolio_session_visit_v1", "true");
             }
          })
          .catch(err => console.error("Visit tracking failed:", err));

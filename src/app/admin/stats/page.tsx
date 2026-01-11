@@ -101,8 +101,11 @@ export default function AdminStatsPage() {
       for (let i = 0; i < days; i++) {
         const d = new Date();
         d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
-        const dayLabel = weekDays[new Date(dateStr).getUTCDay()];
+        
+        // KST 기준으로 날짜 문자열 생성 (YYYY-MM-DD)
+        const dateStr = d.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
+        
+        const dayLabel = weekDays[new Date(dateStr).getDay()]; // 로컬 시간 기준 요일
         const queryDateStart = `${dateStr}T00:00:00`;
         const queryDateEnd = `${dateStr}T23:59:59`;
 
