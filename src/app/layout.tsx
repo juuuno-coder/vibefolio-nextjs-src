@@ -12,6 +12,8 @@ import { RootLayoutContent } from "@/components/layout/RootLayoutContent";
 import RealtimeListener from "@/components/RealtimeListener";
 import { VisitTracker } from "@/components/VisitTracker";
 
+export const revalidate = 0; // 메타데이터 실시간 반영을 위해 캐시 끄기
+
 const poppins = Poppins({
   weight: ['400', '500', '600', '700', '800'],
   subsets: ['latin'],
