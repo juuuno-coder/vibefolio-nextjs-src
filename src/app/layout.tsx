@@ -24,20 +24,52 @@ const notoSansKr = Noto_Sans_KR({
   variable: '--font-noto-sans-kr',
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://vibefolio.net'),
-  title: "Vibefolio - 크리에이터를 위한 영감 저장소",
-  description: "디자이너, 개발자, 기획자를 위한 프로젝트 아카이빙 및 레퍼런스 공유 플랫폼",
-  keywords: ["AI", "포트폴리오", "바이브코딩", "창작물", "디자인", "일러스트", "3D"],
-  openGraph: {
-    title: "Vibefolio",
-    description: "영감을 수집하고 공유하세요",
-    type: "website",
-  },
-  icons: {
-    icon: "/favicon.ico",
-  },
-};
+import { createClient } from '@supabase/supabase-js';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const defaultTitle = "Vibefolio - 크리에이터를 위한 영감 저장소";
+  const defaultDesc = "디자이너, 개발자, 기획자를 위한 프로젝트 아카이빙 및 레퍼런스 공유 플랫폼";
+  const defaultOgImage = "/images/og-default.png"; // Fallback if needed
+
+  let title = defaultTitle;
+  let description = defaultDesc;
+  let ogImage = "";
+
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data } = await supabase.from('site_config').select('*');
+    
+    if (data) {
+      const config: any = {};
+      data.forEach((item: any) => config[item.key] = item.value);
+      
+      if (config.seo_title) title = config.seo_title;
+      if (config.seo_description) description = config.seo_description;
+      if (config.seo_og_image) ogImage = config.seo_og_image;
+    }
+  } catch (e) {
+    console.error('Metadata fetch failed:', e);
+  }
+
+  return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://vibefolio.net'),
+    title: title,
+    description: description,
+    keywords: ["AI", "포트폴리오", "바이브코딩", "창작물", "디자인", "일러스트", "3D"],
+    openGraph: {
+      title: title,
+      description: description,
+      type: "website",
+      images: ogImage ? [{ url: ogImage }] : [],
+    },
+    icons: {
+      icon: "/favicon.ico",
+    },
+  };
+}
 
 export default function RootLayout({
   children,

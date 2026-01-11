@@ -72,6 +72,12 @@ const menuItems = [
     path: "/admin/stats",
     icon: BarChart3,
     color: "text-indigo-500"
+  },
+  {
+    title: "설정 관리",
+    path: "/admin/settings",
+    icon: Settings,
+    color: "text-slate-600"
   }
 ];
 

@@ -17,6 +17,10 @@ CREATE INDEX IF NOT EXISTS idx_visit_logs_referrer ON visit_logs(referrer);
 
 -- RLS 설정
 ALTER TABLE visit_logs ENABLE ROW LEVEL SECURITY;
+
+-- 기존 정책이 있다면 삭제 (에러 방지) 후 재생성
+DROP POLICY IF EXISTS "Allow insert for everyone" ON visit_logs;
 CREATE POLICY "Allow insert for everyone" ON visit_logs FOR INSERT WITH CHECK (true);
--- 관리자(authenticated)만 조회 가능
+
+DROP POLICY IF EXISTS "Allow select for authenticated" ON visit_logs;
 CREATE POLICY "Allow select for authenticated" ON visit_logs FOR SELECT USING (auth.role() = 'authenticated');
