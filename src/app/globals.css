@@ -97,6 +97,16 @@
 }
 
 @layer components {
+  /* Prose Embeds (Youtube, Vimeo, etc) */
+  .prose iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    border-radius: 0.75rem; /* rounded-xl */
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
   /* Vibe 카드 (호버 효과) */
   .behance-card {
     background: white;

@@ -121,7 +121,7 @@ export default function MyPage() {
         if (activeTab === 'projects') {
           const { data } = await supabase
             .from('Project')
-            .select('project_id, title, thumbnail_url, likes_count, views_count, created_at, description, rendering_type, alt_description, custom_data')
+            .select('project_id, title, thumbnail_url, likes_count, views_count, created_at, content_text, rendering_type, custom_data')
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
           
@@ -132,9 +132,9 @@ export default function MyPage() {
             likes: p.likes_count || 0,
             views: p.views_count || 0,
             created_at: p.created_at,
-            description: p.description || '',
+            description: p.content_text || '',
             rendering_type: p.rendering_type || 'image',
-            alt_description: p.alt_description || '',
+            alt_description: p.title || '',
             custom_data: p.custom_data,
           })));
           

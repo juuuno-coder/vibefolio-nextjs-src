@@ -196,15 +196,15 @@ export default function AdminRecruitPage() {
     try {
       const { error } = await supabase
         .from('recruit_items')
-        .update({ is_approved: true } as any)
+        .update({ is_approved: true, is_active: true } as any)
         .eq('id', id);
 
       if (error) throw error;
-      alert("승인되었습니다.");
+      toast.success("승인 및 게시 완료!");
       loadItems();
     } catch (error) {
       console.error('Approve Error:', error);
-      alert("승인 처리 중 오류가 발생했습니다.");
+      toast.error("승인 처리 중 오류가 발생했습니다.");
     }
   };
   // 항목 추가/수정 (Supabase 연동)
