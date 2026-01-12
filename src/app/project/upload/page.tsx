@@ -288,13 +288,30 @@ export default function TiptapUploadPage() {
         coverUrl = await uploadImage(coverImage);
       }
 
-      // 3. 커버 이미지가 없고 본문이 있다면, 본문 첫 번째 이미지 추출 (자동 썸네일)
+      // 3. 커버 이미지가 없고 본문이 있다면, 본문 첫 번째 이미지 또는 영상 썸네일 추출 (자동 썸네일)
       if (!coverUrl && content) {
         try {
           const doc = new DOMParser().parseFromString(content, 'text/html');
+          
+          // 1순위: 이미지 태그
           const firstImg = doc.querySelector('img');
           if (firstImg) {
             coverUrl = firstImg.getAttribute('src');
+          }
+          
+          // 2순위: 유튜브 임베드 (이미지가 없을 경우)
+          if (!coverUrl) {
+            const firstIframe = doc.querySelector('iframe');
+            if (firstIframe) {
+               const src = firstIframe.getAttribute('src');
+               if (src) {
+                 // YouTube URL Parsing
+                 const youtubeMatch = src.match(/(?:youtube\.com\/embed\/|youtu\.be\/)([^?&]+)/);
+                 if (youtubeMatch && youtubeMatch[1]) {
+                   coverUrl = `https://img.youtube.com/vi/${youtubeMatch[1]}/maxresdefault.jpg`;
+                 }
+               }
+            }
           }
         } catch (e) {
           console.error('Thumbnail extraction failed:', e);
