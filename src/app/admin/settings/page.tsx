@@ -30,10 +30,12 @@ export default function AdminSettingsPage() {
     seo_title: string;
     seo_description: string;
     seo_og_image: string;
+    seo_favicon: string;
   }>({
     seo_title: "",
     seo_description: "",
     seo_og_image: "",
+    seo_favicon: "",
   });
 
   useEffect(() => {
@@ -116,6 +118,20 @@ export default function AdminSettingsPage() {
       const url = await uploadImage(file, 'banners');
       setConfig(prev => ({ ...prev, seo_og_image: url }));
       toast.success("이미지가 업로드되었습니다.");
+    } catch (err) {
+      toast.error("업로드 실패: " + (err as Error).message);
+    }
+  };
+
+  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      toast.info("파비콘 업로드 중...");
+      const url = await uploadImage(file, 'banners');
+      setConfig(prev => ({ ...prev, seo_favicon: url }));
+      toast.success("파비콘이 업로드되었습니다.");
     } catch (err) {
       toast.error("업로드 실패: " + (err as Error).message);
     }
@@ -257,6 +273,80 @@ export default function AdminSettingsPage() {
                           <div className="text-xs text-gray-500 mt-1 line-clamp-2">{config.seo_description || "설명이 없습니다."}</div>
                        </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-100">
+              <Label className="text-sm font-bold text-slate-700 mb-4 block">파비콘 (Favicon)</Label>
+              <div className="flex flex-col md:flex-row gap-8">
+                <div className="flex-1 space-y-4">
+                  <div className="flex items-start gap-6">
+                    <div className="relative group w-32 h-32 bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 shadow-sm flex-shrink-0">
+                      {config.seo_favicon ? (
+                        <div 
+                          className="w-full h-full bg-contain bg-center bg-no-repeat"
+                          style={{ backgroundImage: `url(${config.seo_favicon})` }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                          <ImageIcon size={24} className="mb-2 opacity-50" />
+                        </div>
+                      )}
+                      
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <Button variant="secondary" size="sm" className="font-bold" onClick={() => document.getElementById('favicon_upload')?.click()}>
+                          변경
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-2 py-2">
+                       <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                        * 브라우저 탭에 표시되는 작은 아이콘입니다.<br/>
+                        * 권장 사이즈: <strong className="text-slate-600">192 x 192 px</strong> 이상<br/>
+                        * 포맷: PNG, ICO 권장
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">아이콘 URL</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        value={config.seo_favicon || ''}
+                        onChange={(e) => setConfig(prev => ({ ...prev, seo_favicon: e.target.value }))}
+                        placeholder="https://..."
+                        className="h-10 rounded-xl bg-slate-50 border-slate-200 text-xs font-medium"
+                      />
+                      <Button 
+                        variant="outline" 
+                        className="h-10 px-4 rounded-xl border-slate-200"
+                        onClick={() => document.getElementById('favicon_upload')?.click()}
+                      >
+                        <Upload size={14} />
+                      </Button>
+                      <input 
+                        type="file" 
+                        id="favicon_upload" 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={handleFaviconUpload}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Browser Tab Preview */}
+                  <div className="bg-slate-200 p-4 rounded-xl space-y-2 max-w-sm">
+                     <div className="text-[10px] font-bold text-slate-500">브라우저 탭 미리보기</div>
+                     <div className="bg-white rounded-t-lg border-t border-x border-slate-300 p-2 flex items-center gap-2 w-48 shadow-sm">
+                        <div className="w-4 h-4 rounded-sm bg-slate-100 bg-contain bg-center bg-no-repeat flex-shrink-0" style={{ backgroundImage: config.seo_favicon ? `url(${config.seo_favicon})` : 'none' }}>
+                            {!config.seo_favicon && <div className="w-full h-full bg-slate-200"></div>}
+                        </div>
+                        <div className="text-xs text-slate-700 font-medium truncate">{config.seo_title || "Vibefolio"}</div>
+                     </div>
                   </div>
                 </div>
               </div>

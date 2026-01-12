@@ -36,6 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
   let title = defaultTitle;
   let description = defaultDesc;
   let ogImage = "";
+  let favicon = "/vibefolio2.png"; // Default Favicon
 
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -57,6 +58,7 @@ export async function generateMetadata(): Promise<Metadata> {
         if (config.seo_title) title = config.seo_title;
         if (config.seo_description) description = config.seo_description;
         if (config.seo_og_image) ogImage = config.seo_og_image;
+        if (config.seo_favicon) favicon = config.seo_favicon;
       }
     }
   } catch (e) {
@@ -75,7 +77,9 @@ export async function generateMetadata(): Promise<Metadata> {
       images: ogImage ? [{ url: ogImage }] : [],
     },
     icons: {
-      icon: "/vibefolio2.png",
+      icon: favicon,
+      shortcut: favicon,
+      apple: favicon,
     },
   };
 }
