@@ -22,6 +22,10 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { useAdmin } from "@/hooks/useAdmin";
 import { ProjectDetailModalV2 } from "@/components/ProjectDetailModalV2";
+import { GENRE_CATEGORIES, FIELD_CATEGORIES } from "@/lib/constants";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Settings } from "lucide-react";
 
 // 카테고리 목록
 const CATEGORIES = [
@@ -404,9 +408,48 @@ export default function AdminProjectsPage() {
                             {new Date(project.created_at).toLocaleDateString("ko-KR")}
                           </span>
                           {project.Category && (
-                            <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                              {project.Category.name}
-                            </span>
+                            <select
+                              value={project.category_id || ""}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={async (e) => {
+                                const newCategoryId = parseInt(e.target.value);
+                                if (!newCategoryId) return;
+                                
+                                try {
+                                  // Optimistic Update
+                                  setProjects(prev => prev.map(p => 
+                                    p.project_id === project.project_id 
+                                      ? { 
+                                          ...p, 
+                                          category_id: newCategoryId, 
+                                          Category: { name: CATEGORIES.find(c => c.id === newCategoryId)?.name || "" } 
+                                        } 
+                                      : p
+                                  ));
+
+                                  const { data: { session } } = await supabase.auth.getSession();
+                                  const res = await fetch(`/api/projects/${project.project_id}`, {
+                                    method: 'PUT',
+                                    headers: { 
+                                      'Content-Type': 'application/json',
+                                      'Authorization': `Bearer ${session?.access_token}`
+                                    },
+                                    body: JSON.stringify({ category_id: newCategoryId })
+                                  });
+
+                                  if (!res.ok) throw new Error("Update failed");
+                                } catch (error) {
+                                  console.error("카테고리 수정 실패:", error);
+                                  alert("수정에 실패했습니다.");
+                                  loadProjects(); // Revert
+                                }
+                              }}
+                              className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs border-none cursor-pointer hover:bg-blue-100 focus:ring-0"
+                            >
+                              {CATEGORIES.map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                              ))}
+                            </select>
                           )}
                         </div>
                       </div>
@@ -452,6 +495,18 @@ export default function AdminProjectsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            openMetadataEditor(project);
+                        }}
+                        className="text-gray-500 hover:text-gray-900"
+                        title="메타데이터 관리"
+                      >
+                        <Settings size={16} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleDelete(project.project_id)}
                         className="text-red-500 hover:text-red-700"
                       >
@@ -471,6 +526,123 @@ export default function AdminProjectsPage() {
         onOpenChange={setDetailModalOpen}
         project={selectedProject}
       />
+// ... imports
+import { GENRE_CATEGORIES, FIELD_CATEGORIES } from "@/lib/constants";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+
+// ... inside component
+  const [metadataEditOpen, setMetadataEditOpen] = useState(false);
+  const [metadataTarget, setMetadataTarget] = useState<any>(null);
+  const [editGenres, setEditGenres] = useState<string[]>([]);
+  const [editFields, setEditFields] = useState<string[]>([]);
+
+  // Open Metadata Editor
+  const openMetadataEditor = (project: any) => {
+    setMetadataTarget(project);
+    try {
+        const custom = typeof project.custom_data === 'string' ? JSON.parse(project.custom_data) : project.custom_data || {};
+        setEditGenres(custom.genres || []);
+        setEditFields(custom.fields || []);
+    } catch {
+        setEditGenres([]);
+        setEditFields([]);
+    }
+    setMetadataEditOpen(true);
+  };
+
+  // Save Metadata
+  const saveMetadata = async () => {
+    if (!metadataTarget) return;
+    
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Preserve existing custom_data
+        let existingCustom = {};
+        try {
+            existingCustom = typeof metadataTarget.custom_data === 'string' ? JSON.parse(metadataTarget.custom_data) : metadataTarget.custom_data || {};
+        } catch {}
+
+        const newCustomData = {
+            ...existingCustom,
+            genres: editGenres,
+            fields: editFields
+        };
+
+        const res = await fetch(`/api/projects/${metadataTarget.project_id}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token}`
+            },
+            body: JSON.stringify({ custom_data: newCustomData }) // API handles JSON stringifying if needed
+        });
+
+        if (!res.ok) throw new Error("Metadata update failed");
+
+        alert("메타데이터가 수정되었습니다.");
+        setMetadataEditOpen(false);
+        loadProjects();
+    } catch (error) {
+        console.error("메타데이터 수정 실패:", error);
+        alert("수정에 실패했습니다.");
+    }
+  };
+
+  // ... inside render
+  // Add dialog at the end
+  
+      <Dialog open={metadataEditOpen} onOpenChange={setMetadataEditOpen}>
+        <DialogContent className="max-w-2xl bg-white">
+          <DialogHeader>
+            <DialogTitle>프로젝트 메타데이터 수정 ({metadataTarget?.title})</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-6">
+            <div className="space-y-2">
+                <Label>장르 (Genres)</Label>
+                <div className="flex flex-wrap gap-2">
+                    {GENRE_CATEGORIES.map(g => (
+                        <button
+                            key={g.id}
+                            onClick={() => setEditGenres(prev => prev.includes(g.id) ? prev.filter(x => x !== g.id) : [...prev, g.id])}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                                editGenres.includes(g.id) 
+                                ? "bg-green-100 border-green-500 text-green-700" 
+                                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                            }`}
+                        >
+                            {g.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            
+            <div className="space-y-2">
+                <Label>산업 분야 (Fields)</Label>
+                <div className="flex flex-wrap gap-2">
+                    {FIELD_CATEGORIES.map(f => (
+                        <button
+                            key={f.id}
+                            onClick={() => setEditFields(prev => prev.includes(f.id) ? prev.filter(x => x !== f.id) : [...prev, f.id])}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                                editFields.includes(f.id) 
+                                ? "bg-blue-100 border-blue-500 text-blue-700" 
+                                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                            }`}
+                        >
+                            {f.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMetadataEditOpen(false)}>취소</Button>
+            <Button onClick={saveMetadata}>저장하기</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

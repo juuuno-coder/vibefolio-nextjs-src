@@ -3,6 +3,7 @@
 import { useEditor, EditorContent, BubbleMenu, FloatingMenu, Editor } from '@tiptap/react';
 import { StarterKit } from '@tiptap/starter-kit';
 import { CustomImageExtension } from './CustomImageExtension';
+import { IframeExtension } from './IframeExtension';
 import { Link as LinkExtension } from '@tiptap/extension-link';
 import { Youtube as YoutubeExtension } from '@tiptap/extension-youtube';
 import { Placeholder } from '@tiptap/extension-placeholder';
@@ -147,6 +148,7 @@ export default function TiptapEditor({
         color: '#16A34A',
         width: 2,
       }),
+      IframeExtension,
     ],
     content,
     editorProps: {

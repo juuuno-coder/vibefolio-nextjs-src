@@ -31,39 +31,33 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { supabase } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/supabase/storage";
-import { GENRE_TO_CATEGORY_ID } from '@/lib/constants';
+import { GENRE_TO_CATEGORY_ID, GENRE_CATEGORIES, FIELD_CATEGORIES } from '@/lib/constants';
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { Editor } from "@tiptap/react"; // Import Editor type
 
-// 장르 카테고리
-const genreCategories: { id: string; label: string; icon: IconDefinition }[] = [
-  { id: "photo", label: "포토", icon: faCamera },
-  { id: "animation", label: "애니메이션", icon: faWandMagicSparkles },
-  { id: "graphic", label: "그래픽", icon: faPalette },
-  { id: "design", label: "디자인", icon: faPenRuler },
-  { id: "video", label: "영상", icon: faVideo },
-  { id: "cinema", label: "영화·드라마", icon: faFilm },
-  { id: "audio", label: "오디오", icon: faHeadphones },
-  { id: "3d", label: "3D", icon: faCube },
-  { id: "text", label: "텍스트", icon: faFileLines },
-  { id: "code", label: "코드", icon: faCode },
-  { id: "webapp", label: "웹/앱", icon: faMobileScreen },
-  { id: "game", label: "게임", icon: faGamepad },
-];
+// 아이콘 매핑
+const genreIcons: Record<string, IconDefinition> = {
+  photo: faCamera,
+  animation: faWandMagicSparkles,
+  graphic: faPalette,
+  design: faPenRuler,
+  video: faVideo,
+  cinema: faFilm,
+  audio: faHeadphones,
+  "3d": faCube,
+  text: faFileLines,
+  code: faCode,
+  webapp: faMobileScreen,
+  game: faGamepad,
+};
 
-const fieldCategories = [
-  { id: "finance", label: "경제/금융" },
-  { id: "healthcare", label: "헬스케어" },
-  { id: "beauty", label: "뷰티/패션" },
-  { id: "pet", label: "반려" },
-  { id: "fnb", label: "F&B" },
-  { id: "travel", label: "여행/레저" },
-  { id: "education", label: "교육" },
-  { id: "it", label: "IT" },
-  { id: "lifestyle", label: "라이프스타일" },
-  { id: "business", label: "비즈니스" },
-  { id: "other", label: "기타" },
-];
+// 장르 카테고리 (데이터 + 아이콘)
+const genreCategories = GENRE_CATEGORIES.map(g => ({
+  ...g,
+  icon: genreIcons[g.id] || faCube
+}));
+
+const fieldCategories = FIELD_CATEGORIES;
 
 import { useSearchParams } from "next/navigation";
 

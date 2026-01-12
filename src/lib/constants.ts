@@ -28,12 +28,12 @@ export const GENRE_TO_CATEGORY_ID: Record<string, number> = {
   design: 4,
   video: 3,
   cinema: 3,
-  audio: 7, // Placeholder for audio if not in DB
+  audio: 3, // Video/Multimedia
   "3d": 7,
-  text: 1,
-  code: 1,
+  text: 5, // Branding/Editorial
+  code: 5, // Web/App/IT
   webapp: 5,
-  game: 3,
+  game: 3, // Video/Interactive
   brand: 5,
   illust: 6,
   ui: 9,
@@ -51,3 +51,32 @@ export const SOCIAL_LINKS = {
   THREADS: 'https://www.threads.net/@vibefolio',
   YOUTUBE: 'https://youtube.com/vibefolio',
 };
+
+export const GENRE_CATEGORIES = [
+  { id: "photo", label: "포토" },
+  { id: "animation", label: "애니메이션" },
+  { id: "graphic", label: "그래픽" },
+  { id: "design", label: "디자인" },
+  { id: "video", label: "영상" },
+  { id: "cinema", label: "영화·드라마" },
+  { id: "audio", label: "오디오" },
+  { id: "3d", label: "3D" },
+  { id: "text", label: "텍스트" },
+  { id: "code", label: "코드" },
+  { id: "webapp", label: "웹/앱" },
+  { id: "game", label: "게임" },
+];
+
+export const FIELD_CATEGORIES = [
+  { id: "finance", label: "경제/금융" },
+  { id: "healthcare", label: "헬스케어" },
+  { id: "beauty", label: "뷰티/패션" },
+  { id: "pet", label: "반려" },
+  { id: "fnb", label: "F&B" },
+  { id: "travel", label: "여행/레저" },
+  { id: "education", label: "교육" },
+  { id: "it", label: "IT" },
+  { id: "lifestyle", label: "라이프스타일" },
+  { id: "business", label: "비즈니스" },
+  { id: "other", label: "기타" },
+];
