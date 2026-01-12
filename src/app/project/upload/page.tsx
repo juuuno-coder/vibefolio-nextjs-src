@@ -326,7 +326,22 @@ export default function TiptapUploadPage() {
       }
 
       // 프로젝트 생성/수정
-      const category_id = GENRE_TO_CATEGORY_ID[finalGenres[0]] || 1;
+      // 카테고리 우선순위 로직 적용 (영상/3D 등이 그래픽보다 우선시됨)
+      let category_id = 1;
+      
+      const hasVideo = finalGenres.some((g: string) => ['video', 'animation', 'cinema', 'game', 'audio'].includes(g));
+      const has3D = finalGenres.includes('3d');
+      const hasWeb = finalGenres.some((g: string) => ['code', 'webapp', 'it'].includes(g));
+      
+      if (hasVideo) {
+        category_id = 3; // Video/Multimedia
+      } else if (has3D) {
+        category_id = 7; // 3D
+      } else if (hasWeb) {
+        category_id = 5; // Web/App
+      } else {
+        category_id = GENRE_TO_CATEGORY_ID[finalGenres[0]] || 1;
+      }
       
       const url = editId ? `/api/projects/${editId}` : '/api/projects';
       const method = editId ? 'PUT' : 'POST';
