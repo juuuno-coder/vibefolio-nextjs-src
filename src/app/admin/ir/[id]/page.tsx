@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,11 +25,13 @@ import {
   Image as ImageIcon,
   Copy,
   FileJson,
-  Wand2 // Magic wand icon for template
+  Wand2, // Magic wand icon for template
+  Share // Icon for publish
 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import { uploadImage } from "@/lib/supabase/storage";
 import { toBlob } from 'html-to-image'; // Import image capture lib
+import { SlideRenderer } from "@/components/ir/SlideRenderer";
 
 interface IrSlide {
   id: string;
@@ -52,7 +54,7 @@ interface IrDeck {
 export default function IrSlideEditorPage() {
   const params = useParams();
   const router = useRouter();
-  const supabase = createClient();
+  // const supabase is imported
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deck, setDeck] = useState<IrDeck | null>(null);
@@ -65,7 +67,7 @@ export default function IrSlideEditorPage() {
     const fetchDeckAndSlides = async () => {
       try {
         // 1. Fetch Deck
-        const { data: deckData, error: deckError } = await supabase
+        const { data: deckData, error: deckError } = await (supabase as any)
           .from('ir_decks')
           .select('*')
           .eq('id', params.id)
@@ -75,7 +77,7 @@ export default function IrSlideEditorPage() {
         setDeck(deckData);
 
         // 2. Fetch Slides
-        const { data: slidesData, error: slidesError } = await supabase
+        const { data: slidesData, error: slidesError } = await (supabase as any)
           .from('ir_slides')
           .select('*')
           .eq('deck_id', params.id)
@@ -113,7 +115,7 @@ export default function IrSlideEditorPage() {
     if (!activeSlide) return;
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('ir_slides')
         .update({
           layout_type: activeSlide.layout_type,
@@ -138,7 +140,7 @@ export default function IrSlideEditorPage() {
     if (!deck) return;
     try {
       const newOrderIndex = slides.length;
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('ir_slides')
         .insert({
           deck_id: deck.id,
@@ -162,7 +164,7 @@ export default function IrSlideEditorPage() {
   const handleDeleteSlide = async (id: string) => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
     try {
-      const { error } = await supabase.from('ir_slides').delete().eq('id', id);
+      const { error } = await (supabase as any).from('ir_slides').delete().eq('id', id);
       if (error) throw error;
       
       const newSlides = slides.filter(s => s.id !== id);
@@ -184,7 +186,7 @@ export default function IrSlideEditorPage() {
     setLoading(true);
     try {
       // 1. Delete all existing slides
-      await supabase.from('ir_slides').delete().eq('deck_id', deck.id);
+      await (supabase as any).from('ir_slides').delete().eq('deck_id', deck.id);
 
       // 2. Define Template Slides (Standard IR Deck Structure)
       const templateSlides = [
@@ -202,7 +204,7 @@ export default function IrSlideEditorPage() {
 
       // 3. Insert Template Slides
       for (let i = 0; i < templateSlides.length; i++) {
-        await supabase.from('ir_slides').insert({
+        await (supabase as any).from('ir_slides').insert({
           deck_id: deck.id,
           order_index: i,
           layout_type: templateSlides[i].layout,
@@ -213,7 +215,7 @@ export default function IrSlideEditorPage() {
       }
 
       // 4. Refresh
-      const { data: newSlides } = await supabase
+      const { data: newSlides } = await (supabase as any)
         .from('ir_slides')
         .select('*')
         .eq('deck_id', deck.id)
@@ -309,8 +311,47 @@ export default function IrSlideEditorPage() {
     }
   };
 
-  // --- End Copy Functions ---
+  // --- NEW: Publish Function ---
+  const handlePublish = async () => {
+    if (!deck) return;
+    if (!confirm('이 IR Deck을 프로젝트로 발행하시겠습니까? "내 프로젝트"에 노출됩니다.')) return;
 
+    setLoading(true); // Re-use loading state or create a publishing state
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("로그인이 필요합니다.");
+
+      // Find a suitable thumbnail (Cover slide image or first image)
+      const coverSlide = slides.find(s => s.layout_type === 'cover');
+      const firstImageSlide = slides.find(s => s.image_url);
+      const thumbnail_url = coverSlide?.image_url || firstImageSlide?.image_url || null;
+
+      // Create Project
+      // We use 'any' cast because Project table might not perfectly match types or to avoid strict type checks for now
+      const { error } = await (supabase as any)
+        .from('Project')
+        .insert({
+          user_id: user.id,
+          title: deck.team_name + " - " + deck.title, // Combine for better title
+          description: deck.title,
+          summary: "IR Deck Presentation",
+          thumbnail_url: thumbnail_url,
+          rendering_type: 'ir_deck',
+          custom_data: { deck_id: deck.id },
+          category_id: 1, // Default category, maybe 'Startup' or 'Business' if exists
+          views_count: 0,
+          likes_count: 0
+        });
+
+      if (error) throw error;
+      toast.success('프로젝트로 발행되었습니다! 마이페이지에서 확인하세요.');
+    } catch (error: any) {
+      console.error('Publish error:', error);
+      toast.error(error.message || '발행 실패');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) return <div className="p-8">Loading editor...</div>;
 
@@ -328,6 +369,10 @@ export default function IrSlideEditorPage() {
           </div>
         </div>
         <div className="flex gap-2">
+           <Button variant="outline" onClick={handlePublish} className="gap-2 text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">
+            <Share className="w-4 h-4" />
+            프로젝트로 발행
+          </Button>
            <Button variant="outline" onClick={handleApplyTemplate} className="gap-2 text-violet-600 border-violet-200 bg-violet-50 hover:bg-violet-100">
             <Wand2 className="w-4 h-4" />
             추천 템플릿 적용
@@ -495,145 +540,11 @@ export default function IrSlideEditorPage() {
                 className="w-[960px] h-[540px] bg-white rounded-xl shadow-2xl shrink-0 p-12 relative flex flex-col overflow-hidden transition-all duration-300 transform scale-[0.7] origin-top-left"
                 style={{ transform: 'scale(0.85)', transformOrigin: 'top center' }}
               >
-                {/* Header / Logo Area */}
-                <div className="absolute top-8 right-12 text-xs font-bold text-neutral-300 uppercase tracking-widest">
-                  {deck?.team_name || 'Vibefolio'}
-                </div>
-
-                {/* Dynamic Layout Rendering */}
-                {activeSlide.layout_type === 'cover' && (
-                   <div className="flex flex-col justify-center h-full">
-                     <h1 className="text-6xl font-black text-neutral-900 mb-6 leading-tight whitespace-pre-wrap">
-                       {activeSlide.title}
-                     </h1>
-                     <div className="text-2xl text-neutral-500 whitespace-pre-wrap font-light leading-relaxed">
-                       {activeSlide.content}
-                     </div>
-                   </div>
-                )}
-
-                {activeSlide.layout_type === 'basic' && (
-                  <div className="h-full flex flex-col">
-                    <h2 className="text-4xl font-bold text-neutral-900 mb-8 border-l-4 border-blue-600 pl-4">
-                      {activeSlide.title}
-                    </h2>
-                    <div className="flex-1 prose prose-lg max-w-none text-neutral-600">
-                      <ReactMarkdown>{activeSlide.content}</ReactMarkdown>
-                    </div>
-                  </div>
-                )}
-
-                {activeSlide.layout_type === 'image_right' && (
-                  <div className="h-full flex gap-12">
-                     <div className="flex-1 flex flex-col justify-center">
-                        <h2 className="text-4xl font-bold text-neutral-900 mb-8 leading-tight">
-                          {activeSlide.title}
-                        </h2>
-                        <div className="prose text-neutral-600">
-                          <ReactMarkdown>{activeSlide.content}</ReactMarkdown>
-                        </div>
-                     </div>
-                     <div className="flex-1 bg-neutral-100 rounded-lg overflow-hidden flex items-center justify-center relative">
-                        {activeSlide.image_url ? (
-                          <img src={activeSlide.image_url} alt="slide visual" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="text-neutral-300 flex flex-col items-center">
-                            <ImageIcon className="w-12 h-12 mb-2" />
-                            <span className="text-sm font-medium">Image Placeholder</span>
-                          </div>
-                        )}
-                     </div>
-                  </div>
-                )}
-
-                {activeSlide.layout_type === 'image_left' && (
-                  <div className="h-full flex gap-12 flex-row-reverse">
-                     <div className="flex-1 flex flex-col justify-center">
-                        <h2 className="text-4xl font-bold text-neutral-900 mb-8">
-                          {activeSlide.title}
-                        </h2>
-                        <div className="prose text-neutral-600">
-                          <ReactMarkdown>{activeSlide.content}</ReactMarkdown>
-                        </div>
-                     </div>
-                     <div className="flex-1 bg-neutral-100 rounded-lg overflow-hidden flex items-center justify-center">
-                        {activeSlide.image_url ? (
-                          <img src={activeSlide.image_url} alt="slide visual" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="text-neutral-300 flex flex-col items-center">
-                            <ImageIcon className="w-12 h-12 mb-2" />
-                            <span className="text-sm font-medium">Image Placeholder</span>
-                          </div>
-                        )}
-                     </div>
-                  </div>
-                )}
-                
-                 {activeSlide.layout_type === 'grid' && (
-                  <div className="h-full flex flex-col">
-                    <h2 className="text-3xl font-bold text-neutral-900 mb-8 text-center">
-                      {activeSlide.title}
-                    </h2>
-                    <div className="flex-1 grid grid-cols-2 gap-6">
-                      <div className="bg-neutral-50 p-6 rounded-lg border border-neutral-100">
-                         <div className="prose prose-sm"><ReactMarkdown>{activeSlide.content.split('\n\n')[0] || ''}</ReactMarkdown></div>
-                      </div>
-                      <div className="bg-neutral-50 p-6 rounded-lg border border-neutral-100">
-                         <div className="prose prose-sm"><ReactMarkdown>{activeSlide.content.split('\n\n')[1] || ''}</ReactMarkdown></div>
-                      </div>
-                      <div className="bg-neutral-50 p-6 rounded-lg border border-neutral-100">
-                         <div className="prose prose-sm"><ReactMarkdown>{activeSlide.content.split('\n\n')[2] || ''}</ReactMarkdown></div>
-                      </div>
-                       <div className="bg-neutral-50 p-6 rounded-lg border border-neutral-100 flex items-center justify-center text-neutral-300">
-                         <ImageIcon className="w-8 h-8" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeSlide.layout_type === 'swot' && (
-                  <div className="h-full flex flex-col">
-                    <h2 className="text-3xl font-bold text-neutral-900 mb-6 text-center">
-                      {activeSlide.title}
-                    </h2>
-                     <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-4">
-                        <div className="bg-blue-50 p-6 rounded-xl flex flex-col">
-                          <span className="text-blue-500 font-bold mb-2">STRENGTH</span>
-                          <div className="text-sm text-neutral-700 flex-1"><ReactMarkdown>{activeSlide.content}</ReactMarkdown></div>
-                        </div>
-                        <div className="bg-red-50 p-6 rounded-xl flex flex-col">
-                           <span className="text-red-500 font-bold mb-2">WEAKNESS</span>
-                           <div className="text-sm text-neutral-700">- ...</div>
-                        </div>
-                        <div className="bg-green-50 p-6 rounded-xl flex flex-col">
-                           <span className="text-green-500 font-bold mb-2">OPPORTUNITY</span>
-                           <div className="text-sm text-neutral-700">- ...</div>
-                        </div>
-                        <div className="bg-orange-50 p-6 rounded-xl flex flex-col">
-                           <span className="text-orange-500 font-bold mb-2">THREAT</span>
-                           <div className="text-sm text-neutral-700">- ...</div>
-                        </div>
-                     </div>
-                  </div>
-                )}
-                
-                 {activeSlide.layout_type === 'big_number' && (
-                  <div className="h-full flex flex-col items-center justify-center text-center">
-                    <h2 className="text-2xl font-bold text-neutral-400 mb-8 uppercase tracking-widest">
-                      {activeSlide.title}
-                    </h2>
-                    <div className="text-8xl font-black text-blue-600 mb-6 tracking-tight">
-                       {activeSlide.content.split('\n')[0] || '0%'}
-                    </div>
-                     <div className="text-xl text-neutral-600 max-w-xl leading-relaxed">
-                       <ReactMarkdown>{activeSlide.content.split('\n').slice(1).join('\n') || ''}</ReactMarkdown>
-                    </div>
-                  </div>
-                )}
+                <SlideRenderer slide={activeSlide} deckName={deck?.team_name} />
 
                 {/* Speaker Notes Overlay (Visible only when hovering bottom) */}
                 {activeSlide.speaker_notes && (
-                  <div className="absolute bottom-4 left-4 right-4 bg-black/80 backdrop-blur-sm text-white p-6 rounded-xl opacity-0 hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute bottom-4 left-4 right-4 bg-black/80 backdrop-blur-sm text-white p-6 rounded-xl opacity-0 hover:opacity-100 transition-opacity duration-300 z-20">
                     <div className="text-xs font-bold text-yellow-400 mb-2 uppercase">Speaker Notes</div>
                     <p className="text-sm leading-relaxed">{activeSlide.speaker_notes}</p>
                   </div>
