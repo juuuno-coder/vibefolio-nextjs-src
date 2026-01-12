@@ -32,7 +32,7 @@ import { ProposalModal } from "./ProposalModal";
 import { CollectionModal } from "./CollectionModal";
 import { LoginRequiredModal } from "./LoginRequiredModal";
 import { supabase } from "@/lib/supabase/client";
-import { SlideRenderer } from "@/components/ir/SlideRenderer";
+
 
 dayjs.extend(relativeTime);
 dayjs.locale("ko");
@@ -164,39 +164,7 @@ export function ProjectDetailModalV2({
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [replyingTo, setReplyingTo] = useState<{ id: string; username: string } | null>(null);
-  const [irSlides, setIrSlides] = useState<any[]>([]); // IR 덱 슬라이드 상태
 
-  useEffect(() => {
-    if (open && project?.rendering_type === 'ir_deck' && project.custom_data) {
-      const fetchSlides = async () => {
-        let deckId = null;
-        try {
-          // custom_data가 string일 수도 있고 object일 수도 있음
-          const custom = typeof project.custom_data === 'string' 
-            ? JSON.parse(project.custom_data) 
-            : project.custom_data;
-          
-          deckId = custom?.deck_id;
-        } catch (e) {
-          console.error("Failed to parse custom_data", e);
-        }
-
-        if (deckId) {
-           const { data } = await (supabase as any)
-             .from('ir_slides')
-             .select('*')
-             .eq('deck_id', deckId)
-             .order('order_index', { ascending: true });
-           
-           if (data) setIrSlides(data);
-        }
-      };
-      
-      fetchSlides();
-    } else {
-      setIrSlides([]);
-    }
-  }, [open, project]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [viewsCount, setViewsCount] = useState(0);
@@ -645,18 +613,6 @@ export function ProjectDetailModalV2({
                   className="prose prose-sm max-w-full p-6 mx-auto bg-white whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{ __html: unescapeHtml(project.description || '') }}
                 />
-              ) : project.rendering_type === 'ir_deck' ? (
-                <div className="space-y-4 bg-gray-50 p-4">
-                  {irSlides.map((slide, idx) => (
-                    <div key={slide.id} className="w-full aspect-video bg-white shadow-sm rounded-lg overflow-hidden relative border border-gray-100">
-                       <SlideRenderer slide={slide} deckName={project.title || undefined} />
-                       <div className="absolute top-2 left-2 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded opacity-80">
-                         {idx + 1} / {irSlides.length}
-                       </div>
-                    </div>
-                  ))}
-                  {irSlides.length === 0 && <div className="text-gray-400 py-10 text-center text-sm">Loading slides...</div>}
-                </div>
               ) : (
                 <img
                   src={project.urls.full}
@@ -842,18 +798,6 @@ export function ProjectDetailModalV2({
                       className="prose prose-lg max-w-4xl w-full bg-white p-4 whitespace-pre-wrap"
                       dangerouslySetInnerHTML={{ __html: unescapeHtml(project.description || '') }}
                     />
-                  ) : project.rendering_type === 'ir_deck' ? (
-                       <div className="space-y-8 w-full max-w-5xl">
-                          {irSlides.map((slide, idx) => (
-                            <div key={slide.id} className="w-full aspect-video bg-white shadow-lg rounded-xl overflow-hidden relative group border border-gray-100">
-                               <SlideRenderer slide={slide} deckName={project.title || undefined} />
-                               <div className="absolute top-4 left-4 bg-black/50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                                 {idx + 1} / {irSlides.length}
-                               </div>
-                            </div>
-                          ))}
-                          {irSlides.length === 0 && <div className="text-gray-400 py-20 text-center">Loading slides...</div>}
-                       </div>
                   ) : (
                     <img
                       src={project.urls.full}

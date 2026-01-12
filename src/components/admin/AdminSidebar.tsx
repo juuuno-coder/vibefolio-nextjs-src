@@ -80,12 +80,7 @@ const menuItems = [
     icon: Settings,
     color: "text-slate-600"
   },
-  {
-    title: "IR 자료 관리",
-    path: "/admin/ir",
-    icon: Presentation,
-    color: "text-orange-500"
-  }
+
 ];
 
 export function AdminSidebar() {

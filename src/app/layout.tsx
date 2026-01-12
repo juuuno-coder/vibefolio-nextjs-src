@@ -75,7 +75,7 @@ export async function generateMetadata(): Promise<Metadata> {
       images: ogImage ? [{ url: ogImage }] : [],
     },
     icons: {
-      icon: "/favicon.ico",
+      icon: "/vibefolio2.png",
     },
   };
 }
