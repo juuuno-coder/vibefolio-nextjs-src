@@ -241,7 +241,7 @@ export function Header({
                   // 비로그인 상태
                   <div className="flex items-center gap-1">
                      <Link href="/login">
-                        <Button variant="ghost" className="text-[15px] font-medium text-black hover:bg-gray-100 rounded-full px-5">
+                        <Button variant="ghost" className="text-[15px] font-medium text-black hover:bg-gray-100 hover:text-black rounded-full px-5">
                            로그인
                         </Button>
                      </Link>
