@@ -347,7 +347,7 @@ export function ProjectDetailModal({
                 <div className="mb-20 max-w-4xl mx-auto w-full content-renderer">
                     {project.description ? (
                       <div 
-                        className="prose prose-lg max-w-none text-gray-800 leading-relaxed"
+                        className="prose prose-lg prose-h1:text-3xl max-w-none text-gray-800 leading-relaxed"
                         dangerouslySetInnerHTML={{ __html: project.description }} 
                       />
                     ) : (

@@ -610,7 +610,7 @@ export function ProjectDetailModalV2({
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               {project.rendering_type === 'rich_text' ? (
                 <div 
-                  className="prose prose-sm max-w-full p-6 mx-auto bg-white whitespace-pre-wrap"
+                  className="prose prose-sm prose-h1:text-xl max-w-full p-6 mx-auto bg-white whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{ __html: unescapeHtml(project.description || '') }}
                 />
               ) : (
@@ -795,7 +795,7 @@ export function ProjectDetailModalV2({
                 <div className="p-8 flex flex-col items-center min-h-[400px]">
                   {project.rendering_type === 'rich_text' ? (
                     <div 
-                      className="prose prose-lg max-w-4xl w-full bg-white p-4 whitespace-pre-wrap"
+                      className="prose prose-lg prose-h1:text-3xl max-w-4xl w-full bg-white p-4 whitespace-pre-wrap"
                       dangerouslySetInnerHTML={{ __html: unescapeHtml(project.description || '') }}
                     />
                   ) : (

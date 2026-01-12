@@ -63,6 +63,7 @@ interface Item {
   category_tags?: string;
   banner_image_url?: string;
   attachments?: { name: string; url: string; size: number; type: string }[];
+  created_at?: string;
 }
 
 export default function RecruitPage() {
@@ -163,6 +164,7 @@ export default function RecruitPage() {
           category_tags: item.category_tags || undefined,
           banner_image_url: item.banner_image_url || undefined,
           attachments: item.attachments || [],
+          created_at: item.created_at,
         }));
         setItems(formattedItems);
       } else {
@@ -1123,20 +1125,75 @@ export default function RecruitPage() {
             </div>
           </div>
 
-          <TabsContent value="all" className="mt-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {processedItems.map((item) => (
-                <ItemCard
-                  key={item.id}
-                  item={item}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onViewDetail={handleViewDetail}
-                  isAdmin={isAdmin}
-                  getDday={getDday}
-                />
-              ))}
-            </div>
+          <TabsContent value="all" className="mt-0 space-y-12">
+            {/* 1. 마감 임박 섹션 (D-Day 임박순 상위 4개) */}
+            {processedItems.length > 0 && categoryFilter === 'all' && sortBy === 'latest' ? (
+               // 섹션 구분 뷰
+               <>
+                 {/* 마감 임박 */}
+                 <section>
+                    <div className="flex items-center gap-2 mb-6">
+                      <Clock className="text-red-500" size={20} />
+                      <h2 className="text-xl font-bold text-slate-900">마감 임박! 놓치지 마세요</h2>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-6">
+                      {processedItems.slice(0, 4).map((item) => (
+                        <ItemCard
+                          key={item.id}
+                          item={item}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          onViewDetail={handleViewDetail}
+                          isAdmin={isAdmin}
+                          getDday={getDday}
+                        />
+                      ))}
+                    </div>
+                 </section>
+
+                 <Separator className="bg-slate-100" />
+
+                 {/* 최신 등록 (나머지 또는 전체를 최신순으로) */}
+                 <section>
+                    <div className="flex items-center gap-2 mb-6">
+                      <Sparkles className="text-[#16A34A]" size={20} />
+                      <h2 className="text-xl font-bold text-slate-900">따끈따끈한 새 소식</h2>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-6">
+                      {processedItems.slice(4).map((item) => (
+                        <ItemCard
+                          key={item.id}
+                          item={item}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          onViewDetail={handleViewDetail}
+                          isAdmin={isAdmin}
+                          getDday={getDday}
+                        />
+                      ))}
+                    </div>
+                    {processedItems.length <= 4 && (
+                      <p className="text-slate-400 text-sm mt-4">새로운 소식이 준비중입니다.</p>
+                    )}
+                 </section>
+               </>
+            ) : (
+              // 기본 그리드 뷰 (필터링 상태거나 다른 정렬일 때)
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-6">
+                {processedItems.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onViewDetail={handleViewDetail}
+                    isAdmin={isAdmin}
+                    getDday={getDday}
+                  />
+                ))}
+              </div>
+            )}
+            
             {processedItems.length === 0 && <EmptyState />}
           </TabsContent>
 
@@ -1305,8 +1362,8 @@ function ItemCard({
         )}
       </div>
 
-      <CardHeader className="p-5 pb-2">
-        <div className="space-y-1.5 h-[68px]"> {/* Fixed height for title alignment */}
+      <CardHeader className="p-4 pb-1">
+        <div className="space-y-1 h-[60px]"> {/* Fixed height for title alignment */}
           <div className="flex items-center gap-2">
             {item.company && (
               <p className="text-[10px] font-black text-[#16A34A] tracking-wider uppercase leading-none truncate max-w-[120px]">{item.company}</p>
@@ -1326,14 +1383,14 @@ function ItemCard({
         </div>
       </CardHeader>
 
-      <CardContent className="p-5 pt-0 flex flex-col flex-1">
-        <div className="h-[40px] mb-4"> {/* Fixed height for description */}
+      <CardContent className="p-4 pt-0 flex flex-col flex-1">
+        <div className="h-[36px] mb-3"> {/* Fixed height for description */}
           <p className="text-xs text-slate-500 line-clamp-2 font-medium leading-relaxed">
             {item.description}
           </p>
         </div>
         
-        <div className="mt-auto pt-4 border-t border-slate-50 space-y-2.5">
+        <div className="mt-auto pt-3 border-t border-slate-50 space-y-2">
           <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
@@ -1355,7 +1412,7 @@ function ItemCard({
 
           <Button
             variant="ghost"
-            className="w-full h-12 rounded-2xl bg-slate-50 hover:bg-[#16A34A] hover:text-slate-900 transition-all duration-300 font-bold text-xs flex items-center justify-center gap-2 group/btn shadow-sm hover:shadow-[#16A34A]/25"
+            className="w-full h-10 rounded-xl bg-slate-50 hover:bg-[#16A34A] hover:text-slate-900 transition-all duration-300 font-bold text-xs flex items-center justify-center gap-2 group/btn shadow-sm hover:shadow-[#16A34A]/25"
             onClick={() => onViewDetail(item)}
             disabled={isExpired}
           >

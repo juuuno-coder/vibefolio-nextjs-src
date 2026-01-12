@@ -109,6 +109,7 @@ export default function AdminRecruitPage() {
       const { data, error, count } = await supabase
         .from('recruit_items')
         .select('*', { count: 'exact' })
+        .order('is_approved', { ascending: true }) // false first
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -880,7 +881,6 @@ export default function AdminRecruitPage() {
             ) : (
               <div className="space-y-4">
                 {filteredItems
-                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                   .map((item) => {
                     const dday = getDday(item.date);
                     const isExpired = dday === "마감";
