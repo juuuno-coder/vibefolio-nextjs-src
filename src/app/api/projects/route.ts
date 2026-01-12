@@ -165,6 +165,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // [New] 표준화된 Fields 매핑 저장
+    // custom_data 내의 fields (slug 배열)를 확인하여 project_fields 테이블에 관계 설정
+    if (data && data.project_id && custom_data) {
+        try {
+            const parsedCustom = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
+            const fieldSlugs = parsedCustom.fields; // e.g. ['it', 'finance']
+
+            if (Array.isArray(fieldSlugs) && fieldSlugs.length > 0) {
+                // 1. Slug에 해당하는 ID 조회
+                const { data: fieldRecords } = await (supabaseAdmin as any)
+                    .from('fields')
+                    .select('id, slug')
+                    .in('slug', fieldSlugs);
+
+                if (fieldRecords && fieldRecords.length > 0) {
+                    // 2. project_fields 테이블에 매핑 데이터 삽입
+                    const mappings = fieldRecords.map((f: any) => ({
+                        project_id: data.project_id,
+                        field_id: f.id,
+                    }));
+
+                    const { error: mapError } = await (supabaseAdmin as any)
+                        .from('project_fields')
+                        .insert(mappings);
+
+                    if (mapError) {
+                         console.error('[API] Field mapping insert failed:', mapError);
+                    } else {
+                         console.log('[API] Field mappings created:', mappings.length);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('[API] Standardizing fields failed:', e);
+        }
+    }
+
     return NextResponse.json({ project: data }, { status: 201 });
   } catch (error: any) {
     console.error('서버 오류:', error);
