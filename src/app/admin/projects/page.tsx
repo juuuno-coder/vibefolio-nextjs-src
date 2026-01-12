@@ -31,17 +31,20 @@ import { Settings } from "lucide-react";
 const CATEGORIES = [
   { id: 1, name: "전체" },
   { id: 2, name: "AI" },
-  { id: 3, name: "비디오/영상" },
-  { id: 4, name: "그래픽 디자인" },
-  { id: 5, name: "브랜딩" },
+  { id: 3, name: "비디오" },
+  { id: 4, name: "그래픽" },
+  { id: 5, name: "바이브코딩" },
   { id: 6, name: "일러스트" },
   { id: 7, name: "3D" },
   { id: 8, name: "사진" },
-  { id: 9, name: "UI/UX" },
-  { id: 10, name: "제품 디자인" },
-  { id: 11, name: "타이포그래피" },
-  { id: 12, name: "공예" },
-  { id: 13, name: "파인아트" },
+  { id: 9, name: "브랜딩/편집" },
+  { id: 10, name: "UI/UX" },
+  { id: 11, name: "캐릭터" },
+  { id: 12, name: "제품/패키지" },
+  { id: 13, name: "포토그래피" },
+  { id: 14, name: "타이포그래피" },
+  { id: 15, name: "공예" },
+  { id: 16, name: "파인아트" },
 ];
 
 const stripHtml = (html: string) => {

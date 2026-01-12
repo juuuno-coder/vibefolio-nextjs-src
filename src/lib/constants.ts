@@ -8,39 +8,41 @@ export const CATEGORY_IDS = {
   ALL: 1,
   AI: 2,
   VIDEO: 3,
-  GRAPHIC_DESIGN: 4,
-  WEB_DESIGN: 5,
+  GRAPHIC: 4,
+  CODING: 5, // VibeCoding
   ILLUST: 6,
   "3D": 7,
   PHOTO: 8,
-  BRAND: 5, // Mapping legacy or alternate names to current IDs
-  UI: 9,
-  PRODUCT: 10,
-  TYPO: 11,
-  CRAFT: 12,
-  ART: 13,
+  BRANDING: 9, // Branding/Editorial
+  UIUX: 10,
+  CHARACTER: 11,
+  PRODUCT: 12, // Product/Package
+  PHOTOGRAPHY: 13,
+  TYPOGRAPHY: 14,
+  CRAFT: 15,
+  FINEART: 16,
 } as const;
 
 export const GENRE_TO_CATEGORY_ID: Record<string, number> = {
   photo: 8,
-  animation: 3,
+  animation: 3, // Video
   graphic: 4,
-  design: 4,
+  design: 4, // Graphic
   video: 3,
-  cinema: 3,
-  audio: 3, // Video/Multimedia
+  cinema: 3, // Video
+  audio: 3, // Video
   "3d": 7,
-  text: 5, // Branding/Editorial
-  code: 5, // Web/App/IT
-  webapp: 5,
-  game: 3, // Video/Interactive
-  brand: 5,
+  text: 9, // Branding/Editorial
+  code: 5, // VibeCoding
+  webapp: 5, // VibeCoding
+  game: 3, // Video
+  brand: 9, // Branding/Editorial
   illust: 6,
-  ui: 9,
-  product: 10,
-  typo: 11,
-  craft: 12,
-  art: 13,
+  ui: 10, // UI/UX
+  product: 12, // Product/Package
+  typo: 14, // Typography
+  craft: 15,
+  art: 16, // Fine Art
   ai: 2,
 };
 
