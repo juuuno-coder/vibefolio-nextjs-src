@@ -54,7 +54,7 @@ export const SOCIAL_LINKS = {
 
 export const GENRE_CATEGORIES = [
   { id: "photo", label: "포토" },
-  { id: "animation", label: "애니메이션" },
+  { id: "animation", label: "웹툰/애니" },
   { id: "graphic", label: "그래픽" },
   { id: "design", label: "디자인" },
   { id: "video", label: "영상" },

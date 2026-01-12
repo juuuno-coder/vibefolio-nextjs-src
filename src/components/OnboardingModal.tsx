@@ -28,7 +28,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 // 장르 카테고리
 export const GENRE_CATEGORIES = [
   { icon: faCamera, label: "포토", value: "photo" },
-  { icon: faWandMagicSparkles, label: "애니메이션", value: "animation" },
+  { icon: faWandMagicSparkles, label: "웹툰/애니", value: "animation" },
   { icon: faPalette, label: "그래픽", value: "graphic" },
   { icon: faPenRuler, label: "디자인", value: "design" },
   { icon: faVideo, label: "영상", value: "video" },
