@@ -137,9 +137,17 @@ export default function AdminPage() {
         for (let i = 6; i >= 0; i--) {
           const d = new Date();
           d.setDate(d.getDate() - i);
-          const dateStr = d.toISOString().split('T')[0];
-          const queryDateStart = `${dateStr}T00:00:00`;
-          const queryDateEnd = `${dateStr}T23:59:59`;
+          
+          // [Fix] UTC(`toISOString`)가 아닌 KST(로컬) 기준으로 날짜 생성
+          // 새벽 시간에 UTC 변환 시 전날로 잡히는 문제 해결
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          const dateStr = `${year}-${month}-${day}`;
+
+          // DB 쿼리 시 KST(+09:00) 타임존 명시 (한국 시간 기준 00:00~23:59)
+          const queryDateStart = `${dateStr}T00:00:00+09:00`;
+          const queryDateEnd = `${dateStr}T23:59:59+09:00`;
 
           // 4가지 지표 병렬 조회
           const [visitRes, userRes, projectRes, recruitRes] = await Promise.all([
@@ -184,7 +192,7 @@ export default function AdminPage() {
           const { data: visitData } = await (supabase as any)
             .from('site_stats')
             .select('visits')
-            .eq('date', new Date().toISOString().split('T')[0])
+            .eq('date', `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`)
             .single();
           todayVisits = visitData?.visits || 0;
         } catch (e) { console.warn('site_stats error', e); }
