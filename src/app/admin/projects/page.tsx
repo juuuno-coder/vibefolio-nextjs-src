@@ -61,6 +61,65 @@ export default function AdminProjectsPage() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any | null>(null);
 
+  // Metadata Edit State
+  const [metadataEditOpen, setMetadataEditOpen] = useState(false);
+  const [metadataTarget, setMetadataTarget] = useState<any>(null);
+  const [editGenres, setEditGenres] = useState<string[]>([]);
+  const [editFields, setEditFields] = useState<string[]>([]);
+
+  // Open Metadata Editor
+  const openMetadataEditor = (project: any) => {
+    setMetadataTarget(project);
+    try {
+        const custom = typeof project.custom_data === 'string' ? JSON.parse(project.custom_data) : project.custom_data || {};
+        setEditGenres(custom.genres || []);
+        setEditFields(custom.fields || []);
+    } catch {
+        setEditGenres([]);
+        setEditFields([]);
+    }
+    setMetadataEditOpen(true);
+  };
+
+  // Save Metadata
+  const saveMetadata = async () => {
+    if (!metadataTarget) return;
+    
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Preserve existing custom_data
+        let existingCustom = {};
+        try {
+            existingCustom = typeof metadataTarget.custom_data === 'string' ? JSON.parse(metadataTarget.custom_data) : metadataTarget.custom_data || {};
+        } catch {}
+
+        const newCustomData = {
+            ...existingCustom,
+            genres: editGenres,
+            fields: editFields
+        };
+
+        const res = await fetch(`/api/projects/${metadataTarget.project_id}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token}`
+            },
+            body: JSON.stringify({ custom_data: newCustomData })
+        });
+
+        if (!res.ok) throw new Error("Metadata update failed");
+
+        alert("메타데이터가 수정되었습니다.");
+        setMetadataEditOpen(false);
+        loadProjects();
+    } catch (error) {
+        console.error("메타데이터 수정 실패:", error);
+        alert("수정에 실패했습니다.");
+    }
+  };
+
   // 프로젝트 로드
   const loadProjects = useCallback(async () => {
     setLoading(true);
@@ -526,73 +585,7 @@ export default function AdminProjectsPage() {
         onOpenChange={setDetailModalOpen}
         project={selectedProject}
       />
-// ... imports
-import { GENRE_CATEGORIES, FIELD_CATEGORIES } from "@/lib/constants";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 
-// ... inside component
-  const [metadataEditOpen, setMetadataEditOpen] = useState(false);
-  const [metadataTarget, setMetadataTarget] = useState<any>(null);
-  const [editGenres, setEditGenres] = useState<string[]>([]);
-  const [editFields, setEditFields] = useState<string[]>([]);
-
-  // Open Metadata Editor
-  const openMetadataEditor = (project: any) => {
-    setMetadataTarget(project);
-    try {
-        const custom = typeof project.custom_data === 'string' ? JSON.parse(project.custom_data) : project.custom_data || {};
-        setEditGenres(custom.genres || []);
-        setEditFields(custom.fields || []);
-    } catch {
-        setEditGenres([]);
-        setEditFields([]);
-    }
-    setMetadataEditOpen(true);
-  };
-
-  // Save Metadata
-  const saveMetadata = async () => {
-    if (!metadataTarget) return;
-    
-    try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        // Preserve existing custom_data
-        let existingCustom = {};
-        try {
-            existingCustom = typeof metadataTarget.custom_data === 'string' ? JSON.parse(metadataTarget.custom_data) : metadataTarget.custom_data || {};
-        } catch {}
-
-        const newCustomData = {
-            ...existingCustom,
-            genres: editGenres,
-            fields: editFields
-        };
-
-        const res = await fetch(`/api/projects/${metadataTarget.project_id}`, {
-            method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session?.access_token}`
-            },
-            body: JSON.stringify({ custom_data: newCustomData }) // API handles JSON stringifying if needed
-        });
-
-        if (!res.ok) throw new Error("Metadata update failed");
-
-        alert("메타데이터가 수정되었습니다.");
-        setMetadataEditOpen(false);
-        loadProjects();
-    } catch (error) {
-        console.error("메타데이터 수정 실패:", error);
-        alert("수정에 실패했습니다.");
-    }
-  };
-
-  // ... inside render
-  // Add dialog at the end
-  
       <Dialog open={metadataEditOpen} onOpenChange={setMetadataEditOpen}>
         <DialogContent className="max-w-2xl bg-white">
           <DialogHeader>

@@ -200,7 +200,7 @@ export function ProjectDetailModalV2({
         const { data: likeData } = await supabase
           .from('like')
           .select('id')
-          .eq('project_id', project.id) // project.id가 있어야 함
+          .eq('project_id', parseInt(project.id)) // project.id가 있어야 함
           .eq('user_id', currentId)
           .single();
         setLiked(!!likeData);
@@ -709,9 +709,67 @@ export function ProjectDetailModalV2({
                   </div>
                 </div>
               )}
+
+              {/* 모바일 댓글 섹션 (리스트 + 입력) */}
+              <div className="px-4 py-8 bg-white border-t border-gray-100 mb-20">
+                  <h3 className="font-bold text-sm mb-4">댓글 ({comments.length})</h3>
+                  
+                  {/* 댓글 작성 폼 */}
+                  {isLoggedIn ? (
+                    <div className="flex gap-2 mb-6">
+                      <div className="flex-1 relative">
+                        {replyingTo && (
+                            <div className="flex items-center justify-between text-xs text-green-600 mb-2 px-1 absolute -top-5 left-0 w-full">
+                              <span>@{replyingTo.username}님에게 답글</span>
+                              <button onClick={() => setReplyingTo(null)} className="hover:underline">취소</button>
+                            </div>
+                        )}
+                        <textarea 
+                          value={newComment} 
+                          onChange={(e) => setNewComment(e.target.value)} 
+                          placeholder="댓글을 남겨주세요..." 
+                          className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-green-500 resize-none h-[50px] leading-tight transition-all" 
+                        />
+                      </div>
+                      <Button 
+                        onClick={handleCommentSubmit} 
+                        disabled={loading.comment || !newComment.trim()}
+                        className="bg-green-600 hover:bg-green-700 text-white w-[50px] h-[50px] rounded-xl flex items-center justify-center shadow-sm"
+                      >
+                        <FontAwesomeIcon icon={faPaperPlane} className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                     <div className="p-4 bg-gray-50 rounded-xl text-center mb-6 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => setLoginModalOpen(true)}>
+                        <p className="text-xs text-gray-500">로그인하고 의견을 남겨보세요</p>
+                     </div>
+                  )}
+
+                  {/* 댓글 리스트 */}
+                  <div className="space-y-4">
+                    {comments.length > 0 ? (
+                        comments.map((comment) => (
+                           <CommentItem 
+                              key={comment.comment_id} 
+                              comment={comment} 
+                              onReply={(id, username) => {
+                                  setReplyingTo({ id, username });
+                                  // Scroll to input?
+                              }} 
+                              onDelete={handleDeleteComment} 
+                              currentUserId={currentUserId} 
+                              depth={0} 
+                           />
+                        ))
+                    ) : (
+                        <div className="text-center py-8 text-gray-400 text-xs">
+                           <p>아직 댓글이 없습니다.</p>
+                        </div>
+                    )}
+                  </div>
+              </div>
             </div>
 
-            {/* 하단 고정 버튼들 */}
             <div className="flex gap-3 p-4 border-t border-gray-100 bg-white">
               {isLoggedIn && project.userId && currentUserId !== project.userId && (
                 <Button
