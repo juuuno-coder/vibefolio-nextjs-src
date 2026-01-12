@@ -451,7 +451,7 @@ export default function AdminProjectsPage() {
                       <img
                         src={project.thumbnail_url || project.image_url || "/globe.svg"}
                         alt={project.title || "프로젝트"}
-                        className="w-20 h-20 object-cover rounded"
+                        className="w-28 aspect-[4/3] object-cover rounded bg-slate-100"
                       />
                       
                       {/* 정보 */}
