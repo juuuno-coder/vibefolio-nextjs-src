@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import Link from "next/link";
 import { FontAwesomeIcon } from "./FaIcon";
-import { faInstagram, faFacebook, faTwitter, faYoutube } from "@fortawesome/free-brands-svg-icons";
+import { faInstagram, faFacebook, faThreads, faYoutube } from "@fortawesome/free-brands-svg-icons";
 import { SOCIAL_LINKS } from "@/lib/constants";
 
 export function Footer({ className }: { className?: string }) {
@@ -28,7 +28,7 @@ export function Footer({ className }: { className?: string }) {
         </div>
         
         {/* 소셜 아이콘 */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 md:mr-20">
           <a 
             href={SOCIAL_LINKS.INSTAGRAM} 
             target="_blank" 
@@ -46,12 +46,12 @@ export function Footer({ className }: { className?: string }) {
             <FontAwesomeIcon icon={faFacebook} className="w-5 h-5" />
           </a>
           <a 
-            href={SOCIAL_LINKS.TWITTER} 
+            href={SOCIAL_LINKS.THREADS} 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="text-gray-400 hover:text-sky-500 transition-colors"
+            className="text-gray-400 hover:text-black transition-colors"
           >
-            <FontAwesomeIcon icon={faTwitter} className="w-5 h-5" />
+            <FontAwesomeIcon icon={faThreads} className="w-5 h-5" />
           </a>
           <a 
             href={SOCIAL_LINKS.YOUTUBE} 

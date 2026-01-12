@@ -48,6 +48,6 @@ export const CONTACT_EMAIL = 'support@vibefolio.com';
 export const SOCIAL_LINKS = {
   INSTAGRAM: 'https://instagram.com/vibefolio',
   FACEBOOK: 'https://facebook.com/vibefolio',
-  TWITTER: 'https://twitter.com/vibefolio',
+  THREADS: 'https://www.threads.net/@vibefolio',
   YOUTUBE: 'https://youtube.com/vibefolio',
 };
