@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { toast } from "sonner";
 
 export interface Notification {
   id: string;
@@ -210,19 +211,19 @@ export function useNotifications(): UseNotificationsReturn {
           table: "notifications",
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
+        async (payload) => {
           console.log("[Notifications] 새 알림:", payload);
-          // 새 알림 추가
-          const newNotification: Notification = {
-            id: payload.new.id,
-            type: payload.new.type,
-            title: payload.new.title,
-            message: payload.new.message,
-            link: payload.new.link,
-            read: payload.new.read,
-            createdAt: payload.new.created_at,
-          };
-          setNotifications((prev) => [newNotification, ...prev]);
+          const newNotif = payload.new as any;
+
+          // [New] 실시간 Toast 알림
+          toast.success(newNotif.title, {
+            description: newNotif.message,
+            duration: 5000,
+            style: { background: 'white', border: '2px solid #22c55e', color: 'black' }
+          });
+
+          // 목록 새로고침 (보낸 사람 정보 등을 위해)
+          loadNotifications();
         }
       )
       .subscribe();
