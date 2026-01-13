@@ -45,6 +45,19 @@ export function ShareModal({
     setSupportsNativeShare(typeof navigator !== "undefined" && !!navigator.share);
   }, []);
 
+  useEffect(() => {
+    // 모달 열릴 때 카카오 SDK 초기화 미리 시도
+    if (open && typeof window !== "undefined" && window.Kakao) {
+      if (!window.Kakao.isInitialized() && process.env.NEXT_PUBLIC_KAKAO_API_KEY) {
+        try {
+          window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_API_KEY);
+        } catch (e) {
+          console.error("Kakao init error:", e);
+        }
+      }
+    }
+  }, [open]);
+
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(url);
