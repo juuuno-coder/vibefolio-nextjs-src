@@ -224,11 +224,18 @@ function HomeContent() {
       const myGenres = userInterests.genres || [];
       const myFields = userInterests.fields || [];
 
-      // Genre slug check (myGenres has slugs)
-      const genreMatch = myGenres.length === 0 || (p.categorySlug && myGenres.includes(p.categorySlug));
-      // Field slug/name check
+      // Genre 매칭: 내 관심사가 Slug일 수도, Name일 수도 있음 -> 양방향 체크
+      const genreMatch = myGenres.length === 0 || (
+        (p.categorySlug && myGenres.includes(p.categorySlug)) || // Slug vs Slug
+        myGenres.includes(p.category) || // Name vs Name
+        myGenres.map(g => getCategoryName(g)).includes(p.category) // Slug -> Name vs Name
+      );
+
+      // Field 매칭: 내 관심사가 Slug/Name 혼재 가능 -> 양방향 체크
       const fieldMatch = myFields.length === 0 || (p.field && (
-         myFields.includes(p.field) || myFields.map(f => getCategoryName(f)).includes(p.field)
+         myFields.includes(p.field) || 
+         myFields.map(f => getCategoryName(f)).includes(p.field) ||
+         myFields.includes(getCategoryName(p.field))
       ));
       
       return genreMatch && fieldMatch;
