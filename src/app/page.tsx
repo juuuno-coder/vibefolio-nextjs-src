@@ -143,6 +143,19 @@ function HomeContent() {
             // 이미지 URL: thumbnail_url, image_url, url 등 가능한 모든 필드 체크
             const imgUrl = proj.thumbnail_url || proj.image_url || proj.url || "/placeholder.jpg";
 
+            // [Fix] custom_data 내의 fields 우선 확인
+            let primaryField = "it";
+            try {
+               const cData = typeof proj.custom_data === 'string' ? JSON.parse(proj.custom_data) : proj.custom_data;
+               if (cData?.fields && Array.isArray(cData.fields) && cData.fields.length > 0) {
+                  primaryField = cData.fields[0]; // 첫 번째 필드를 대표 필드로 사용
+               } else if (proj.field) {
+                  primaryField = proj.field;
+               }
+            } catch {
+               if (proj.field) primaryField = proj.field;
+            }
+
             return {
               id: proj.project_id.toString(),
               title: proj.title,
@@ -165,7 +178,7 @@ function HomeContent() {
               width: 400,
               height: 300,
               category: proj.Category?.name || getCategoryNameById(proj.category_id || proj.Category || 1),
-              field: (proj.field || "it").toLowerCase(), // 소문자로 통일
+              field: primaryField.toLowerCase(), // 소문자로 통일
               userId: proj.user_id,
               rendering_type: proj.rendering_type,
             } as ImageDialogProps;

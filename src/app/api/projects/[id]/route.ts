@@ -167,6 +167,50 @@ export async function PUT(
       );
     }
 
+    // [New] 표준화된 Fields 매핑 동기화
+    // custom_data 내의 fields가 수정되었을 때 project_fields 테이블도 업데이트
+    if (custom_data) {
+        try {
+            const parsedCustom = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
+            const fieldSlugs = parsedCustom.fields; // e.g. ['it', 'finance']
+
+            // 필드가 아예 없거나 빈 배열인 경우 -> 기존 매핑 삭제만 수행할 수도 있으므로 항상 실행
+            // 1. 기존 매핑 삭제
+            await (supabaseAdmin as any)
+                .from('project_fields')
+                .delete()
+                .eq('project_id', id);
+
+            if (Array.isArray(fieldSlugs) && fieldSlugs.length > 0) {
+                // 2. Slug에 해당하는 ID 조회
+                const { data: fieldRecords } = await (supabaseAdmin as any)
+                    .from('fields')
+                    .select('id, slug')
+                    .in('slug', fieldSlugs);
+
+                if (fieldRecords && fieldRecords.length > 0) {
+                    // 3. 새로운 매핑 삽입
+                    const mappings = fieldRecords.map((f: any) => ({
+                        project_id: id,
+                        field_id: f.id,
+                    }));
+
+                    const { error: mapError } = await (supabaseAdmin as any)
+                        .from('project_fields')
+                        .insert(mappings);
+
+                    if (mapError) {
+                         console.error('[API] Field mapping update failed:', mapError);
+                    } else {
+                         console.log('[API] Field mappings updated:', mappings.length);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('[API] Syncing fields failed:', e);
+        }
+    }
+
     // Supabase Admin을 직접 사용하여 사용자 정보 가져오기
     if (data && data.user_id) {
       try {
