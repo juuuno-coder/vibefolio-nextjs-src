@@ -57,6 +57,8 @@ const fieldCategories = [
   { id: "it", label: "IT" },
   { id: "lifestyle", label: "라이프스타일" },
   { id: "business", label: "비즈니스" },
+  { id: "art", label: "문화/예술" },
+  { id: "marketing", label: "마케팅" },
   { id: "other", label: "기타" },
 ];
 

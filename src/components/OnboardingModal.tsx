@@ -25,35 +25,36 @@ import {
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/AuthContext";
 
-// 장르 카테고리
-export const GENRE_CATEGORIES = [
-  { icon: faCamera, label: "포토", value: "photo" },
-  { icon: faWandMagicSparkles, label: "웹툰/애니", value: "animation" },
-  { icon: faPalette, label: "그래픽", value: "graphic" },
-  { icon: faPenRuler, label: "디자인", value: "design" },
-  { icon: faVideo, label: "영상", value: "video" },
-  { icon: faFilm, label: "영화·드라마", value: "cinema" },
-  { icon: faHeadphones, label: "오디오", value: "audio" },
-  { icon: faCube, label: "3D", value: "3d" },
-  { icon: faFileLines, label: "텍스트", value: "text" },
-  { icon: faCode, label: "코드", value: "code" },
-  { icon: faMobileScreen, label: "웹/앱", value: "webapp" },
-  { icon: faGamepad, label: "게임", value: "game" },
-];
+import { GENRE_CATEGORIES as GENRES_CONST, FIELD_CATEGORIES as FIELDS_CONST } from "@/lib/constants";
+
+// 아이콘 매핑
+const GENRE_ICONS: Record<string, any> = {
+  photo: faCamera,
+  animation: faWandMagicSparkles,
+  graphic: faPalette,
+  design: faPenRuler,
+  video: faVideo,
+  cinema: faFilm,
+  audio: faHeadphones,
+  "3d": faCube,
+  text: faFileLines,
+  code: faCode,
+  webapp: faMobileScreen,
+  game: faGamepad,
+};
+
+// 장르 카테고리 (Constants + Icons)
+const GENRE_CATEGORIES = GENRES_CONST.map(g => ({
+  ...g,
+  value: g.id, // Modal uses 'value'
+  icon: GENRE_ICONS[g.id] || faCube
+}));
 
 // 산업 분야 카테고리
-export const FIELD_CATEGORIES = [
-  { label: "경제/금융", value: "finance" },
-  { label: "헬스케어", value: "healthcare" },
-  { label: "뷰티/패션", value: "beauty" },
-  { label: "반려", value: "pet" },
-  { label: "F&B", value: "fnb" },
-  { label: "여행/레저", value: "travel" },
-  { label: "교육", value: "education" },
-  { label: "IT", value: "it" },
-  { label: "라이프스타일", value: "lifestyle" },
-  { label: "비즈니스", value: "business" },
-];
+const FIELD_CATEGORIES = FIELDS_CONST.map(f => ({
+  ...f,
+  value: f.id 
+}));
 
 interface OnboardingModalProps {
   open: boolean;

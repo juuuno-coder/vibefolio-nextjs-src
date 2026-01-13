@@ -19,6 +19,8 @@ INSERT INTO public.fields (slug, name, sort_order) VALUES
 ('it', 'IT', 80),
 ('lifestyle', '라이프스타일', 90),
 ('business', '비즈니스', 100),
+('art', '문화/예술', 110),
+('marketingt', '마케팅', 120),
 ('other', '기타', 999)
 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name;
 

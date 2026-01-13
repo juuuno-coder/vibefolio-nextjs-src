@@ -69,6 +69,6 @@ export const FIELD_CATEGORIES = [
   { id: "lifestyle", label: "라이프스타일" },
   { id: "business", label: "비즈니스" },
   { id: "marketing", label: "마케팅" },
-  { id: "culture_arts", label: "문화/예술" },
+  { id: "art", label: "문화/예술" },
   { id: "other", label: "기타" },
 ];

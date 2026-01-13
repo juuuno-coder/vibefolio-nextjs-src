@@ -19,10 +19,10 @@ export const CATEGORY_MAP: Record<string, string> = {
   "photo": "포토",
   "typography": "타이포그래피",
   "craft": "공예",
-  "art": "파인아트",
+  // "art": "파인아트", // Moved to field category
   
   // 새로운 장르 카테고리
-  "animation": "애니메이션",
+  "animation": "웹툰/애니",
   "graphic": "그래픽",
   "design": "디자인",
   "cinema": "영화·드라마",
@@ -43,6 +43,9 @@ export const CATEGORY_MAP: Record<string, string> = {
   "it": "IT",
   "lifestyle": "라이프스타일",
   "business": "비즈니스",
+  "marketing": "마케팅",
+  "art": "문화/예술",
+  "other": "기타",
 };
 
 // 역매핑 - DB name에서 value로
@@ -64,7 +67,7 @@ export function getCategoryValue(name: string): string {
 export function getCategoryNameById(id: number | string): string {
   const idMap: Record<number, string> = {
     1: "포토",
-    2: "애니메이션", 
+    2: "웹툰/애니", 
     3: "그래픽",
     4: "디자인",
     5: "영상",

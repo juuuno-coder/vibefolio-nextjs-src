@@ -36,6 +36,8 @@ INSERT INTO fields (slug, name) VALUES
 ('it', 'IT'),
 ('lifestyle', '라이프스타일'),
 ('business', '비즈니스'),
+('art', '문화/예술'),
+('marketingt', '마케팅'),
 ('other', '기타')
 ON CONFLICT (slug) DO UPDATE 
 SET name = EXCLUDED.name;
