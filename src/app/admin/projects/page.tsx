@@ -20,7 +20,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { useAdmin } from "@/hooks/useAdmin";
 import { ProjectDetailModalV2 } from "@/components/ProjectDetailModalV2";
-import { GENRE_CATEGORIES, FIELD_CATEGORIES } from "@/lib/constants";
+import { GENRE_CATEGORIES, FIELD_CATEGORIES, GENRE_TO_CATEGORY_ID } from "@/lib/constants";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
@@ -79,13 +79,27 @@ export default function AdminProjectsPage() {
             fields: editFields
         };
 
+        // [Sync] Update core columns based on primary selection
+        const primaryGenre = editGenres[0];
+        const primaryField = editFields[0];
+        
+        const payload: any = { custom_data: newCustomData };
+        
+        if (primaryGenre && GENRE_TO_CATEGORY_ID[primaryGenre]) {
+            payload.category_id = GENRE_TO_CATEGORY_ID[primaryGenre];
+        }
+        
+        if (primaryField) {
+            payload.field = primaryField;
+        }
+
         const res = await fetch(`/api/projects/${metadataTarget.project_id}`, {
             method: 'PUT',
             headers: { 
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${session?.access_token}`
             },
-            body: JSON.stringify({ custom_data: newCustomData })
+            body: JSON.stringify(payload)
         });
 
         if (!res.ok) throw new Error("Metadata update failed");
