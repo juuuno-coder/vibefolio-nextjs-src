@@ -272,11 +272,16 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                             className="w-full h-auto py-3 px-4 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-100 text-left flex items-center justify-between group"
                             onClick={() => window.open(file.url, '_blank')}
                           >
-                            <div className="flex flex-col min-w-0 pr-2">
-                               <span className="text-slate-900 text-xs font-bold truncate max-w-[200px]">{file.name}</span>
-                               <span className="text-slate-500 text-[10px] font-medium">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                            <div className="flex items-center gap-3 min-w-0 pr-3">
+                               <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-200 text-slate-400 shrink-0 group-hover:border-slate-300 group-hover:text-slate-600 transition-colors">
+                                  <FileText size={16} />
+                               </div>
+                               <div className="flex flex-col min-w-0">
+                                   <span className="text-slate-900 text-xs font-bold truncate max-w-[160px] leading-tight mb-0.5">{file.name}</span>
+                                   <span className="text-slate-400 text-[10px] font-medium">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                               </div>
                             </div>
-                            <Download size={14} className="text-slate-400 group-hover:text-slate-900 transition-colors shrink-0" />
+                            <Download size={14} className="text-slate-300 group-hover:text-slate-600 transition-colors shrink-0 ml-2" />
                           </Button>
                         ))}
                       </div>
