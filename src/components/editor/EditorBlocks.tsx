@@ -590,7 +590,7 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
   ];
 
   // 관련 분야 데이터 정의
-  const fields = ["경제/금융", "헬스케어", "뷰티/패션", "반려", "F&B", "여행/레저", "교육", "IT", "라이프스타일", "비즈니스", "기타"];
+  const fields = ["경제/금융", "헬스케어", "뷰티/패션", "반려", "F&B", "여행/레저", "교육", "IT", "라이프스타일", "비즈니스", "문화/예술", "마케팅", "기타"];
 
   const toggleGenre = (id: string) => {
     setSelectedGenres(prev => 
