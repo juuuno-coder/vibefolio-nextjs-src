@@ -32,6 +32,7 @@ import { ProposalModal } from "./ProposalModal";
 import { CollectionModal } from "./CollectionModal";
 import { LoginRequiredModal } from "./LoginRequiredModal";
 import { supabase } from "@/lib/supabase/client";
+import { createNotification } from "@/hooks/useNotifications";
 
 
 dayjs.extend(relativeTime);
@@ -490,6 +491,25 @@ export function ProjectDetailModalV2({
         setFollowing(data.following);
         // 팔로워 수 업데이트
         setFollowersCount(prev => data.following ? prev + 1 : prev - 1);
+
+        // [New] 팔로우 알림 (팔로우 했을 때만)
+        if (data.following) {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const nickname = session?.user?.user_metadata?.nickname || '회원';
+                
+                await createNotification({
+                    userId: project.userId!,
+                    type: 'follow',
+                    title: '새로운 팔로워 🥳',
+                    message: `${nickname}님이 회원님을 팔로우합니다.`,
+                    link: `/user/${currentUserId}`, // 유저 프로필 페이지 (임시 경로)
+                    senderId: currentUserId!
+                });
+            } catch (e) {
+                console.error("알림 전송 실패", e);
+            }
+        }
       }
     } catch (error) {
       console.error('팔로우 실패:', error);
@@ -532,6 +552,21 @@ export function ProjectDetailModalV2({
         }
         setNewComment('');
         setReplyingTo(null);
+
+        // [New] 댓글 알림 전송 (본인 프로젝트가 아닐 경우)
+        if (project.userId && project.userId !== session.user.id) {
+             try {
+                 const nickname = session.user.user_metadata?.nickname || '회원';
+                 await createNotification({
+                     userId: project.userId,
+                     type: 'comment',
+                     title: '새로운 댓글 💬',
+                     message: `${nickname}님이 프로젝트에 댓글을 남겼습니다: "${newComment.substring(0, 20)}${newComment.length > 20 ? '...' : ''}"`,
+                     link: `/project/${project.id}`,
+                     senderId: session.user.id
+                 });
+             } catch(e) { console.error("알림 전송 실패", e); }
+        }
       } else {
         alert(data.error || '댓글 작성에 실패했습니다.');
       }
