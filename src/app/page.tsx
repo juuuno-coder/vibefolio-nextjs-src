@@ -40,7 +40,9 @@ interface ImageDialogProps {
   height: number;
   category: string;
   categorySlug?: string; // Slug 추가
+  categories?: string[]; // 복수 장르 (Slug)
   field?: string; // 분야 정보 추가
+  fields?: string[]; // 복수 분야 (Slug)
   userId?: string;
   rendering_type?: string;
 }
@@ -144,17 +146,41 @@ function HomeContent() {
             // 이미지 URL: thumbnail_url, image_url, url 등 가능한 모든 필드 체크
             const imgUrl = proj.thumbnail_url || proj.image_url || proj.url || "/placeholder.jpg";
 
-            // [Fix] custom_data 내의 fields 우선 확인
+            // [Enhanced] 복수 필드 & 장르 파싱
+            let projectGenres: string[] = [];
+            let projectFields: string[] = [];
             let primaryField = "it";
+            
             try {
                const cData = typeof proj.custom_data === 'string' ? JSON.parse(proj.custom_data) : proj.custom_data;
-               if (cData?.fields && Array.isArray(cData.fields) && cData.fields.length > 0) {
-                  primaryField = cData.fields[0]; // 첫 번째 필드를 대표 필드로 사용
-               } else if (proj.field) {
-                  primaryField = proj.field;
+               
+               // Fields Parsing
+               if (cData?.fields && Array.isArray(cData.fields)) {
+                  projectFields = cData.fields.map((f: string) => f.toLowerCase());
                }
-            } catch {
-               if (proj.field) primaryField = proj.field;
+
+               // Genres Parsing (New)
+               if (cData?.selectedGenres && Array.isArray(cData.selectedGenres)) {
+                   projectGenres = cData.selectedGenres;
+               } else if (cData?.genres && Array.isArray(cData.genres)) {
+                   projectGenres = cData.genres;
+               }
+            } catch {}
+
+            // Fallback for primaryField
+            if (projectFields.length > 0) {
+                primaryField = projectFields[0];
+            } else if (proj.field) {
+                primaryField = proj.field;
+                projectFields = [proj.field.toLowerCase()];
+            }
+
+            const categoryName = proj.Category?.name || getCategoryNameById(proj.category_id || proj.Category || 1);
+            const mainCatSlug = getCategoryValue(categoryName);
+            
+            // 메인 category_id도 장르에 포함 (중복 방지)
+            if (mainCatSlug && mainCatSlug !== 'all' && !projectGenres.includes(mainCatSlug)) {
+                projectGenres.push(mainCatSlug);
             }
 
             return {
@@ -178,9 +204,11 @@ function HomeContent() {
               created_at: proj.created_at,
               width: 400,
               height: 300,
-              category: proj.Category?.name || getCategoryNameById(proj.category_id || proj.Category || 1),
-              categorySlug: getCategoryValue(proj.Category?.name || getCategoryNameById(proj.category_id || proj.Category || 1)),
-              field: primaryField.toLowerCase(), // 소문자로 통일
+              category: categoryName,
+              categorySlug: mainCatSlug,
+              categories: projectGenres,
+              field: primaryField.toLowerCase(),
+              fields: projectFields,
               userId: proj.user_id,
               rendering_type: proj.rendering_type,
             } as ImageDialogProps;
@@ -215,7 +243,7 @@ function HomeContent() {
     : [getCategoryName(selectedCategory)];
   
   // 필터링 로직 강화 (카테고리 + 분야 + 관심사) - 검색어는 서버 사이드에서 처리됨
-  // 필터링 로직 강화 (카테고리 + 분야 + 관심사) - 검색어는 서버 사이드에서 처리됨
+  // 필터링 로직 강화 (카테고리 + 분야 + 관심사) - 복수 선택 지원
   const filtered = projects.filter(p => {
     // 1. 관심사 탭 ("interests") 선택 시 로직
     if (selectedCategory === "interests") {
@@ -224,35 +252,37 @@ function HomeContent() {
       const myGenres = userInterests.genres || [];
       const myFields = userInterests.fields || [];
 
-      // Genre 매칭: 내 관심사가 Slug일 수도, Name일 수도 있음 -> 양방향 체크
-      const genreMatch = myGenres.length === 0 || (
-        (p.categorySlug && myGenres.includes(p.categorySlug)) || // Slug vs Slug
-        myGenres.includes(p.category) || // Name vs Name
-        myGenres.map(g => getCategoryName(g)).includes(p.category) // Slug -> Name vs Name
-      );
+      // Genre 매칭 (복수 지원)
+      const genreMatch = myGenres.length === 0 || myGenres.some(g => {
+         return p.categories?.includes(g) || 
+                p.categories?.includes(getCategoryValue(g)) || 
+                (p.category && p.category === g) ||
+                (p.category && p.category === getCategoryName(g));
+      });
 
-      // Field 매칭: 내 관심사가 Slug/Name 혼재 가능 -> 양방향 체크
-      const fieldMatch = myFields.length === 0 || (p.field && (
-         myFields.includes(p.field) || 
-         myFields.map(f => getCategoryName(f)).includes(p.field) ||
-         myFields.includes(getCategoryName(p.field))
+      // Field 매칭 (복수 지원)
+      const fieldMatch = myFields.length === 0 || (p.fields && myFields.some(f => 
+         p.fields?.includes(f) || 
+         p.fields?.includes(getCategoryValue(f)) ||
+         p.fields?.includes(f.toLowerCase())
       ));
       
       return genreMatch && fieldMatch;
     }
 
-    // 2. 일반 카테고리 필터 (Slug 비교)
+    // 2. 일반 카테고리 필터 (복수 매칭)
     const matchCategory = selectedCategory === "all" || (
       Array.isArray(selectedCategory) 
-        ? (p.categorySlug && selectedCategory.includes(p.categorySlug))
-        : p.categorySlug === selectedCategory
+        ? selectedCategory.some(cat => p.categories?.includes(cat))
+        : p.categories?.includes(selectedCategory)
     );
     
-    // 3. 분야 필터
-    const matchField = selectedFields.length === 0 || (p.field && (
-      selectedFields.includes(p.field) || 
-      selectedFields.map(f => getCategoryName(f)).includes(p.field)
-    ));
+    // 3. 분야 필터 (복수 매칭)
+    const matchField = selectedFields.length === 0 || (
+       p.fields && p.fields.some(f => 
+          selectedFields.includes(f) || selectedFields.includes(getCategoryName(f))
+       )
+    );
     
     return matchCategory && matchField;
   });
