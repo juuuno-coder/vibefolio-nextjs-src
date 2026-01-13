@@ -308,7 +308,40 @@ export default function AdminPage() {
     );
   }
 
-  // const maxVal = Math.max(...weeklyData.map(d => d.value), 1); // 삭제
+  // ... (previous imports and setup)
+
+  // Max Val Helper
+  const getMax = (arr: any[], key: string) => Math.max(...arr.map(d => d[key]), 1);
+
+  // SVG Path Generator for smooth curves
+  const getSmoothPath = (points: [number, number][]) => {
+    if (points.length === 0) return "";
+    
+    // First point
+    let d = `M ${points[0][0]},${points[0][1]}`;
+
+    // Curve strategy: Catmull-Rom to Cubic Bezier conversion or simple Control Point calc
+    // Since we have 7 fixed points, we can use a simpler smoothing
+    for (let i = 0; i < points.length - 1; i++) {
+        const x0 = i > 0 ? points[i - 1][0] : points[i][0] - (points[i+1][0] - points[i][0]);
+        const y0 = i > 0 ? points[i - 1][1] : points[i][1];
+        const x1 = points[i][0];
+        const y1 = points[i][1];
+        const x2 = points[i+1][0];
+        const y2 = points[i+1][1];
+        const x3 = i < points.length - 2 ? points[i+2][0] : points[i+1][0] + (points[i+1][0] - points[i][0]);
+        const y3 = i < points.length - 2 ? points[i+2][1] : points[i+1][1];
+
+        const cp1x = x1 + (x2 - x0) / 6;
+        const cp1y = y1 + (y2 - y0) / 6;
+
+        const cp2x = x2 - (x3 - x1) / 6;
+        const cp2y = y2 - (y3 - y1) / 6;
+
+        d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${x2},${y2}`;
+    }
+    return d;
+  };
 
   return (
     <div className="space-y-10 pb-20">
@@ -361,13 +394,13 @@ export default function AdminPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Weekly Activity Chart (CSS Pure) */}
+        {/* Weekly Activity Chart (Updated) */}
         <Card className="lg:col-span-2 border-none shadow-sm rounded-[32px] overflow-hidden p-8 flex flex-col justify-between min-h-[400px] bg-white">
           <div>
             <div className="flex items-center justify-between mb-8">
               <CardTitle className="text-xl font-black flex items-center gap-2">
                 <BarChart3 className="text-[#16A34A]" />
-                주간 프로젝트 등록 현황
+                플랫폼 통계
               </CardTitle>
               <select className="bg-slate-50 border-none text-[10px] font-bold text-slate-500 rounded-lg px-3 py-1.5 focus:ring-0 cursor-pointer">
                 <option>최근 7일</option>
@@ -375,128 +408,115 @@ export default function AdminPage() {
               </select>
             </div>
             
-            {/* Combined Chart (Bar + Lines) */}
+            {/* Smooth Curve Chart */}
             <div 
               className="w-full h-64 mt-6 relative"
               onMouseLeave={() => setHoveredChartData(null)}
             >
               {(() => {
                  const data = weeklyData.length > 0 ? weeklyData : Array(7).fill({day: '-', visits:0, users:0, projects:0, recruits:0});
-                 // 1. Max Scales
-                 const maxVisits = Math.max(...data.map((d: any) => d.visits), 10); // 막대용 (최소 10)
-                 const maxOthers = Math.max(...data.map((d: any) => Math.max(d.users, d.projects, d.recruits)), 5); // 선 그래프용 (최소 5)
+                 
+                 const maxVisits = Math.max(...data.map((d: any) => d.visits), 10);
+                 const maxOthers = Math.max(...data.map((d: any) => Math.max(d.users, d.projects, d.recruits)), 5);
+
+                 // Coord Calculators
+                 const getX = (i: number) => i * (100/6); // 0 to 100 distributed
+                 const getY = (val: number, max: number) => 50 - (val / max) * 45; // Leave bottom padding
+
+                 // Points
+                 const visitPoints = data.map((d: any, i: number) => [getX(i), getY(d.visits, maxVisits)] as [number, number]);
+                 const userPoints = data.map((d: any, i: number) => [getX(i), getY(d.users, maxOthers)] as [number, number]);
+                 const projectPoints = data.map((d: any, i: number) => [getX(i), getY(d.projects, maxOthers)] as [number, number]);
+
+                 const visitPath = getSmoothPath(visitPoints);
+                 const userPath = getSmoothPath(userPoints);
+                 const projectPath = getSmoothPath(projectPoints);
 
                  return (
                    <div className="w-full h-full relative font-bold text-[10px] text-slate-400">
                      {/* 범례 */}
                      <div className="absolute top-0 right-0 flex items-center gap-3">
-                       <div className="flex items-center gap-1"><div className="w-2 h-2 bg-slate-200"></div> 방문자</div>
+                       <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> 방문자</div>
                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-pink-500"></div> 가입</div>
                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-indigo-500"></div> 프로젝트</div>
-                       <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500"></div> 채용/공모</div>
                      </div>
 
                      {/* SVG Chart */}
                      <svg viewBox="0 0 100 50" preserveAspectRatio="none" className="w-full h-full overflow-visible">
-                       {/* Grid Lines (Horizontal) */}
-                       {[0, 25, 50, 75, 100].map(y => ( <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="#f1f5f9" strokeWidth="0.5" /> ))}
+                       <defs>
+                          <linearGradient id="blueGradient" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" />
+                            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                          </linearGradient>
+                       </defs>
 
-                       {/* Bars (Visits) */}
-                       {data.map((d: any, i: number) => {
-                         const barHeight = (d.visits / maxVisits) * 50;
-                         return (
-                           <rect 
-                             key={`bar-${i}`}
-                             x={i * (100/7) + 2} 
-                             y={50 - barHeight} 
-                             width={(100/7) - 4} 
-                             height={barHeight} 
-                             fill="#e2e8f0" 
-                             rx="1"
-                             className="hover:fill-slate-300 transition-all"
-                           >
-                             <title>{d.visits} View</title>
-                           </rect>
-                         );
-                       })}
+                       {/* Grid Lines */}
+                       {[0, 12.5, 25, 37.5, 50].map(y => ( <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="#f1f5f9" strokeWidth="0.5" /> ))}
 
-                       {/* Lines (Others) using polyline */}
-                         {/* Users (Pink) */}
-                         <polyline 
-                           fill="none" 
-                           stroke="#ec4899" 
-                           strokeWidth="1" 
-                           strokeLinecap="round"
-                           strokeLinejoin="round"
-                           points={data.map((d: any, i: number) => `${i * (100/7) + (100/7)/2},${50 - (d.users / maxOthers) * 50}`).join(" ")}
+                       {/* Visits Area & Line */}
+                       <path d={`${visitPath} L 100,50 L 0,50 Z`} fill="url(#blueGradient)" />
+                       <path d={visitPath} fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+
+                       {/* Users Line */}
+                       <path d={userPath} fill="none" stroke="#ec4899" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="2,1" vectorEffect="non-scaling-stroke" />
+
+                       {/* Projects Line */}
+                       <path d={projectPath} fill="none" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+
+                       {/* Data Points */}
+                        {data.map((d: any, i: number) => (
+                           <g key={i}>
+                               <circle cx={getX(i)} cy={getY(d.visits, maxVisits)} r="1.5" fill="#3b82f6" stroke="white" strokeWidth="0.5" />
+                               {d.projects > 0 && <circle cx={getX(i)} cy={getY(d.projects, maxOthers)} r="1.5" fill="#6366f1" stroke="white" strokeWidth="0.5" />}
+                           </g>
+                        ))}
+
+                       {/* Interaction Layer */}
+                       {data.map((d: any, i: number) => (
+                         <rect
+                           key={`touch-${i}`}
+                           x={getX(i) - (100/12)}
+                           y="0"
+                           width={100/6}
+                           height="50"
+                           fill="transparent"
+                           className="cursor-pointer hover:fill-slate-900/5 transition-colors"
+                           onMouseEnter={() => setHoveredChartData({ ...d, index: i })}
                          />
-                         {/* Projects (Indigo) */}
-                         <polyline 
-                           fill="none" 
-                           stroke="#6366f1" 
-                           strokeWidth="1" 
-                           strokeLinecap="round"
-                           strokeLinejoin="round"
-                           points={data.map((d: any, i: number) => `${i * (100/7) + (100/7)/2},${50 - (d.projects / maxOthers) * 50}`).join(" ")}
-                         />
-                         {/* Recruits (Green) */}
-                         <polyline 
-                           fill="none" 
-                           stroke="#22c55e" 
-                           strokeWidth="1" 
-                           strokeLinecap="round"
-                           strokeLinejoin="round"
-                           points={data.map((d: any, i: number) => `${i * (100/7) + (100/7)/2},${50 - (d.recruits / maxOthers) * 50}`).join(" ")}
-                         />
-
-                     {/* Interaction Layer (Full height columns) */}
-                     {data.map((d: any, i: number) => (
-                       <rect
-                         key={`touch-${i}`}
-                         x={i * (100/7)}
-                         y="0"
-                         width={100/7}
-                         height="50"
-                         fill="transparent"
-                         className="cursor-pointer hover:fill-slate-900/5 transition-colors"
-                         onMouseEnter={() => setHoveredChartData({ ...d, index: i })}
-                       />
-                     ))}
-                   </svg>
-
-                   {/* Hover Tooltip (Absolute Position) */}
-                   {hoveredChartData && (
-                     <div 
-                       className="absolute bg-slate-900 text-white text-[10px] p-3 rounded-xl shadow-xl z-50 pointer-events-none transition-all duration-200 ease-out transform -translate-x-1/2 -translate-y-2"
-                       style={{ 
-                         left: `${hoveredChartData.index * (100/7) + (100/7)/2}%`, 
-                         top: '10%' // 차트 중간쯤이나 위쪽에 표시. 막대 높이에 따라 유동적으로 하면 좋지만 고정 위치가 깔끔함.
-                       }}
-                     >
-                       <p className="font-bold text-slate-300 mb-2 border-b border-white/10 pb-1 text-center whitespace-nowrap">
-                         {hoveredChartData.day}요일 ({hoveredChartData.date?.slice(5)})
-                       </p>
-                       <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-left min-w-[100px]">
-                         <div className="flex items-center justify-between"><span className="text-slate-400">방문</span> <span className="font-bold">{hoveredChartData.visits}</span></div>
-                         <div className="flex items-center justify-between"><span className="text-pink-400">가입</span> <span className="font-bold">{hoveredChartData.users}</span></div>
-                         <div className="flex items-center justify-between"><span className="text-indigo-400">등록</span> <span className="font-bold">{hoveredChartData.projects}</span></div>
-                         <div className="flex items-center justify-between"><span className="text-green-400">공모</span> <span className="font-bold">{hoveredChartData.recruits}</span></div>
+                       ))}
+                     </svg>
+                     
+                     {/* Hover Tooltip */}
+                     {hoveredChartData && (
+                       <div 
+                         className="absolute bg-slate-900/90 backdrop-blur text-white text-[10px] p-3 rounded-xl shadow-xl z-50 pointer-events-none transition-all duration-200 transform -translate-x-1/2 -translate-y-4"
+                         style={{ 
+                           left: `${hoveredChartData.index * (100/6)}%`, 
+                           top: '10%' 
+                         }}
+                       >
+                         <p className="font-bold text-slate-300 mb-2 border-b border-white/10 pb-1 text-center whitespace-nowrap">
+                           {hoveredChartData.day}요일 ({hoveredChartData.date?.slice(5)})
+                         </p>
+                         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-left min-w-[100px]">
+                           <div className="flex items-center justify-between"><span className="text-blue-400">방문</span> <span className="font-bold">{hoveredChartData.visits}</span></div>
+                           <div className="flex items-center justify-between"><span className="text-pink-400">가입</span> <span className="font-bold">{hoveredChartData.users}</span></div>
+                           <div className="flex items-center justify-between"><span className="text-indigo-400">등록</span> <span className="font-bold">{hoveredChartData.projects}</span></div>
+                           <div className="flex items-center justify-between"><span className="text-green-400">공모</span> <span className="font-bold">{hoveredChartData.recruits}</span></div>
+                         </div>
                        </div>
-                       {/* 화살표 */}
-                       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-slate-900"></div>
-                     </div>
-                   )}
+                     )}
 
-                   {/* X-axis Labels */}
-                   <div className="flex justify-between mt-2 px-1">
-                     {data.map((d: any, i: number) => (
-                       <div key={i} className={`flex-1 text-center transition-colors ${hoveredChartData?.index === i ? 'text-slate-900 font-bold scale-110' : ''}`}>{d.day}</div>
-                     ))}
+                     {/* X-axis Labels */}
+                     <div className="flex justify-between mt-2">
+                       {data.map((d: any, i: number) => (
+                         <div key={i} className={`flex-1 text-center transition-colors ${hoveredChartData?.index === i ? 'text-slate-900 font-bold' : ''}`} style={{ width: `${100/7}%` }}>{d.day}</div>
+                       ))}
+                     </div>
                    </div>
-                 </div>
-               );
-            })()}
-          </div>
+                 );
+              })()}
+            </div>
           </div>
           
           <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
@@ -509,10 +529,10 @@ export default function AdminPage() {
           </div>
         </Card>
 
-        {/* Recent Activities (Combined Tab) */}
+        {/* Recent Activities (Updated) */}
         <Card className="border-none shadow-sm rounded-[32px] overflow-hidden p-6 flex flex-col bg-white h-full min-h-[400px]">
           <div className="flex items-center justify-between mb-6">
-            <CardTitle className="text-lg font-black italic">RECENT ACTIVITIES</CardTitle>
+            <CardTitle className="text-lg font-black italic">최근 활동 내역</CardTitle>
             <div className="flex bg-slate-100 p-1 rounded-xl">
               <button 
                 onClick={() => setActiveTab('projects')}
@@ -520,7 +540,7 @@ export default function AdminPage() {
                   activeTab === 'projects' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
                 }`}
               >
-                PROJECTS
+                최근 프로젝트
               </button>
               <button 
                 onClick={() => setActiveTab('inquiries')}
@@ -528,7 +548,7 @@ export default function AdminPage() {
                   activeTab === 'inquiries' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
                 }`}
               >
-                INQUIRIES {recentInquiries.length > 0 && <span className="ml-1 w-1.5 h-1.5 inline-block rounded-full bg-red-500"></span>}
+                최근 문의 {recentInquiries.length > 0 && <span className="ml-1 w-1.5 h-1.5 inline-block rounded-full bg-red-500"></span>}
               </button>
             </div>
           </div>
