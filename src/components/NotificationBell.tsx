@@ -159,7 +159,7 @@ export function NotificationBell() {
   };
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
+    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
@@ -183,7 +183,7 @@ export function NotificationBell() {
 
       <DropdownMenuContent
         align="end"
-        className="w-[380px] p-0 overflow-hidden rounded-2xl border-gray-100 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] bg-white/95 backdrop-blur-xl z-[200]"
+        className="w-[380px] p-0 overflow-hidden rounded-2xl border-gray-100 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] bg-white/95 backdrop-blur-xl z-[1000]"
         sideOffset={8}
       >
         <Tabs defaultValue="activity" className="w-full">
