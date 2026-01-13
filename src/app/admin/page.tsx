@@ -310,18 +310,15 @@ export default function AdminPage() {
 
   // ... (previous imports and setup)
 
+  // ... (previous imports)
+
   // Max Val Helper
   const getMax = (arr: any[], key: string) => Math.max(...arr.map(d => d[key]), 1);
 
   // SVG Path Generator for smooth curves
   const getSmoothPath = (points: [number, number][]) => {
     if (points.length === 0) return "";
-    
-    // First point
     let d = `M ${points[0][0]},${points[0][1]}`;
-
-    // Curve strategy: Catmull-Rom to Cubic Bezier conversion or simple Control Point calc
-    // Since we have 7 fixed points, we can use a simpler smoothing
     for (let i = 0; i < points.length - 1; i++) {
         const x0 = i > 0 ? points[i - 1][0] : points[i][0] - (points[i+1][0] - points[i][0]);
         const y0 = i > 0 ? points[i - 1][1] : points[i][1];
@@ -334,7 +331,6 @@ export default function AdminPage() {
 
         const cp1x = x1 + (x2 - x0) / 6;
         const cp1y = y1 + (y2 - y0) / 6;
-
         const cp2x = x2 - (x3 - x1) / 6;
         const cp2y = y2 - (y3 - y1) / 6;
 
@@ -344,7 +340,7 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="space-y-10 pb-20">
+    <div className="space-y-8 pb-20">
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
@@ -393,15 +389,21 @@ export default function AdminPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Weekly Activity Chart (Updated) */}
-        <Card className="lg:col-span-2 border-none shadow-sm rounded-[32px] overflow-hidden p-8 flex flex-col justify-between min-h-[400px] bg-white">
+      {/* Full Width Chart Section */}
+      <Card className="border-none shadow-sm rounded-[32px] overflow-hidden p-8 flex flex-col justify-between min-h-[450px] bg-white">
           <div>
             <div className="flex items-center justify-between mb-8">
-              <CardTitle className="text-xl font-black flex items-center gap-2">
-                <BarChart3 className="text-[#16A34A]" />
-                플랫폼 통계
-              </CardTitle>
+              <div className="flex items-center gap-4">
+                  <CardTitle className="text-xl font-black flex items-center gap-2">
+                    <BarChart3 className="text-[#16A34A]" />
+                    플랫폼 통계
+                  </CardTitle>
+                  <div className="flex items-center gap-4 text-xs font-bold text-slate-400 bg-slate-50 px-4 py-2 rounded-full">
+                       <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded bg-blue-500"></div> 방문자</div>
+                       <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-pink-500"></div> 가입</div>
+                       <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-indigo-500"></div> 프로젝트</div>
+                  </div>
+              </div>
               <select className="bg-slate-50 border-none text-[10px] font-bold text-slate-500 rounded-lg px-3 py-1.5 focus:ring-0 cursor-pointer">
                 <option>최근 7일</option>
                 <option>최근 30일</option>
@@ -410,7 +412,7 @@ export default function AdminPage() {
             
             {/* Smooth Curve Chart */}
             <div 
-              className="w-full h-64 mt-6 relative"
+              className="w-full h-72 mt-8 relative"
               onMouseLeave={() => setHoveredChartData(null)}
             >
               {(() => {
@@ -420,8 +422,8 @@ export default function AdminPage() {
                  const maxOthers = Math.max(...data.map((d: any) => Math.max(d.users, d.projects, d.recruits)), 5);
 
                  // Coord Calculators
-                 const getX = (i: number) => i * (100/6); // 0 to 100 distributed
-                 const getY = (val: number, max: number) => 50 - (val / max) * 45; // Leave bottom padding
+                 const getX = (i: number) => i * (100/6); 
+                 const getY = (val: number, max: number) => 50 - (val / max) * 45; 
 
                  // Points
                  const visitPoints = data.map((d: any, i: number) => [getX(i), getY(d.visits, maxVisits)] as [number, number]);
@@ -434,14 +436,6 @@ export default function AdminPage() {
 
                  return (
                    <div className="w-full h-full relative font-bold text-[10px] text-slate-400">
-                     {/* 범례 */}
-                     <div className="absolute top-0 right-0 flex items-center gap-3">
-                       <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> 방문자</div>
-                       <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-pink-500"></div> 가입</div>
-                       <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-indigo-500"></div> 프로젝트</div>
-                     </div>
-
-                     {/* SVG Chart */}
                      <svg viewBox="0 0 100 50" preserveAspectRatio="none" className="w-full h-full overflow-visible">
                        <defs>
                           <linearGradient id="blueGradient" x1="0" x2="0" y1="0" y2="1">
@@ -466,8 +460,9 @@ export default function AdminPage() {
                        {/* Data Points */}
                         {data.map((d: any, i: number) => (
                            <g key={i}>
-                               <circle cx={getX(i)} cy={getY(d.visits, maxVisits)} r="1.5" fill="#3b82f6" stroke="white" strokeWidth="0.5" />
-                               {d.projects > 0 && <circle cx={getX(i)} cy={getY(d.projects, maxOthers)} r="1.5" fill="#6366f1" stroke="white" strokeWidth="0.5" />}
+                               <circle cx={getX(i)} cy={getY(d.visits, maxVisits)} r="1.5" fill="#3b82f6" stroke="white" strokeWidth="1" />
+                               {d.projects > 0 && <circle cx={getX(i)} cy={getY(d.projects, maxOthers)} r="1.5" fill="#6366f1" stroke="white" strokeWidth="1" />}
+                               {d.users > 0 && <circle cx={getX(i)} cy={getY(d.users, maxOthers)} r="1.5" fill="#ec4899" stroke="white" strokeWidth="1" />}
                            </g>
                         ))}
 
@@ -489,28 +484,34 @@ export default function AdminPage() {
                      {/* Hover Tooltip */}
                      {hoveredChartData && (
                        <div 
-                         className="absolute bg-slate-900/90 backdrop-blur text-white text-[10px] p-3 rounded-xl shadow-xl z-50 pointer-events-none transition-all duration-200 transform -translate-x-1/2 -translate-y-4"
+                         className="absolute bg-slate-900/95 backdrop-blur text-white text-[11px] p-4 rounded-2xl shadow-2xl z-50 pointer-events-none transition-all duration-200 transform -translate-x-1/2 -translate-y-6 border border-slate-700/50"
                          style={{ 
                            left: `${hoveredChartData.index * (100/6)}%`, 
-                           top: '10%' 
+                           top: '0%' 
                          }}
                        >
-                         <p className="font-bold text-slate-300 mb-2 border-b border-white/10 pb-1 text-center whitespace-nowrap">
-                           {hoveredChartData.day}요일 ({hoveredChartData.date?.slice(5)})
-                         </p>
-                         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-left min-w-[100px]">
-                           <div className="flex items-center justify-between"><span className="text-blue-400">방문</span> <span className="font-bold">{hoveredChartData.visits}</span></div>
-                           <div className="flex items-center justify-between"><span className="text-pink-400">가입</span> <span className="font-bold">{hoveredChartData.users}</span></div>
-                           <div className="flex items-center justify-between"><span className="text-indigo-400">등록</span> <span className="font-bold">{hoveredChartData.projects}</span></div>
-                           <div className="flex items-center justify-between"><span className="text-green-400">공모</span> <span className="font-bold">{hoveredChartData.recruits}</span></div>
+                         <div className="flex items-center justify-between gap-4 mb-3 border-b border-white/10 pb-2">
+                             <span className="font-bold text-white text-xs">
+                                 {/* Format: 2026.01.13 (Tue) */}
+                                 {new Date().getFullYear()}.{hoveredChartData.date?.slice(5).replace('-', '.')} ({hoveredChartData.day})
+                             </span>
+                         </div>
+                         <div className="space-y-2 min-w-[120px]">
+                           <div className="flex items-center justify-between"><span className="text-blue-400 font-medium">방문자</span> <span className="font-bold text-white text-sm">{hoveredChartData.visits}</span></div>
+                           <div className="flex items-center justify-between"><span className="text-pink-400 font-medium">신규 가입</span> <span className="font-bold text-white text-sm">{hoveredChartData.users}</span></div>
+                           <div className="flex items-center justify-between"><span className="text-indigo-400 font-medium">프로젝트</span> <span className="font-bold text-white text-sm">{hoveredChartData.projects}</span></div>
+                           <div className="flex items-center justify-between"><span className="text-green-400 font-medium">채용/공모</span> <span className="font-bold text-white text-sm">{hoveredChartData.recruits}</span></div>
                          </div>
                        </div>
                      )}
 
                      {/* X-axis Labels */}
-                     <div className="flex justify-between mt-2">
+                     <div className="flex justify-between mt-4">
                        {data.map((d: any, i: number) => (
-                         <div key={i} className={`flex-1 text-center transition-colors ${hoveredChartData?.index === i ? 'text-slate-900 font-bold' : ''}`} style={{ width: `${100/7}%` }}>{d.day}</div>
+                         <div key={i} className={`flex-1 text-center transition-colors ${hoveredChartData?.index === i ? 'text-slate-900 font-bold' : ''}`} style={{ width: `${100/7}%`, fontSize: '11px' }}>
+                             {/* Format: 01.13 (Tue) */}
+                             {d.date?.slice(5).replace('-', '.')} ({d.day})
+                         </div>
                        ))}
                      </div>
                    </div>
@@ -527,81 +528,75 @@ export default function AdminPage() {
             </p>
             <Button variant="ghost" className="text-[#16A34A] font-bold text-xs hover:bg-[#16A34A]/5 rounded-xl" onClick={() => router.push('/admin/stats')}>상세 리포트 보기</Button>
           </div>
-        </Card>
+      </Card>
 
-        {/* Recent Activities (Updated) */}
-        <Card className="border-none shadow-sm rounded-[32px] overflow-hidden p-6 flex flex-col bg-white h-full min-h-[400px]">
-          <div className="flex items-center justify-between mb-6">
-            <CardTitle className="text-lg font-black italic">최근 활동 내역</CardTitle>
-            <div className="flex bg-slate-100 p-1 rounded-xl">
-              <button 
-                onClick={() => setActiveTab('projects')}
-                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
-                  activeTab === 'projects' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
-                }`}
-              >
-                최근 프로젝트
-              </button>
-              <button 
-                onClick={() => setActiveTab('inquiries')}
-                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
-                  activeTab === 'inquiries' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
-                }`}
-              >
-                최근 문의 {recentInquiries.length > 0 && <span className="ml-1 w-1.5 h-1.5 inline-block rounded-full bg-red-500"></span>}
-              </button>
+      {/* Recent Activities Split View */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Projects */}
+          <Card className="border-none shadow-sm rounded-[32px] overflow-hidden p-6 flex flex-col bg-white min-h-[400px]">
+            <div className="flex items-center justify-between mb-6">
+                <CardTitle className="text-lg font-black italic flex items-center gap-2">
+                    <span className="w-1.5 h-6 bg-indigo-500 rounded-full inline-block"></span>
+                    최근 프로젝트
+                </CardTitle>
+                <Link href="/admin/projects" className="text-slate-400 hover:text-indigo-600 text-xs font-bold transition-colors">더보기</Link>
             </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-            {activeTab === 'projects' ? (
-              <div className="space-y-4">
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3">
                 {recentProjects.length > 0 ? recentProjects.map((project, idx) => (
-                   <div key={idx} className="flex items-center gap-4 group cursor-pointer hover:bg-slate-50 p-2 rounded-xl transition-colors">
-                      <div className="w-12 h-12 rounded-xl bg-slate-100 bg-cover bg-center flex-shrink-0 border border-slate-100" style={{ backgroundImage: `url(${project.thumbnail_url || '/globe.svg'})` }} />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-bold text-slate-900 text-xs truncate group-hover:text-[#16A34A] transition-colors">{project.title || "제목 없음"}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                           <span className="text-[10px] text-slate-400 font-bold">@{project.profiles?.username || "익명"}</span>
-                           <span className="text-[9px] text-slate-300">|</span>
-                           <span className="text-[10px] text-slate-400">{new Date(project.created_at).toLocaleDateString()}</span>
+                    <div key={idx} className="flex items-center gap-4 group cursor-pointer hover:bg-indigo-50/50 p-2.5 rounded-xl transition-all border border-transparent hover:border-indigo-100">
+                        <div className="w-14 h-14 rounded-xl bg-slate-100 bg-cover bg-center flex-shrink-0 border border-slate-100 shadow-sm" style={{ backgroundImage: `url(${project.thumbnail_url || '/globe.svg'})` }} />
+                        <div className="min-w-0 flex-1">
+                            <p className="font-bold text-slate-900 text-sm truncate group-hover:text-indigo-600 transition-colors">{project.title || "제목 없음"}</p>
+                            <div className="flex items-center gap-2 mt-1.5">
+                                <span className="text-[11px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded">@{project.profiles?.username || "익명"}</span>
+                                <span className="text-[11px] text-slate-400">{new Date(project.created_at).toLocaleDateString()}</span>
+                            </div>
                         </div>
-                      </div>
-                      <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-900" />
-                   </div>
+                        <ChevronRight size={16} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                    </div>
                 )) : (
-                  <div className="text-center py-12 text-slate-300 text-xs">최근 등록된 프로젝트가 없습니다.</div>
+                    <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-2">
+                        <FileText size={32} strokeWidth={1.5} />
+                        <span className="text-xs">등록된 프로젝트가 없습니다.</span>
+                    </div>
                 )}
-              </div>
-            ) : (
-              <div className="space-y-4">
+            </div>
+          </Card>
+
+          {/* Inquiries */}
+          <Card className="border-none shadow-sm rounded-[32px] overflow-hidden p-6 flex flex-col bg-white min-h-[400px]">
+             <div className="flex items-center justify-between mb-6">
+                <CardTitle className="text-lg font-black italic flex items-center gap-2">
+                    <span className="w-1.5 h-6 bg-orange-500 rounded-full inline-block"></span>
+                    최근 문의
+                </CardTitle>
+                <Link href="/admin/inquiries" className="text-slate-400 hover:text-orange-600 text-xs font-bold transition-colors">더보기</Link>
+            </div>
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3">
                 {recentInquiries.length > 0 ? recentInquiries.map((inq, idx) => (
-                   <div key={idx} className="flex items-start gap-3 group cursor-pointer hover:bg-slate-50 p-2 rounded-xl transition-colors">
-                      <div className="mt-1 w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
-                        <MessageCircle size={14} />
+                    <div key={idx} className="flex items-start gap-3 group cursor-pointer hover:bg-orange-50/50 p-3 rounded-xl transition-all border border-transparent hover:border-orange-100">
+                      <div className="mt-1 w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 shrink-0 shadow-sm group-hover:bg-orange-100 transition-colors">
+                        <MessageCircle size={16} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-slate-900 text-xs truncate max-w-[120px]">{inq.title || "문의"}</p>
-                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${inq.status === 'resolved' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-bold text-slate-900 text-sm truncate">{inq.title || "문의"}</p>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${inq.status === 'resolved' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
                             {inq.status === 'resolved' ? '완료' : '대기'}
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-400 mt-1 line-clamp-2">{inq.content || "내용 없음"}</p>
-                        <span className="text-[9px] text-slate-300 mt-1 block">{new Date(inq.created_at).toLocaleDateString()}</span>
+                        <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">{inq.content || "내용 없음"}</p>
+                        <span className="text-[10px] text-slate-400 mt-2 block font-medium">{new Date(inq.created_at).toLocaleDateString()}</span>
                       </div>
                    </div>
                 )) : (
-                  <div className="text-center py-12 text-slate-300 text-xs">새로운 문의사항이 없습니다.</div>
+                    <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-2">
+                        <MessageCircle size={32} strokeWidth={1.5} />
+                        <span className="text-xs">새로운 문의가 없습니다.</span>
+                    </div>
                 )}
-              </div>
-            )}
-          </div>
-          
-          <Link href={activeTab === 'projects' ? '/admin/projects' : '/admin/inquiries'} className="mt-6 w-full py-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-900 text-xs font-bold text-center transition-colors flex items-center justify-center gap-2">
-            전체 보기 <ChevronRight size={12} />
-          </Link>
-        </Card>
+            </div>
+          </Card>
       </div>
     </div>
   );
