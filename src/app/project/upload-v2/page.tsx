@@ -29,38 +29,32 @@ import { supabase } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/supabase/storage";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
-// 장르 카테고리
-const genreCategories: { id: string; label: string; icon: IconDefinition }[] = [
-  { id: "photo", label: "포토", icon: faCamera },
-  { id: "animation", label: "애니메이션", icon: faWandMagicSparkles },
-  { id: "graphic", label: "그래픽", icon: faPalette },
-  { id: "design", label: "디자인", icon: faPenRuler },
-  { id: "video", label: "영상", icon: faVideo },
-  { id: "cinema", label: "영화·드라마", icon: faFilm },
-  { id: "audio", label: "오디오", icon: faHeadphones },
-  { id: "3d", label: "3D", icon: faCube },
-  { id: "text", label: "텍스트", icon: faFileLines },
-  { id: "code", label: "코드", icon: faCode },
-  { id: "webapp", label: "웹/앱", icon: faMobileScreen },
-  { id: "game", label: "게임", icon: faGamepad },
-];
+import { GENRE_CATEGORIES as GENRES_CONST, FIELD_CATEGORIES as FIELDS_CONST, GENRE_TO_CATEGORY_ID } from "@/lib/constants";
+
+// 아이콘 매핑
+const GENRE_ICONS: Record<string, IconDefinition> = {
+  photo: faCamera,
+  animation: faWandMagicSparkles,
+  graphic: faPalette,
+  design: faPenRuler,
+  video: faVideo,
+  cinema: faFilm,
+  audio: faHeadphones,
+  "3d": faCube,
+  text: faFileLines,
+  code: faCode,
+  webapp: faMobileScreen,
+  game: faGamepad,
+};
+
+// 장르 카테고리 (Constants + Icons)
+const genreCategories = GENRES_CONST.map(g => ({
+  ...g,
+  icon: GENRE_ICONS[g.id] || faCube
+}));
 
 // 산업 분야
-const fieldCategories = [
-  { id: "finance", label: "경제/금융" },
-  { id: "healthcare", label: "헬스케어" },
-  { id: "beauty", label: "뷰티/패션" },
-  { id: "pet", label: "반려" },
-  { id: "fnb", label: "F&B" },
-  { id: "travel", label: "여행/레저" },
-  { id: "education", label: "교육" },
-  { id: "it", label: "IT" },
-  { id: "lifestyle", label: "라이프스타일" },
-  { id: "business", label: "비즈니스" },
-  { id: "art", label: "문화/예술" },
-  { id: "marketing", label: "마케팅" },
-  { id: "other", label: "기타" },
-];
+const fieldCategories = FIELDS_CONST;
 
 export default function AdvancedProjectUploadPage() {
   const router = useRouter();
@@ -170,12 +164,7 @@ export default function AdvancedProjectUploadPage() {
       // TODO: 각 블록의 이미지/비디오 파일 업로드 처리
 
       // 3. 프로젝트 생성
-      const genreToCategory: { [key: string]: number } = {
-        photo: 1, animation: 2, graphic: 3, design: 4,
-        video: 5, cinema: 6, audio: 7, "3d": 8,
-        text: 9, code: 10, webapp: 11, game: 12,
-      };
-      const category_id = genreToCategory[selectedGenres[0]] || 1;
+      const category_id = GENRE_TO_CATEGORY_ID[selectedGenres[0]] || 1;
 
       const response = await fetch('/api/projects', {
         method: 'POST',
