@@ -183,7 +183,8 @@ export function NotificationBell() {
 
       <DropdownMenuContent
         align="end"
-        className="w-[380px] p-0 overflow-hidden rounded-2xl border-2 border-gray-100 shadow-2xl bg-white z-[9999]"
+        className="w-[380px] p-0 overflow-hidden rounded-2xl border-2 border-gray-100 shadow-2xl bg-white"
+        style={{ zIndex: 99999 }}
         sideOffset={12}
       >
         <Tabs defaultValue="activity" className="w-full">
