@@ -203,7 +203,7 @@ export function Header({
                       <Plus className="w-4 h-4" />
                       프로젝트 등록
                     </Button>
-                    <NotificationBell />
+                    {/* <NotificationBell /> */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="outline-none rounded-full ring-2 ring-transparent ring-offset-2 hover:ring-gray-200 transition-all">
