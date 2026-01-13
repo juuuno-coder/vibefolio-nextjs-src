@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 const FALLBACK_IMAGE = "/placeholder.svg";
 const FALLBACK_AVATAR = "/globe.svg";
 
+import { getCategoryName } from "@/lib/categoryMap";
+
 // Props 인터페이스 정의
 interface ImageCardProps {
   props: {
@@ -30,6 +32,9 @@ interface ImageCardProps {
     created_at?: string;
     width?: number;
     height?: number;
+    category?: string;
+    categorySlug?: string;
+    field?: string;
   } | null;
   className?: string;
   onClick?: () => void;
@@ -54,6 +59,8 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
     const likes = props.likes ?? 0;
     const views = props.views;
     const altText = props.alt_description || props.title || '@THUMBNAIL';
+    const categoryName = props.category;
+    const fieldLabel = props.field ? getCategoryName(props.field) : null;
 
     // 화면상의 좋아요 수 계산 (Optimistic UI 보정)
     const displayLikes = likes + (isLiked ? 1 : 0) - (props.likes && isLiked ? 0 : 0);
@@ -83,6 +90,20 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
                <span>🏆</span> <span>POPULAR</span>
             </div>
           )}
+
+          {/* 카테고리 & 분야 뱃지 (우측 상단) */}
+          <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-1.5 pointer-events-none">
+            {categoryName && (
+              <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-medium px-2 py-1 rounded-md border border-white/10 shadow-sm">
+                {categoryName}
+              </span>
+            )}
+            {fieldLabel && (
+              <span className="bg-white/90 backdrop-blur-md text-slate-700 text-[10px] font-bold px-2 py-1 rounded-md shadow-sm border border-slate-100">
+                {fieldLabel}
+              </span>
+            )}
+          </div>
           
             {imgError ? (
             <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
