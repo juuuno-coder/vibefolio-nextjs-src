@@ -11,7 +11,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { User, Mail, Phone, MapPin, Link as LinkIcon, Upload } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { GENRE_CATEGORIES, FIELD_CATEGORIES } from "@/components/OnboardingModal";
+import { GENRE_CATEGORIES_WITH_ICONS as GENRE_CATEGORIES, FIELD_CATEGORIES_WITH_ICONS as FIELD_CATEGORIES } from "@/lib/ui-constants";
 
 interface UserProfile {
   username: string;
