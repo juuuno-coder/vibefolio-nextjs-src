@@ -245,29 +245,36 @@ function HomeContent() {
   // 필터링 로직 강화 (카테고리 + 분야 + 관심사) - 검색어는 서버 사이드에서 처리됨
   // 필터링 로직 강화 (카테고리 + 분야 + 관심사) - 복수 선택 지원
   const filtered = projects.filter(p => {
-    // 1. 관심사 탭 ("interests") 선택 시 로직
+    // 1. 관심사 탭 ("interests") 선택 시 로직 (OR 조건: 하나라도 맞으면 노출)
     if (selectedCategory === "interests") {
       if (!userInterests) return false;
       
       const myGenres = userInterests.genres || [];
       const myFields = userInterests.fields || [];
+      
+      const hasGenres = myGenres.length > 0;
+      const hasFields = myFields.length > 0;
 
-      // Genre 매칭 (복수 지원)
-      const genreMatch = myGenres.length === 0 || myGenres.some(g => {
+      // 둘 다 설정 안했으면 통과 X (관심사 설정 모달이 뜰 것임)
+      if (!hasGenres && !hasFields) return false;
+
+      // Genre 매칭 확인
+      const isGenreMatched = hasGenres && myGenres.some(g => {
          return p.categories?.includes(g) || 
                 p.categories?.includes(getCategoryValue(g)) || 
                 (p.category && p.category === g) ||
                 (p.category && p.category === getCategoryName(g));
       });
 
-      // Field 매칭 (복수 지원)
-      const fieldMatch = myFields.length === 0 || (p.fields && myFields.some(f => 
+      // Field 매칭 확인
+      const isFieldMatched = hasFields && (p.fields && myFields.some(f => 
          p.fields?.includes(f) || 
          p.fields?.includes(getCategoryValue(f)) ||
          p.fields?.includes(f.toLowerCase())
       ));
       
-      return genreMatch && fieldMatch;
+      // 사용자 요구사항: "1개라도 해당되는게 있으면 소팅" -> 합집합(OR)
+      return isGenreMatched || isFieldMatched;
     }
 
     // 2. 일반 카테고리 필터 (복수 매칭)
