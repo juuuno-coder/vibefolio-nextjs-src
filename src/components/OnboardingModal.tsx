@@ -44,14 +44,14 @@ const GENRE_ICONS: Record<string, any> = {
 };
 
 // 장르 카테고리 (Constants + Icons)
-const GENRE_CATEGORIES = GENRES_CONST.map(g => ({
+export const GENRE_CATEGORIES = GENRES_CONST.map(g => ({
   ...g,
   value: g.id, // Modal uses 'value'
   icon: GENRE_ICONS[g.id] || faCube
 }));
 
 // 산업 분야 카테고리
-const FIELD_CATEGORIES = FIELDS_CONST.map(f => ({
+export const FIELD_CATEGORIES = FIELDS_CONST.map(f => ({
   ...f,
   value: f.id 
 }));

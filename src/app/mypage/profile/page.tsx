@@ -515,7 +515,7 @@ export default function ProfileSettingsPage() {
               <Button onClick={handleAddSkill}>추가</Button>
             </div>
             <div className="flex flex-wrap gap-2">
-              {profile.skills.map((skill, idx) => (
+              {(profile.skills || []).map((skill, idx) => (
                 <div
                   key={idx}
                   className="bg-green-600 text-white px-3 py-1 rounded-full text-sm flex items-center gap-2"
