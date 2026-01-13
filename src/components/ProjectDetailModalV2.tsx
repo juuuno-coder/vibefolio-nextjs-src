@@ -182,6 +182,46 @@ export function ProjectDetailModalV2({
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [otherProjects, setOtherProjects] = useState<any[]>([]);
 
+  // [New] 실시간 좋아요 수 동기화
+  useEffect(() => {
+    if (!open || !project?.id) return;
+
+    const fetchLikesCount = async () => {
+      const { count } = await supabase
+        .from('Like')
+        .select('*', { count: 'exact', head: true })
+        .eq('project_id', Number(project.id));
+      
+      if (count !== null) setLikesCount(count);
+    };
+
+    // 초기 로드 시에도 실제 DB 카운트와 동기화
+    fetchLikesCount();
+
+    const channel = supabase
+      .channel(`project-likes-${project.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'Like',
+          filter: `project_id=eq.${project.id}`,
+        },
+        (payload) => {
+          // INSERT나 DELETE 발생 시 카운트 재조회
+          if (payload.eventType === 'INSERT' || payload.eventType === 'DELETE') {
+             fetchLikesCount();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [open, project?.id]);
+
   useEffect(() => {
     if (!project || !open) return;
 
