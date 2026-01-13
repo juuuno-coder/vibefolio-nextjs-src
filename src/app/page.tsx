@@ -232,7 +232,10 @@ function HomeContent() {
     const matchCategory = selectedCategory === "all" || categoryNames.includes(catName);
     
     // 3. 분야 필터
-    const matchField = selectedFields.length === 0 || (p.field && selectedFields.includes(p.field));
+    const matchField = selectedFields.length === 0 || (p.field && (
+      selectedFields.includes(p.field) || 
+      selectedFields.map(f => getCategoryName(f)).includes(p.field)
+    ));
     
     return matchCategory && matchField;
   });
