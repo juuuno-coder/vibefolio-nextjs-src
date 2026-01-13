@@ -79,47 +79,37 @@ export function ShareModal({
   const cleanTitle = stripHtml(title);
   const cleanDescription = stripHtml(description);
 
-  // 카카오톡 공유 (SDK 사용)
+  // 카카오톡 공유 (SDK 사용 + Fallback)
   const shareKakao = () => {
-    if (typeof window === "undefined" || !window.Kakao) {
-      alert("카카오톡 SDK가 로드되지 않았습니다.");
-      return;
-    }
-
-    // .env에서 키 가져오기
-    const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_API_KEY;
-    if (!kakaoKey) {
-      // 키가 없으면 기존 웹 공유(sharer)로 시도
-      const kakaoUrl = `https://sharer.kakao.com/talk/friends/picker/link?url=${encodeURIComponent(url)}`;
-      window.open(kakaoUrl, "_blank", "width=600,height=700");
-      return;
-    }
-
-    if (!window.Kakao.isInitialized()) {
-      window.Kakao.init(kakaoKey);
-    }
-
-    window.Kakao.Share.sendDefault({
-      objectType: 'feed',
-      content: {
-        title: cleanTitle,
-        description: cleanDescription,
-        imageUrl: imageUrl || 'https://vibefolio.net/og-image.png',
-        link: {
-          mobileWebUrl: url,
-          webUrl: url,
-        },
-      },
-      buttons: [
-        {
-          title: '자세히 보기',
+    // 1. SDK가 정상적으로 로드되었는지 확인
+    if (typeof window !== "undefined" && window.Kakao && window.Kakao.isInitialized()) {
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: cleanTitle,
+          description: cleanDescription,
+          imageUrl: imageUrl || 'https://vibefolio.net/og-image.png',
           link: {
             mobileWebUrl: url,
             webUrl: url,
           },
         },
-      ],
-    });
+        buttons: [
+          {
+            title: '자세히 보기',
+            link: {
+              mobileWebUrl: url,
+              webUrl: url,
+            },
+          },
+        ],
+      });
+      return;
+    }
+
+    // 2. SDK가 없거나 문제 발생 시 -> 웹 공유 URL로 대체 (Fallback)
+    const kakaoUrl = `https://sharer.kakao.com/talk/friends/picker/link?url=${encodeURIComponent(url)}`;
+    window.open(kakaoUrl, "_blank", "width=600,height=700");
   };
 
   // 트위터(X) 공유
