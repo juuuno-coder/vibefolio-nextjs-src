@@ -633,10 +633,10 @@ export function ProjectDetailModalV2({
         >
           {/* 모바일 뷰 - 노트폴리오 스타일 */}
           <div className="md:hidden w-full h-full bg-white flex flex-col rounded-t-xl overflow-hidden">
-            {/* X 버튼 */}
+            {/* X 버튼: 시인성 개선 (검정 반투명 배경) */}
             <button
               onClick={() => onOpenChange(false)}
-              className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg transition-colors"
+              className="absolute top-4 right-4 z-50 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors backdrop-blur-sm shadow-sm"
             >
               <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
             </button>
@@ -832,15 +832,21 @@ export function ProjectDetailModalV2({
           </div>
 
           {/* 데스크톱 뷰 - 기존 구조 유지 + 하단 리뉴얼 섹션 추가 */}
-          <div className="hidden md:flex h-full items-end justify-center gap-4">
+          <div 
+             className="hidden md:flex h-full items-end justify-center gap-4 w-full"
+             onClick={(e) => {
+               // [1671] 배경(빈 공간) 클릭 시 닫기
+               if (e.target === e.currentTarget) onOpenChange(false);
+             }}
+          >
             {/* 메인 이미지 영역 */}
             <div className="w-[66vw] h-full bg-white flex flex-col relative rounded-t-xl overflow-hidden shadow-2xl">
-              {/* X 버튼 */}
+              {/* X 버튼: 시인성 개선 (검정 반투명 배경) */}
               <button
                 onClick={() => onOpenChange(false)}
-                className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg transition-colors text-gray-800"
+                className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors backdrop-blur-sm shadow-md"
               >
-                <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
+                <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
               </button>
 
               {/* 프로젝트 정보 헤더 (기존 디자인 유지) */}
