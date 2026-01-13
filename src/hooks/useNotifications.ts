@@ -219,7 +219,12 @@ export function useNotifications(): UseNotificationsReturn {
           toast.success(newNotif.title, {
             description: newNotif.message,
             duration: 5000,
-            style: { background: 'white', border: '2px solid #22c55e', color: 'black' }
+            style: { 
+              background: '#18181b', 
+              border: '1px solid #333', 
+              color: '#fff', 
+              boxShadow: '0 8px 20px rgba(0,0,0,0.4)' 
+            }
           });
 
           // 목록 새로고침 (보낸 사람 정보 등을 위해)
