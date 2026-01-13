@@ -183,8 +183,8 @@ export function NotificationBell() {
 
       <DropdownMenuContent
         align="end"
-        className="w-[380px] p-0 overflow-hidden rounded-2xl border-gray-100 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] bg-white/95 backdrop-blur-xl z-[1000]"
-        sideOffset={8}
+        className="w-[380px] p-0 overflow-hidden rounded-2xl border-2 border-gray-100 shadow-2xl bg-white z-[9999]"
+        sideOffset={12}
       >
         <Tabs defaultValue="activity" className="w-full">
           <div className="px-5 pt-5 pb-3 flex items-center justify-between border-b border-gray-50/50 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
