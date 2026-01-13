@@ -214,15 +214,16 @@ export function NotificationBell() {
           <TabsContent value="activity" className="m-0 focus-visible:outline-none">
             <div className="max-h-[460px] min-h-[300px] overflow-y-auto custom-scrollbar p-2 relative">
               {isLoading ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="animate-spin w-8 h-8 border-3 border-gray-100 border-t-green-500 rounded-full" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                  <div className="animate-spin w-8 h-8 border-[3px] border-gray-100 border-t-green-500 rounded-full" />
+                  <p className="text-xs text-gray-400 font-medium animate-pulse">알림을 불러오고 있어요...</p>
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
                   <div className="w-20 h-20 bg-gradient-to-br from-green-50 to-blue-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
                     <Sparkles className="w-10 h-10 text-green-400" />
                   </div>
-                  <p className="text-base font-bold text-gray-600">새로운 알림이 없어요</p>
+                  <p className="text-base font-bold text-gray-600">아직 도착한 알림이 없어요</p>
                   <p className="text-xs text-gray-400 mt-2 max-w-[200px] leading-relaxed">
                     프로젝트를 업로드하거나<br/>다른 크리에이터와 소통해보세요!
                   </p>
