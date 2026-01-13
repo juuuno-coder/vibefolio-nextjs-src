@@ -230,15 +230,25 @@ export default function TiptapUploadPage() {
   };
 
   const toggleGenre = (id: string) => {
-    setSelectedGenres(prev => 
-      prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id]
-    );
+    setSelectedGenres(prev => {
+      if (prev.includes(id)) return prev.filter(g => g !== id);
+      if (prev.length >= 5) {
+        toast.error('장르는 최대 5개까지 선택할 수 있습니다.');
+        return prev;
+      }
+      return [...prev, id];
+    });
   };
 
   const toggleField = (id: string) => {
-    setSelectedFields(prev => 
-      prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
-    );
+    setSelectedFields(prev => {
+      if (prev.includes(id)) return prev.filter(f => f !== id);
+      if (prev.length >= 3) {
+        toast.error('분야는 최대 3개까지 선택할 수 있습니다.');
+        return prev;
+      }
+      return [...prev, id];
+    });
   };
 
   // Step 1 -> Step 2
@@ -326,21 +336,12 @@ export default function TiptapUploadPage() {
       }
 
       // 프로젝트 생성/수정
-      // 카테고리 우선순위 로직 적용 (영상/3D 등이 그래픽보다 우선시됨)
+      // 첫 번째 선택된 장르를 메인 카테고리로 설정 (1:1 매핑)
       let category_id = 1;
-      
-      const hasVideo = finalGenres.some((g: string) => ['video', 'animation', 'cinema', 'game', 'audio'].includes(g));
-      const has3D = finalGenres.includes('3d');
-      const hasWeb = finalGenres.some((g: string) => ['code', 'webapp', 'it'].includes(g));
-      
-      if (hasVideo) {
-        category_id = 3; // Video/Multimedia
-      } else if (has3D) {
-        category_id = 7; // 3D
-      } else if (hasWeb) {
-        category_id = 5; // Web/App
-      } else {
-        category_id = GENRE_TO_CATEGORY_ID[finalGenres[0]] || 1;
+
+      if (finalGenres.length > 0) {
+         // GENRE_TO_CATEGORY_ID는 이제 1~12 사이의 정확한 ID를 리턴함
+         category_id = GENRE_TO_CATEGORY_ID[finalGenres[0]] || 1;
       }
       
       const url = editId ? `/api/projects/${editId}` : '/api/projects';

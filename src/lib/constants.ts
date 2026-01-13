@@ -5,45 +5,33 @@
 export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://vibefolio.net';
 
 export const CATEGORY_IDS = {
-  ALL: 1,
-  AI: 2,
-  VIDEO: 3,
-  GRAPHIC: 4,
-  CODING: 5, // VibeCoding
-  ILLUST: 6,
-  "3D": 7,
-  PHOTO: 8,
-  BRANDING: 9, // Branding/Editorial
-  UIUX: 10,
-  CHARACTER: 11,
-  PRODUCT: 12, // Product/Package
-  PHOTOGRAPHY: 13,
-  TYPOGRAPHY: 14,
-  CRAFT: 15,
-  FINEART: 16,
+  PHOTO: 1,
+  ANIMATION: 2,
+  GRAPHIC: 3,
+  DESIGN: 4,
+  VIDEO: 5,
+  CINEMA: 6,
+  AUDIO: 7,
+  "3D": 8,
+  TEXT: 9,
+  CODE: 10,
+  WEBAPP: 11,
+  GAME: 12,
 } as const;
 
 export const GENRE_TO_CATEGORY_ID: Record<string, number> = {
-  photo: 8,
-  animation: 3, // Video
-  graphic: 4,
-  design: 4, // Graphic
-  video: 3,
-  cinema: 3, // Video
-  audio: 3, // Video
-  "3d": 7,
-  text: 9, // Branding/Editorial
-  code: 5, // VibeCoding
-  webapp: 5, // VibeCoding
-  game: 3, // Video
-  brand: 9, // Branding/Editorial
-  illust: 6,
-  ui: 10, // UI/UX
-  product: 12, // Product/Package
-  typo: 14, // Typography
-  craft: 15,
-  art: 16, // Fine Art
-  ai: 2,
+  photo: 1,
+  animation: 2,
+  graphic: 3,
+  design: 4,
+  video: 5,
+  cinema: 6,
+  audio: 7,
+  "3d": 8,
+  text: 9,
+  code: 10,
+  webapp: 11,
+  game: 12,
 };
 
 export const CONTACT_EMAIL = 'support@vibefolio.com';

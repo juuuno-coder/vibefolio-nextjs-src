@@ -45,6 +45,28 @@ export async function GET(request: NextRequest) {
       if (categoryId) query = query.eq('category_id', categoryId);
     }
 
+    // [New] 분야 필터 (project_fields 테이블 조인 대체)
+    const field = searchParams.get('field');
+    if (field && field !== 'all') {
+       // 1. 해당 슬러그의 Field ID 조회
+       const { data: fieldData } = await (supabase as any)
+         .from('fields').select('id').eq('slug', field).single();
+       
+       if (fieldData) {
+          // 2. 해당 Field를 가진 프로젝트 ID들 조회
+          const { data: pFields } = await (supabase as any)
+             .from('project_fields').select('project_id').eq('field_id', fieldData.id);
+          
+          if (pFields && pFields.length > 0) {
+             const pIds = pFields.map((row:any) => row.project_id);
+             query = query.in('project_id', pIds);
+          } else {
+             // 해당 분야의 프로젝트가 없음 -> 빈 결과 반환
+             query = query.eq('project_id', -1); 
+          }
+       }
+    }
+
     // 사용자 필터
     if (userId) query = query.eq('user_id', userId);
 
