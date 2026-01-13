@@ -24,7 +24,20 @@ import {
   HelpCircle,
   ChevronRight,
   Plus,
+  ArrowUpRight,
+  ArrowDownRight,
+  TrendingUp,
 } from "lucide-react";
+import {
+  ComposedChart,
+  Line,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 import Link from "next/link";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/lib/supabase/client";
@@ -166,6 +179,9 @@ export default function AdminPage() {
             users: userRes.count || 0,
             projects: pCount,
             recruits: recruitRes.count || 0,
+            date: dateStr,
+            fullDate: `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`,
+            displayDate: `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} (${days[d.getDay()]})`
           });
         }
         
@@ -312,31 +328,31 @@ export default function AdminPage() {
 
   // ... (previous imports)
 
-  // Max Val Helper
-  const getMax = (arr: any[], key: string) => Math.max(...arr.map(d => d[key]), 1);
 
-  // SVG Path Generator for smooth curves
-  const getSmoothPath = (points: [number, number][]) => {
-    if (points.length === 0) return "";
-    let d = `M ${points[0][0]},${points[0][1]}`;
-    for (let i = 0; i < points.length - 1; i++) {
-        const x0 = i > 0 ? points[i - 1][0] : points[i][0] - (points[i+1][0] - points[i][0]);
-        const y0 = i > 0 ? points[i - 1][1] : points[i][1];
-        const x1 = points[i][0];
-        const y1 = points[i][1];
-        const x2 = points[i+1][0];
-        const y2 = points[i+1][1];
-        const x3 = i < points.length - 2 ? points[i+2][0] : points[i+1][0] + (points[i+1][0] - points[i][0]);
-        const y3 = i < points.length - 2 ? points[i+2][1] : points[i+1][1];
 
-        const cp1x = x1 + (x2 - x0) / 6;
-        const cp1y = y1 + (y2 - y0) / 6;
-        const cp2x = x2 - (x3 - x1) / 6;
-        const cp2y = y2 - (y3 - y1) / 6;
-
-        d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${x2},${y2}`;
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-slate-900/95 border border-slate-700/50 p-4 rounded-xl shadow-2xl backdrop-blur-md min-w-[150px]">
+          <p className="font-bold text-slate-200 mb-3 border-b border-white/10 pb-2 text-xs">
+             {payload[0].payload.fullDate} ({payload[0].payload.day})
+          </p>
+          <div className="space-y-2">
+            {[
+                { label: '방문자', value: payload.find((p:any) => p.dataKey === 'visits')?.value, color: '#60a5fa' },
+                { label: '신규 가입', value: payload.find((p:any) => p.dataKey === 'users')?.value, color: '#f472b6' },
+                { label: '프로젝트', value: payload.find((p:any) => p.dataKey === 'projects')?.value, color: '#818cf8' },
+            ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between gap-4 text-xs">
+                    <span className="font-medium text-slate-400">{item.label}</span>
+                    <span className="font-bold" style={{ color: item.color }}>{item.value?.toLocaleString() || 0}</span>
+                </div>
+            ))}
+          </div>
+        </div>
+      );
     }
-    return d;
+    return null;
   };
 
   return (
@@ -390,7 +406,7 @@ export default function AdminPage() {
       </div>
 
       {/* Full Width Chart Section */}
-      <Card className="border-none shadow-sm rounded-[32px] overflow-hidden p-8 flex flex-col justify-between min-h-[450px] bg-white">
+      <Card className="border-none shadow-sm rounded-[32px] overflow-hidden p-8 flex flex-col justify-between min-h-[500px] bg-white">
           <div>
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
@@ -410,113 +426,60 @@ export default function AdminPage() {
               </select>
             </div>
             
-            {/* Smooth Curve Chart */}
-            <div 
-              className="w-full h-72 mt-8 relative"
-              onMouseLeave={() => setHoveredChartData(null)}
-            >
-              {(() => {
-                 const data = weeklyData.length > 0 ? weeklyData : Array(7).fill({day: '-', visits:0, users:0, projects:0, recruits:0});
-                 
-                 const maxVisits = Math.max(...data.map((d: any) => d.visits), 10);
-                 const maxOthers = Math.max(...data.map((d: any) => Math.max(d.users, d.projects, d.recruits)), 5);
-
-                 // Coord Calculators
-                 const getX = (i: number) => i * (100/6); 
-                 const getY = (val: number, max: number) => 50 - (val / max) * 45; 
-
-                 // Points
-                 const visitPoints = data.map((d: any, i: number) => [getX(i), getY(d.visits, maxVisits)] as [number, number]);
-                 const userPoints = data.map((d: any, i: number) => [getX(i), getY(d.users, maxOthers)] as [number, number]);
-                 const projectPoints = data.map((d: any, i: number) => [getX(i), getY(d.projects, maxOthers)] as [number, number]);
-
-                 const visitPath = getSmoothPath(visitPoints);
-                 const userPath = getSmoothPath(userPoints);
-                 const projectPath = getSmoothPath(projectPoints);
-
-                 return (
-                   <div className="w-full h-full relative font-bold text-[10px] text-slate-400">
-                     <svg viewBox="0 0 100 50" preserveAspectRatio="none" className="w-full h-full overflow-visible">
-                       <defs>
-                          <linearGradient id="blueGradient" x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" />
-                            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-                          </linearGradient>
-                       </defs>
-
-                       {/* Grid Lines */}
-                       {[0, 12.5, 25, 37.5, 50].map(y => ( <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="#f1f5f9" strokeWidth="0.5" /> ))}
-
-                       {/* Visits Area & Line */}
-                       <path d={`${visitPath} L 100,50 L 0,50 Z`} fill="url(#blueGradient)" />
-                       <path d={visitPath} fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-
-                       {/* Users Line */}
-                       <path d={userPath} fill="none" stroke="#ec4899" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="2,1" vectorEffect="non-scaling-stroke" />
-
-                       {/* Projects Line */}
-                       <path d={projectPath} fill="none" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-
-                       {/* Data Points */}
-                        {data.map((d: any, i: number) => (
-                           <g key={i}>
-                               <circle cx={getX(i)} cy={getY(d.visits, maxVisits)} r="1.5" fill="#3b82f6" stroke="white" strokeWidth="1" />
-                               {d.projects > 0 && <circle cx={getX(i)} cy={getY(d.projects, maxOthers)} r="1.5" fill="#6366f1" stroke="white" strokeWidth="1" />}
-                               {d.users > 0 && <circle cx={getX(i)} cy={getY(d.users, maxOthers)} r="1.5" fill="#ec4899" stroke="white" strokeWidth="1" />}
-                           </g>
-                        ))}
-
-                       {/* Interaction Layer */}
-                       {data.map((d: any, i: number) => (
-                         <rect
-                           key={`touch-${i}`}
-                           x={getX(i) - (100/12)}
-                           y="0"
-                           width={100/6}
-                           height="50"
-                           fill="transparent"
-                           className="cursor-pointer hover:fill-slate-900/5 transition-colors"
-                           onMouseEnter={() => setHoveredChartData({ ...d, index: i })}
-                         />
-                       ))}
-                     </svg>
-                     
-                     {/* Hover Tooltip */}
-                     {hoveredChartData && (
-                       <div 
-                         className="absolute bg-slate-900/95 backdrop-blur text-white text-[11px] p-4 rounded-2xl shadow-2xl z-50 pointer-events-none transition-all duration-200 transform -translate-x-1/2 -translate-y-6 border border-slate-700/50"
-                         style={{ 
-                           left: `${hoveredChartData.index * (100/6)}%`, 
-                           top: '0%' 
-                         }}
-                       >
-                         <div className="flex items-center justify-between gap-4 mb-3 border-b border-white/10 pb-2">
-                             <span className="font-bold text-white text-xs">
-                                 {/* Format: 2026.01.13 (Tue) */}
-                                 {new Date().getFullYear()}.{hoveredChartData.date?.slice(5).replace('-', '.')} ({hoveredChartData.day})
-                             </span>
-                         </div>
-                         <div className="space-y-2 min-w-[120px]">
-                           <div className="flex items-center justify-between"><span className="text-blue-400 font-medium">방문자</span> <span className="font-bold text-white text-sm">{hoveredChartData.visits}</span></div>
-                           <div className="flex items-center justify-between"><span className="text-pink-400 font-medium">신규 가입</span> <span className="font-bold text-white text-sm">{hoveredChartData.users}</span></div>
-                           <div className="flex items-center justify-between"><span className="text-indigo-400 font-medium">프로젝트</span> <span className="font-bold text-white text-sm">{hoveredChartData.projects}</span></div>
-                           <div className="flex items-center justify-between"><span className="text-green-400 font-medium">채용/공모</span> <span className="font-bold text-white text-sm">{hoveredChartData.recruits}</span></div>
-                         </div>
-                       </div>
-                     )}
-
-                     {/* X-axis Labels */}
-                     <div className="flex justify-between mt-4">
-                       {data.map((d: any, i: number) => (
-                         <div key={i} className={`flex-1 text-center transition-colors ${hoveredChartData?.index === i ? 'text-slate-900 font-bold' : ''}`} style={{ width: `${100/7}%`, fontSize: '11px' }}>
-                             {/* Format: 01.13 (Tue) */}
-                             {d.date?.slice(5).replace('-', '.')} ({d.day})
-                         </div>
-                       ))}
-                     </div>
-                   </div>
-                 );
-              })()}
+            {/* Recharts Implementation */}
+            <div className="w-full h-[350px] mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={weeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis 
+                    dataKey="displayDate" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 500 }}
+                    dy={10}
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#94a3b8', fontSize: 11 }}
+                  />
+                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                  
+                  <Area 
+                    type="monotone" 
+                    dataKey="visits" 
+                    name="방문자" 
+                    stroke="#3b82f6" 
+                    strokeWidth={3}
+                    fillOpacity={1} 
+                    fill="url(#colorVisits)" 
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="users" 
+                    name="신규 가입" 
+                    stroke="#ec4899" 
+                    strokeWidth={3} 
+                    dot={{ r: 4, fill: '#ec4899', strokeWidth: 2, stroke: '#fff' }}
+                    activeDot={{ r: 6, strokeWidth: 0 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="projects" 
+                    name="프로젝트" 
+                    stroke="#6366f1" 
+                    strokeWidth={3} 
+                    dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }}
+                    activeDot={{ r: 6, strokeWidth: 0 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
             </div>
           </div>
           
