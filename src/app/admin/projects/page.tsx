@@ -12,11 +12,9 @@ import {
   Trash2, 
   Search, 
   ArrowLeft, 
-  Check,
   RefreshCw,
-  CheckSquare,
-  Square,
-  Loader2
+  Loader2,
+  Settings
 } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
@@ -25,7 +23,6 @@ import { ProjectDetailModalV2 } from "@/components/ProjectDetailModalV2";
 import { GENRE_CATEGORIES, FIELD_CATEGORIES } from "@/lib/constants";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Settings } from "lucide-react";
 
 // 카테고리 목록 (12개 표준)
 const CATEGORIES = [
@@ -54,9 +51,6 @@ export default function AdminProjectsPage() {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [updating, setUpdating] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any | null>(null);
 
@@ -147,68 +141,6 @@ export default function AdminProjectsPage() {
     }
   }, [isAdmin, adminLoading, router, loadProjects]);
 
-  // 프로젝트 선택 토글
-  const toggleSelect = (id: number) => {
-    setSelectedIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  };
-
-  // 전체 선택/해제
-  const toggleSelectAll = () => {
-    if (selectedIds.size === filteredProjects.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredProjects.map(p => p.project_id)));
-    }
-  };
-
-  // 선택된 프로젝트 카테고리 일괄 변경
-  const handleBatchCategoryChange = async () => {
-    if (selectedIds.size === 0) {
-      alert("프로젝트를 선택해주세요.");
-      return;
-    }
-    if (!selectedCategory) {
-      alert("변경할 카테고리를 선택해주세요.");
-      return;
-    }
-
-    setUpdating(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const promises = Array.from(selectedIds).map(id =>
-        fetch(`/api/projects/${id}`, {
-          method: 'PUT',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`
-          },
-          body: JSON.stringify({ category_id: selectedCategory })
-        })
-      );
-
-      await Promise.all(promises);
-      
-      alert(`${selectedIds.size}개 프로젝트의 카테고리가 변경되었습니다.`);
-      setSelectedIds(new Set());
-      setSelectedCategory(null);
-      loadProjects();
-    } catch (error) {
-      console.error("카테고리 변경 실패:", error);
-      alert("카테고리 변경에 실패했습니다.");
-    } finally {
-      setUpdating(false);
-    }
-  };
-
   // 프로젝트 삭제
   const handleDelete = async (id: number) => {
     if (!confirm("정말 이 프로젝트를 삭제하시겠습니까?")) return;
@@ -232,41 +164,6 @@ export default function AdminProjectsPage() {
       }
     } catch (error) {
       console.error("프로젝트 삭제 실패:", error);
-    }
-  };
-
-  // 선택된 프로젝트 일괄 삭제
-  const handleBatchDelete = async () => {
-    if (selectedIds.size === 0) {
-      alert("프로젝트를 선택해주세요.");
-      return;
-    }
-
-    if (!confirm(`선택한 ${selectedIds.size}개 프로젝트를 모두 삭제하시겠습니까?`)) return;
-
-    setUpdating(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const promises = Array.from(selectedIds).map(id =>
-        fetch(`/api/projects/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`
-          }
-        })
-      );
-
-      await Promise.all(promises);
-      
-      alert(`${selectedIds.size}개 프로젝트가 삭제되었습니다.`);
-      setSelectedIds(new Set());
-      loadProjects();
-    } catch (error) {
-      console.error("일괄 삭제 실패:", error);
-      alert("일괄 삭제에 실패했습니다.");
-    } finally {
-      setUpdating(false);
     }
   };
 
@@ -303,7 +200,7 @@ export default function AdminProjectsPage() {
           </p>
         </div>
 
-        {/* 검색 및 일괄 작업 */}
+        {/* 검색 */}
         <div className="mb-6 space-y-4">
           <div className="flex items-center gap-4">
             <div className="flex items-center border rounded-lg px-4 py-2 bg-white flex-1">
@@ -320,52 +217,6 @@ export default function AdminProjectsPage() {
               새로고침
             </Button>
           </div>
-
-          {/* 일괄 작업 바 */}
-          {selectedIds.size > 0 && (
-            <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <span className="font-medium text-blue-700">
-                {selectedIds.size}개 선택됨
-              </span>
-              
-              <select
-                value={selectedCategory || ""}
-                onChange={(e) => setSelectedCategory(e.target.value ? parseInt(e.target.value) : null)}
-                className="px-3 py-2 border rounded-lg"
-              >
-                <option value="">카테고리 선택</option>
-                {CATEGORIES.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-              
-              <Button 
-                onClick={handleBatchCategoryChange}
-                disabled={updating || !selectedCategory}
-                size="sm"
-              >
-                {updating ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
-                카테고리 변경
-              </Button>
-              
-              <Button 
-                variant="destructive"
-                onClick={handleBatchDelete}
-                disabled={updating}
-                size="sm"
-              >
-                선택 삭제
-              </Button>
-              
-              <Button 
-                variant="ghost"
-                onClick={() => setSelectedIds(new Set())}
-                size="sm"
-              >
-                선택 해제
-              </Button>
-            </div>
-          )}
         </div>
 
         {/* 통계 */}
@@ -404,13 +255,6 @@ export default function AdminProjectsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>프로젝트 목록 ({filteredProjects.length})</CardTitle>
-            <Button variant="ghost" size="sm" onClick={toggleSelectAll}>
-              {selectedIds.size === filteredProjects.length ? (
-                <><CheckSquare size={16} className="mr-2" />전체 해제</>
-              ) : (
-                <><Square size={16} className="mr-2" />전체 선택</>
-              )}
-            </Button>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -426,23 +270,9 @@ export default function AdminProjectsPage() {
                 {filteredProjects.map((project) => (
                   <div
                     key={project.project_id}
-                    className={`flex items-center justify-between p-4 rounded-lg transition-colors cursor-pointer ${
-                      selectedIds.has(project.project_id) 
-                        ? "bg-blue-50 border-2 border-blue-300" 
-                        : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
-                    }`}
-                    onClick={() => toggleSelect(project.project_id)}
+                    className="flex items-center justify-between p-4 rounded-lg transition-colors bg-gray-50 hover:bg-gray-100"
                   >
                     <div className="flex items-center gap-4 flex-1">
-                      {/* 체크박스 */}
-                      <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
-                        selectedIds.has(project.project_id) 
-                          ? "bg-blue-500 border-blue-500 text-white" 
-                          : "border-gray-300"
-                      }`}>
-                        {selectedIds.has(project.project_id) && <Check size={14} />}
-                      </div>
-
                       {/* 썸네일 */}
                       <img
                         src={project.thumbnail_url || project.image_url || "/globe.svg"}
@@ -535,7 +365,7 @@ export default function AdminProjectsPage() {
                              views: project.views_count || project.views || 0,
                              title: project.title,
                              description: project.content_text,
-                             summary: project.summary, // 한줄 소개 매핑
+                             summary: project.summary,
                              alt_description: project.title,
                              created_at: project.created_at,
                              width: 1200, 
@@ -576,72 +406,72 @@ export default function AdminProjectsPage() {
             )}
           </CardContent>
         </Card>
-      </div>
-      
-      <ProjectDetailModalV2
-        open={detailModalOpen}
-        onOpenChange={setDetailModalOpen}
-        project={selectedProject}
-      />
+        
+        <ProjectDetailModalV2
+          open={detailModalOpen}
+          onOpenChange={setDetailModalOpen}
+          project={selectedProject}
+        />
 
-      <Dialog open={metadataEditOpen} onOpenChange={setMetadataEditOpen}>
-        <DialogContent className="max-w-2xl bg-white">
-          <DialogHeader>
-            <DialogTitle>프로젝트 메타데이터 수정 ({metadataTarget?.title})</DialogTitle>
-          </DialogHeader>
-          <div className="py-4 space-y-6">
-            <div className="space-y-2">
-                <Label>장르 (Genres - 최대 5개)</Label>
-                <div className="flex flex-wrap gap-2">
-                    {GENRE_CATEGORIES.map(g => (
-                        <button
-                            key={g.id}
-                            onClick={() => setEditGenres(prev => {
-                                if (prev.includes(g.id)) return prev.filter(x => x !== g.id);
-                                if (prev.length >= 5) { alert('장르는 최대 5개까지 선택 가능합니다.'); return prev; }
-                                return [...prev, g.id];
-                            })}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
-                                editGenres.includes(g.id) 
-                                ? "bg-green-100 border-green-500 text-green-700" 
-                                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
-                            }`}
-                        >
-                            {g.label}
-                        </button>
-                    ))}
-                </div>
+        <Dialog open={metadataEditOpen} onOpenChange={setMetadataEditOpen}>
+          <DialogContent className="max-w-2xl bg-white">
+            <DialogHeader>
+              <DialogTitle>프로젝트 메타데이터 수정 ({metadataTarget?.title})</DialogTitle>
+            </DialogHeader>
+            <div className="py-4 space-y-6">
+              <div className="space-y-2">
+                  <Label>장르 (Genres - 최대 5개)</Label>
+                  <div className="flex flex-wrap gap-2">
+                      {GENRE_CATEGORIES.map(g => (
+                          <button
+                              key={g.id}
+                              onClick={() => setEditGenres(prev => {
+                                  if (prev.includes(g.id)) return prev.filter(x => x !== g.id);
+                                  if (prev.length >= 5) { alert('장르는 최대 5개까지 선택 가능합니다.'); return prev; }
+                                  return [...prev, g.id];
+                              })}
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                                  editGenres.includes(g.id) 
+                                  ? "bg-green-100 border-green-500 text-green-700" 
+                                  : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                              }`}
+                          >
+                              {g.label}
+                          </button>
+                      ))}
+                  </div>
+              </div>
+              
+              <div className="space-y-2">
+                  <Label>산업 분야 (Fields - 최대 3개)</Label>
+                  <div className="flex flex-wrap gap-2">
+                      {FIELD_CATEGORIES.map(f => (
+                          <button
+                              key={f.id}
+                              onClick={() => setEditFields(prev => {
+                                  if (prev.includes(f.id)) return prev.filter(x => x !== f.id);
+                                  if (prev.length >= 3) { alert('분야는 최대 3개까지 선택 가능합니다.'); return prev; }
+                                  return [...prev, f.id];
+                              })}
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                                  editFields.includes(f.id) 
+                                  ? "bg-blue-100 border-blue-500 text-blue-700" 
+                                  : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                              }`}
+                          >
+                              {f.label}
+                          </button>
+                      ))}
+                  </div>
+              </div>
             </div>
-            
-            <div className="space-y-2">
-                <Label>산업 분야 (Fields - 최대 3개)</Label>
-                <div className="flex flex-wrap gap-2">
-                    {FIELD_CATEGORIES.map(f => (
-                        <button
-                            key={f.id}
-                            onClick={() => setEditFields(prev => {
-                                if (prev.includes(f.id)) return prev.filter(x => x !== f.id);
-                                if (prev.length >= 3) { alert('분야는 최대 3개까지 선택 가능합니다.'); return prev; }
-                                return [...prev, f.id];
-                            })}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
-                                editFields.includes(f.id) 
-                                ? "bg-blue-100 border-blue-500 text-blue-700" 
-                                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
-                            }`}
-                        >
-                            {f.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMetadataEditOpen(false)}>취소</Button>
-            <Button onClick={saveMetadata}>저장하기</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setMetadataEditOpen(false)}>취소</Button>
+              <Button onClick={saveMetadata}>저장하기</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }

@@ -64,16 +64,82 @@ export async function GET(
   }
 }
 
+const ADMIN_EMAILS = [
+  "juuuno@naver.com", 
+  "juuuno1116@gmail.com", 
+  "designd@designd.co.kr", 
+  "designdlab@designdlab.co.kr", 
+  "admin@vibefolio.net"
+];
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   try {
+    // 1. 인증 확인
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: '인증에 실패했습니다.' },
+        { status: 401 }
+      );
+    }
+
+    // 2. 권한 확인 (관리자 또는 프로젝트 소유자)
+    const isAdminEmail = user.email && ADMIN_EMAILS.includes(user.email);
+    
+    // DB상 관리자 권한 확인
+    let isDbAdmin = false;
+    if (!isAdminEmail) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      isDbAdmin = profile?.role === 'admin';
+    }
+
+    const isAuthorizedAdmin = isAdminEmail || isDbAdmin;
+
+    // 프로젝트 소유자 확인을 위해 먼저 프로젝트 조회
+    const { data: existingProject, error: fetchError } = await (supabaseAdmin as any)
+      .from('Project')
+      .select('user_id')
+      .eq('project_id', id)
+      .single();
+
+    if (fetchError || !existingProject) {
+      return NextResponse.json(
+        { error: '프로젝트를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    // 관리자가 아니고 소유자도 아니면 거부
+    if (!isAuthorizedAdmin && existingProject.user_id !== user.id) {
+       return NextResponse.json(
+        { error: '수정 권한이 없습니다.' },
+        { status: 403 }
+      );
+    }
+
+    // 3. 업데이트 수행 (supabaseAdmin 사용)
     const body = await request.json();
     const { title, content_text, thumbnail_url, category_id, rendering_type, custom_data } = body;
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await (supabaseAdmin as any)
       .from('Project')
       .update({
         title,
