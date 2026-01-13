@@ -37,6 +37,7 @@ export function Header({
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const [trends, setTrends] = useState<{ query: string; count: number }[]>([]);
   const router = useRouter();
 
@@ -204,9 +205,15 @@ export function Header({
                       프로젝트 등록
                     </Button>
                     <NotificationBell />
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="outline-none rounded-full ring-2 ring-transparent ring-offset-2 hover:ring-gray-200 transition-all">
+                    <div 
+                      className="relative"
+                      onMouseEnter={() => setIsAvatarMenuOpen(true)}
+                      onMouseLeave={() => setIsAvatarMenuOpen(false)}
+                    >
+                        <button 
+                          className="outline-none rounded-full ring-2 ring-transparent ring-offset-2 hover:ring-gray-200 transition-all"
+                          onClick={() => router.push('/mypage')}
+                        >
                           <Avatar className="w-9 h-9 cursor-pointer border border-gray-200">
                             <AvatarImage src={userProfile?.profile_image_url} />
                              <AvatarFallback className="bg-gray-100 text-black font-bold">
@@ -214,28 +221,35 @@ export function Header({
                              </AvatarFallback>
                           </Avatar>
                         </button>
-                      </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-60 mt-2 rounded-xl border border-gray-100 shadow-xl bg-white p-2">
-                        <div className="px-3 py-3 border-b border-gray-50 mb-1">
-                           <p className="font-bold text-sm text-black truncate">{userProfile?.username}</p>
-                           <p className="text-xs text-black/60 truncate">{user.email}</p>
+
+                        {/* Hover Menu */}
+                        <div 
+                          className={`absolute top-full right-0 mt-2 w-60 bg-white rounded-xl border border-gray-100 shadow-xl p-2 transition-all duration-200 origin-top-right z-[100] ${
+                            isAvatarMenuOpen 
+                              ? "opacity-100 scale-100 translate-y-0 visible" 
+                              : "opacity-0 scale-95 -translate-y-2 invisible"
+                          }`}
+                        >
+                            <div className="px-3 py-3 border-b border-gray-50 mb-1">
+                               <p className="font-bold text-sm text-black truncate">{userProfile?.username}</p>
+                               <p className="text-xs text-black/60 truncate">{user.email}</p>
+                            </div>
+                           <button onClick={() => router.push('/project/upload')} className="w-full text-left px-2 py-2 rounded-lg cursor-pointer text-green-600 hover:bg-green-50 text-sm font-medium flex items-center">
+                             <Upload className="mr-2 h-4 w-4" /> 프로젝트 등록
+                           </button>
+                           <button onClick={() => router.push('/mypage')} className="w-full text-left px-2 py-2 rounded-lg cursor-pointer text-black hover:bg-gray-100 text-sm font-medium flex items-center">
+                             <UserIcon className="mr-2 h-4 w-4" /> 마이페이지
+                           </button>
+                           {isAdmin && (
+                             <button onClick={() => router.push('/admin')} className="w-full text-left px-2 py-2 mt-1 rounded-lg cursor-pointer text-indigo-600 bg-indigo-50 hover:bg-indigo-100 text-sm font-bold flex items-center">
+                                <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자 센터
+                             </button>
+                           )}
+                           <button onClick={handleLogout} className="w-full text-left px-2 py-2 rounded-lg cursor-pointer text-red-600 hover:bg-red-50 text-sm font-medium flex items-center">
+                              <LogOut className="mr-2 h-4 w-4" /> 로그아웃
+                           </button>
                         </div>
-                       <DropdownMenuItem onClick={() => router.push('/project/upload')} className="rounded-lg cursor-pointer text-green-600 hover:bg-green-50 focus:bg-green-50 hover:text-green-700 focus:text-green-700 font-medium">
-                         <Upload className="mr-2 h-4 w-4" /> 프로젝트 등록
-                       </DropdownMenuItem>
-                       <DropdownMenuItem onClick={() => router.push('/mypage')} className="rounded-lg cursor-pointer text-black hover:bg-gray-100 focus:bg-gray-100 hover:text-black focus:text-black">
-                         <UserIcon className="mr-2 h-4 w-4" /> 마이페이지
-                       </DropdownMenuItem>
-                       {isAdmin && (
-                         <DropdownMenuItem onClick={() => router.push('/admin')} className="rounded-lg cursor-pointer text-indigo-600 bg-indigo-50 hover:bg-indigo-100 focus:bg-indigo-100 hover:text-indigo-800 focus:text-indigo-800 font-bold mt-1">
-                            <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자 센터
-                         </DropdownMenuItem>
-                       )}
-                       <DropdownMenuItem onClick={handleLogout} className="rounded-lg cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:bg-red-50 focus:text-red-700">
-                          <LogOut className="mr-2 h-4 w-4" /> 로그아웃
-                       </DropdownMenuItem>
-                     </DropdownMenuContent>
-                    </DropdownMenu>
+                    </div>
                   </div>
                ) : (
                   // 비로그인 상태
