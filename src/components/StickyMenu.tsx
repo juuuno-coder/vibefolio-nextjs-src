@@ -84,7 +84,7 @@ const categories: Category[] = [
   { iconSolid: faHeart, label: "관심사", value: "interests" },
   { iconSolid: faLayerGroup, label: "전체", value: "all" },
   { iconSolid: faCamera, label: "포토", value: "photo" },
-  { iconSolid: faWandMagicSparkles, label: "애니메이션", value: "animation" },
+  { iconSolid: faWandMagicSparkles, label: "웹툰/애니", value: "animation" },
   { iconSolid: faPalette, label: "그래픽", value: "graphic" },
   { iconSolid: faPenRuler, label: "디자인", value: "design" },
   { iconSolid: faVideo, label: "영상", value: "video" },
