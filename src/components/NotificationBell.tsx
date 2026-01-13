@@ -16,11 +16,7 @@ import {
   FlaskConical
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import { useNotifications, Notification, createNotification } from "@/hooks/useNotifications";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -132,7 +128,7 @@ export function NotificationBell() {
         console.error("Failed to parse settings", e);
       }
     }
-  }, [open]);
+  }, []);
 
   const updateSetting = (key: keyof NotificationSettings, value: boolean) => {
     const newSettings = { ...settings, [key]: value };
@@ -159,214 +155,221 @@ export function NotificationBell() {
   };
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative w-10 h-10 rounded-full hover:bg-green-50 transition-all active:scale-95 group"
-          aria-label="알림 센터"
-        >
-          <Bell className={cn(
-            "w-[22px] h-[22px] transition-colors", 
-            unreadCount > 0 
-              ? "text-green-600 fill-green-100 animate-pulse-gentle" 
-              : "text-gray-600 group-hover:text-green-600"
-          )} />
-          {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold ring-2 ring-white shadow-sm">
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent
-        align="end"
-        className="w-[380px] p-0 overflow-hidden rounded-2xl border-2 border-gray-100 shadow-2xl bg-white"
-        style={{ zIndex: 99999 }}
-        sideOffset={12}
+    <div className="relative">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="relative w-10 h-10 rounded-full hover:bg-green-50 transition-all active:scale-95 group"
+        aria-label="알림 센터"
+        onClick={() => setOpen(!open)}
       >
-        <Tabs defaultValue="activity" className="w-full">
-          <div className="px-5 pt-5 pb-3 flex items-center justify-between border-b border-gray-50/50 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
-            <TabsList className="bg-gray-100/80 p-1 h-9 rounded-xl gap-1">
-              <TabsTrigger value="activity" className="rounded-lg px-4 h-7 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-green-600 data-[state=active]:shadow-sm transition-all">
-                활동
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="rounded-lg px-4 h-7 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm transition-all">
-                설정
-              </TabsTrigger>
-            </TabsList>
-            
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-[11px] text-gray-500 hover:text-green-600 hover:bg-green-50 font-bold rounded-lg px-2"
-                onClick={markAllAsRead}
-                disabled={unreadCount === 0}
-              >
-                <Check className="w-3.5 h-3.5 mr-1.5" />
-                모두 읽음
-              </Button>
-            </div>
-          </div>
+        <Bell className={cn(
+          "w-[22px] h-[22px] transition-colors", 
+          unreadCount > 0 
+            ? "text-green-600 fill-green-100 animate-pulse-gentle" 
+            : "text-gray-600 group-hover:text-green-600"
+        )} />
+        {unreadCount > 0 && (
+          <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold ring-2 ring-white shadow-sm">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
+      </Button>
 
-          <TabsContent value="activity" className="m-0 focus-visible:outline-none">
-            <div className="max-h-[460px] min-h-[300px] overflow-y-auto custom-scrollbar p-2 relative">
-              {isLoading ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                  <div className="animate-spin w-8 h-8 border-[3px] border-gray-100 border-t-green-500 rounded-full" />
-                  <p className="text-xs text-gray-400 font-medium animate-pulse">알림을 불러오고 있어요...</p>
-                </div>
-              ) : notifications.length === 0 ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
-                  <div className="w-20 h-20 bg-gradient-to-br from-green-50 to-blue-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                    <Sparkles className="w-10 h-10 text-green-400" />
-                  </div>
-                  <p className="text-base font-bold text-gray-600">아직 도착한 알림이 없어요</p>
-                  <p className="text-xs text-gray-400 mt-2 max-w-[200px] leading-relaxed">
-                    프로젝트를 업로드하거나<br/>다른 크리에이터와 소통해보세요!
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-6 rounded-full text-xs h-8 border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700"
-                    onClick={() => setOpen(false)} 
-                  >
-                    활동 시작하기
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-1 p-1">
-                  {(notifications || []).slice(0, 30).map((notification) => (
-                    <NotificationItem
-                      key={notification.id}
-                      notification={notification}
-                      onRead={markAsRead}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-            {notifications.length > 5 && (
-              <div className="p-3 border-t border-gray-50 bg-gray-50/50 text-center backdrop-blur-sm sticky bottom-0">
-                <Link
-                  href="/mypage/notifications"
-                  className="text-xs font-bold text-gray-400 hover:text-green-600 transition-colors flex items-center justify-center gap-1"
-                >
-                  모든 알림 보기 <Sparkles className="w-3 h-3" />
-                </Link>
-              </div>
-            )}
-          </TabsContent>
+      {open && (
+        <>
+          {/* Backdrop for closing on click outside */}
+          <div 
+            className="fixed inset-0 z-[99998] cursor-default" 
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
 
-          <TabsContent value="settings" className="m-0 focus-visible:outline-none bg-gray-50/30">
-            <div className="p-5 space-y-8 max-h-[460px] overflow-y-auto custom-scrollbar">
-              <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <span className="w-1 h-3 bg-green-500 rounded-full"></span>
-                  일반 알림 설정
-                </h4>
+          {/* Custom Dropdown Content */}
+          <div 
+            className="absolute top-full right-0 mt-3 w-[380px] bg-white rounded-2xl border-2 border-gray-100 shadow-2xl z-[99999] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right"
+          >
+            <Tabs defaultValue="activity" className="w-full">
+              <div className="px-5 pt-5 pb-3 flex items-center justify-between border-b border-gray-50/50 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+                <TabsList className="bg-gray-100/80 p-1 h-9 rounded-xl gap-1">
+                  <TabsTrigger value="activity" className="rounded-lg px-4 h-7 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-green-600 data-[state=active]:shadow-sm transition-all">
+                    활동
+                  </TabsTrigger>
+                  <TabsTrigger value="settings" className="rounded-lg px-4 h-7 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm transition-all">
+                    설정
+                  </TabsTrigger>
+                </TabsList>
                 
-                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-5">
-                    {/* 설정 항목들... */}
-                    <div className="flex items-center justify-between group">
-                      <div className="space-y-0.5">
-                        <Label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                          <Rocket className="w-4 h-4 text-blue-500" /> 신규 프로젝트
-                        </Label>
-                        <p className="text-[10px] text-gray-400 pl-6">내 관심사 일치 시 수신</p>
-                      </div>
-                      <Switch 
-                        checked={settings.projects}
-                        onCheckedChange={(v) => updateSetting('projects', v)}
-                        className="data-[state=checked]:bg-green-500"
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                          <Briefcase className="w-4 h-4 text-emerald-500" /> 연결하기 (Recruit)
-                        </Label>
-                        <p className="text-[10px] text-gray-400 pl-6">채용/공모전 관심 분야 알림</p>
-                      </div>
-                      <Switch 
-                        checked={settings.recruit}
-                        onCheckedChange={(v) => updateSetting('recruit', v)}
-                        className="data-[state=checked]:bg-green-500"
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                        <Heart className="w-4 h-4 text-red-500" /> 좋아요
-                      </Label>
-                      <Switch 
-                        checked={settings.likes}
-                        onCheckedChange={(v) => updateSetting('likes', v)}
-                        className="data-[state=checked]:bg-green-500"
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                        <MessageCircle className="w-4 h-4 text-orange-500" /> 소통/제안
-                      </Label>
-                      <Switch 
-                        checked={settings.proposals}
-                        onCheckedChange={(v) => updateSetting('proposals', v)}
-                        className="data-[state=checked]:bg-green-500"
-                      />
-                    </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-[11px] text-gray-500 hover:text-green-600 hover:bg-green-50 font-bold rounded-lg px-2"
+                    onClick={markAllAsRead}
+                    disabled={unreadCount === 0}
+                  >
+                    <Check className="w-3.5 h-3.5 mr-1.5" />
+                    모두 읽음
+                  </Button>
                 </div>
               </div>
 
-              {isAdmin && (
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-2">
-                     <span className="w-1 h-3 bg-indigo-500 rounded-full"></span>
-                     관리자 전용
-                  </h4>
-                  <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-bold text-gray-700">고객 1:1 문의</Label>
-                        <Switch 
-                          checked={settings.adminInquiries}
-                          onCheckedChange={(v) => updateSetting('adminInquiries', v)}
-                          className="data-[state=checked]:bg-indigo-500"
-                        />
+              <TabsContent value="activity" className="m-0 focus-visible:outline-none">
+                <div className="max-h-[460px] min-h-[300px] overflow-y-auto custom-scrollbar p-2 relative">
+                  {isLoading ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                      <div className="animate-spin w-8 h-8 border-[3px] border-gray-100 border-t-green-500 rounded-full" />
+                      <p className="text-xs text-gray-400 font-medium animate-pulse">알림을 불러오고 있어요...</p>
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+                      <div className="w-20 h-20 bg-gradient-to-br from-green-50 to-blue-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                        <Sparkles className="w-10 h-10 text-green-400" />
                       </div>
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-bold text-gray-700">신규 회원 가입</Label>
-                        <Switch 
-                          checked={settings.adminSignups}
-                          onCheckedChange={(v) => updateSetting('adminSignups', v)}
-                          className="data-[state=checked]:bg-indigo-500"
+                      <p className="text-base font-bold text-gray-600">아직 도착한 알림이 없어요</p>
+                      <p className="text-xs text-gray-400 mt-2 max-w-[200px] leading-relaxed">
+                        프로젝트를 업로드하거나<br/>다른 크리에이터와 소통해보세요!
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-6 rounded-full text-xs h-8 border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700"
+                        onClick={() => setOpen(false)} 
+                      >
+                        활동 시작하기
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-1 p-1">
+                      {(notifications || []).slice(0, 30).map((notification) => (
+                        <NotificationItem
+                          key={notification.id}
+                          notification={notification}
+                          onRead={markAsRead}
                         />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {notifications.length > 5 && (
+                  <div className="p-3 border-t border-gray-50 bg-gray-50/50 text-center backdrop-blur-sm sticky bottom-0">
+                    <Link
+                      href="/mypage/notifications"
+                      className="text-xs font-bold text-gray-400 hover:text-green-600 transition-colors flex items-center justify-center gap-1"
+                      onClick={() => setOpen(false)}
+                    >
+                      모든 알림 보기 <Sparkles className="w-3 h-3" />
+                    </Link>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="settings" className="m-0 focus-visible:outline-none bg-gray-50/30">
+                <div className="p-5 space-y-8 max-h-[460px] overflow-y-auto custom-scrollbar">
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                      <span className="w-1 h-3 bg-green-500 rounded-full"></span>
+                      일반 알림 설정
+                    </h4>
+                    
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-5">
+                        <div className="flex items-center justify-between group">
+                          <div className="space-y-0.5">
+                            <Label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                              <Rocket className="w-4 h-4 text-blue-500" /> 신규 프로젝트
+                            </Label>
+                            <p className="text-[10px] text-gray-400 pl-6">내 관심사 일치 시 수신</p>
+                          </div>
+                          <Switch 
+                            checked={settings.projects}
+                            onCheckedChange={(v) => updateSetting('projects', v)}
+                            className="data-[state=checked]:bg-green-500"
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                              <Briefcase className="w-4 h-4 text-emerald-500" /> 연결하기 (Recruit)
+                            </Label>
+                            <p className="text-[10px] text-gray-400 pl-6">채용/공모전 관심 분야 알림</p>
+                          </div>
+                          <Switch 
+                            checked={settings.recruit}
+                            onCheckedChange={(v) => updateSetting('recruit', v)}
+                            className="data-[state=checked]:bg-green-500"
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                            <Heart className="w-4 h-4 text-red-500" /> 좋아요
+                          </Label>
+                          <Switch 
+                            checked={settings.likes}
+                            onCheckedChange={(v) => updateSetting('likes', v)}
+                            className="data-[state=checked]:bg-green-500"
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                            <MessageCircle className="w-4 h-4 text-orange-500" /> 소통/제안
+                          </Label>
+                          <Switch 
+                            checked={settings.proposals}
+                            onCheckedChange={(v) => updateSetting('proposals', v)}
+                            className="data-[state=checked]:bg-green-500"
+                          />
+                        </div>
+                    </div>
+                  </div>
+
+                  {isAdmin && (
+                    <div className="space-y-4">
+                      <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-2">
+                         <span className="w-1 h-3 bg-indigo-500 rounded-full"></span>
+                         관리자 전용
+                      </h4>
+                      <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm font-bold text-gray-700">고객 1:1 문의</Label>
+                            <Switch 
+                              checked={settings.adminInquiries}
+                              onCheckedChange={(v) => updateSetting('adminInquiries', v)}
+                              className="data-[state=checked]:bg-indigo-500"
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm font-bold text-gray-700">신규 회원 가입</Label>
+                            <Switch 
+                              checked={settings.adminSignups}
+                              onCheckedChange={(v) => updateSetting('adminSignups', v)}
+                              className="data-[state=checked]:bg-indigo-500"
+                            />
+                          </div>
                       </div>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t border-gray-200">
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-dashed border-gray-300 text-gray-500 hover:text-green-600 hover:border-green-300 hover:bg-green-50 h-10 text-xs font-bold"
+                        onClick={handleTestNotification}
+                      >
+                        <FlaskConical className="w-3.5 h-3.5 mr-2" />
+                        알림 UI 테스트 (Test Notification)
+                      </Button>
+                      <p className="text-[10px] text-gray-400 text-center mt-2">
+                        버튼을 누르면 나에게 테스트 알림을 즉시 발송합니다.
+                      </p>
                   </div>
                 </div>
-              )}
-
-              {/* 테스트 영역 */}
-              <div className="pt-4 border-t border-gray-200">
-                  <Button 
-                    variant="outline" 
-                    className="w-full border-dashed border-gray-300 text-gray-500 hover:text-green-600 hover:border-green-300 hover:bg-green-50 h-10 text-xs font-bold"
-                    onClick={handleTestNotification}
-                  >
-                    <FlaskConical className="w-3.5 h-3.5 mr-2" />
-                    알림 UI 테스트 (Test Notification)
-                  </Button>
-                  <p className="text-[10px] text-gray-400 text-center mt-2">
-                    버튼을 누르면 나에게 테스트 알림을 즉시 발송합니다.
-                  </p>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </DropdownMenuContent>
-    </DropdownMenu>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
