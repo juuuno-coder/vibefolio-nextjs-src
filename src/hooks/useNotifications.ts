@@ -46,6 +46,8 @@ export function useNotifications(): UseNotificationsReturn {
     }
 
     try {
+      // 1. 알림 데이터 조회 (Join 없이)
+      // DB Foreign Key 문제(PGRST200)를 회피하기 위해 Application-level Join 사용
       const { data, error } = await supabase
         .from("notifications")
         .select(`
@@ -56,8 +58,7 @@ export function useNotifications(): UseNotificationsReturn {
           link,
           read,
           created_at,
-          sender_id,
-          users!sender_id (id, nickname, profile_image_url)
+          sender_id
         `)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -65,20 +66,43 @@ export function useNotifications(): UseNotificationsReturn {
 
       if (error) throw error;
 
-      const formatted: Notification[] = (data || []).map((n: any) => ({
-        id: n.id,
-        type: n.type,
-        title: n.title,
-        message: n.message,
-        link: n.link,
-        read: n.read,
-        createdAt: n.created_at,
-        sender: n.users ? {
-          id: n.users.id,
-          nickname: n.users.nickname,
-          profileImage: n.users.profile_image_url,
-        } : undefined,
-      }));
+      // 2. sender_id 수집
+      const notifs = data || [];
+      const senderIds = Array.from(new Set(notifs.map((n: any) => n.sender_id).filter(Boolean))) as string[];
+
+      // 3. 프로필 정보 조회 (Application-level Join)
+      let sendersMap: Record<string, any> = {};
+      if (senderIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username, profile_image_url')
+          .in('id', senderIds);
+        
+        if (profiles) {
+          profiles.forEach((p: any) => {
+            sendersMap[p.id] = p;
+          });
+        }
+      }
+
+      // 4. 데이터 병합
+      const formatted: Notification[] = notifs.map((n: any) => {
+        const senderProfile = n.sender_id ? sendersMap[n.sender_id] : null;
+        return {
+          id: n.id,
+          type: n.type,
+          title: n.title,
+          message: n.message,
+          link: n.link,
+          read: n.read,
+          createdAt: n.created_at,
+          sender: senderProfile ? {
+            id: senderProfile.id,
+            nickname: senderProfile.username || '알 수 없음',
+            profileImage: senderProfile.profile_image_url,
+          } : undefined,
+        };
+      });
 
       setNotifications(formatted);
     } catch (error) {
