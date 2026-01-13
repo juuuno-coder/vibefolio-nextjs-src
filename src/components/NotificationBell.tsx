@@ -236,7 +236,7 @@ export function NotificationBell() {
                 </div>
               ) : (
                 <div className="space-y-1 p-1">
-                  {notifications.slice(0, 30).map((notification) => (
+                  {(notifications || []).slice(0, 30).map((notification) => (
                     <NotificationItem
                       key={notification.id}
                       notification={notification}
