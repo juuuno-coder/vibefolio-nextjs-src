@@ -3,7 +3,7 @@ export const CATEGORY_MAP: Record<string, string> = {
   // 기존 카테고리
   "korea": "전체",
   "all": "전체",
-  "video": "영상/모션그래픽",
+  "video": "영상",
   "graphic-design": "그래픽 디자인",
   "brand": "브랜딩/편집",
   "ui": "UI/UX",
