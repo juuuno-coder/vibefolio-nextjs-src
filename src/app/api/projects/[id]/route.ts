@@ -221,7 +221,23 @@ export async function DELETE(
       );
     }
 
-    // 프로젝트 소유자 확인
+    // 2. 권한 확인 (관리자 또는 프로젝트 소유자)
+    const isAdminEmail = user.email && ADMIN_EMAILS.includes(user.email);
+    
+    // DB상 관리자 권한 확인
+    let isDbAdmin = false;
+    if (!isAdminEmail) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      isDbAdmin = profile?.role === 'admin';
+    }
+
+    const isAuthorizedAdmin = isAdminEmail || isDbAdmin;
+
+    // 프로젝트 정보 조회
     const { data: project, error: fetchError } = await (supabaseAdmin as any)
       .from('Project')
       .select('user_id')
@@ -235,9 +251,10 @@ export async function DELETE(
       );
     }
 
-    if (project.user_id !== user.id) {
+    // 관리자가 아니고 소유자도 아니면 거부
+    if (!isAuthorizedAdmin && project.user_id !== user.id) {
       return NextResponse.json(
-        { error: '본인의 프로젝트만 삭제할 수 있습니다.' },
+        { error: '삭제 권한이 없습니다.' },
         { status: 403 }
       );
     }

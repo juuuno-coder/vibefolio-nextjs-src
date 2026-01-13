@@ -24,21 +24,7 @@ import { GENRE_CATEGORIES, FIELD_CATEGORIES } from "@/lib/constants";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
-// 카테고리 목록 (12개 표준)
-const CATEGORIES = [
-  { id: 1, name: "포토" },
-  { id: 2, name: "웹툰/애니" },
-  { id: 3, name: "그래픽" },
-  { id: 4, name: "디자인" },
-  { id: 5, name: "영상" },
-  { id: 6, name: "영화·드라마" },
-  { id: 7, name: "오디오" },
-  { id: 8, name: "3D" },
-  { id: 9, name: "텍스트" },
-  { id: 10, name: "코드" },
-  { id: 11, name: "웹/앱" },
-  { id: 12, name: "게임" },
-];
+
 
 const stripHtml = (html: string) => {
   if (!html) return "";
@@ -143,7 +129,7 @@ export default function AdminProjectsPage() {
 
   // 프로젝트 삭제
   const handleDelete = async (id: number) => {
-    if (!confirm("정말 이 프로젝트를 삭제하시겠습니까?")) return;
+    if (!confirm("정말 이 프로젝트를 삭제하시겠습니까?\n(확인 시 DB에서 완전히 삭제되지 않고 숨김 처리됩니다)")) return;
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -295,49 +281,6 @@ export default function AdminProjectsPage() {
                           <span>
                             {new Date(project.created_at).toLocaleDateString("ko-KR")}
                           </span>
-                            <select
-                              value={project.category_id || ""}
-                              onClick={(e) => e.stopPropagation()}
-                              onChange={async (e) => {
-                                const newCategoryId = parseInt(e.target.value);
-                                if (!newCategoryId) return;
-                                
-                                try {
-                                  // Optimistic Update
-                                  setProjects(prev => prev.map(p => 
-                                    p.project_id === project.project_id 
-                                      ? { 
-                                          ...p, 
-                                          category_id: newCategoryId, 
-                                          Category: { name: CATEGORIES.find(c => c.id === newCategoryId)?.name || "" } 
-                                        } 
-                                      : p
-                                  ));
-
-                                  const { data: { session } } = await supabase.auth.getSession();
-                                  const res = await fetch(`/api/projects/${project.project_id}`, {
-                                    method: 'PUT',
-                                    headers: { 
-                                      'Content-Type': 'application/json',
-                                      'Authorization': `Bearer ${session?.access_token}`
-                                    },
-                                    body: JSON.stringify({ category_id: newCategoryId })
-                                  });
-
-                                  if (!res.ok) throw new Error("Update failed");
-                                } catch (error) {
-                                  console.error("카테고리 수정 실패:", error);
-                                  alert("수정에 실패했습니다.");
-                                  loadProjects(); // Revert
-                                }
-                              }}
-                              className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs border-none cursor-pointer hover:bg-blue-100 focus:ring-0"
-                            >
-                              <option value="">카테고리 미설정</option>
-                              {CATEGORIES.map(cat => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                              ))}
-                            </select>
                         </div>
                       </div>
                     </div>
