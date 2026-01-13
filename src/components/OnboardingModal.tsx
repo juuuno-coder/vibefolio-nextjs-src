@@ -98,16 +98,44 @@ export function OnboardingModal({
     );
   };
 
-  const handleNextStep = () => {
-    if (step === 1 && !nickname.trim()) {
-      setError("닉네임을 입력해주세요.");
-      return;
+  const handleNextStep = async () => {
+    setError("");
+
+    if (step === 1) {
+       if (!nickname.trim()) {
+         setError("닉네임을 입력해주세요.");
+         return;
+       }
+       
+       // 닉네임 중복 체크
+       setLoading(true);
+       try {
+         const { count, error } = await supabase
+           .from('profiles')
+           .select('id', { count: 'exact', head: true })
+           .eq('username', nickname)
+           .neq('id', userId); // 내 ID는 제외
+           
+         if (error) {
+            console.error("Nickname check failed:", error);
+            // 에러 발생 시 진행은 하되 로그 남김
+         } else if (count && count > 0) {
+            setError("이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해주세요.");
+            setLoading(false);
+            return;
+         }
+       } catch (e) {
+          console.error("Nickname check exception:", e);
+       } finally {
+          setLoading(false);
+       }
     }
+
     if (step === 2 && genres.length === 0) {
       setError("최소 1개의 장르를 선택해주세요.");
       return;
     }
-    setError("");
+    
     setStep(prev => prev + 1);
   };
 
@@ -186,7 +214,17 @@ export function OnboardingModal({
     } catch (error: any) {
       console.error('[Onboarding] 에러 발생:', error);
       setLoading(false);
-      setError(error.message || '정보 저장에 실패했습니다.');
+      
+      // 중복 닉네임 에러 처리
+      if (error.message?.includes('username_key') || error.message?.includes('duplicate key') || error.code === '23505') {
+          setError("이미 사용 중인 닉네임입니다. 화면 상단의 '1/2'를 눌러 닉네임을 변경해주세요.");
+          // 사용자 편의를 위해 자동으로 스텝 1로 이동시킬 수도 있지만, 에러 메시지를 읽게 하는 것이 나음
+          // 혹은 버튼을 추가해줄 수 있음.
+          // 여기서 setStep(1)을 바로 하면 에러 메시지가 사라질 수 있으므로(스텝1 상태에선 error state가 초기화될 수 있음 - handleNextStep에서 초기화 안함)
+          // 그래도 직관적으로 "닉네임이 중복됨"을 알리기 위해 메시지를 띄우는 게 낫음.
+      } else {
+          setError(error.message || '정보 저장에 실패했습니다.');
+      }
     }
   };
 
@@ -264,10 +302,15 @@ export function OnboardingModal({
         {step === 2 && (
           <div className="p-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
             <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-2 text-sm text-green-600 font-medium mb-2">
+              <button 
+                onClick={() => setStep(1)}
+                className="inline-flex items-center gap-2 text-sm text-green-600 font-medium mb-2 hover:bg-green-50 px-3 py-1 rounded-full transition-colors"
+                title="이전 단계로 돌아가기 (닉네임 수정)"
+              >
                 <span className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center text-xs">2</span>
-                / 2
-              </div>
+                / 2 
+                <span className="text-xs text-gray-400 ml-1 font-normal">← 이전</span>
+              </button>
               <h2 className="text-xl font-bold text-gray-900">
                 관심 장르와 분야를 선택해주세요
               </h2>
