@@ -104,6 +104,18 @@ export function useNotifications(): UseNotificationsReturn {
         };
       });
 
+      // [발표용] 알림이 하나도 없으면 웰컴 메시지 추가
+      if (formatted.length === 0) {
+         formatted.push({
+           id: 'welcome-msg',
+           type: 'system',
+           title: 'Vibefolio에 오신 것을 환영합니다! 🎉',
+           message: '멋진 포트폴리오를 만들고 전 세계 크리에이터들과 소통해보세요.',
+           read: false,
+           createdAt: new Date().toISOString(),
+         });
+      }
+
       setNotifications(formatted);
     } catch (error) {
       console.error("[Notifications] 로드 실패:", error);
@@ -115,6 +127,14 @@ export function useNotifications(): UseNotificationsReturn {
   // 읽음 처리
   const markAsRead = useCallback(async (id: string) => {
     if (!user) return;
+
+    // 가짜 알림은 로컬 상태만 업데이트
+    if (id === 'welcome-msg') {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      );
+      return;
+    }
 
     try {
       await (supabase
