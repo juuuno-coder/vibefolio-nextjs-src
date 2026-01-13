@@ -591,12 +591,16 @@ export default function AdminProjectsPage() {
           </DialogHeader>
           <div className="py-4 space-y-6">
             <div className="space-y-2">
-                <Label>장르 (Genres)</Label>
+                <Label>장르 (Genres - 최대 5개)</Label>
                 <div className="flex flex-wrap gap-2">
                     {GENRE_CATEGORIES.map(g => (
                         <button
                             key={g.id}
-                            onClick={() => setEditGenres(prev => prev.includes(g.id) ? prev.filter(x => x !== g.id) : [...prev, g.id])}
+                            onClick={() => setEditGenres(prev => {
+                                if (prev.includes(g.id)) return prev.filter(x => x !== g.id);
+                                if (prev.length >= 5) { alert('장르는 최대 5개까지 선택 가능합니다.'); return prev; }
+                                return [...prev, g.id];
+                            })}
                             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
                                 editGenres.includes(g.id) 
                                 ? "bg-green-100 border-green-500 text-green-700" 
@@ -610,12 +614,16 @@ export default function AdminProjectsPage() {
             </div>
             
             <div className="space-y-2">
-                <Label>산업 분야 (Fields)</Label>
+                <Label>산업 분야 (Fields - 최대 3개)</Label>
                 <div className="flex flex-wrap gap-2">
                     {FIELD_CATEGORIES.map(f => (
                         <button
                             key={f.id}
-                            onClick={() => setEditFields(prev => prev.includes(f.id) ? prev.filter(x => x !== f.id) : [...prev, f.id])}
+                            onClick={() => setEditFields(prev => {
+                                if (prev.includes(f.id)) return prev.filter(x => x !== f.id);
+                                if (prev.length >= 3) { alert('분야는 최대 3개까지 선택 가능합니다.'); return prev; }
+                                return [...prev, f.id];
+                            })}
                             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
                                 editFields.includes(f.id) 
                                 ? "bg-blue-100 border-blue-500 text-blue-700" 
