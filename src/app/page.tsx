@@ -10,7 +10,7 @@ import { MainBanner } from "@/components/MainBanner";
 import { ImageCard } from "@/components/ImageCard";
 import { StickyMenu } from "@/components/StickyMenu";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { getCategoryName, getCategoryNameById } from "@/lib/categoryMap";
+import { getCategoryName, getCategoryNameById, getCategoryValue } from "@/lib/categoryMap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWandSparkles, faXmark, faCheck } from "@fortawesome/free-solid-svg-icons";
 
@@ -39,6 +39,7 @@ interface ImageDialogProps {
   width: number;
   height: number;
   category: string;
+  categorySlug?: string; // Slug 추가
   field?: string; // 분야 정보 추가
   userId?: string;
   rendering_type?: string;
@@ -178,6 +179,7 @@ function HomeContent() {
               width: 400,
               height: 300,
               category: proj.Category?.name || getCategoryNameById(proj.category_id || proj.Category || 1),
+              categorySlug: getCategoryValue(proj.Category?.name || getCategoryNameById(proj.category_id || proj.Category || 1)),
               field: primaryField.toLowerCase(), // 소문자로 통일
               userId: proj.user_id,
               rendering_type: proj.rendering_type,
@@ -213,6 +215,7 @@ function HomeContent() {
     : [getCategoryName(selectedCategory)];
   
   // 필터링 로직 강화 (카테고리 + 분야 + 관심사) - 검색어는 서버 사이드에서 처리됨
+  // 필터링 로직 강화 (카테고리 + 분야 + 관심사) - 검색어는 서버 사이드에서 처리됨
   const filtered = projects.filter(p => {
     // 1. 관심사 탭 ("interests") 선택 시 로직
     if (selectedCategory === "interests") {
@@ -221,15 +224,22 @@ function HomeContent() {
       const myGenres = userInterests.genres || [];
       const myFields = userInterests.fields || [];
 
-      const genreMatch = myGenres.length === 0 || myGenres.some(g => getCategoryName(g) === p.category);
-      const fieldMatch = myFields.length === 0 || (p.field && myFields.includes(p.field));
+      // Genre slug check (myGenres has slugs)
+      const genreMatch = myGenres.length === 0 || (p.categorySlug && myGenres.includes(p.categorySlug));
+      // Field slug/name check
+      const fieldMatch = myFields.length === 0 || (p.field && (
+         myFields.includes(p.field) || myFields.map(f => getCategoryName(f)).includes(p.field)
+      ));
       
       return genreMatch && fieldMatch;
     }
 
-    // 2. 일반 카테고리 필터
-    const catName = p.category;
-    const matchCategory = selectedCategory === "all" || categoryNames.includes(catName);
+    // 2. 일반 카테고리 필터 (Slug 비교)
+    const matchCategory = selectedCategory === "all" || (
+      Array.isArray(selectedCategory) 
+        ? (p.categorySlug && selectedCategory.includes(p.categorySlug))
+        : p.categorySlug === selectedCategory
+    );
     
     // 3. 분야 필터
     const matchField = selectedFields.length === 0 || (p.field && (
