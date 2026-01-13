@@ -59,7 +59,7 @@ interface ImageDialogProps {
 
 export default function CreatorProfilePage() {
   const params = useParams();
-  const username = params.username as string;
+  const username = decodeURIComponent(params.username as string || '');
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [projects, setProjects] = useState<ImageDialogProps[]>([]);
