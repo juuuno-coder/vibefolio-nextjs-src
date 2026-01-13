@@ -50,7 +50,13 @@ export default function Error({
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button 
-            onClick={() => reset()}
+            onClick={() => {
+              if (error.message.toLowerCase().includes("loading chunk") || error.message.toLowerCase().includes("failed")) {
+                window.location.reload();
+              } else {
+                reset();
+              }
+            }}
             className="h-12 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-lg"
           >
             <RefreshCcw size={18} className="mr-2" />
