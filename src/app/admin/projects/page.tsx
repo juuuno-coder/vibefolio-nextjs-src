@@ -27,24 +27,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Settings } from "lucide-react";
 
-// 카테고리 목록
+// 카테고리 목록 (12개 표준)
 const CATEGORIES = [
-  { id: 1, name: "전체" },
-  { id: 2, name: "AI" },
-  { id: 3, name: "비디오" },
-  { id: 4, name: "그래픽" },
-  { id: 5, name: "바이브코딩" },
-  { id: 6, name: "일러스트" },
-  { id: 7, name: "3D" },
-  { id: 8, name: "사진" },
-  { id: 9, name: "브랜딩/편집" },
-  { id: 10, name: "UI/UX" },
-  { id: 11, name: "캐릭터" },
-  { id: 12, name: "제품/패키지" },
-  { id: 13, name: "포토그래피" },
-  { id: 14, name: "타이포그래피" },
-  { id: 15, name: "공예" },
-  { id: 16, name: "파인아트" },
+  { id: 1, name: "포토" },
+  { id: 2, name: "웹툰/애니" },
+  { id: 3, name: "그래픽" },
+  { id: 4, name: "디자인" },
+  { id: 5, name: "영상" },
+  { id: 6, name: "영화·드라마" },
+  { id: 7, name: "오디오" },
+  { id: 8, name: "3D" },
+  { id: 9, name: "텍스트" },
+  { id: 10, name: "코드" },
+  { id: 11, name: "웹/앱" },
+  { id: 12, name: "게임" },
 ];
 
 const stripHtml = (html: string) => {
@@ -469,7 +465,6 @@ export default function AdminProjectsPage() {
                           <span>
                             {new Date(project.created_at).toLocaleDateString("ko-KR")}
                           </span>
-                          {project.Category && (
                             <select
                               value={project.category_id || ""}
                               onClick={(e) => e.stopPropagation()}
@@ -508,11 +503,11 @@ export default function AdminProjectsPage() {
                               }}
                               className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs border-none cursor-pointer hover:bg-blue-100 focus:ring-0"
                             >
+                              <option value="">카테고리 미설정</option>
                               {CATEGORIES.map(cat => (
                                 <option key={cat.id} value={cat.id}>{cat.name}</option>
                               ))}
                             </select>
-                          )}
                         </div>
                       </div>
                     </div>
