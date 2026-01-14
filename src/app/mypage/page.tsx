@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit } from "lucide-react";
+import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
 import { ProposalCard } from "@/components/ProposalCard";
@@ -551,6 +551,9 @@ export default function MyPage() {
                           </Button>
                           <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white h-9 px-3 text-xs" onClick={() => router.push(`/project/upload?edit=${project.id}`)}>
                             <Edit className="w-3.5 h-3.5 mr-1" /> 수정
+                          </Button>
+                          <Button size="sm" variant="secondary" className="bg-indigo-600 hover:bg-indigo-700 text-white border-0 h-9 px-3 text-xs" onClick={() => router.push(`/project/upload?mode=version&projectId=${project.id}`)}>
+                            <Rocket className="w-3.5 h-3.5 mr-1" /> 새 에피소드
                           </Button>
                           <Button size="sm" variant="destructive" className="h-9 px-3 text-xs" onClick={() => handleDeleteProject(project.id)}>
                             <Trash2 className="w-3.5 h-3.5 mr-1" /> 삭제
