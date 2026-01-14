@@ -10,6 +10,7 @@ import { EditorSidebar } from "@/components/editor/EditorSidebar";
 import { EmbedModal, AssetModal, Asset, StyleModal, CTAButtonModal, SettingsModal } from "@/components/editor/EditorBlocks";
 import { PhotoGridModal, GridLayout } from "@/components/editor/PhotoGridModal";
 import { LightroomModal } from "@/components/editor/LightroomModal";
+import { LeanCanvasModal } from "@/components/LeanCanvasModal";
 import '@/components/editor/tiptap.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -96,6 +97,7 @@ export default function TiptapUploadPage() {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [photoGridModalOpen, setPhotoGridModalOpen] = useState(false);
   const [lightroomModalOpen, setLightroomModalOpen] = useState(false);
+  const [leanCanvasOpen, setLeanCanvasOpen] = useState(false);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [projectBgColor, setProjectBgColor] = useState("#FFFFFF");
   const [contentSpacing, setContentSpacing] = useState(60);
@@ -626,6 +628,19 @@ export default function TiptapUploadPage() {
     });
   };
 
+  const handleLeanCanvasApply = (markdownContent: string) => {
+    if (!editor) return;
+    
+    // Simple Markdown to HTML conversion
+    let html = markdownContent
+       .replace(/### (.*?)\n/g, '<h3>$1</h3>')
+       .replace(/## (.*?)\n/g, '<h2>$1</h2>')
+       .replace(/\n\n/g, '<br/><br/>')
+       .replace(/\n/g, '<br/>');
+
+    editor.chain().focus().insertContent(html).run();
+ };
+
   if (step === 'info') {
     return (
       <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-white to-green-50 py-12 px-4 transition-all duration-500 ease-in-out animate-in fade-in slide-in-from-bottom-4">
@@ -900,6 +915,15 @@ export default function TiptapUploadPage() {
              >
                임시 저장
              </Button>
+              {/* [New] AI Planner Button */}
+              <Button
+                variant="outline"
+                className="border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800 gap-2 h-10 px-4 rounded-full font-bold transition-all hover:scale-105"
+                onClick={() => setLeanCanvasOpen(true)}
+              >
+                <FontAwesomeIcon icon={faWandMagicSparkles} className="w-4 h-4" />
+                AI 기획
+              </Button>
             <Button
               onClick={handleContinue}
               className="bg-green-600 hover:bg-green-700 text-white px-8 h-10 rounded-full font-bold shadow-md transition-all hover:scale-105"
@@ -997,6 +1021,11 @@ export default function TiptapUploadPage() {
         isOpen={lightroomModalOpen}
         onClose={() => setLightroomModalOpen(false)}
         onImport={handleLightroomImport}
+      />
+      <LeanCanvasModal
+        open={leanCanvasOpen}
+        onOpenChange={setLeanCanvasOpen}
+        onApply={handleLeanCanvasApply}
       />
     </div>
   );
