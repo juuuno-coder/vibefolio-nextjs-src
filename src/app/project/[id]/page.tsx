@@ -377,9 +377,10 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
               <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight break-keep">
                 {project.title || "제목 없음"}
               </h1>
-              <p className="text-lg text-gray-700 leading-8 whitespace-pre-wrap mb-10 break-keep">
-                {project.description || project.alt_description || "설명이 없습니다."}
-              </p>
+              <div 
+                className="text-lg text-gray-700 leading-8 mb-10 break-keep prose prose-lg max-w-none prose-img:rounded-xl prose-video:rounded-xl prose-headings:font-bold prose-a:text-green-600 hover:prose-a:text-green-700"
+                dangerouslySetInnerHTML={{ __html: project.description || project.alt_description || "설명이 없습니다." }}
+              />
 
               {/* 태그 리스트 & 라이선스 */}
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between pt-8 border-t border-gray-100 gap-6">
