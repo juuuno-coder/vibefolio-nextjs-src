@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { FeedbackPoll } from "./FeedbackPoll";
 import {
   Dialog,
   DialogContent,
@@ -999,6 +1000,14 @@ export function ProjectDetailModalV2({
 
                 {/* 2. 하단 리뉴얼 섹션 (노트폴리오 스타일) - 본문 끝나고 나타남 */}
                 <div className="w-full mt-24 border-t border-gray-100">
+                   
+                   {/* Feedback Poll Section */}
+                   <div className="w-full bg-white py-16 border-b border-gray-100">
+                       <div className="max-w-2xl mx-auto px-4">
+                          <FeedbackPoll projectId={project.id} />
+                       </div>
+                   </div>
+
                    {/* Black Action Bar */}
                    <div className="w-full bg-[#18181b] text-white py-10">
                       <div className="max-w-3xl mx-auto px-4 text-center">
