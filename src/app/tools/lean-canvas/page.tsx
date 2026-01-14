@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Wand2, Rocket, Share2, Download, ArrowRight } from "lucide-react";
+import { Loader2, Wand2, Rocket, Share2, Download, ArrowRight, Check } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import html2canvas from "html2canvas";
 
@@ -57,7 +57,7 @@ export default function LeanCanvasPage() {
       setCanvasData({
         problem: `1. 시장의 기존 솔루션이 너무 복잡함\n2. 높은 가격대로 인한 접근성 저하\n3. ${topic} 관련 전문 지식 부족`,
         customerSegments: `1. ${topic}에 관심 있는 2030 세대\n2. 효율성을 추구하는 실무자\n3. 새로운 도구를 찾는 얼리어답터`,
-        uniqueValueProposition: `"${topic}"을(를) 위한\n가장 쉽고 직관적인 솔루션.\n복잡함은 줄이고, 핵심 가치에 집중.`,
+        uniqueValueProposition: `"${topic}"을(를) 위한\n가장 쉽고 직관적인 솔루션.\n복잡한 과정 없이 핵심 가치 제공.`,
         solution: `1. AI 기반 자동화 시스템\n2. 원클릭 워크플로우\n3. 사용자 친화적인 UX/UI`,
         channels: `1. Instagram & TikTok 숏폼 마케팅\n2. 관련 네이버 카페 및 커뮤니티\n3. 인플루언서 제휴`,
         revenueStreams: `1. 부분 유료화 (Freemium)\n2. 프리미엄 구독 멤버십\n3. 기업용 라이선스 판매`,
@@ -138,225 +138,219 @@ ${canvasData.revenueStreams}
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       <Toaster position="top-center" richColors />
       
       {/* Hero Section */}
-      <div className="bg-[#111] text-white py-20 px-4 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
-        <div className="absolute -top-20 -right-20 w-96 h-96 bg-purple-600 rounded-full blur-[100px] opacity-40"></div>
-        <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-green-500 rounded-full blur-[100px] opacity-30"></div>
+      <div className="bg-[#0a0a0a] text-white pt-24 pb-32 px-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full opacity-[0.15] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+        <div className="absolute -top-[20%] right-[10%] w-[500px] h-[500px] bg-purple-900/40 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[10%] left-[10%] w-[400px] h-[400px] bg-green-900/30 rounded-full blur-[100px]"></div>
 
         <div className="max-w-4xl mx-auto text-center relative z-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
-          <div className="inline-block px-3 py-1 bg-white/10 rounded-full text-xs font-bold text-green-400 mb-6 border border-white/10 backdrop-blur-sm">
-            ✨ LABS : AI 기획 도우미
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full text-xs font-bold text-green-400 mb-6 border border-white/10 backdrop-blur-sm">
+            <Wand2 className="w-3 h-3" />
+            Vibefolio AI Labs
           </div>
           <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight tracking-tight">
-            막연한 아이디어, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">10초 만에 기획서</span>로 만드세요.
+            아이디어를 <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">비즈니스로</span>
           </h1>
           <p className="text-lg text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            스타트업의 필수품 '린 캔버스(Lean Canvas)'를 AI가 대신 작성해드립니다.<br className="hidden md:block"/>
-            작성된 기획안으로 바로 포트폴리오 프로젝트를 시작해보세요.
+            한 줄의 아이디어만 입력하세요. <br className="hidden md:block"/>
+            AI가 <b>린 캔버스(Lean Canvas)</b>를 완벽하게 작성해드립니다.
           </p>
 
           <div className="max-w-xl mx-auto relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-purple-600 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
-            <div className="relative bg-white rounded-2xl p-2 flex items-center shadow-2xl">
+            <div className="absolute -inset-1 bg-gradient-to-r from-green-500 to-purple-600 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
+            <div className="relative bg-white rounded-xl p-2 flex items-center shadow-2xl">
               <Input
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                placeholder="예: 20대 대학생을 위한 AI 자소설 첨삭 서비스"
-                className="border-0 h-14 text-lg text-black placeholder:text-gray-400 focus-visible:ring-0 bg-transparent px-4"
+                placeholder="어떤 서비스를 만들고 싶으신가요?"
+                className="border-0 h-12 text-lg text-black placeholder:text-gray-400 focus-visible:ring-0 bg-transparent px-4 font-medium"
               />
               <Button 
                 onClick={handleGenerate} 
                 disabled={isLoading}
-                className="h-12 px-8 bg-black hover:bg-gray-800 text-white rounded-xl font-bold text-lg gap-2 transition-all"
+                className="h-12 px-6 bg-black hover:bg-gray-800 text-white rounded-lg font-bold text-base gap-2 transition-all min-w-[120px]"
               >
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
-                {isLoading ? "생성 중..." : "AI 생성"}
+                {isLoading ? "작성 중" : "생성하기"}
               </Button>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-4">비로그인 상태에서도 무료로 이용할 수 있습니다.</p>
         </div>
       </div>
 
       {/* Canvas Section */}
-      <div className="container mx-auto px-4 py-16">
-        <div className={`transition-all duration-1000 ${isGenerated ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-10 brightness-95 grayscale'}`}>
+      <div className="-mt-20 container mx-auto px-4 pb-20 relative z-20">
+        <div className={`transition-all duration-1000 ${isGenerated ? 'opacity-100 translate-y-0' : 'opacity-100 translate-y-0'}`}>
             
             {/* Toolbar */}
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                    📊 린 캔버스 결과
-                    {!isGenerated && <span className="text-sm font-normal text-gray-400 ml-2">(생성 대기 중...)</span>}
+            <div className="flex justify-between items-center mb-6 pl-2 pr-2">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-white/90">
+                    <span className="bg-white/10 p-1.5 rounded-md"><Rocket className="w-4 h-4 text-green-400" /></span>
+                    린 캔버스 미리보기
                 </h2>
                 <div className="flex gap-3">
-                    <Button variant="outline" onClick={handleDownloadImage} disabled={!isGenerated} className="gap-2">
+                    <Button variant="secondary" onClick={handleDownloadImage} disabled={!isGenerated} className="gap-2 bg-white hover:bg-gray-100 text-black border border-transparent shadow-lg text-sm font-semibold">
                         <Download className="w-4 h-4" /> 이미지 저장
                     </Button>
-                    <Button onClick={handleStartProject} disabled={!isGenerated} className="bg-green-600 hover:bg-green-700 text-white gap-2 font-bold shadow-lg hover:translate-y-[-2px] transition-all">
-                        <Rocket className="w-4 h-4" /> 이 기획으로 프로젝트 시작하기
+                    <Button onClick={handleStartProject} disabled={!isGenerated} className="bg-green-600 hover:bg-green-700 text-white gap-2 font-bold shadow-lg shadow-green-900/20 hover:translate-y-[-2px] transition-all">
+                        프로젝트 시작하기 <ArrowRight className="w-4 h-4" />
                     </Button>
                 </div>
             </div>
 
-            {/* Grid */}
-            <div ref={canvasRef} className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
-                {/* Canvas Header (For Screenshot) */}
-                <div className="mb-8 border-b border-gray-100 pb-4 flex justify-between items-end">
+            {/* Canvas Container -> Paper Style */}
+            <div 
+               ref={canvasRef} 
+               className="bg-white rounded-sm shadow-2xl overflow-hidden"
+               style={{ minHeight: '800px' }} // A4 비율 비슷하게
+            >
+                {/* Canvas Header */}
+                <div className="p-8 border-b-2 border-black flex justify-between items-end bg-gray-50/50">
                     <div>
-                        <h3 className="text-3xl font-black text-gray-900">{topic || "나의 아이디어"}</h3>
-                        <p className="text-sm text-gray-500 mt-1">Generated by Vibefolio AI</p>
+                        <h3 className="text-3xl font-black text-gray-900 tracking-tight">{topic || "Lean Canvas Title"}</h3>
+                        <p className="text-sm text-gray-500 mt-2 font-medium">Business Model & Strategy</p>
                     </div>
-                    <div className="text-right">
-                        <div className="text-xs text-gray-400">Date</div>
-                        <div className="font-medium">{new Date().toLocaleDateString()}</div>
+                     <div className="text-right flex flex-col gap-1">
+                        <div className="text-xs text-gray-400 font-bold uppercase tracking-widest">Designed By</div>
+                        <div className="font-bold text-gray-900">Vibefolio AI</div>
+                        <div className="text-xs text-gray-400 font-mono mt-1">{new Date().toLocaleDateString()}</div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-5 md:grid-rows-3 gap-4 min-h-[800px]">
-                    {/* 1. Problem */}
-                    <CanvasBlock
-                    title="1. 문제 (Problem)"
-                    subtitle="고객이 겪는 상위 3가지 문제"
-                    value={canvasData.problem}
-                    onChange={(v) => handleChange("problem", v)}
-                    className="md:row-span-2 md:col-span-1"
-                    icon="🔥"
-                    />
+                {/* THE GRID: 10 Columns */}
+                <div className="grid grid-cols-1 md:grid-cols-10 border-black border-l-0 border-r-0 border-b-0 min-h-[700px]">
                     
-                    {/* 4. Solution */}
-                    <CanvasBlock
-                    title="4. 솔루션 (Solution)"
-                    subtitle="각 문제에 대한 해결책"
-                    value={canvasData.solution}
-                    onChange={(v) => handleChange("solution", v)}
-                    className="md:col-span-1"
-                    icon="💡"
-                    />
+                    {/* 1. Problem (Col 1-2 / Row 1-2) */}
+                    {/* Desktop: col-span-2, row-span-2 */}
+                    <div className="md:col-span-2 md:row-span-2 border-r border-b border-black/10 md:border-black p-0 flex flex-col h-full bg-white">
+                        <CanvasHeader number="1" title="Problem" subtitle="고객의 문제" icon="🔥" />
+                        <CanvasBody value={canvasData.problem} onChange={(v) => handleChange("problem", v)} />
+                    </div>
 
-                    {/* 3. UVP */}
-                    <CanvasBlock
-                    title="3. 가치 제안 (UVP)"
-                    subtitle="차별화된 핵심 가치 메시지"
-                    value={canvasData.uniqueValueProposition}
-                    onChange={(v) => handleChange("uniqueValueProposition", v)}
-                    className="md:row-span-2 md:col-span-1 bg-purple-50/50 border-purple-100"
-                    icon="💎"
-                    isHighlight
-                    />
+                    {/* 4. Solution (Col 3-4 / Row 1) */}
+                    <div className="md:col-span-2 md:row-span-1 border-r border-b border-black/10 md:border-black p-0 flex flex-col h-full bg-white">
+                         <CanvasHeader number="4" title="Solution" subtitle="해결책" icon="💡" />
+                         <CanvasBody value={canvasData.solution} onChange={(v) => handleChange("solution", v)} />
+                    </div>
 
-                    {/* 9. Unfair Advantage */}
-                    <CanvasBlock
-                    title="9. 경쟁 우위 (Advantage)"
-                    subtitle="쉽게 복제할 수 없는 강점"
-                    value={canvasData.unfairAdvantage}
-                    onChange={(v) => handleChange("unfairAdvantage", v)}
-                    className="md:col-span-1"
-                    icon="🛡️"
-                    />
+                    {/* 3. UVP (Col 5-6 / Row 1-2) -> Center */}
+                    <div className="md:col-span-2 md:row-span-2 border-r border-b border-black/10 md:border-black p-0 flex flex-col h-full bg-slate-50 relative">
+                         {/* Centered UVP Highlight */}
+                         <CanvasHeader number="3" title="Value Proposition" subtitle="차별화된 가치" icon="💎" className="text-purple-700" />
+                         <CanvasBody value={canvasData.uniqueValueProposition} onChange={(v) => handleChange("uniqueValueProposition", v)} className="text-center font-medium text-gray-800" />
+                         <div className="absolute top-0 right-0 p-2 opacity-10 pointer-events-none">
+                            <Rocket className="w-24 h-24 text-purple-600" />
+                         </div>
+                    </div>
 
-                    {/* 2. Customer Segments */}
-                    <CanvasBlock
-                    title="2. 고객군 (Segments)"
-                    subtitle="목표 고객 및 얼리어답터"
-                    value={canvasData.customerSegments}
-                    onChange={(v) => handleChange("customerSegments", v)}
-                    className="md:row-span-2 md:col-span-1"
-                    icon="🎯"
-                    />
+                    {/* 9. Unfair Advantage (Col 7-8 / Row 1) */}
+                     <div className="md:col-span-2 md:row-span-1 border-r border-b border-black/10 md:border-black p-0 flex flex-col h-full bg-white">
+                         <CanvasHeader number="9" title="Unfair Advantage" subtitle="경쟁 우위" icon="🛡️" />
+                         <CanvasBody value={canvasData.unfairAdvantage} onChange={(v) => handleChange("unfairAdvantage", v)} />
+                    </div>
 
-                    {/* 8. Key Metrics */}
-                    <CanvasBlock
-                    title="8. 핵심 지표 (Metrics)"
-                    subtitle="성공을 측정하는 핵심 숫자"
-                    value={canvasData.keyMetrics}
-                    onChange={(v) => handleChange("keyMetrics", v)}
-                    className="md:col-span-1"
-                    icon="📊"
-                    />
+                    {/* 2. Segments (Col 9-10 / Row 1-2) */}
+                    <div className="md:col-span-2 md:row-span-2 border-b border-black/10 md:border-black p-0 flex flex-col h-full bg-white">
+                        <CanvasHeader number="2" title="Customer Segments" subtitle="목표 고객" icon="🎯" />
+                        <CanvasBody value={canvasData.customerSegments} onChange={(v) => handleChange("customerSegments", v)} />
+                    </div>
 
-                    {/* 5. Channels */}
-                    <CanvasBlock
-                    title="5. 채널 (Channels)"
-                    subtitle="고객에게 도달하는 경로"
-                    value={canvasData.channels}
-                    onChange={(v) => handleChange("channels", v)}
-                    className="md:col-span-1"
-                    icon="📢"
-                    />
+                    {/* 8. Key Metrics (Col 3-4 / Row 2) -> Below Solution */}
+                    {/* Note: In grid-flow-row, this needs to be placed carefully or use specific placement. 
+                        Tailwind grid auto-placement usually goes row by row.
+                        
+                        Current Order in DOM:
+                        1. Problem (Span 2, Row 2)
+                        2. Solution (Span 2, Row 1)
+                        3. UVP (Span 2, Row 2)
+                        4. Advantage (Span 2, Row 1)
+                        5. Segments (Span 2, Row 2)
+                        
+                        This order is tricky for Masonry/Dense packing.
+                        Instead, we can use specific grid classes like `md:col-start-XX md:row-start-XX`.
+                    */}
+                    
+                    {/* Re-ordering for manual placement in 10-col grid */}
+                    
+                    {/* Row 2 fillers */}
+                    
+                    {/* 8. Key Metrics -> Goes under Solution (Col 3-4) */}
+                    <div className="md:col-start-3 md:col-end-5 md:row-start-2 border-r border-b border-black/10 md:border-black p-0 flex flex-col h-full bg-white">
+                         <CanvasHeader number="8" title="Key Metrics" subtitle="핵심 지표" icon="📊" />
+                         <CanvasBody value={canvasData.keyMetrics} onChange={(v) => handleChange("keyMetrics", v)} />
+                    </div>
 
-                    {/* 7. Cost Structure */}
-                    <CanvasBlock
-                    title="7. 비용 구조 (Cost Structure)"
-                    subtitle="고정비, 변동비 등 주요 비용"
-                    value={canvasData.costStructure}
-                    onChange={(v) => handleChange("costStructure", v)}
-                    className="md:col-span-2.5 md:row-span-1"
-                    icon="💸"
-                    />
+                    {/* 5. Channels -> Goes under Advantage (Col 7-8) */}
+                     <div className="md:col-start-7 md:col-end-9 md:row-start-2 border-r border-b border-black/10 md:border-black p-0 flex flex-col h-full bg-white">
+                         <CanvasHeader number="5" title="Channels" subtitle="유통 채널" icon="📢" />
+                         <CanvasBody value={canvasData.channels} onChange={(v) => handleChange("channels", v)} />
+                    </div>
 
-                    {/* 6. Revenue Streams */}
-                    <CanvasBlock
-                    title="6. 수익원 (Revenue Streams)"
-                    subtitle="수익 모델, 가격 정책"
-                    value={canvasData.revenueStreams}
-                    onChange={(v) => handleChange("revenueStreams", v)}
-                    className="md:col-span-2.5 md:row-span-1 bg-green-50/50 border-green-100"
-                    icon="💰"
-                    />
+                    {/* Bottom Row */}
+                    
+                    {/* 7. Cost Structure (Col 1-5 / Row 3) */}
+                     <div className="md:col-span-5 md:row-start-3 border-r md:border-r border-black/10 md:border-black p-0 flex flex-col min-h-[200px] bg-white">
+                         <CanvasHeader number="7" title="Cost Structure" subtitle="비용 구조" icon="💸" />
+                         <CanvasBody value={canvasData.costStructure} onChange={(v) => handleChange("costStructure", v)} />
+                    </div>
+
+                    {/* 6. Revenue Streams (Col 6-10 / Row 3) */}
+                     <div className="md:col-span-5 md:row-start-3 border-black/10 md:border-black p-0 flex flex-col min-h-[200px] bg-white">
+                         <CanvasHeader number="6" title="Revenue Streams" subtitle="수익원" icon="💰" className="text-green-700" />
+                         <CanvasBody value={canvasData.revenueStreams} onChange={(v) => handleChange("revenueStreams", v)} className="text-green-900 font-medium" />
+                    </div>
+
                 </div>
             </div>
         </div>
       </div>
 
-      {/* Footer CTA */}
-      <div className="bg-gray-50 border-t border-gray-200 py-16 text-center">
-        <h2 className="text-3xl font-bold mb-4">준비된 기획, 포트폴리오로 완성하세요</h2>
-        <p className="text-gray-500 mb-8">바이브폴리오는 당신의 아이디어가 세상과 만나는 곳입니다.</p>
-        <Button onClick={() => router.push('/')} variant="outline" className="h-12 px-8 rounded-full border-gray-300 hover:bg-white text-lg">
-            메인으로 돌아가기
-        </Button>
-      </div>
     </div>
   );
 }
 
-function CanvasBlock({ 
-    title, 
-    subtitle, 
-    value, 
-    onChange, 
-    className, 
-    icon,
-    isHighlight = false
-}: { 
-    title: string; 
-    subtitle: string; 
-    value: string; 
-    onChange: (v: string) => void; 
-    className?: string;
-    icon: string;
-    isHighlight?: boolean;
-}) {
+function CanvasHeader({ number, title, subtitle, icon, className }: { number: string, title: string, subtitle: string, icon: string, className?: string }) {
     return (
-        <div className={`flex flex-col border rounded-xl p-4 transition-all duration-300 hover:shadow-md ${isHighlight ? 'border-purple-200 ring-4 ring-purple-50/50' : 'border-gray-200 hover:border-gray-400 bg-white'} ${className}`}>
-            <div className="flex items-center justify-between mb-2">
-                <h3 className="font-bold text-base text-gray-800 flex items-center gap-2">
-                    <span className="text-lg">{icon}</span> {title}
-                </h3>
-            </div>
-            <p className="text-xs text-gray-400 mb-3">{subtitle}</p>
+        <div className={`px-4 py-3 border-b border-dashed border-gray-200 flex justify-between items-center ${className}`}>
+           <div>
+               <h4 className="font-extrabold text-sm uppercase tracking-wide flex items-center gap-2">
+                   {title}
+               </h4>
+               <p className="text-[10px] text-gray-400 font-medium mt-0.5">{subtitle}</p>
+           </div>
+           <div className="flex items-center gap-2 opacity-50">
+               <span className="text-lg grayscale">{icon}</span>
+               <span className="text-xs font-black border border-current rounded-full w-5 h-5 flex items-center justify-center">{number}</span>
+           </div>
+        </div>
+    )
+}
+
+function CanvasBody({ value, onChange, className }: { value: string, onChange: (v: string) => void, className?: string }) {
+    return (
+        <div className="flex-1 p-0 relative group">
             <Textarea
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="flex-1 w-full resize-none text-sm leading-relaxed border-0 bg-transparent p-0 focus-visible:ring-0 placeholder:text-gray-300 min-h-[100px]"
-                placeholder="내용이 생성됩니다..."
+                className={`w-full h-full resize-none border-0 bg-transparent p-4 text-sm leading-relaxed focus-visible:ring-0 placeholder:text-gray-200 ${className}`}
+                placeholder="..."
             />
+            <div className="absolute bottom-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <EditIcon className="w-3 h-3" />
+            </div>
         </div>
-    );
+    )
+}
+
+function EditIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+        </svg>
+    )
 }
