@@ -64,27 +64,29 @@ function CommentItem({
 }) {
   const isOwner = currentUserId && comment.user_id === currentUserId;
   const isSecret = comment.is_secret;
-  const canView = !isSecret || (currentUserId && (comment.user_id === currentUserId || projectOwnerId === currentUserId));
+  const isProposal = comment.content?.includes("[협업 제안]");
+  const canView = !isSecret || (currentUserId && (String(comment.user_id) === String(currentUserId) || String(projectOwnerId) === String(currentUserId)));
   
   return (
-    <div className={`${depth > 0 ? 'ml-6 mt-2' : ''}`}>
+    <div className={`${depth > 0 ? 'ml-6 mt-2' : ''} ${isProposal ? 'bg-green-50/50 -mx-2 px-2 py-1 rounded-lg border border-green-100/50' : ''}`}>
       <div className="flex gap-2">
-        <Avatar className="w-6 h-6 flex-shrink-0 bg-white">
+        <Avatar className="w-6 h-6 flex-shrink-0 bg-white shadow-sm ring-1 ring-gray-100">
           <AvatarImage src={comment.user?.profile_image_url || '/globe.svg'} />
-          <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-3 h-3" /></AvatarFallback>
+          <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-3 h-3 text-gray-400" /></AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <div className="flex items-center gap-1 mb-0.5">
-            <span className="font-medium text-[10px]">{comment.user?.username || 'Unknown'}</span>
+            <span className="font-bold text-[10px] text-gray-900">{comment.user?.username || 'Unknown'}</span>
             {isSecret && (
-               <span className="bg-amber-100 text-amber-600 text-[9px] px-1 rounded flex items-center gap-0.5">
-                 <FontAwesomeIcon icon={faLock} className="w-2 h-2" /> 비밀
+               <span className={`${isProposal ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-600'} text-[9px] px-1.5 py-0.5 rounded font-bold flex items-center gap-0.5`}>
+                 <FontAwesomeIcon icon={isProposal ? faPaperPlane : faLock} className="w-2 h-2" /> 
+                 {isProposal ? "비밀 제안" : "비밀 댓글"}
                </span>
             )}
-            <span className="text-[9px] text-gray-400">{dayjs(comment.created_at).fromNow()}</span>
+            <span className="text-[9px] text-gray-400 font-medium">{dayjs(comment.created_at).fromNow()}</span>
           </div>
-          <p className={`text-xs ${isSecret ? 'text-gray-500 italic' : 'text-gray-700'}`}>
-            {canView ? comment.content : "🔒 작성자와 프로젝트 관리자만 볼 수 있는 비밀 댓글입니다."}
+          <p className={`text-xs leading-relaxed ${isSecret ? 'text-gray-500' : 'text-gray-700'} ${isProposal && canView ? 'text-green-800 font-medium' : ''}`}>
+            {canView ? comment.content : (isProposal ? "🔒 작성자와 프로젝트 관리자만 볼 수 있는 비밀 제안입니다." : "🔒 작성자와 프로젝트 관리자만 볼 수 있는 비밀 댓글입니다.")}
           </p>
           <div className="flex items-center gap-2 mt-1">
             <button

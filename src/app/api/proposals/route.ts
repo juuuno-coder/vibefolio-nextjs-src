@@ -130,6 +130,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // [New] 비밀 제안을 댓글 목에도 표시 (자동 댓글 생성)
+    try {
+        await (supabaseAdmin as any)
+          .from('Comment')
+          .insert({
+            user_id: user.id,
+            project_id: project_id,
+            content: `🔒 [협업 제안] "${title}" 제안을 보냈습니다.`,
+            is_secret: true,
+          });
+    } catch (commentError) {
+        console.warn("제안 댓글 생성 실패 (조용히 넘어감):", commentError);
+    }
+
     return NextResponse.json({ proposal: data, message: '제안이 성공적으로 전송되었습니다.' });
   } catch (error: any) {
     console.error('서버 오류:', error);

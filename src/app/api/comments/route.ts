@@ -17,6 +17,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // To handle secret comments, we need the current user ID
+    const authHeader = request.headers.get('authorization');
+    let currentUserId: string | null = null;
+    if (authHeader) {
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+        if (user) currentUserId = user.id;
+    }
+
+    // Get project owner ID to allow them to see secret comments
+    const { data: projectInfo } = await (supabaseAdmin as any)
+        .from('Project')
+        .select('user_id')
+        .eq('project_id', projectId)
+        .single();
+    
+    const projectOwnerId = projectInfo?.user_id;
+
     const { data, error } = await supabaseAdmin
       .from('Comment')
       .select('*')
@@ -32,9 +50,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Privacy Filter: Mask content if secret
+    const filteredData = (data || []).map((comment: any) => {
+      if (comment.is_secret) {
+          const isAuthor = currentUserId && String(comment.user_id) === String(currentUserId);
+          const isProjectOwner = currentUserId && String(projectOwnerId) === String(currentUserId);
+          
+          if (!isAuthor && !isProjectOwner) {
+              return { ...comment, content: '🔒 비밀 댓글입니다.' };
+          }
+      }
+      return comment;
+    });
+
     // 사용자 정보 조회 (profiles 테이블 사용 - 성능 개선)
-    if (data && data.length > 0) {
-      const userIds = Array.from(new Set(data.map((c: any) => c.user_id).filter(Boolean))) as string[];
+    if (filteredData && filteredData.length > 0) {
+      const userIds = Array.from(new Set(filteredData.map((c: any) => c.user_id).filter(Boolean))) as string[];
       
       // profiles 테이블에서 사용자 정보 조회
       const { data: profiles } = await supabaseAdmin
@@ -52,7 +83,7 @@ export async function GET(request: NextRequest) {
         ]) || []
       );
 
-      data.forEach((comment: any) => {
+      filteredData.forEach((comment: any) => {
         const user = userMap.get(comment.user_id);
         comment.user = user || {
           username: 'Unknown',
@@ -64,12 +95,12 @@ export async function GET(request: NextRequest) {
       const commentMap = new Map();
       const rootComments: any[] = [];
 
-      data.forEach((comment: any) => {
+      filteredData.forEach((comment: any) => {
         comment.replies = [];
         commentMap.set(comment.comment_id, comment);
       });
 
-      data.forEach((comment: any) => {
+      filteredData.forEach((comment: any) => {
         if (comment.parent_comment_id) {
           const parent = commentMap.get(comment.parent_comment_id);
           if (parent) {
@@ -83,7 +114,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ comments: rootComments });
     }
 
-    return NextResponse.json({ comments: data });
+    return NextResponse.json({ comments: filteredData });
   } catch (error) {
     console.error('서버 오류:', error);
     return NextResponse.json(
