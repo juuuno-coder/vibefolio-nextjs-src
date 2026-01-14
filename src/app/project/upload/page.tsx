@@ -1009,6 +1009,33 @@ export default function TiptapUploadPage() {
                <p className="text-center mt-6 text-[10px] text-gray-400 font-medium bg-white/50 py-2 rounded-full border border-dashed border-gray-100">배포 시 위와 같은 타임라인이 프로필 상세 페이지의 [로켓] 버튼 툴팁에 동적으로 반영됩니다.</p>
             </div>
 
+            {/* [New] Previous Content Quick Reference (Accordion) */}
+            {isVersionMode && previousContent && (
+               <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+                  <details className="group border-2 border-amber-100 rounded-[2.5rem] overflow-hidden bg-white/40">
+                     <summary className="flex items-center justify-between p-8 cursor-pointer list-none hover:bg-amber-50/30 transition-all">
+                        <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 shadow-sm border border-amber-100">
+                              <FontAwesomeIcon icon={faFileLines} className="w-5 h-5" />
+                           </div>
+                           <div>
+                              <h4 className="text-lg font-black text-gray-900 leading-tight">이전 배포 내용 참조</h4>
+                              <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">Original Content View</p>
+                           </div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-white border border-amber-200 flex items-center justify-center text-amber-500 group-open:rotate-180 transition-transform">
+                           <span className="text-xs">▼</span>
+                        </div>
+                     </summary>
+                     <div className="p-10 border-t border-amber-50 bg-white/80 max-h-[500px] overflow-y-auto custom-scrollbar">
+                        <div className="prose prose-sm max-w-none text-gray-500 opacity-60 pointer-events-none select-all filter contrast-[0.8]">
+                           <div dangerouslySetInnerHTML={{ __html: previousContent }} />
+                        </div>
+                     </div>
+                  </details>
+               </div>
+            )}
+
             <div className="w-full h-px bg-gray-100 my-8"></div>
 
             {/* 발행 버튼 */}
