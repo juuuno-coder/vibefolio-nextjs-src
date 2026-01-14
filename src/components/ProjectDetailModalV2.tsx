@@ -1156,19 +1156,60 @@ export function ProjectDetailModalV2({
                 </div>
               )}
 
-              {/* Version History (Rocket) - Visible to everyone */}
+              {/* Version History (Rocket) - History Popover */}
               <div className="relative group flex items-center mt-2">
-                 <button 
-                  onClick={() => setHistoryModalOpen(true)} 
-                  className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 bg-white text-gray-700 hover:bg-blue-600 hover:text-white`}
+                <button 
+                  onClick={() => setHistoryModalOpen(!isHistoryModalOpen)}
+                  className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 ${isHistoryModalOpen ? 'bg-blue-600 text-white shadow-inner scale-95' : 'bg-white text-gray-700 hover:bg-blue-600 hover:text-white'}`}
                 >
                   <FontAwesomeIcon icon={faRocket} className="w-5 h-5" />
                 </button>
-                {/* Tooltip */}
-                <div className="absolute right-full mr-3 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-md">
-                   {versions.length > 0 ? `현재 버전: ${versions[0].version_name}` : "프로젝트 히스토리"}
-                   <div className="absolute top-1/2 -translate-y-1/2 -right-1 border-4 border-transparent border-l-gray-900"></div>
+                
+                {/* Desktop Rich History Popover */}
+                <div className={`absolute right-full mr-5 w-80 bg-white rounded-3xl shadow-2xl border border-gray-100 transition-all duration-300 origin-right z-[100] ${isHistoryModalOpen ? 'opacity-100 scale-100 translate-x-0' : 'opacity-0 scale-95 translate-x-4 pointer-events-none'}`}>
+                   <div className="p-5 border-b border-gray-50 flex items-center justify-between">
+                      <h4 className="font-bold text-sm text-gray-900 flex items-center gap-2 text-left">
+                         <FontAwesomeIcon icon={faRocket} className="text-blue-500 w-3 h-3" />
+                         업데이트 히스토리
+                      </h4>
+                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                        {versions.length > 0 ? `v${versions[0].version_name}` : 'v1.0'}
+                      </span>
+                   </div>
+                   <div className="p-6 max-h-[400px] overflow-y-auto custom-scrollbar">
+                      {versions.length > 0 ? (
+                        <div className="space-y-8 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-gray-100">
+                          {versions.map((ver, idx) => (
+                            <div key={ver.id || idx} className="relative pl-8 text-left">
+                              <div className={`absolute left-0 top-1.5 w-4 h-4 rounded-full border-4 border-white shadow-sm ring-1 ${idx === 0 ? 'bg-green-500 ring-green-100 scale-110' : 'bg-gray-300 ring-gray-100'}`}></div>
+                              <div className="flex flex-col">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <span className={`text-xs font-black ${idx === 0 ? 'text-green-600' : 'text-gray-900'}`}>{ver.version_name}</span>
+                                  <span className="text-[10px] text-gray-400 font-bold tabular-nums">{new Date(ver.created_at).toLocaleDateString()}</span>
+                                  {idx === 0 && <span className="text-[9px] font-black text-white bg-green-500 px-1 rounded">LATEST</span>}
+                                </div>
+                                <p className="text-xs text-gray-500 leading-relaxed font-medium line-clamp-3">{ver.changelog || '업데이트 기록이 없습니다.'}</p>
+                                <button className="text-[10px] text-blue-500 font-bold mt-2 self-start hover:underline cursor-pointer">버전 상세보기 →</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-400">
+                            <p className="text-xs">데이터가 없습니다.</p>
+                        </div>
+                      )}
+                   </div>
+                   {/* Arrow */}
+                   <div className="absolute top-6 -right-2 border-[8px] border-transparent border-l-white"></div>
                 </div>
+
+                {!isHistoryModalOpen && (
+                   <div className="absolute right-full mr-3 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-md">
+                      업데이트 히스토리
+                      <div className="absolute top-1/2 -translate-y-1/2 -right-1 border-4 border-transparent border-l-gray-900"></div>
+                   </div>
+                )}
               </div>
 
               {/* Proposal (PaperPlane) - Visible to non-owners */}
