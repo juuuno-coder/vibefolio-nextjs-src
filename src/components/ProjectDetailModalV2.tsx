@@ -1252,9 +1252,9 @@ export function ProjectDetailModalV2({
 
             </div>
 
-            {/* 댓글 패널 (더 슬림하게 20vw 조정) */}
+            {/* 댓글 패널 (더 슬림하게 22vw 조정) */}
             {commentsPanelOpen && (
-              <div className="w-[20vw] h-full bg-white flex flex-col border-l border-gray-200 ml-4 rounded-t-xl overflow-hidden shadow-xl animate-in slide-in-from-right duration-500">
+              <div className="w-[22vw] h-full bg-white flex flex-col border-l border-gray-200 ml-4 rounded-t-xl overflow-hidden shadow-xl animate-in slide-in-from-right duration-500">
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white z-10">
                   <h3 className="font-bold text-sm">활동 및 댓글 ({comments.length})</h3>
                   <button onClick={() => setCommentsPanelOpen(false)} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
