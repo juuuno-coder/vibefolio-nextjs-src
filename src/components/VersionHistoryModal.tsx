@@ -51,13 +51,13 @@ export function VersionHistoryModal({
              ) : (
                  <DialogTitle className="text-xl font-bold flex items-center gap-2">
                     <Tag className="w-5 h-5" />
-                    업데이트 히스토리
+                    릴리즈 히스토리 (Release History)
                  </DialogTitle>
              )}
              
              {!selectedVersion && isOwner && (
-               <Button onClick={handleCreateClick} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white gap-1 rounded-full px-4">
-                 <Plus className="w-4 h-4" /> 새 버전
+               <Button onClick={handleCreateClick} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1 rounded-full px-4">
+                 <Plus className="w-4 h-4" /> 새 에피소드
                </Button>
              )}
           </div>
@@ -91,8 +91,8 @@ export function VersionHistoryModal({
               <>
               {versions.length === 0 ? (
                 <div className="text-center py-20 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                   <p className="text-sm">아직 배포된 버전이 없습니다.</p>
-                   {isOwner && <p className="text-xs mt-1">첫 번째 버전을 배포해보세요!</p>}
+                   <p className="text-sm">아직 발행된 에피소드가 없습니다.</p>
+                   {isOwner && <p className="text-xs mt-1">첫 번째 에피소드를 발행해보세요!</p>}
                 </div>
               ) : (
                 <div className="relative border-l-2 border-gray-100 ml-3 space-y-8 py-2 pb-10">

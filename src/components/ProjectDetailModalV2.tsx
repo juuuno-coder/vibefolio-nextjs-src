@@ -1105,6 +1105,29 @@ export function ProjectDetailModalV2({
                 </Avatar>
               </button>
 
+              {/* [New] New Episode Button for Owner */}
+              {String(currentUserId) === String(project.userId) && (
+                <div className="relative group flex items-center mb-2">
+                   <button 
+                    onClick={() => {
+                        window.location.href = `/project/upload?mode=version&projectId=${project.id}`;
+                    }} 
+                    className="w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 bg-white text-gray-700 hover:bg-indigo-600 hover:text-white"
+                  >
+                    <div className="relative">
+                        <FontAwesomeIcon icon={faRocket} className="w-5 h-5" />
+                        <span className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white shadow-sm ring-2 ring-white">
+                            N
+                        </span>
+                    </div>
+                  </button>
+                  <div className="absolute right-full mr-3 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-md">
+                     새 에피소드 발행
+                     <div className="absolute top-1/2 -translate-y-1/2 -right-1 border-4 border-transparent border-l-gray-900"></div>
+                  </div>
+                </div>
+              )}
+
               {isLoggedIn && project.userId && currentUserId !== project.userId && (
                 <div className="flex flex-col items-center mb-2">
                   <Button onClick={handleFollow} disabled={loading.follow} size="sm" className={`text-xs px-3 py-1 h-8 rounded-full transition-all shadow-md ${following ? 'bg-white text-gray-700 border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200' : 'bg-green-600 text-white hover:bg-green-700 hover:scale-105'}`}>
@@ -1227,7 +1250,7 @@ export function ProjectDetailModalV2({
                         />
                         <Button 
                           onClick={handleCommentSubmit} 
-                          size="sm" 
+                          size="sm"
                           disabled={loading.comment || !newComment.trim()}
                           className="bg-green-600 hover:bg-green-700 text-white h-[42px] px-4 rounded-lg"
                         >

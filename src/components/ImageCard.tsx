@@ -162,7 +162,7 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
                       onClick={(e) => { e.stopPropagation(); router.push(`/project/upload?mode=version&projectId=${props.id}`); }}
                       className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
                     >
-                      <Rocket className="w-4 h-4" /> 새 버전
+                      <Rocket className="w-4 h-4" /> 새 에피소드
                     </button>
                     <button 
                       onClick={(e) => { 
@@ -184,8 +184,8 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
                 </div>
               )}
               {isRecentlyUpdated && (
-                <div className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
-                   <span>🚀</span> <span>UPDATE</span>
+                <div className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
+                   <span>✨</span> <span>NEW RELEASE</span>
                 </div>
               )}
               {props.is_feedback_requested && (

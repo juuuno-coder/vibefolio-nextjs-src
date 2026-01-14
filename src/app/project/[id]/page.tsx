@@ -506,7 +506,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                     onClick={() => router.push(`/project/upload?mode=version&projectId=${project.id}`)}
                     className="h-11 px-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white border-0 gap-2 font-bold text-base shadow-md"
                   >
-                    <Rocket size={18} /> 새 버전 배포
+                    <Rocket size={18} /> 새 에피소드 발행
                   </Button>
                 ) : (
                   <>
