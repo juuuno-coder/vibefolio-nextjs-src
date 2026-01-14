@@ -66,61 +66,80 @@ function CommentItem({
   depth: number 
 }) {
   const isOwner = currentUserId && comment.user_id === currentUserId;
+  const isAuthor = String(comment.user_id) === String(projectOwnerId);
   const isSecret = comment.is_secret;
   const isProposal = comment.content?.includes("[협업 제안]");
   const canView = !isSecret || (currentUserId && (String(comment.user_id) === String(currentUserId) || String(projectOwnerId) === String(currentUserId)));
   
   return (
-    <div className={`${depth > 0 ? 'ml-6 mt-2' : ''} ${isProposal ? 'bg-green-50/50 -mx-2 px-2 py-1 rounded-lg border border-green-100/50' : ''}`}>
-      <div className="flex gap-2">
-        <Avatar className="w-6 h-6 flex-shrink-0 bg-white shadow-sm ring-1 ring-gray-100">
+    <div className={`relative ${depth > 0 ? 'ml-5 mt-3 pl-3' : 'mt-5 first:mt-1'}`}>
+      {/* Reply Connector Line */}
+      {depth > 0 && (
+        <div className="absolute left-0 top-0 bottom-0 w-px bg-gray-100 rounded-full h-full"></div>
+      )}
+
+      <div className={`flex gap-3 group/item ${isProposal && canView ? 'bg-emerald-50/40 -mx-3 px-3 py-2 rounded-2xl border border-emerald-100/50' : ''}`}>
+        <Avatar className={`flex-shrink-0 bg-white shadow-sm ring-2 ${isAuthor ? 'ring-blue-100' : 'ring-gray-50'} ${depth > 0 ? 'w-5 h-5' : 'w-7 h-7'}`}>
           <AvatarImage src={comment.user?.profile_image_url || '/globe.svg'} />
           <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-3 h-3 text-gray-400" /></AvatarFallback>
         </Avatar>
-        <div className="flex-1">
-          <div className="flex items-center gap-1 mb-0.5">
-            <span className="font-bold text-[10px] text-gray-900">{comment.user?.username || 'Unknown'}</span>
-            {isSecret && (
-               <span className={`${isProposal ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-600'} text-[9px] px-1.5 py-0.5 rounded font-bold flex items-center gap-0.5`}>
-                 <FontAwesomeIcon icon={isProposal ? faPaperPlane : faLock} className="w-2 h-2" /> 
-                 {isProposal ? "비밀 제안" : "비밀 댓글"}
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-1.5 overflow-hidden">
+               <span className={`font-black tracking-tight truncate ${depth > 0 ? 'text-[10px]' : 'text-xs'} ${isAuthor ? 'text-blue-600' : 'text-gray-900'}`}>
+                 {comment.user?.username || 'Unknown'}
                </span>
-            )}
-            <span className="text-[9px] text-gray-400 font-medium">{dayjs(comment.created_at).fromNow()}</span>
+               {isAuthor && (
+                 <span className="px-1.5 py-0.5 bg-blue-600 text-white text-[7px] font-black rounded uppercase tracking-tighter shadow-sm flex-shrink-0">AUTHOR</span>
+               )}
+               {isSecret && (
+                  <span className={`${isProposal ? 'bg-emerald-600 text-white' : 'bg-amber-100 text-amber-600 border border-amber-200'} text-[8px] px-1.5 py-0.5 rounded-full font-black flex items-center gap-1 shadow-xs flex-shrink-0`}>
+                    <FontAwesomeIcon icon={isProposal ? faPaperPlane : faLock} className="w-1.5 h-1.5" /> 
+                    {isProposal ? "PRIVATE INQUIRY" : "SECRET"}
+                  </span>
+               )}
+            </div>
+            <span className="text-[9px] text-gray-300 font-bold tabular-nums ml-auto whitespace-nowrap">{dayjs(comment.created_at).fromNow()}</span>
           </div>
-          <p className={`text-xs leading-relaxed ${isSecret ? 'text-gray-500' : 'text-gray-700'} ${isProposal && canView ? 'text-green-800 font-medium' : ''}`}>
-            {canView ? comment.content : (isProposal ? "🔒 작성자와 프로젝트 관리자만 볼 수 있는 비밀 제안입니다." : "🔒 작성자와 프로젝트 관리자만 볼 수 있는 비밀 댓글입니다.")}
-          </p>
-          <div className="flex items-center gap-2 mt-1">
+
+          <div className="relative">
+            <p className={`whitespace-pre-wrap leading-relaxed break-words font-medium ${depth > 0 ? 'text-[11px]' : 'text-[12px]'} ${isSecret && !canView ? 'text-gray-400 italic' : (isAuthor ? 'text-gray-800' : 'text-gray-600')} ${isProposal && canView ? 'text-emerald-900' : ''}`}>
+              {canView ? comment.content : (isProposal ? "작성자와 프로젝트 관리자만 볼 수 있는 비밀 제안입니다." : "작성자와 프로젝트 관리자만 볼 수 있는 비밀 댓글입니다.")}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 mt-1.5 opacity-0 group-hover/item:opacity-100 transition-opacity">
             <button
               onClick={() => onReply(comment.comment_id, comment.user?.username || 'Unknown')}
-              className="text-[9px] text-gray-500 hover:text-green-600"
+              className="text-[9px] font-black text-gray-400 hover:text-blue-600 transition-colors tracking-widest uppercase"
             >
-              답글
+              Reply
             </button>
             {isOwner && (
               <button
                 onClick={() => onDelete(comment.comment_id)}
-                className="text-[9px] text-gray-400 hover:text-red-500"
+                className="text-[9px] font-black text-gray-300 hover:text-red-500 transition-colors tracking-widest uppercase"
               >
-                삭제
+                Delete
               </button>
             )}
           </div>
         </div>
       </div>
+
       {/* 대댓글 */}
       {comment.replies && comment.replies.length > 0 && (
-        <div className="mt-2 space-y-2">
+        <div className="relative">
           {comment.replies.map((reply: any) => (
-            <CommentItem
-              key={reply.comment_id}
-              comment={reply}
-              onReply={onReply}
-              onDelete={onDelete}
-              currentUserId={currentUserId}
+            <CommentItem 
+              key={reply.comment_id} 
+              comment={reply} 
+              onReply={onReply} 
+              onDelete={onDelete} 
+              currentUserId={currentUserId} 
               projectOwnerId={projectOwnerId}
-              depth={depth + 1}
+              depth={depth + 1} 
             />
           ))}
         </div>
