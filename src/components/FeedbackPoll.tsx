@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Rocket, FlaskConical, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase/client';
 
 interface FeedbackPollProps {
   projectId: string;
@@ -20,18 +21,48 @@ export function FeedbackPoll({ projectId, initialCounts, userVote }: FeedbackPol
   const [counts, setCounts] = useState(initialCounts || { launch: 0, research: 0, more: 0 });
   const [isVoting, setIsVoting] = useState(false);
 
+  // Fetch Poll Data on Mount
+  React.useEffect(() => {
+    if (!projectId) return;
+    const fetchPoll = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: Record<string, string> = {};
+            if (session) {
+                headers['Authorization'] = `Bearer ${session.access_token}`;
+            }
+
+            const res = await fetch(`/api/projects/${projectId}/vote`, { headers });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.counts) setCounts(data.counts);
+                if (data.myVote !== undefined) setSelected(data.myVote);
+            }
+        } catch (e) {
+            console.error("Failed to load poll", e);
+        }
+    };
+    fetchPoll();
+  }, [projectId]);
+
   const handleVote = async (type: 'launch' | 'research' | 'more') => {
     if (isVoting) return;
     
     // Optimistic UI Update
     const prevSelected = selected;
     const prevCounts = { ...counts };
+    let newVoteType: string | null = type;
 
     // Toggle logic
     if (selected === type) {
       // Cancel vote
       setSelected(null);
-      setCounts(prev => ({ ...prev, [type]: Math.max(0, prev[type] - 1) }));
+      newVoteType = null;
+      setCounts(prev => {
+          const newC = { ...prev };
+          newC[type] = Math.max(0, newC[type] - 1);
+          return newC;
+      });
     } else {
       // New vote or switch
       setSelected(type);
@@ -49,13 +80,29 @@ export function FeedbackPoll({ projectId, initialCounts, userVote }: FeedbackPol
     setIsVoting(true);
 
     try {
-       // TODO: API Call (DB Migration needed)
-       // await fetch(`/api/projects/${projectId}/vote`, { ... });
+       const { data: { session } } = await supabase.auth.getSession();
+       if (!session) {
+           toast.error("로그인이 필요한 서비스입니다.");
+           setIsVoting(false);
+           setSelected(prevSelected);
+           setCounts(prevCounts);
+           return;
+       }
+
+       const res = await fetch(`/api/projects/${projectId}/vote`, {
+           method: 'POST',
+           headers: { 
+               'Content-Type': 'application/json',
+               'Authorization': `Bearer ${session.access_token}`
+           },
+           body: JSON.stringify({ voteType: newVoteType })
+       });
        
-       // Simulate API delay
-       await new Promise(r => setTimeout(r, 500));
+       if (!res.ok) {
+           throw new Error('Vote Failed');
+       }
        
-       if (selected === type) {
+       if (!newVoteType) {
            toast.info("투표를 취소했습니다.");
        } else {
            toast.success("소중한 의견 감사합니다! 🎉");
