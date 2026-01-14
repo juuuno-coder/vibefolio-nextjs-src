@@ -31,7 +31,7 @@ import { recordView, getProjectViewCount } from "@/lib/views"; // Import view fu
 import dayjs from "dayjs";
 import { supabase } from "@/lib/supabase/client";
 import { ProjectTimeline } from "@/components/ProjectTimeline";
-import { CreateVersionModal } from "@/components/CreateVersionModal";
+
 import { getProjectVersions, ProjectVersion } from "@/lib/versions";
 
 interface Project {
@@ -77,7 +77,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
   const [versions, setVersions] = useState<ProjectVersion[]>([]);
   const [newComment, setNewComment] = useState("");
   const [newCommentSecret, setNewCommentSecret] = useState(false);
-  const [isVersionModalOpen, setVersionModalOpen] = useState(false);
+
   const [isLoading, setIsLoading] = useState(true);
 
   const projectId = params.id;
@@ -503,7 +503,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
             <div className="flex items-center justify-center gap-3">
                 {user && user.id === project.user_id ? (
                   <Button 
-                    onClick={() => setVersionModalOpen(true)}
+                    onClick={() => router.push(`/project/upload?mode=version&projectId=${project.id}`)}
                     className="h-11 px-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white border-0 gap-2 font-bold text-base shadow-md"
                   >
                     <Rocket size={18} /> 새 버전 배포
@@ -613,15 +613,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
         )}
 
       </div>
-      <CreateVersionModal
-        open={isVersionModalOpen}
-        onOpenChange={setVersionModalOpen}
-        projectId={params.id}
-        onSuccess={() => {
-          // 버전 목록 새로고침
-          getProjectVersions(Number(params.id)).then(setVersions);
-        }}
-      />
+
     </div>
   );
 }

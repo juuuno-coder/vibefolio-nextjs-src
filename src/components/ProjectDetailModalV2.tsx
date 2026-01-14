@@ -25,7 +25,7 @@ import {
   faUnlock,
   faRocket,
 } from "@fortawesome/free-solid-svg-icons";
-import { CreateVersionModal } from "./CreateVersionModal";
+
 import { VersionHistoryModal } from "./VersionHistoryModal";
 import { getProjectVersions, ProjectVersion } from "@/lib/versions";
 import { faHeart as faHeartRegular, faComment as faCommentRegular, faBookmark as faBookmarkRegular } from "@fortawesome/free-regular-svg-icons";
@@ -184,7 +184,7 @@ export function ProjectDetailModalV2({
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [newCommentSecret, setNewCommentSecret] = useState(false);
-  const [isVersionModalOpen, setVersionModalOpen] = useState(false);
+
   const [isHistoryModalOpen, setHistoryModalOpen] = useState(false);
   const [versions, setVersions] = useState<ProjectVersion[]>([]);
   const [replyingTo, setReplyingTo] = useState<{ id: string; username: string } | null>(null);
@@ -1315,15 +1315,7 @@ export function ProjectDetailModalV2({
         </DialogContent>
       </Dialog>
       
-      <CreateVersionModal
-        open={isVersionModalOpen}
-        onOpenChange={setVersionModalOpen}
-        projectId={project.id}
-        onSuccess={() => {
-           // Refetch logic or minimal toast
-           // Currently no generic refresh function passed to modal
-        }}
-      />
+
 
       <VersionHistoryModal
         open={isHistoryModalOpen}
