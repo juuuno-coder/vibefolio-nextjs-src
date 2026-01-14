@@ -170,26 +170,26 @@ ${persona.frustrations.map(f => `- ${f}`).join('\n')}
       </div>
 
       {/* Result Section */}
-      <div className="-mt-20 container mx-auto px-4 pb-20 relative z-20">
+      <div className="-mt-12 container mx-auto px-4 pb-20 relative z-20">
         
         {/* Tool Switcher Tabs */}
-        <div className="flex justify-center mb-8">
-            <div className="bg-white/10 backdrop-blur-md p-1 rounded-xl flex gap-1 border border-white/20">
+        <div className="flex justify-center mb-10">
+            <div className="bg-white/10 backdrop-blur-md p-1.5 rounded-2xl flex gap-1 border border-white/20 shadow-xl">
                 <button 
                     onClick={() => router.push('/tools/lean-canvas')}
-                    className="px-6 py-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-lg font-medium text-sm transition-all"
+                    className="px-6 py-3 text-white/70 hover:text-white hover:bg-white/10 rounded-xl font-medium text-sm transition-all flex items-center gap-2"
                 >
-                    📊 린 캔버스
+                    <span className="text-lg opacity-70">📊</span> 린 캔버스
                 </button>
-                <button className="px-6 py-2.5 bg-white text-black rounded-lg font-bold text-sm shadow-lg transition-all">
-                    👤 페르소나 정의
+                <button className="px-6 py-3 bg-white text-black rounded-xl font-bold text-sm shadow-lg transition-all flex items-center gap-2">
+                     <span className="text-lg">👤</span> 페르소나 정의
                 </button>
             </div>
         </div>
 
         <div className={`transition-all duration-1000 ${isGenerated ? 'opacity-100 translate-y-0' : 'opacity-100 translate-y-0'}`}>
              {/* Toolbar */}
-             <div className="flex justify-between items-center mb-6 pl-2 pr-2 max-w-4xl mx-auto">
+             <div className="flex justify-between items-center mb-6 pl-2 pr-2 max-w-5xl mx-auto">
                 <h2 className="text-xl font-bold flex items-center gap-2 text-white/90">
                     <span className="bg-white/10 p-1.5 rounded-md"><User className="w-4 h-4 text-blue-400" /></span>
                     타겟 페르소나 프로필
@@ -205,71 +205,73 @@ ${persona.frustrations.map(f => `- ${f}`).join('\n')}
             </div>
 
             {/* Persona ID Card Design */}
-            <div ref={cardRef} className="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[500px]">
+            <div ref={cardRef} className="max-w-5xl mx-auto bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[600px]">
                 
                  {/* Left: Profile Image & Basic Info */}
-                 <div className="md:w-1/3 bg-gray-50 border-r border-gray-100 p-8 flex flex-col items-center text-center relative">
-                     <div className="w-40 h-40 rounded-full border-4 border-white shadow-xl overflow-hidden mb-6 relative group">
-                         <img src={persona.image} alt={persona.name} className="w-full h-full object-cover" />
-                         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors"></div>
+                 <div className="md:w-[38%] bg-slate-50 border-r border-gray-100 p-12 flex flex-col items-center text-center relative justify-center">
+                     <div className="w-48 h-48 rounded-full border-8 border-white shadow-2xl overflow-hidden mb-8 relative group">
+                         <img src={persona.image} alt={persona.name} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" />
+                         <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors"></div>
                      </div>
                      
-                     <h2 className="text-3xl font-black text-gray-900 mb-1">{persona.name}</h2>
-                     <p className="text-lg text-gray-500 font-medium mb-4">{persona.age}, {persona.job}</p>
+                     <h2 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">{persona.name}</h2>
+                     <p className="text-xl text-gray-500 font-medium mb-8">{persona.age}, {persona.job}</p>
                      
-                     <div className="flex gap-2 mb-8">
-                         <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">{persona.mbti}</span>
-                         <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-bold">{persona.location}</span>
+                     <div className="flex flex-wrap justify-center gap-2 mb-10">
+                         <span className="px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-bold shadow-sm">{persona.mbti}</span>
+                         <span className="px-4 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-bold shadow-sm">{persona.location}</span>
                      </div>
 
                      {/* Brands */}
-                     <div className="mt-auto w-full">
-                         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Favorite Brands</p>
-                         <div className="flex flex-wrap justify-center gap-2">
+                     <div className="mt-auto w-full pt-8 border-t border-gray-200/60">
+                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Favorite Brands</p>
+                         <div className="flex flex-wrap justify-center gap-3">
                              {persona.brands.map(brand => (
-                                 <span key={brand} className="px-2 py-1 border border-gray-200 rounded text-[10px] font-bold text-gray-500">{brand}</span>
+                                 <span key={brand} className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 shadow-sm">{brand}</span>
                              ))}
                          </div>
                      </div>
                  </div>
 
                  {/* Right: Details */}
-                 <div className="md:w-2/3 p-10 flex flex-col">
+                 <div className="md:w-[62%] p-14 flex flex-col justify-center bg-white relative">
+                     {/* Decorative Quote Mark */}
+                     <Quote className="absolute top-12 left-10 w-20 h-20 text-blue-50 -z-0 rotate-180" />
+                     
                      {/* Quote */}
-                     <div className="mb-10 relative">
-                         <Quote className="absolute -top-4 -left-4 w-12 h-12 text-blue-100 -z-10" />
-                         <h3 className="text-2xl font-bold text-gray-800 italic leading-relaxed">"{persona.quote}"</h3>
+                     <div className="mb-12 relative z-10 pl-2">
+                         <h3 className="text-3xl font-bold text-gray-900 leading-normal tracking-tight">"{persona.quote}"</h3>
                      </div>
 
                      {/* Bio */}
-                     <div className="mb-8">
-                         <p className="text-gray-600 leading-relaxed text-lg">{persona.bio}</p>
+                     <div className="mb-10 pl-2">
+                         <p className="text-gray-600 leading-loose text-lg font-medium">{persona.bio}</p>
                      </div>
 
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-auto">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-auto">
                          {/* Goals */}
-                         <div className="bg-green-50 rounded-xl p-5 border border-green-100">
-                             <h4 className="flex items-center gap-2 font-bold text-green-800 mb-3 uppercase text-sm tracking-wide">
+                         <div className="bg-gradient-to-br from-green-50 to-emerald-50/30 rounded-2xl p-6 border border-green-100/50">
+                             <h4 className="flex items-center gap-2 font-extrabold text-green-700 mb-4 uppercase text-xs tracking-widest">
                                  <Target className="w-4 h-4" /> Goals & Needs
                              </h4>
-                             <ul className="space-y-2">
+                             <ul className="space-y-3">
                                  {persona.goals.map((goal, i) => (
-                                     <li key={i} className="flex items-start gap-2 text-sm text-green-900 font-medium">
-                                         <span className="text-green-500 mt-1">•</span> {goal}
+                                     <li key={i} className="flex items-start gap-2.5 text-sm text-green-900 font-semibold leading-relaxed">
+                                         <span className="text-green-500 mt-1.5 w-1.5 h-1.5 rounded-full bg-green-500 shrink-0"></span> {goal}
                                      </li>
                                  ))}
                              </ul>
                          </div>
 
                          {/* Frustrations */}
-                         <div className="bg-red-50 rounded-xl p-5 border border-red-100">
-                             <h4 className="flex items-center gap-2 font-bold text-red-800 mb-3 uppercase text-sm tracking-wide">
+                         <div className="bg-gradient-to-br from-red-50 to-pink-50/30 rounded-2xl p-6 border border-red-100/50">
+                             <h4 className="flex items-center gap-2 font-extrabold text-red-700 mb-4 uppercase text-xs tracking-widest">
                                  <AlertCircle className="w-4 h-4" /> Frustrations
                              </h4>
-                             <ul className="space-y-2">
+                             <ul className="space-y-3">
                                  {persona.frustrations.map((item, i) => (
-                                     <li key={i} className="flex items-start gap-2 text-sm text-red-900 font-medium">
-                                         <span className="text-red-500 mt-1">•</span> {item}
+                                     <li key={i} className="flex items-start gap-2.5 text-sm text-red-900 font-semibold leading-relaxed">
+                                         <span className="text-red-500 mt-1.5 w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span> {item}
                                      </li>
                                  ))}
                              </ul>
