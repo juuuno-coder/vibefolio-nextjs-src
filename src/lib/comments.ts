@@ -13,6 +13,7 @@ export interface Comment {
   createdAt: string; // Fix: Rename to createdAt
   username: string;
   userAvatar: string;
+  isSecret?: boolean;
 }
 
 /**
@@ -21,7 +22,7 @@ export interface Comment {
 export async function getProjectComments(projectId: string | number): Promise<Comment[]> {
   const { data, error } = await supabase
     .from("comment")
-    .select("id, project_id, user_id, content, created_at, username, user_avatar_url")
+    .select("id, project_id, user_id, content, created_at, username, user_avatar_url, is_secret")
     .eq("project_id", Number(projectId))
     .order("created_at", { ascending: false });
 
@@ -40,6 +41,7 @@ export async function getProjectComments(projectId: string | number): Promise<Co
     createdAt: c.created_at,
     username: c.username,
     userAvatar: c.user_avatar_url,
+    isSecret: c.is_secret,
   }));
 }
 
@@ -52,6 +54,7 @@ export async function addComment(
   content: string,
   username: string,
   avatarUrl: string,
+  isSecret: boolean = false
 ): Promise<Comment | null> {
   const { data, error } = await supabase
     .from("comment")
@@ -61,8 +64,9 @@ export async function addComment(
       content,
       username,
       user_avatar_url: avatarUrl,
+      is_secret: isSecret,
     } as unknown as CommentInsert)
-    .select("id, project_id, user_id, content, created_at, username, user_avatar_url")
+    .select("id, project_id, user_id, content, created_at, username, user_avatar_url, is_secret")
     .single();
 
   if (error) {
@@ -82,6 +86,7 @@ export async function addComment(
     createdAt: d.created_at,
     username: d.username,
     userAvatar: d.user_avatar_url,
+    isSecret: d.is_secret,
   };
 }
 

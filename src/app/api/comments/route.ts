@@ -116,14 +116,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { projectId, content, parentCommentId, mentionedUserId } = body;
+    const { projectId, content, parentCommentId, mentionedUserId, isSecret } = body;
 
     console.log('댓글 작성 요청:', { 
       userId: user.id, 
       projectId, 
       content, 
       parentCommentId, 
-      mentionedUserId 
+      mentionedUserId,
+      isSecret,
     });
 
     if (!projectId || !content) {
@@ -132,6 +133,13 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // 프로젝트 정보 조회 (작성자 확인용)
+    const { data: projectData } = await (supabaseAdmin as any)
+      .from('Project')
+      .select('user_id')
+      .eq('project_id', projectId)
+      .single();
 
     const { data, error } = await (supabaseAdmin as any)
       .from('Comment')
@@ -142,6 +150,7 @@ export async function POST(request: NextRequest) {
           content,
           parent_comment_id: parentCommentId || null,
           mentioned_user_id: mentionedUserId || null,
+          is_secret: isSecret || false,
         },
       ] as any)
       .select('*')
@@ -156,6 +165,23 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('댓글 작성 성공:', data);
+
+    // [포인트 지급] 내 프로젝트가 아닌 경우에만 +1 점
+    if (projectData && projectData.user_id !== user.id) {
+      try {
+        const { error: rpcError } = await (supabaseAdmin as any).rpc('increment_feedback_points', { 
+          row_id: user.id, 
+          amount: 1 
+        });
+        if (rpcError) {
+          console.warn("포인트 지급 실패 (함수 없음 등):", rpcError);
+        } else {
+          console.log(`[Feedback Rewards] User ${user.id} gained 1 point.`);
+        }
+      } catch (e) {
+        console.warn("포인트 지급 중 예외 발생:", e);
+      }
+    }
 
     // 작성한 사용자 정보 추가
     data.user = {

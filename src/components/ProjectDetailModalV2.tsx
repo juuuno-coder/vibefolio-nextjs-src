@@ -21,6 +21,8 @@ import {
   faFolder,
   faEye,
   faCheck,
+  faLock,
+  faUnlock,
 } from "@fortawesome/free-solid-svg-icons";
 import { faHeart as faHeartRegular, faComment as faCommentRegular, faBookmark as faBookmarkRegular } from "@fortawesome/free-regular-svg-icons";
 import { addCommas } from "@/lib/format/comma";
@@ -44,15 +46,19 @@ function CommentItem({
   onReply, 
   onDelete,
   currentUserId,
+  projectOwnerId,
   depth = 0 
 }: { 
   comment: any; 
   onReply: (id: string, username: string) => void; 
   onDelete: (commentId: string) => void;
   currentUserId: string | null;
+  projectOwnerId: string | undefined;
   depth: number 
 }) {
   const isOwner = currentUserId && comment.user_id === currentUserId;
+  const isSecret = comment.is_secret;
+  const canView = !isSecret || (currentUserId && (comment.user_id === currentUserId || projectOwnerId === currentUserId));
   
   return (
     <div className={`${depth > 0 ? 'ml-6 mt-2' : ''}`}>
@@ -64,9 +70,16 @@ function CommentItem({
         <div className="flex-1">
           <div className="flex items-center gap-1 mb-0.5">
             <span className="font-medium text-[10px]">{comment.user?.username || 'Unknown'}</span>
+            {isSecret && (
+               <span className="bg-amber-100 text-amber-600 text-[9px] px-1 rounded flex items-center gap-0.5">
+                 <FontAwesomeIcon icon={faLock} className="w-2 h-2" /> 비밀
+               </span>
+            )}
             <span className="text-[9px] text-gray-400">{dayjs(comment.created_at).fromNow()}</span>
           </div>
-          <p className="text-xs text-gray-700">{comment.content}</p>
+          <p className={`text-xs ${isSecret ? 'text-gray-500 italic' : 'text-gray-700'}`}>
+            {canView ? comment.content : "🔒 작성자와 프로젝트 관리자만 볼 수 있는 비밀 댓글입니다."}
+          </p>
           <div className="flex items-center gap-2 mt-1">
             <button
               onClick={() => onReply(comment.comment_id, comment.user?.username || 'Unknown')}
@@ -95,6 +108,7 @@ function CommentItem({
               onReply={onReply}
               onDelete={onDelete}
               currentUserId={currentUserId}
+              projectOwnerId={projectOwnerId}
               depth={depth + 1}
             />
           ))}
@@ -164,6 +178,7 @@ export function ProjectDetailModalV2({
   const [commentsPanelOpen, setCommentsPanelOpen] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [newCommentSecret, setNewCommentSecret] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{ id: string; username: string } | null>(null);
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -280,6 +295,7 @@ export function ProjectDetailModalV2({
           user_image: c.user?.profile_image_url || null,
           content: c.content,
           created_at: c.created_at,
+          is_secret: c.is_secret,
         }));
         setComments(mappedComments);
       }
@@ -579,6 +595,7 @@ export function ProjectDetailModalV2({
           projectId: parseInt(project.id),
           content: newComment,
           parentCommentId: replyingTo?.id || null,
+          isSecret: newCommentSecret,
         }),
       });
       
@@ -591,6 +608,7 @@ export function ProjectDetailModalV2({
           setComments(commentData.comments);
         }
         setNewComment('');
+        setNewCommentSecret(false);
         setReplyingTo(null);
 
         // [New] 댓글 알림 전송 (본인 프로젝트가 아닐 경우)
@@ -833,6 +851,7 @@ export function ProjectDetailModalV2({
                               }} 
                               onDelete={handleDeleteComment} 
                               currentUserId={currentUserId} 
+                              projectOwnerId={project.userId}
                               depth={0} 
                            />
                         ))
@@ -1118,7 +1137,7 @@ export function ProjectDetailModalV2({
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
                    {comments.length > 0 ? (
                        comments.map((comment) => (
-                          <CommentItem key={comment.id + 'panel'} comment={comment} onReply={(id, username) => setReplyingTo({ id, username })} onDelete={handleDeleteComment} currentUserId={currentUserId} depth={0} />
+                          <CommentItem key={comment.id + 'panel'} comment={comment} onReply={(id, username) => setReplyingTo({ id, username })} onDelete={handleDeleteComment} currentUserId={currentUserId} projectOwnerId={project.userId} depth={0} />
                        ))
                    ) : (
                        <div className="flex flex-col items-center justify-center h-40 text-gray-400 text-sm">
@@ -1157,6 +1176,15 @@ export function ProjectDetailModalV2({
                         >
                           <FontAwesomeIcon icon={faPaperPlane} className="w-3 h-3" />
                         </Button>
+                      </div>
+                      <div className="flex justify-end mt-1">
+                        <button
+                          onClick={() => setNewCommentSecret(!newCommentSecret)}
+                          className={`flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded transition-colors ${newCommentSecret ? 'text-amber-600 bg-amber-50' : 'text-gray-400 hover:text-gray-600'}`}
+                        >
+                          <FontAwesomeIcon icon={newCommentSecret ? faLock : faUnlock} className="w-3 h-3" />
+                          {newCommentSecret ? "비밀글" : "공개"}
+                        </button>
                       </div>
                    </div>
                  ) : (

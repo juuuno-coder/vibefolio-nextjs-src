@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { createNotification } from "@/hooks/useNotifications";
-import { Heart, Eye, Share2, Bookmark, ArrowLeft, ExternalLink, MessageCircle, MessageSquare, Plus } from "lucide-react";
+import { Heart, Eye, Share2, Bookmark, ArrowLeft, ExternalLink, MessageCircle, MessageSquare, Plus, Lock, Unlock, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
 import { addCommas } from "@/lib/format/comma";
@@ -30,6 +30,9 @@ import {
 import { recordView, getProjectViewCount } from "@/lib/views"; // Import view functions
 import dayjs from "dayjs";
 import { supabase } from "@/lib/supabase/client";
+import { ProjectTimeline } from "@/components/ProjectTimeline";
+import { CreateVersionModal } from "@/components/CreateVersionModal";
+import { getProjectVersions, ProjectVersion } from "@/lib/versions";
 
 interface Project {
   id: string;
@@ -71,7 +74,10 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
   const [likeCount, setLikeCount] = useState(0);
   const [viewCount, setViewCount] = useState(0); // Add viewCount state
   const [comments, setComments] = useState<Comment[]>([]);
+  const [versions, setVersions] = useState<ProjectVersion[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [newCommentSecret, setNewCommentSecret] = useState(false);
+  const [isVersionModalOpen, setVersionModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const projectId = params.id;
@@ -156,15 +162,17 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
         await recordView(projectId);
       }
 
-      // Fetch likes, bookmarks, views, and comments
-      const [likeCount, viewCount, comments] = await Promise.all([
+      // Fetch likes, bookmarks, views, comments, and versions
+      const [likeCount, viewCount, comments, versionsData] = await Promise.all([
         getProjectLikeCount(Number(projectId)),
         getProjectViewCount(Number(projectId)),
         getProjectComments(Number(projectId)),
+        getProjectVersions(Number(projectId)),
       ]);
       setLikeCount(likeCount);
       setViewCount(viewCount);
       setComments(comments);
+      setVersions(versionsData);
 
       // Check like and bookmark status
       if (user) {
@@ -238,7 +246,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
       const username = user.user_metadata.full_name || "Anonymous";
       const avatarUrl = user.user_metadata.avatar_url || "/default-avatar.png";
 
-      await addComment(projectId, user.id, newComment, username, avatarUrl);
+      await addComment(projectId, user.id, newComment, username, avatarUrl, newCommentSecret);
       
       // 알림 생성 (자신의 게시물이 아닐 때만)
       if (project && project.user_id !== user.id) {
@@ -253,6 +261,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
       }
 
       setNewComment("");
+      setNewCommentSecret(false);
       // Refetch comments to display the new one
       const updatedComments = await getProjectComments(projectId);
       setComments(updatedComments);
@@ -382,6 +391,11 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                 dangerouslySetInnerHTML={{ __html: project.description || project.alt_description || "설명이 없습니다." }}
               />
 
+              {/* Version Timeline */}
+              <div className="mb-16 max-w-2xl">
+                 <ProjectTimeline versions={versions} />
+              </div>
+
               {/* 태그 리스트 & 라이선스 */}
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between pt-8 border-t border-gray-100 gap-6">
                  <div className="flex flex-wrap gap-2">
@@ -487,12 +501,23 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
             </p>
             
             <div className="flex items-center justify-center gap-3">
-                <Button variant="outline" className="h-11 px-8 rounded-full border-gray-300 hover:bg-gray-50 gap-2 text-base">
-                  <Plus size={18} /> 팔로우
-                </Button>
-                <Button className="h-11 px-8 rounded-full bg-[#00d084] hover:bg-[#00b874] text-white border-0 gap-2 font-bold text-base shadow-md">
-                  <MessageSquare size={18} /> 제안하기
-                </Button>
+                {user && user.id === project.user_id ? (
+                  <Button 
+                    onClick={() => setVersionModalOpen(true)}
+                    className="h-11 px-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white border-0 gap-2 font-bold text-base shadow-md"
+                  >
+                    <Rocket size={18} /> 새 버전 배포
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="outline" className="h-11 px-8 rounded-full border-gray-300 hover:bg-gray-50 gap-2 text-base">
+                      <Plus size={18} /> 팔로우
+                    </Button>
+                    <Button className="h-11 px-8 rounded-full bg-[#00d084] hover:bg-[#00b874] text-white border-0 gap-2 font-bold text-base shadow-md">
+                      <MessageSquare size={18} /> 제안하기
+                    </Button>
+                  </>
+                )}
             </div>
         </div>
 
@@ -505,13 +530,23 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
             {/* Input */}
             <div className="flex gap-4 mb-10">
                 <div className="flex-1">
-                  <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="작품에 대한 감상평을 남겨주세요..."
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all resize-none text-gray-800 placeholder:text-gray-400"
-                    rows={2}
-                  />
+                  <div className="relative">
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder={newCommentSecret ? "작성자와 관리자만 볼 수 있는 비밀 댓글입니다." : "작품에 대한 감상평을 남겨주세요..."}
+                      className={`w-full px-4 py-3 bg-gray-50 border ${newCommentSecret ? 'border-amber-200 bg-amber-50/50' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all resize-none text-gray-800 placeholder:text-gray-400 pr-24`}
+                      rows={2}
+                    />
+                    <button
+                      onClick={() => setNewCommentSecret(!newCommentSecret)}
+                      className={`absolute bottom-3 right-3 px-2 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-bold ${newCommentSecret ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
+                      title="비밀 댓글 설정"
+                    >
+                      {newCommentSecret ? <Lock size={12} /> : <Unlock size={12} />}
+                      {newCommentSecret ? "비밀글" : "공개"}
+                    </button>
+                  </div>
                   <div className="flex justify-end mt-2">
                      <Button 
                         onClick={handleAddComment} 
@@ -534,12 +569,21 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                       <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                               <span className="font-bold text-sm text-gray-900">{comment.username}</span>
+                              {comment.isSecret && (
+                                <span className="bg-amber-100 text-amber-600 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1 font-medium">
+                                  <Lock size={10} /> 비밀
+                                </span>
+                              )}
                               <span className="text-xs text-gray-400">{dayjs(comment.createdAt).format("YYYY.MM.DD")}</span>
                               {user && user.id === comment.user_id && (
                                  <button onClick={() => handleDeleteComment(comment.id)} className="ml-auto text-xs text-gray-300 hover:text-red-500 transition-colors">삭제</button>
                               )}
                           </div>
-                          <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                          <p className={`text-sm leading-relaxed whitespace-pre-wrap ${comment.isSecret ? 'text-gray-500 italic' : 'text-gray-700'}`}>
+                            {(!comment.isSecret || (user && (user.id === comment.user_id || user.id === project.user_id))) 
+                              ? comment.content 
+                              : "🔒 작성자와 프로젝트 관리자만 볼 수 있는 비밀 댓글입니다."}
+                          </p>
                       </div>
                   </div>
                 ))
@@ -569,6 +613,15 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
         )}
 
       </div>
+      <CreateVersionModal
+        open={isVersionModalOpen}
+        onOpenChange={setVersionModalOpen}
+        projectId={params.id}
+        onSuccess={() => {
+          // 버전 목록 새로고침
+          getProjectVersions(Number(params.id)).then(setVersions);
+        }}
+      />
     </div>
   );
 }
