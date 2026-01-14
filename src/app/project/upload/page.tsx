@@ -81,6 +81,7 @@ export default function TiptapUploadPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [originalProjectTitle, setOriginalProjectTitle] = useState(""); // For version mode context
 
   // Editor Instance State
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -109,41 +110,55 @@ export default function TiptapUploadPage() {
       }
       setUserId(user.id);
 
-      // 수정 모드일 경우 데이터 로드
-      if (editId) {
+      // 수정 모드 또는 버전 모드일 경우 데이터 로드 (권한 체크 및 컨텍스트용)
+      if (editId || isVersionMode) {
+        // ID to fetch: editId if editing, projectIdParam if versioning
+        const targetId = editId || projectIdParam;
+        
         try {
-          const res = await fetch(`/api/projects/${editId}`);
+          const res = await fetch(`/api/projects/${targetId}`);
           if (!res.ok) throw new Error("프로젝트를 불러올 수 없습니다.");
           const { project } = await res.json();
           
           if (project) {
-            // 본인 프로젝트인지 확인 (API에서 안 막으면 여기서라도)
+            // 본인 프로젝트인지 확인
             if (project.user_id !== user.id) {
-               toast.error("수정 권한이 없습니다.");
+               toast.error("권한이 없습니다.");
                router.push("/");
                return;
             }
 
-            setTitle(project.title || "");
-            setSummary(project.description || ""); // DB 컬럼 확인 필요하지만 일단 description 매핑
-            setContent(project.content_text || "");
-            setCoverPreview(project.thumbnail_url || project.image_url);
-            
-            if (project.custom_data) {
-              try {
-                const custom = typeof project.custom_data === 'string' ? JSON.parse(project.custom_data) : project.custom_data;
-                if (custom.genres) setSelectedGenres(custom.genres);
-                if (custom.fields) setSelectedFields(custom.fields);
-              } catch (e) {
-                console.error("Custom data parse error", e);
-              }
+            if (isVersionMode) {
+                // 버전 모드: 원본 제목만 저장하고 에디터는 비움
+                setOriginalProjectTitle(project.title);
+                setTitle(""); 
+                setSummary("");
+                setContent(""); // Start fresh
+                // 커버 이미지도 비움 (새 버전용)
+                setCoverPreview(null);
+            } else {
+                // 수정 모드: 기존 내용 로드
+                setTitle(project.title || "");
+                setSummary(project.description || "");
+                setContent(project.content_text || "");
+                setCoverPreview(project.thumbnail_url || project.image_url);
+                
+                if (project.custom_data) {
+                  try {
+                    const custom = typeof project.custom_data === 'string' ? JSON.parse(project.custom_data) : project.custom_data;
+                    if (custom.genres) setSelectedGenres(custom.genres);
+                    if (custom.fields) setSelectedFields(custom.fields);
+                  } catch (e) {
+                    console.error("Custom data parse error", e);
+                  }
+                }
             }
           }
         } catch (error) {
           console.error("Load project error:", error);
           toast.error("프로젝트 정보를 불러오는데 실패했습니다.");
         }
-        return; // 수정 모드면 임시저장 불러오기 패스
+        return; // 수정/버전 모드면 임시저장 복구 패스
       }
 
       // 로컬스토리지에서 임시 저장된 데이터 복구 (신규 작성 시에만)
@@ -849,7 +864,16 @@ export default function TiptapUploadPage() {
               <FontAwesomeIcon icon={faArrowLeft} className="w-5 h-5" />
             </button>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">{title || "새 프로젝트"}</h2>
+              <h2 className="text-lg font-bold text-gray-900">
+                  {isVersionMode ? (
+                      <span className="flex items-center gap-2">
+                        <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs whitespace-nowrap">New Version</span>
+                        <span className="truncate max-w-[200px] text-gray-700">{originalProjectTitle}</span>
+                        <span className="text-gray-300">/</span>
+                        <span className="text-black">{title || "버전 이름 입력 대기..."}</span>
+                      </span>
+                  ) : (title || "새 프로젝트")}
+              </h2>
               <p className="text-xs text-gray-500 truncate max-w-[300px]">{summary}</p>
               <p className="text-xs text-gray-500 flex items-center gap-1">
                  {lastSaved ? (

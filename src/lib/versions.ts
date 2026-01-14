@@ -6,6 +6,9 @@ export interface ProjectVersion {
   project_id: number;
   version_name: string;
   changelog: string | null;
+  content_html?: string | null;
+  content_text?: string | null;
+  images?: string[] | null;
   created_at: string;
 }
 

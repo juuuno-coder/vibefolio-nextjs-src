@@ -59,5 +59,21 @@ export async function POST(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // [New] Update Project content to reflect latest version
+  // This ensures the main view shows the new content
+  const updatePayload: any = {
+      content_text: content_text, // Update main content
+      updated_at: new Date().toISOString()
+  };
+
+  const { error: projectUpdateError } = await supabaseAdmin
+      .from("Project")
+      .update(updatePayload)
+      .eq("project_id", Number(projectId));
+
+  if (projectUpdateError) {
+      console.warn("Failed to update project main content:", projectUpdateError);
+  }
+
   return NextResponse.json({ success: true, version: data });
 }

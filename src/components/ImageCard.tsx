@@ -3,12 +3,13 @@
 import React, { forwardRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { Heart, BarChart3, Image as ImageIcon, Edit, Rocket, Trash2 } from 'lucide-react';
+import { Heart, BarChart3, Image as ImageIcon, Edit, Rocket, Trash2, Eye } from 'lucide-react';
 import { addCommas } from "@/lib/format/comma";
 import { useLikes } from "@/hooks/useLikes";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
+import dayjs from "dayjs";
 
 // 기본 폴백 이미지
 const FALLBACK_IMAGE = "/placeholder.svg";
@@ -31,6 +32,7 @@ interface ImageCardProps {
     alt_description?: string | null;
     title?: string;
     created_at?: string;
+    updated_at?: string;
     width?: number;
     height?: number;
     category?: string;
@@ -68,6 +70,21 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
     const categoryName = props.category;
     const fieldLabel = props.field ? getCategoryName(props.field) : null;
 
+    // Update Badge Logic
+    const isRecentlyUpdated = React.useMemo(() => {
+        if (!props.updated_at || !props.created_at) return false;
+        const created = dayjs(props.created_at);
+        const updated = dayjs(props.updated_at);
+        const now = dayjs();
+        
+        // 1. created와 updated가 1시간 이상 차이 (단순 생성 시점 갱신 제외)
+        const isModified = updated.diff(created, 'hour') >= 1;
+        // 2. 최근 7일 이내 업데이트
+        const isRecent = now.diff(updated, 'day') <= 7;
+        
+        return isModified && isRecent;
+    }, [props.created_at, props.updated_at]);
+
     // 화면상의 좋아요 수 계산 (Optimistic UI 보정)
     const displayLikes = likes + (isLiked ? 1 : 0) - (props.likes && isLiked ? 0 : 0);
 
@@ -93,6 +110,16 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
            {/* Owner Actions Overlay */}
            {isOwner && (
              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex flex-col items-center justify-center gap-3 backdrop-blur-[2px]">
+                <button 
+                  onClick={(e) => { 
+                      // 보기 버튼은 전파를 막지 않거나 명시적으로 onClick 호출
+                      if (onClick) onClick();
+                      // e.stopPropagation(); // Do not stop if parent onClick handles modal
+                  }}
+                  className="bg-gray-100 text-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-white transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
+                >
+                  <Eye className="w-4 h-4" /> 보기
+                </button>
                 <button 
                   onClick={(e) => { e.stopPropagation(); router.push(`/project/edit/${props.id}`); }}
                   className="bg-white text-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-green-500 hover:text-white transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
@@ -122,12 +149,19 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
                 </button>
              </div>
            )}
-          {/* 인기 프로젝트 뱃지 */}
-          {likes >= 100 && (
-            <div className="absolute top-3 left-3 z-10 bg-yellow-400 text-yellow-950 text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
-               <span>🏆</span> <span>POPULAR</span>
-            </div>
-          )}
+          {/* Badges Container */}
+          <div className="absolute top-3 left-3 z-10 flex flex-col gap-2 items-start pointer-events-none">
+              {likes >= 100 && (
+                <div className="bg-yellow-400 text-yellow-950 text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
+                   <span>🏆</span> <span>POPULAR</span>
+                </div>
+              )}
+              {isRecentlyUpdated && (
+                <div className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
+                   <span>🚀</span> <span>UPDATE</span>
+                </div>
+              )}
+          </div>
 
           {/* 카테고리 & 분야 뱃지 (우측 상단) */}
           <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-1.5 pointer-events-none">
