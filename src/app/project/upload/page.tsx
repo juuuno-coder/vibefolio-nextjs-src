@@ -84,6 +84,8 @@ export default function TiptapUploadPage() {
   const [allowMichelinRating, setAllowMichelinRating] = useState(true);
   const [allowStickers, setAllowStickers] = useState(true);
   const [allowSecretComments, setAllowSecretComments] = useState(true);
+  const [isAiGeneratingTitle, setIsAiGeneratingTitle] = useState(false);
+  const [isAiGeneratingSummary, setIsAiGeneratingSummary] = useState(false);
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -507,6 +509,34 @@ export default function TiptapUploadPage() {
     }
   };
 
+  // AI Generation Mockups
+  const generateTitleWithAi = () => {
+    setIsAiGeneratingTitle(true);
+    // Simulate AI thinking
+    setTimeout(() => {
+      const examples = isVersionMode 
+        ? ["v1.2: 다크모드 지원 및 UI 최적화", "v2.0: 대규모 엔진 업데이트", "v1.1: 버그 픽스 및 성능 개선"]
+        : ["디지털 네이티브를 위한 미래 지향적 플랫폼", "미니멀리즘으로 재해석한 현대 건축", "비주얼 스토리텔링의 새로운 지평"];
+      const random = examples[Math.floor(Math.random() * examples.length)];
+      setTitle(random);
+      setIsAiGeneratingTitle(false);
+      toast.success("AI가 창의적인 제목을 제안했습니다! ✨");
+    }, 1500);
+  };
+
+  const generateSummaryWithAi = () => {
+    setIsAiGeneratingSummary(true);
+    setTimeout(() => {
+      const examples = isVersionMode
+        ? ["사용자 피드백을 반영하여 전체적인 사용성을 개선했습니다.", "핵심 렌더링 엔진을 고도화하여 속도를 2배 높였습니다.", "새로운 디자인 시스템을 적용하여 일관성을 확보했습니다."]
+        : ["이 프로젝트는 현대 사회의 고립을 예술적으로 풀어낸 실험적 시도입니다.", "기술과 예술의 경계를 허무는 인터랙티브 비주얼을 선보입니다.", "지속 가능한 미래를 위한 디자인 철학을 담은 포트폴리오입니다."];
+      const random = examples[Math.floor(Math.random() * examples.length)];
+      setSummary(random);
+      setIsAiGeneratingSummary(false);
+      toast.success("AI가 내용을 풍성하게 요약했습니다! ✍️");
+    }, 1500);
+  };
+
   // --- Sidebar Handlers ---
   const handleAddText = () => {
     editor?.chain().focus().insertContent('<p>새로운 텍스트를 입력하세요...</p>').run();
@@ -785,33 +815,71 @@ export default function TiptapUploadPage() {
             <div className="w-full h-px bg-gray-100"></div>
 
             {/* 제목 */}
-            <div className="space-y-3">
-              <label className="text-xl font-bold text-gray-900">
-                {isVersionMode ? "버전 이름 (예: v1.1)" : "프로젝트 제목"}
-                <span className="text-red-500 ml-1">*</span>
-              </label>
-              <Input
-                type="text"
-                placeholder={isVersionMode ? "v1.1 대규모 업데이트" : "멋진 프로젝트의 이름을 지어주세요"}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="text-2xl h-16 px-6 font-bold border-2 border-gray-200 focus:border-green-500 rounded-xl transition-all placeholder:font-normal placeholder:text-gray-300"
-              />
+            <div className="space-y-3 relative group">
+              <div className="flex items-center justify-between">
+                <label className="text-xl font-bold text-gray-900">
+                  {isVersionMode ? "버전 이름 (예: v1.1)" : "프로젝트 제목"}
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <button 
+                  onClick={generateTitleWithAi}
+                  disabled={isAiGeneratingTitle}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-600 rounded-full text-[10px] font-black tracking-widest uppercase border border-purple-100 transition-all shadow-sm hover:shadow-md disabled:opacity-50"
+                >
+                  <FontAwesomeIcon icon={faWandMagicSparkles} className={`w-3 h-3 ${isAiGeneratingTitle ? 'animate-spin' : ''}`} />
+                  {isAiGeneratingTitle ? 'Generating...' : 'AI Generate'}
+                </button>
+              </div>
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder={isVersionMode ? "v1.1 대규모 업데이트" : "멋진 프로젝트의 이름을 지어주세요"}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className={`text-2xl h-16 px-6 font-bold border-2 border-gray-200 focus:border-green-500 rounded-xl transition-all placeholder:font-normal placeholder:text-gray-300 ${isAiGeneratingTitle ? 'animate-pulse bg-purple-50/20 ring-2 ring-purple-100' : ''}`}
+                />
+                {isAiGeneratingTitle && (
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-bounce delay-0" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-bounce delay-150" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-bounce delay-300" />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* 한줄 소개 */}
-            <div className="space-y-3">
-              <label className="text-xl font-bold text-gray-900">
-                {isVersionMode ? "변경 사항 요약 (Changelog)" : "한줄 소개"}
-                <span className="text-sm font-normal text-gray-400 ml-2">(선택)</span>
-              </label>
-              <Input
-                type="text"
-                placeholder="작품을 한 문장으로 소개해 주세요. (상세 페이지 댓글 상단에 표시됩니다)"
-                value={summary}
-                onChange={(e) => setSummary(e.target.value)}
-                className="text-lg h-14 px-6 font-medium border-2 border-gray-200 focus:border-green-500 rounded-xl transition-all placeholder:text-gray-300"
-              />
+            <div className="space-y-3 relative group">
+              <div className="flex items-center justify-between">
+                <label className="text-xl font-bold text-gray-900">
+                  {isVersionMode ? "변경 사항 요약 (Changelog)" : "한줄 소개"}
+                  <span className="text-sm font-normal text-gray-400 ml-2">(선택)</span>
+                </label>
+                <button 
+                  onClick={generateSummaryWithAi}
+                  disabled={isAiGeneratingSummary}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-full text-[10px] font-black tracking-widest uppercase border border-indigo-100 transition-all shadow-sm hover:shadow-md disabled:opacity-50"
+                >
+                  <FontAwesomeIcon icon={faWandMagicSparkles} className={`w-3 h-3 ${isAiGeneratingSummary ? 'animate-spin' : ''}`} />
+                  {isAiGeneratingSummary ? 'Summarizing...' : 'AI Summary'}
+                </button>
+              </div>
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="작품을 한 문장으로 소개해 주세요. (상세 페이지 댓글 상단에 표시됩니다)"
+                  value={summary}
+                  onChange={(e) => setSummary(e.target.value)}
+                  className={`text-lg h-14 px-6 font-medium border-2 border-gray-200 focus:border-green-500 rounded-xl transition-all placeholder:text-gray-300 ${isAiGeneratingSummary ? 'animate-pulse bg-indigo-50/20 ring-2 ring-indigo-100' : ''}`}
+                />
+                {isAiGeneratingSummary && (
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce delay-0" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce delay-150" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-bounce delay-300" />
+                  </div>
+                )}
+              </div>
             </div>
 
             {!isVersionMode && (
