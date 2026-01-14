@@ -65,6 +65,9 @@ export default function TiptapUploadPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get('edit');
+  const mode = searchParams.get('mode');
+  const projectIdParam = searchParams.get('projectId');
+  const isVersionMode = mode === 'version' && !!projectIdParam;
 
   // Step 1: Content (Editor), Step 2: Info (Settings)
   const [step, setStep] = useState<'content' | 'info'>('content');
@@ -274,6 +277,55 @@ export default function TiptapUploadPage() {
     const finalGenres = settings?.selectedGenres || selectedGenres;
     const finalFields = settings?.selectedFields || selectedFields;
     const finalTags = settings?.tagList || [];
+
+    if (isVersionMode) {
+        if (!finalTitle.trim()) { toast.error('버전 이름을 입력해주세요.'); return; }
+        
+        setIsSubmitting(true);
+        try {
+            // Extract images from content
+            // Note: Since we are in browser, DOMParser is available.
+            // But content is HTML string.
+            // Extract images
+            const imgRegex = /<img[^>]+src="([^">]+)"/g;
+            const images = [];
+            let match;
+            while ((match = imgRegex.exec(content)) !== null) {
+              images.push(match[1]);
+            }
+            
+            // Clean text (strip tags)
+            const tmp = document.createElement("DIV");
+            tmp.innerHTML = content;
+            const plainText = tmp.textContent || "";
+            
+            const res = await fetch(`/api/projects/${projectIdParam}/versions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    version_name: finalTitle,
+                    content_html: content,
+                    content_text: plainText, 
+                    images: images,
+                    changelog: finalSummary
+                })
+            });
+            
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || '버전 배포 실패');
+            }
+            
+            toast.success('새 버전이 성공적으로 배포되었습니다! 🚀');
+            router.push(`/project/${projectIdParam}`);
+        } catch(e: any) {
+            console.error(e);
+            toast.error(e.message || '버전 배포 중 오류가 발생했습니다.');
+        } finally {
+            setIsSubmitting(false);
+        }
+        return;
+    }
 
     if (!finalTitle.trim()) {
       toast.error('프로젝트 제목을 입력해주세요.');
@@ -566,9 +618,11 @@ export default function TiptapUploadPage() {
             </button>
             <div className="text-right">
                <h1 className="text-3xl font-black text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600">
-                발행 설정
+                {isVersionMode ? "새 버전 배포 설정" : "발행 설정"}
                </h1>
-               <p className="text-sm text-gray-500 mt-1">프로젝트의 마지막 디테일을 채워주세요</p>
+               <p className="text-sm text-gray-500 mt-1">
+                 {isVersionMode ? "업데이트 내용을 요약해주세요" : "프로젝트의 마지막 디테일을 채워주세요"}
+               </p>
             </div>
           </div>
 
@@ -651,12 +705,12 @@ export default function TiptapUploadPage() {
             {/* 제목 */}
             <div className="space-y-3">
               <label className="text-xl font-bold text-gray-900">
-                프로젝트 제목
+                {isVersionMode ? "버전 이름 (예: v1.1)" : "프로젝트 제목"}
                 <span className="text-red-500 ml-1">*</span>
               </label>
               <Input
                 type="text"
-                placeholder="멋진 프로젝트의 이름을 지어주세요"
+                placeholder={isVersionMode ? "v1.1 대규모 업데이트" : "멋진 프로젝트의 이름을 지어주세요"}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="text-2xl h-16 px-6 font-bold border-2 border-gray-200 focus:border-green-500 rounded-xl transition-all placeholder:font-normal placeholder:text-gray-300"
@@ -666,7 +720,7 @@ export default function TiptapUploadPage() {
             {/* 한줄 소개 */}
             <div className="space-y-3">
               <label className="text-xl font-bold text-gray-900">
-                한줄 소개
+                {isVersionMode ? "변경 사항 요약 (Changelog)" : "한줄 소개"}
                 <span className="text-sm font-normal text-gray-400 ml-2">(선택)</span>
               </label>
               <Input
@@ -678,6 +732,8 @@ export default function TiptapUploadPage() {
               />
             </div>
 
+            {!isVersionMode && (
+              <>
             {/* 장르 */}
             <div className="space-y-4">
               <label className="text-xl font-bold text-gray-900">
@@ -735,6 +791,8 @@ export default function TiptapUploadPage() {
                 })}
               </div>
             </div>
+              </>
+            )}
 
             <div className="w-full h-px bg-gray-100 my-8"></div>
 
@@ -759,7 +817,7 @@ export default function TiptapUploadPage() {
                 ) : (
                   <span className="flex items-center gap-2">
                     <FontAwesomeIcon icon={faUpload} className="w-5 h-5" />
-                    프로젝트 발행하기
+                    {isVersionMode ? "버전 배포하기" : "프로젝트 발행하기"}
                   </span>
                 )}
               </Button>

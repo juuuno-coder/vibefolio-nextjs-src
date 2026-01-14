@@ -26,6 +26,7 @@ import {
   faRocket,
 } from "@fortawesome/free-solid-svg-icons";
 import { CreateVersionModal } from "./CreateVersionModal";
+import { VersionHistoryModal } from "./VersionHistoryModal";
 import { getProjectVersions, ProjectVersion } from "@/lib/versions";
 import { faHeart as faHeartRegular, faComment as faCommentRegular, faBookmark as faBookmarkRegular } from "@fortawesome/free-regular-svg-icons";
 import { addCommas } from "@/lib/format/comma";
@@ -38,6 +39,7 @@ import { CollectionModal } from "./CollectionModal";
 import { LoginRequiredModal } from "./LoginRequiredModal";
 import { supabase } from "@/lib/supabase/client";
 import { createNotification } from "@/hooks/useNotifications";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 
 dayjs.extend(relativeTime);
@@ -183,6 +185,7 @@ export function ProjectDetailModalV2({
   const [newComment, setNewComment] = useState("");
   const [newCommentSecret, setNewCommentSecret] = useState(false);
   const [isVersionModalOpen, setVersionModalOpen] = useState(false);
+  const [isHistoryModalOpen, setHistoryModalOpen] = useState(false);
   const [versions, setVersions] = useState<ProjectVersion[]>([]);
   const [replyingTo, setReplyingTo] = useState<{ id: string; username: string } | null>(null);
 
@@ -192,6 +195,7 @@ export function ProjectDetailModalV2({
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [authorBio, setAuthorBio] = useState("");
+  const { refreshUserProfile } = useAuth();
 
   const [loading, setLoading] = useState({
     like: false,
@@ -643,6 +647,9 @@ export function ProjectDetailModalV2({
                  });
              } catch(e) { console.error("알림 전송 실패", e); }
         }
+        
+        // 포인트 갱신을 위해 프로필 리프레시
+        await refreshUserProfile();
       } else {
         alert(data.error || '댓글 작성에 실패했습니다.');
       }
@@ -1106,27 +1113,39 @@ export function ProjectDetailModalV2({
                 </div>
               )}
 
-              <div className="relative group flex items-center">
+              {/* Version History (Rocket) - Visible to everyone */}
+              <div className="relative group flex items-center mt-2">
                  <button 
-                  onClick={() => { 
-                    if (!isLoggedIn) { setLoginModalOpen(true); return; } 
-                    if (String(currentUserId) === String(project.userId)) { setVersionModalOpen(true); return; } 
-                    if (currentUserId === project.userId) { alert('본인 프로젝트에는 제안할 수 없습니다.'); return; }
-                    setProposalModalOpen(true); 
-                  }} 
-                  className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 ${String(currentUserId) === String(project.userId) ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white text-gray-700 hover:bg-green-600 hover:text-white'}`}
+                  onClick={() => setHistoryModalOpen(true)} 
+                  className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 bg-white text-gray-700 hover:bg-blue-600 hover:text-white`}
                 >
-                  <FontAwesomeIcon icon={String(currentUserId) === String(project.userId) ? faRocket : faPaperPlane} className="w-5 h-5" />
+                  <FontAwesomeIcon icon={faRocket} className="w-5 h-5" />
                 </button>
-                
-                {/* Custom Tooltip (Left side) */}
+                {/* Tooltip */}
                 <div className="absolute right-full mr-3 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-md">
-                   {String(currentUserId) === String(project.userId) 
-                      ? (versions.length > 0 ? `현재 버전: ${versions[0].version_name}` : "새 버전 배포") 
-                      : "제안하기"}
+                   {versions.length > 0 ? `현재 버전: ${versions[0].version_name}` : "프로젝트 히스토리"}
                    <div className="absolute top-1/2 -translate-y-1/2 -right-1 border-4 border-transparent border-l-gray-900"></div>
                 </div>
               </div>
+
+              {/* Proposal (PaperPlane) - Visible to non-owners */}
+              {String(currentUserId) !== String(project.userId) && (
+                <div className="relative group flex items-center mt-2">
+                   <button 
+                    onClick={() => { 
+                      if (!isLoggedIn) { setLoginModalOpen(true); return; } 
+                      setProposalModalOpen(true); 
+                    }} 
+                    className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 bg-white text-gray-700 hover:bg-green-600 hover:text-white`}
+                  >
+                    <FontAwesomeIcon icon={faPaperPlane} className="w-5 h-5" />
+                  </button>
+                  <div className="absolute right-full mr-3 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-md">
+                     제안하기
+                     <div className="absolute top-1/2 -translate-y-1/2 -right-1 border-4 border-transparent border-l-gray-900"></div>
+                  </div>
+                </div>
+              )}
 
               <button onClick={handleLike} disabled={!isLoggedIn} className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex flex-col items-center justify-center transition-all hover:scale-105 ${liked ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 hover:bg-red-50 hover:text-red-500'}`}>
                 {loading.like ? <FontAwesomeIcon icon={faSpinner} className="w-5 h-5 animate-spin" /> : <FontAwesomeIcon icon={liked ? faHeart : faHeartRegular} className="w-5 h-5" />}
@@ -1303,6 +1322,18 @@ export function ProjectDetailModalV2({
         onSuccess={() => {
            // Refetch logic or minimal toast
            // Currently no generic refresh function passed to modal
+        }}
+      />
+
+      <VersionHistoryModal
+        open={isHistoryModalOpen}
+        onOpenChange={setHistoryModalOpen}
+        versions={versions}
+        projectId={project.id}
+        isOwner={String(currentUserId) === String(project.userId)}
+        onSelectVersion={(v) => {
+           // TODO: Scroll to version content
+           setHistoryModalOpen(false);
         }}
       />
     </>

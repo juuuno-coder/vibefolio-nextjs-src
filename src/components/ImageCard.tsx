@@ -1,8 +1,9 @@
 "use client";
 
 import React, { forwardRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { Heart, BarChart3, Image as ImageIcon } from 'lucide-react';
+import { Heart, BarChart3, Image as ImageIcon, Edit, Rocket, Trash2 } from 'lucide-react';
 import { addCommas } from "@/lib/format/comma";
 import { useLikes } from "@/hooks/useLikes";
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ interface ImageCardProps {
     category?: string;
     categorySlug?: string;
     field?: string;
+    userId?: string;
   } | null;
   className?: string;
   onClick?: () => void;
@@ -46,6 +48,10 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
     const [imgError, setImgError] = useState(false);
     const [avatarError, setAvatarError] = useState(false);
     const { user } = useAuth();
+    const router = useRouter();
+    
+    // 소유자 여부 확인
+    const isOwner = user?.id && props?.userId && user.id === props.userId;
 
     // ✅ Hook 호출: 조건부 리턴(if (!props)) 이전에 호출하여 Rule violation 방지
     const { isLiked, toggleLike } = useLikes(props?.id, props?.likes);
@@ -84,6 +90,38 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
       >
         {/* 이미지 영역 - 4:3 비율 고정 */}
         <div className="relative overflow-hidden rounded-xl aspect-[4/3] bg-gray-100 shadow-sm">
+           {/* Owner Actions Overlay */}
+           {isOwner && (
+             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex flex-col items-center justify-center gap-3 backdrop-blur-[2px]">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); router.push(`/project/edit/${props.id}`); }}
+                  className="bg-white text-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-green-500 hover:text-white transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
+                >
+                  <Edit className="w-4 h-4" /> 수정
+                </button>
+                <button 
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    router.push(`/project/upload?mode=version&projectId=${props.id}`); 
+                  }}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
+                >
+                  <Rocket className="w-4 h-4" /> 새 버전
+                </button>
+                <button 
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    if(confirm("정말 삭제하시겠습니까?")) {
+                       // Delete logic placeholder
+                       toast.error("삭제 기능은 상위 컴포넌트에서 처리해야 합니다.");
+                    }
+                  }}
+                  className="bg-gray-700/80 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-red-600 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
+                >
+                  <Trash2 className="w-4 h-4" /> 삭제
+                </button>
+             </div>
+           )}
           {/* 인기 프로젝트 뱃지 */}
           {likes >= 100 && (
             <div className="absolute top-3 left-3 z-10 bg-yellow-400 text-yellow-950 text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">

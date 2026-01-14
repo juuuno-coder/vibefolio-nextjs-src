@@ -233,6 +233,13 @@ export function Header({
                             <div className="px-3 py-3 border-b border-gray-50 mb-1">
                                <p className="font-bold text-sm text-black truncate">{userProfile?.username}</p>
                                <p className="text-xs text-black/60 truncate">{user.email}</p>
+                               <div className="mt-2 flex items-center justify-between bg-gradient-to-r from-yellow-50 to-orange-50 px-3 py-1.5 rounded-lg border border-yellow-100">
+                                   <div className="flex items-center gap-1.5">
+                                       <Zap size={12} className="text-orange-500 fill-orange-500" />
+                                       <span className="text-xs font-bold text-gray-700">내공</span>
+                                   </div>
+                                   <span className="text-xs font-extrabold text-orange-600 font-mono">{userProfile?.feedback_points || 0} P</span>
+                               </div>
                             </div>
                            <button onClick={() => router.push('/project/upload')} className="w-full text-left px-2 py-2 rounded-lg cursor-pointer text-green-600 hover:bg-green-50 text-sm font-medium flex items-center">
                              <Upload className="mr-2 h-4 w-4" /> 프로젝트 등록
