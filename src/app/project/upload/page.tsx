@@ -1156,33 +1156,49 @@ export default function TiptapUploadPage() {
             />
           </div>
 
-          {/* Previous Content Reference Accordion (Desktop Version) */}
+          {/* [Refined] Previous Content Side-by-Side Reference (Step 1) */}
           {isVersionMode && previousContent && (
-            <div className="w-full max-w-[900px] mt-8 overflow-hidden border border-amber-200 rounded-2xl bg-amber-50/10 transition-all">
-              <details className="group">
-                <summary className="flex items-center justify-between p-5 cursor-pointer list-none hover:bg-amber-50/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-                      <FontAwesomeIcon icon={faFileLines} className="w-4 h-4" />
+            <div className="w-full max-w-[900px] mt-12 flex items-start gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+               {/* Left Version Info Column */}
+               <div className="w-32 flex-shrink-0 pt-6">
+                  <div className="sticky top-40 text-right">
+                     <div className="inline-block px-3 py-1 bg-amber-100 text-amber-600 text-[9px] font-black rounded-lg mb-2 shadow-sm border border-amber-200">ORIGINAL</div>
+                     <h5 className="text-2xl font-black text-gray-800 tracking-tighter mb-1">v{versions.length > 0 ? versions[0].version_name : '1.0'}</h5>
+                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{versions.length > 0 ? new Date(versions[0].created_at).toLocaleDateString() : 'Previous'}</p>
+                     <div className="w-full h-1 bg-amber-400/20 mt-4 rounded-full"></div>
+                  </div>
+               </div>
+
+               {/* Right Side Accordion Content */}
+               <div className="flex-1 overflow-hidden border-2 border-amber-100/50 rounded-[2.5rem] bg-white shadow-sm ring-8 ring-amber-50/20">
+                  <details className="group">
+                    <summary className="flex items-center justify-between p-8 cursor-pointer list-none hover:bg-amber-50/20 transition-all">
+                      <div className="flex items-center gap-4 text-left">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shadow-inner">
+                          <FontAwesomeIcon icon={faFileLines} className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-black text-gray-900 text-sm">이전 글 내용 확인하기</h4>
+                          <p className="text-[10px] text-amber-600 font-bold tracking-tight">참조 모드로 열람 중입니다</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                         <span className="text-[10px] font-bold text-gray-300 mr-2 group-open:opacity-0 transition-opacity uppercase tracking-widest">Expand</span>
+                         <div className="w-8 h-8 rounded-full border border-amber-200 flex items-center justify-center text-amber-500 group-open:rotate-180 transition-transform shadow-sm">
+                            <span className="text-xs">▼</span>
+                         </div>
+                      </div>
+                    </summary>
+                    <div className="px-10 pb-10 border-t border-amber-50 max-h-[700px] overflow-y-auto custom-scrollbar">
+                      <div className="mt-8 prose prose-stone prose-sm max-w-none text-gray-400 select-all opacity-60 filter contrast-[0.9] pointer-events-none">
+                        <div dangerouslySetInnerHTML={{ __html: previousContent }} />
+                      </div>
+                      <div className="mt-12 py-4 border-t border-dashed border-amber-100 text-center">
+                         <p className="text-[10px] text-gray-400 italic font-medium">참조용 뷰어입니다. 텍스트를 드래그해서 복사할 수 있습니다.</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-gray-800 text-sm">이전 버전 내용 참조하기</h4>
-                      <p className="text-[10px] text-amber-600 font-medium tracking-tight">원본의 텍스트와 레이아웃을 보며 새 버전을 보완하세요</p>
-                    </div>
-                  </div>
-                  <div className="w-6 h-6 rounded-full border border-amber-200 flex items-center justify-center text-amber-500 group-open:rotate-180 transition-transform">
-                     <span className="text-[10px]">▼</span>
-                  </div>
-                </summary>
-                <div className="p-8 border-t border-amber-100 bg-white/80 max-h-[600px] overflow-y-auto custom-scrollbar">
-                  <div className="prose prose-stone prose-sm max-w-none text-gray-400 select-all opacity-60 pointer-events-none">
-                    <div dangerouslySetInnerHTML={{ __html: previousContent }} />
-                  </div>
-                  <div className="mt-6 flex justify-center">
-                     <p className="text-[10px] text-gray-400 italic">참조용 모드입니다. 내용을 복사하여 위 에디터에서 편집하세요.</p>
-                  </div>
-                </div>
-              </details>
+                  </details>
+               </div>
             </div>
           )}
         </div>
