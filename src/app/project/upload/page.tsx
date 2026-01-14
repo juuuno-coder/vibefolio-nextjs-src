@@ -163,6 +163,36 @@ export default function TiptapUploadPage() {
         return; // 수정/버전 모드면 임시저장 복구 패스
       }
 
+      // Check for imported content from AI Tools (Lean Canvas, etc)
+      const importedContent = localStorage.getItem('project_import_content');
+      const importedTitle = localStorage.getItem('project_import_title');
+      
+      if (importedContent && !editId && !isVersionMode) {
+          if (confirm('AI 기획 도구에서 작성된 내용이 있습니다. 프로젝트에 적용하시겠습니까?')) {
+              setTitle(importedTitle || '');
+              
+              // Simple Markdown to HTML conversion for initial load
+              const html = importedContent
+                .replace(/### (.*?)\n/g, '<h3>$1</h3>')
+                .replace(/## (.*?)\n/g, '<h2>$1</h2>')
+                .replace(/\n\n/g, '<br/><br/>')
+                .replace(/\n/g, '<br/>');
+
+              const finalHtml = `<h2>🚀 AI 기획안: ${importedTitle || 'Untitled'}</h2><br/>` + html;
+              
+              setContent(finalHtml);
+              
+              // Clear import data
+              localStorage.removeItem('project_import_content');
+              localStorage.removeItem('project_import_title');
+              localStorage.removeItem('project_import_type');
+              return; // Skip draft loading
+          } else {
+             localStorage.removeItem('project_import_content');
+             localStorage.removeItem('project_import_title');
+          }
+      }
+
       // 로컬스토리지에서 임시 저장된 데이터 복구 (신규 작성 시에만)
       const savedDraft = localStorage.getItem('project_draft');
       if (savedDraft) {
