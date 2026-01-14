@@ -62,14 +62,29 @@ export default function PersonaPage() {
     }
 
     setIsLoading(true);
-    // TODO: AI API Integration
-    setTimeout(() => {
-        // Mocking dynamic data based on input
-        // Real implementation would call Gemini API
-      setIsLoading(false);
-      setIsGenerated(true);
-      toast.success("페르소나가 정의되었습니다!");
-    }, 2000);
+    
+    try {
+        const response = await fetch('/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'persona', topic })
+        });
+
+        if (!response.ok) {
+             const errData = await response.json();
+             throw new Error(errData.error || 'AI 생성 실패');
+        }
+
+        const data = await response.json();
+        setPersona(data);
+        setIsGenerated(true);
+        toast.success("페르소나가 정의되었습니다!");
+    } catch (error) {
+        console.error(error);
+        toast.error("생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   const handleDownloadImage = async () => {

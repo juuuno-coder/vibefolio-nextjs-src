@@ -52,23 +52,29 @@ export default function LeanCanvasPage() {
     }
 
     setIsLoading(true);
-    // TODO: AI API Integration
-    setTimeout(() => {
-      setCanvasData({
-        problem: `1. 시장의 기존 솔루션이 너무 복잡함\n2. 높은 가격대로 인한 접근성 저하\n3. ${topic} 관련 전문 지식 부족`,
-        customerSegments: `1. ${topic}에 관심 있는 2030 세대\n2. 효율성을 추구하는 실무자\n3. 새로운 도구를 찾는 얼리어답터`,
-        uniqueValueProposition: `"${topic}"을(를) 위한\n가장 쉽고 직관적인 솔루션.\n복잡한 과정 없이 핵심 가치 제공.`,
-        solution: `1. AI 기반 자동화 시스템\n2. 원클릭 워크플로우\n3. 사용자 친화적인 UX/UI`,
-        channels: `1. Instagram & TikTok 숏폼 마케팅\n2. 관련 네이버 카페 및 커뮤니티\n3. 인플루언서 제휴`,
-        revenueStreams: `1. 부분 유료화 (Freemium)\n2. 프리미엄 구독 멤버십\n3. 기업용 라이선스 판매`,
-        costStructure: `1. 클라우드 서버 운영비\n2. 마케팅 및 광고 집행비\n3. 초기 개발 인건비`,
-        keyMetrics: `1. 월간 활성 사용자 (MAU)\n2. 고객 획득 비용 (CAC)\n3. 유료 전환율 (Conversion Rate)`,
-        unfairAdvantage: `1. 자체 개발 데이터셋\n2. 압도적인 사용자 경험\n3. 강력한 초기 팬덤`,
-      });
-      setIsLoading(false);
-      setIsGenerated(true);
-      toast.success("린 캔버스가 생성되었습니다!");
-    }, 2000);
+    
+    try {
+        const response = await fetch('/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'lean-canvas', topic })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error || 'AI 생성 실패');
+        }
+
+        const data = await response.json();
+        setCanvasData(data);
+        setIsGenerated(true);
+        toast.success("린 캔버스가 생성되었습니다!");
+    } catch (error) {
+        console.error(error);
+        toast.error("생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   const handleChange = (key: keyof LeanCanvasData, value: string) => {
