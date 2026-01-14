@@ -29,6 +29,8 @@ import {
   faUpload,
   faCheck,
   faArrowLeft,
+  faComment,
+  faStar,
 } from "@fortawesome/free-solid-svg-icons";
 import { supabase } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/supabase/storage";
@@ -78,6 +80,9 @@ export default function TiptapUploadPage() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
+  const [allowMichelinRating, setAllowMichelinRating] = useState(true);
+  const [allowStickers, setAllowStickers] = useState(true);
+  const [allowSecretComments, setAllowSecretComments] = useState(true);
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -468,6 +473,9 @@ export default function TiptapUploadPage() {
           content_text: content, // Tiptap HTML content
           thumbnail_url: coverUrl, // URL Update
           rendering_type: 'rich_text',
+          allow_michelin_rating: allowMichelinRating,
+          allow_stickers: allowStickers,
+          allow_secret_comments: allowSecretComments,
           custom_data: JSON.stringify({
             genres: finalGenres,
             fields: finalFields,
@@ -863,6 +871,65 @@ export default function TiptapUploadPage() {
             </div>
               </>
             )}
+
+            <div className="w-full h-px bg-gray-100 my-10"></div>
+
+            {/* 피드백 설정 섹션 */}
+            <div className="mb-12">
+               <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                 <FontAwesomeIcon icon={faComment} className="w-5 h-5 text-green-600" />
+                 피드백 설정
+               </h3>
+               <p className="text-sm text-gray-500 mb-8">프로젝트에 최적화된 피드백 방식을 선택하세요.</p>
+               
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 {[
+                   { 
+                     id: 'michelin', 
+                     title: '미슐랭 평점', 
+                     desc: '별점(5점 만점)을 통해 냉정한 실력을 확인합니다.', 
+                     icon: '⭐', 
+                     status: allowMichelinRating, 
+                     setter: setAllowMichelinRating 
+                   },
+                   { 
+                     id: 'stickers', 
+                     title: '스티커 반응', 
+                     desc: '가볍고 기분 좋게 🚀🧪🤔 등의 반응을 받습니다.', 
+                     icon: '🚀', 
+                     status: allowStickers, 
+                     setter: setAllowStickers 
+                   },
+                   { 
+                     id: 'secret', 
+                     title: '비밀댓글 허용', 
+                     desc: '중요한 피드백이나 연락처를 비밀스럽게 받습니다.', 
+                     icon: '🔒', 
+                     status: allowSecretComments, 
+                     setter: setAllowSecretComments 
+                   }
+                 ].map((opt) => (
+                   <div 
+                     key={opt.id}
+                     onClick={() => opt.setter(!opt.status)}
+                     className={`cursor-pointer p-6 rounded-2xl border-2 transition-all duration-300 ${
+                       opt.status 
+                         ? 'border-green-500 bg-green-50/30' 
+                         : 'border-gray-100 bg-white hover:border-gray-300'
+                     }`}
+                   >
+                     <div className="flex items-center justify-between mb-4">
+                        <span className="text-3xl">{opt.icon}</span>
+                        <div className={`w-10 h-6 rounded-full transition-colors relative ${opt.status ? 'bg-green-500' : 'bg-gray-200'}`}>
+                           <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${opt.status ? 'left-5' : 'left-1'}`} />
+                        </div>
+                     </div>
+                     <h4 className="font-bold text-gray-900 mb-1">{opt.title}</h4>
+                     <p className="text-xs text-gray-500 leading-relaxed font-normal">{opt.desc}</p>
+                   </div>
+                 ))}
+               </div>
+            </div>
 
             <div className="w-full h-px bg-gray-100 my-8"></div>
 

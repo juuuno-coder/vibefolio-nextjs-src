@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { FeedbackPoll } from "./FeedbackPoll";
+import { MichelinRating } from "./MichelinRating";
 import {
   Dialog,
   DialogContent,
@@ -1003,13 +1004,21 @@ export function ProjectDetailModalV2({
                 {/* 2. 하단 리뉴얼 섹션 (노트폴리오 스타일) - 본문 끝나고 나타남 */}
                 <div className="w-full mt-24 border-t border-gray-100">
                    
-                   {/* Feedback Poll Section */}
-                   <div className="w-full bg-white py-16 border-b border-gray-100">
-                       <div className="max-w-2xl mx-auto px-4">
-                          <FeedbackPoll projectId={project.id} />
-                       </div>
+                   {/* Feedback Integration Section */}
+             {((project as any).allow_michelin_rating || (project as any).allow_stickers) && (
+               <div className="w-full mt-24 border-t border-gray-100 pt-12 space-y-8">
+                 {(project as any).allow_michelin_rating && (
+                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                     <MichelinRating projectId={project.id} />
                    </div>
-
+                 )}
+                 {(project as any).allow_stickers && (
+                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
+                     <FeedbackPoll projectId={project.id} />
+                   </div>
+                 )}
+               </div>
+             )}
                    {/* Black Action Bar */}
                    <div className="w-full bg-[#18181b] text-white py-10">
                       <div className="max-w-3xl mx-auto px-4 text-center">
@@ -1268,15 +1277,17 @@ export function ProjectDetailModalV2({
                           <FontAwesomeIcon icon={faPaperPlane} className="w-3 h-3" />
                         </Button>
                       </div>
-                      <div className="flex justify-end mt-1">
-                        <button
-                          onClick={() => setNewCommentSecret(!newCommentSecret)}
-                          className={`flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded transition-colors ${newCommentSecret ? 'text-amber-600 bg-amber-50' : 'text-gray-400 hover:text-gray-600'}`}
-                        >
-                          <FontAwesomeIcon icon={newCommentSecret ? faLock : faUnlock} className="w-3 h-3" />
-                          {newCommentSecret ? "비밀글" : "공개"}
-                        </button>
-                      </div>
+                      {(project as any).allow_secret_comments && (
+                        <div className="flex justify-end mt-1">
+                          <button
+                            onClick={() => setNewCommentSecret(!newCommentSecret)}
+                            className={`flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded transition-colors ${newCommentSecret ? 'text-amber-600 bg-amber-50' : 'text-gray-400 hover:text-gray-600'}`}
+                          >
+                            <FontAwesomeIcon icon={newCommentSecret ? faLock : faUnlock} className="w-3 h-3" />
+                            {newCommentSecret ? "비밀글" : "공개"}
+                          </button>
+                        </div>
+                      )}
                    </div>
                  ) : (
                     <div className="p-4 border-t border-gray-100 bg-gray-50 text-center">

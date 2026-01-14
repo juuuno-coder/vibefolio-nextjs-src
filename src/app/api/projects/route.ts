@@ -154,7 +154,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { user_id, category_id, title, summary, content_text, thumbnail_url, rendering_type, custom_data } = body;
+    const { 
+      user_id, category_id, title, summary, content_text, thumbnail_url, rendering_type, custom_data,
+      allow_michelin_rating, allow_stickers, allow_secret_comments 
+    } = body;
 
     if (!user_id || !category_id || !title) {
       return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 });
@@ -162,7 +165,13 @@ export async function POST(request: NextRequest) {
 
     let { data, error } = await (supabaseAdmin as any)
       .from('Project')
-      .insert([{ user_id, category_id, title, summary, content_text, thumbnail_url, rendering_type, custom_data, likes_count: 0, views_count: 0 }] as any)
+      .insert([{ 
+        user_id, category_id, title, summary, content_text, thumbnail_url, rendering_type, custom_data, 
+        allow_michelin_rating: allow_michelin_rating ?? true, 
+        allow_stickers: allow_stickers ?? true, 
+        allow_secret_comments: allow_secret_comments ?? true,
+        likes_count: 0, views_count: 0 
+      }] as any)
       .select()
       .single();
 
