@@ -3,7 +3,8 @@
 import React, { forwardRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { Heart, BarChart3, Image as ImageIcon, Edit, Rocket, Trash2, Eye } from 'lucide-react';
+import { Heart, BarChart3, Image as ImageIcon, Edit, Rocket, Trash2, Eye, Megaphone } from 'lucide-react';
+import { supabase } from "@/lib/supabase/client";
 import { addCommas } from "@/lib/format/comma";
 import { useLikes } from "@/hooks/useLikes";
 import { toast } from "sonner";
@@ -39,6 +40,7 @@ interface ImageCardProps {
     categorySlug?: string;
     field?: string;
     userId?: string;
+    is_feedback_requested?: boolean;
   } | null;
   className?: string;
   onClick?: () => void;
@@ -98,6 +100,29 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
       toggleLike();
     };
 
+    const handlePromote = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm("내공 5점을 사용하여 '피드백 요청'을 등록하시겠습니까?\n프로젝트에 [FEEDBACK] 뱃지가 붙고 사람들의 주목을 받게 됩니다!")) return;
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { toast.error("로그인이 필요합니다."); return; }
+
+            const res = await fetch(`/api/projects/${props.id}/promote`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error || "요청 실패");
+            
+            toast.success("성공! 피드백 요청 배지가 부착되었습니다. 🎉");
+            // Optional: window.location.reload() or callback to refresh
+        } catch(err: any) {
+            toast.error(err.message);
+        }
+    };
+
     return (
       <div
         ref={ref}
@@ -108,45 +133,47 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
         {/* 이미지 영역 - 4:3 비율 고정 */}
         <div className="relative overflow-hidden rounded-xl aspect-[4/3] bg-gray-100 shadow-sm">
            {/* Owner Actions Overlay */}
-           {isOwner && (
+            {isOwner && (
              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex flex-col items-center justify-center gap-3 backdrop-blur-[2px]">
-                <button 
-                  onClick={(e) => { 
-                      // 보기 버튼은 전파를 막지 않거나 명시적으로 onClick 호출
-                      if (onClick) onClick();
-                      // e.stopPropagation(); // Do not stop if parent onClick handles modal
-                  }}
-                  className="bg-gray-100 text-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-white transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
-                >
-                  <Eye className="w-4 h-4" /> 보기
-                </button>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); router.push(`/project/edit/${props.id}`); }}
-                  className="bg-white text-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-green-500 hover:text-white transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
-                >
-                  <Edit className="w-4 h-4" /> 수정
-                </button>
-                <button 
-                  onClick={(e) => { 
-                    e.stopPropagation(); 
-                    router.push(`/project/upload?mode=version&projectId=${props.id}`); 
-                  }}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
-                >
-                  <Rocket className="w-4 h-4" /> 새 버전
-                </button>
-                <button 
-                  onClick={(e) => { 
-                    e.stopPropagation(); 
-                    if(confirm("정말 삭제하시겠습니까?")) {
-                       // Delete logic placeholder
-                       toast.error("삭제 기능은 상위 컴포넌트에서 처리해야 합니다.");
-                    }
-                  }}
-                  className="bg-gray-700/80 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-red-600 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
-                >
-                  <Trash2 className="w-4 h-4" /> 삭제
-                </button>
+                {!props.is_feedback_requested && (
+                    <button 
+                      onClick={handlePromote}
+                      className="bg-gradient-to-r from-orange-400 to-red-500 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:from-orange-500 hover:to-red-600 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center mb-2"
+                    >
+                      <Megaphone className="w-4 h-4" /> 피드백 요청
+                    </button>
+                )}
+                <div className="flex flex-col gap-2">
+                    <button 
+                      onClick={(e) => { 
+                          if (onClick) onClick();
+                      }}
+                      className="bg-gray-100 text-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-white transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
+                    >
+                      <Eye className="w-4 h-4" /> 보기
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); router.push(`/project/edit/${props.id}`); }}
+                      className="bg-white text-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-green-500 hover:text-white transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
+                    >
+                      <Edit className="w-4 h-4" /> 수정
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); router.push(`/project/upload?mode=version&projectId=${props.id}`); }}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
+                    >
+                      <Rocket className="w-4 h-4" /> 새 버전
+                    </button>
+                    <button 
+                      onClick={(e) => { 
+                          e.stopPropagation(); 
+                          toast.error("삭제 기능은 상위 컴포넌트에서 처리해야 합니다.");
+                      }}
+                      className="bg-red-50 text-red-600 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-red-100 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
+                    >
+                      <Trash2 className="w-4 h-4" /> 삭제
+                    </button>
+                </div>
              </div>
            )}
           {/* Badges Container */}
@@ -159,6 +186,11 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
               {isRecentlyUpdated && (
                 <div className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
                    <span>🚀</span> <span>UPDATE</span>
+                </div>
+              )}
+              {props.is_feedback_requested && (
+                <div className="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1 animate-pulse">
+                   <span>📢</span> <span>FEEDBACK</span>
                 </div>
               )}
           </div>
