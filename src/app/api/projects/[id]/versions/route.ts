@@ -1,21 +1,26 @@
-import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createClient();
   const projectId = params.id;
   
-  // 1. Auth Check
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  // 1. Auth Check (Token based)
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
   if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   // 2. Ownership Check
-  const { data: project } = await supabase
+  const { data: project } = await supabaseAdmin
     .from("Project")
     .select("user_id")
     .eq("project_id", projectId)
@@ -34,14 +39,15 @@ export async function POST(
   }
 
   // 4. Insert Version
-  const { data, error } = await supabase
+  // Note: Using 'any' cast because the types might not be perfectly generated for the new table yet
+  const { data, error } = await (supabaseAdmin as any)
     .from("ProjectVersion")
     .insert({
       project_id: Number(projectId),
       version_name,
       content_html,
       content_text,
-      changelog, // Summary or Short description
+      changelog,
       images: images || [],
       created_at: new Date().toISOString()
     })

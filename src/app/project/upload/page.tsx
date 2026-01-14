@@ -299,9 +299,16 @@ export default function TiptapUploadPage() {
             tmp.innerHTML = content;
             const plainText = tmp.textContent || "";
             
+            // Get session token for secure API call (matches backend requirement)
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
             const res = await fetch(`/api/projects/${projectIdParam}/versions`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                },
                 body: JSON.stringify({
                     version_name: finalTitle,
                     content_html: content,
