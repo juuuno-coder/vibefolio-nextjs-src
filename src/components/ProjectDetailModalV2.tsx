@@ -23,7 +23,10 @@ import {
   faCheck,
   faLock,
   faUnlock,
+  faRocket,
 } from "@fortawesome/free-solid-svg-icons";
+import { CreateVersionModal } from "./CreateVersionModal";
+import { getProjectVersions, ProjectVersion } from "@/lib/versions";
 import { faHeart as faHeartRegular, faComment as faCommentRegular, faBookmark as faBookmarkRegular } from "@fortawesome/free-regular-svg-icons";
 import { addCommas } from "@/lib/format/comma";
 import dayjs from "dayjs";
@@ -179,6 +182,8 @@ export function ProjectDetailModalV2({
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [newCommentSecret, setNewCommentSecret] = useState(false);
+  const [isVersionModalOpen, setVersionModalOpen] = useState(false);
+  const [versions, setVersions] = useState<ProjectVersion[]>([]);
   const [replyingTo, setReplyingTo] = useState<{ id: string; username: string } | null>(null);
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -527,6 +532,19 @@ export function ProjectDetailModalV2({
       setLoading(prev => ({ ...prev, bookmark: false }));
     }
   };
+
+  useEffect(() => {
+    if (project?.id) {
+      getProjectVersions(project.id).then((data) => {
+        // 타입 안전하게 처리
+        if (Array.isArray(data)) {
+          setVersions(data);
+        } else {
+          setVersions([]);
+        }
+      });
+    }
+  }, [project]);
 
   const handleFollow = async () => {
     if (!isLoggedIn || !project?.userId || currentUserId === project.userId) return;
@@ -1088,9 +1106,27 @@ export function ProjectDetailModalV2({
                 </div>
               )}
 
-              <button onClick={() => { if (!isLoggedIn) { setLoginModalOpen(true); return; } if (currentUserId === project.userId) { alert('본인 프로젝트에는 제안할 수 없습니다.'); return; } setProposalModalOpen(true); }} className="w-12 h-12 rounded-full bg-white text-gray-700 border border-gray-100 shadow-lg hover:bg-green-600 hover:text-white hover:scale-105 flex items-center justify-center transition-all" title="제안하기">
-                <FontAwesomeIcon icon={faPaperPlane} className="w-5 h-5" />
-              </button>
+              <div className="relative group flex items-center">
+                 <button 
+                  onClick={() => { 
+                    if (!isLoggedIn) { setLoginModalOpen(true); return; } 
+                    if (String(currentUserId) === String(project.userId)) { setVersionModalOpen(true); return; } 
+                    if (currentUserId === project.userId) { alert('본인 프로젝트에는 제안할 수 없습니다.'); return; }
+                    setProposalModalOpen(true); 
+                  }} 
+                  className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 ${String(currentUserId) === String(project.userId) ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white text-gray-700 hover:bg-green-600 hover:text-white'}`}
+                >
+                  <FontAwesomeIcon icon={String(currentUserId) === String(project.userId) ? faRocket : faPaperPlane} className="w-5 h-5" />
+                </button>
+                
+                {/* Custom Tooltip (Left side) */}
+                <div className="absolute right-full mr-3 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-md">
+                   {String(currentUserId) === String(project.userId) 
+                      ? (versions.length > 0 ? `현재 버전: ${versions[0].version_name}` : "새 버전 배포") 
+                      : "제안하기"}
+                   <div className="absolute top-1/2 -translate-y-1/2 -right-1 border-4 border-transparent border-l-gray-900"></div>
+                </div>
+              </div>
 
               <button onClick={handleLike} disabled={!isLoggedIn} className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex flex-col items-center justify-center transition-all hover:scale-105 ${liked ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 hover:bg-red-50 hover:text-red-500'}`}>
                 {loading.like ? <FontAwesomeIcon icon={faSpinner} className="w-5 h-5 animate-spin" /> : <FontAwesomeIcon icon={liked ? faHeart : faHeartRegular} className="w-5 h-5" />}
@@ -1107,6 +1143,8 @@ export function ProjectDetailModalV2({
               <button onClick={() => setCommentsPanelOpen(!commentsPanelOpen)} className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 ${commentsPanelOpen ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-700 hover:bg-green-600 hover:text-white'}`}>
                 <FontAwesomeIcon icon={faComment} className="w-5 h-5" />
               </button>
+
+
             </div>
 
             {/* 댓글 패널 (우측 사이드바 기능용) */}
@@ -1228,7 +1266,6 @@ export function ProjectDetailModalV2({
         onOpenChange={setLoginModalOpen}
       />
 
-      {/* 이미지 라이트박스 */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent 
           className="!max-w-none !w-screen !h-screen !p-0 !m-0 !gap-0 bg-black/95 border-none shadow-none flex flex-col items-center justify-center outline-none z-[60]"
@@ -1258,6 +1295,16 @@ export function ProjectDetailModalV2({
           </div>
         </DialogContent>
       </Dialog>
+      
+      <CreateVersionModal
+        open={isVersionModalOpen}
+        onOpenChange={setVersionModalOpen}
+        projectId={project.id}
+        onSuccess={() => {
+           // Refetch logic or minimal toast
+           // Currently no generic refresh function passed to modal
+        }}
+      />
     </>
   );
 }
