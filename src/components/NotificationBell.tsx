@@ -35,6 +35,13 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { toast } from "sonner";
 import { DEFAULT_NOTIFICATION_SETTINGS, NotificationSettings } from "./RealtimeListener";
 
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/ko";
+
+dayjs.extend(relativeTime);
+dayjs.locale("ko");
+
 // 알림 타입별 아이콘 및 스타일
 const notificationStyles = {
   like: { icon: Heart, color: "text-red-500", bg: "bg-red-50" },
@@ -44,18 +51,25 @@ const notificationStyles = {
   system: { icon: Info, color: "text-gray-500", bg: "bg-gray-50" },
 };
 
-// 시간 포맷
+// 시간 포맷 (Day.js 적용)
 function formatTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
+  const date = dayjs(dateStr);
+  const now = dayjs();
+  const diffInSecond = now.diff(date, "second");
+  const diffInMinutes = now.diff(date, "minute");
+  const diffInHours = now.diff(date, "hour");
+  const diffInDays = now.diff(date, "day");
 
-  if (diff < 60000) return "방금 전";
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}분 전`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}시간 전`;
-  if (diff < 604800000) return `${Math.floor(diff / 86400000)}일 전`;
-
-  return date.toLocaleDateString("ko-KR");
+  // 1분 미만: '방금'
+  if (diffInSecond < 60) return "방금";
+  // 1시간 미만: 'n분 전'
+  if (diffInMinutes < 60) return `${diffInMinutes}분 전`;
+  // 24시간 미만: 'n시간 전'
+  if (diffInHours < 24) return `${diffInHours}시간 전`;
+  // 7일 미만: 'n일 전'
+  if (diffInDays < 7) return `${diffInDays}일 전`;
+  // 그 외: 날짜 표시
+  return date.format("YYYY.MM.DD");
 }
 
 interface NotificationItemProps {
