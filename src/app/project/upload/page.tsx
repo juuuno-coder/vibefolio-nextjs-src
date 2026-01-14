@@ -88,6 +88,7 @@ export default function TiptapUploadPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [originalProjectTitle, setOriginalProjectTitle] = useState(""); // For version mode context
+  const [previousContent, setPreviousContent] = useState(""); // Previous version content for reference
 
   // Editor Instance State
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -138,6 +139,7 @@ export default function TiptapUploadPage() {
             if (isVersionMode) {
                 // 버전 모드: 원본 제목만 저장하고 에디터는 비움
                 setOriginalProjectTitle(project.title);
+                setPreviousContent(project.content_text || "");
                 setTitle(""); 
                 setSummary("");
                 setContent(""); // Start fresh
@@ -1050,6 +1052,36 @@ export default function TiptapUploadPage() {
               placeholder="여기에 내용을 입력하세요..."
             />
           </div>
+
+          {/* Previous Content Reference Accordion (Desktop Version) */}
+          {isVersionMode && previousContent && (
+            <div className="w-full max-w-[900px] mt-8 overflow-hidden border border-amber-200 rounded-2xl bg-amber-50/10 transition-all">
+              <details className="group">
+                <summary className="flex items-center justify-between p-5 cursor-pointer list-none hover:bg-amber-50/50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                      <FontAwesomeIcon icon={faFileLines} className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-800 text-sm">이전 버전 내용 참조하기</h4>
+                      <p className="text-[10px] text-amber-600 font-medium tracking-tight">원본의 텍스트와 레이아웃을 보며 새 버전을 보완하세요</p>
+                    </div>
+                  </div>
+                  <div className="w-6 h-6 rounded-full border border-amber-200 flex items-center justify-center text-amber-500 group-open:rotate-180 transition-transform">
+                     <span className="text-[10px]">▼</span>
+                  </div>
+                </summary>
+                <div className="p-8 border-t border-amber-100 bg-white/80 max-h-[600px] overflow-y-auto custom-scrollbar">
+                  <div className="prose prose-stone prose-sm max-w-none text-gray-400 select-all opacity-60 pointer-events-none">
+                    <div dangerouslySetInnerHTML={{ __html: previousContent }} />
+                  </div>
+                  <div className="mt-6 flex justify-center">
+                     <p className="text-[10px] text-gray-400 italic">참조용 모드입니다. 내용을 복사하여 위 에디터에서 편집하세요.</p>
+                  </div>
+                </div>
+              </details>
+            </div>
+          )}
         </div>
 
         {/* Right Sidebar (Sticky) */}
