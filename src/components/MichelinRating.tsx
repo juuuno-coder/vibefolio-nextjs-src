@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Star, Info, Target, Zap, Lightbulb, TrendingUp } from 'lucide-react';
+import { Star, Info, Target, Zap, Lightbulb, TrendingUp, Sparkles, MessageSquareQuote } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
@@ -27,12 +27,35 @@ export function MichelinRating({ projectId }: MichelinRatingProps) {
   const [totalCount, setTotalCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [analysis, setAnalysis] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // 현재 내 점수들의 평균 계산 (실시간)
   const currentTotalAvg = useMemo(() => {
     const sum = Object.values(scores).reduce((a, b) => a + b, 0);
     return Number((sum / 4).toFixed(1));
   }, [scores]);
+
+  const fetchAIAnalysis = async (scoresToAnalyze: any) => {
+    setIsAnalyzing(true);
+    try {
+      const res = await fetch('/api/ai/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          scores: scoresToAnalyze,
+          projectTitle: "현재 프로젝트",
+          category: "포트폴리오"
+        })
+      });
+      const data = await res.json();
+      if (data.analysis) setAnalysis(data.analysis);
+    } catch (e) {
+      console.error("AI Analysis failed:", e);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const fetchRatingData = async () => {
     try {
@@ -61,6 +84,9 @@ export function MichelinRating({ projectId }: MichelinRatingProps) {
         setAverages(newAvgs);
         setTotalAvg(Number((Object.values(newAvgs).reduce((a,b)=>a+b, 0) / 4).toFixed(1)));
         setTotalCount(data.length);
+        
+        // 데이터 로드 시 AI 분석 실행
+        fetchAIAnalysis(newAvgs);
       }
 
       const { data: { session } } = await supabase.auth.getSession();
@@ -105,7 +131,7 @@ export function MichelinRating({ projectId }: MichelinRatingProps) {
           project_id: parseInt(projectId),
           user_id: session.user.id,
           ...scores,
-          score: currentTotalAvg // 메인 점수는 평균값으로 저장
+          score: currentTotalAvg
         }, { onConflict: 'project_id, user_id' });
 
       if (error) throw error;
@@ -113,6 +139,9 @@ export function MichelinRating({ projectId }: MichelinRatingProps) {
       setIsEditing(false);
       toast.success(`전문 평가가 등록되었습니다! (평균 ${currentTotalAvg}점)`);
       fetchRatingData();
+      
+      // 내 점수 기반으로 분석 갱신
+      fetchAIAnalysis(scores);
     } catch (e) {
       console.error(e);
       toast.error("평가 등록에 실패했습니다.");
@@ -121,20 +150,17 @@ export function MichelinRating({ projectId }: MichelinRatingProps) {
     }
   };
 
-  // 레이더 차트 생성 헬퍼 (다이아몬드형)
+  // 레이더 차트 생성 헬퍼
   const getRadarPath = (data: Record<string, number>, scale: number = 1) => {
     const center = 100;
     const max = 5;
     const radius = 80 * scale;
-    
-    // 네 꼭짓점 좌표 (위, 오른쪽, 아래, 왼쪽)
     const points = [
-      [center, center - (data.score_1 / max) * radius], // 위: 기획력
-      [center + (data.score_2 / max) * radius, center], // 오른쪽: 완성도
-      [center, center + (data.score_3 / max) * radius], // 아래: 독창성
-      [center - (data.score_4 / max) * radius, center], // 왼쪽: 상업성
+      [center, center - (data.score_1 / max) * radius],
+      [center + (data.score_2 / max) * radius, center],
+      [center, center + (data.score_3 / max) * radius],
+      [center - (data.score_4 / max) * radius, center],
     ];
-    
     return `M ${points[0][0]} ${points[0][1]} L ${points[1][0]} ${points[1][1]} L ${points[2][0]} ${points[2][1]} L ${points[3][0]} ${points[3][1]} Z`;
   };
 
@@ -170,49 +196,21 @@ export function MichelinRating({ projectId }: MichelinRatingProps) {
         {/* Radar Chart Visual */}
         <div className="relative flex justify-center items-center py-8">
            <svg width="240" height="240" viewBox="0 0 200 200" className="drop-shadow-2xl">
-              {/* Background Concentric diamonds */}
               {[1, 0.8, 0.6, 0.4, 0.2].map((s) => (
-                <path 
-                  key={s} 
-                  d={getRadarPath({ score_1: 5, score_2: 5, score_3: 5, score_4: 5 }, s)} 
-                  fill="none" 
-                  stroke="#f1f5f9" 
-                  strokeWidth="1"
-                />
+                <path key={s} d={getRadarPath({ score_1: 5, score_2: 5, score_3: 5, score_4: 5 }, s)} fill="none" stroke="#f1f5f9" strokeWidth="1" />
               ))}
-              {/* Axis lines */}
               <line x1="100" y1="20" x2="100" y2="180" stroke="#f1f5f9" strokeWidth="1" />
               <line x1="20" y1="100" x2="180" y2="100" stroke="#f1f5f9" strokeWidth="1" />
-
-              {/* Average Area (Light Gray) */}
               {totalAvg > 0 && (
-                <path 
-                  d={getRadarPath(averages)} 
-                  fill="rgba(0, 0, 0, 0.03)" 
-                  stroke="rgba(0, 0, 0, 0.1)" 
-                  strokeWidth="1" 
-                  strokeDasharray="4 4"
-                />
+                <path d={getRadarPath(averages)} fill="rgba(0, 0, 0, 0.03)" stroke="rgba(0, 0, 0, 0.1)" strokeWidth="1" strokeDasharray="4 4" />
               )}
-
-              {/* My Rating Area (The Diamond) */}
-              <path 
-                d={getRadarPath(scores)} 
-                fill="rgba(245, 158, 11, 0.15)" 
-                stroke="#f59e0b" 
-                strokeWidth="3" 
-                strokeLinejoin="round"
-                className="transition-all duration-300 ease-out"
-              />
-              
-              {/* Labels on Chart */}
+              <path d={getRadarPath(scores)} fill="rgba(245, 158, 11, 0.15)" stroke="#f59e0b" strokeWidth="3" strokeLinejoin="round" className="transition-all duration-300 ease-out" />
               <text x="100" y="12" textAnchor="middle" className="text-[10px] font-black fill-gray-400">기획력</text>
               <text x="188" y="103" textAnchor="start" className="text-[10px] font-black fill-gray-400">완성도</text>
               <text x="100" y="195" textAnchor="middle" className="text-[10px] font-black fill-gray-400">독창성</text>
               <text x="12" y="103" textAnchor="end" className="text-[10px] font-black fill-gray-400">상업성</text>
            </svg>
 
-           {/* Floating Floating Big Score */}
            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-4xl font-black text-gray-900 tabular-nums">{currentTotalAvg.toFixed(1)}</span>
               <div className="flex gap-0.5">
@@ -223,53 +221,58 @@ export function MichelinRating({ projectId }: MichelinRatingProps) {
            </div>
         </div>
 
-        {/* 4 Category Sliders */}
         <div className="space-y-6">
           {CATEGORIES.map((cat) => (
             <div key={cat.id} className="space-y-2">
               <div className="flex justify-between items-center px-1">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-gray-50 text-gray-600">
-                    <cat.icon className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-sm font-black text-gray-800">{cat.label}</span>
-                    <span className="ml-2 text-[10px] text-gray-400 font-medium">{cat.desc}</span>
-                  </div>
+                  <div className="p-1.5 rounded-lg bg-gray-50 text-gray-600"><cat.icon className="w-4 h-4" /></div>
+                  <div><span className="text-sm font-black text-gray-800">{cat.label}</span></div>
                 </div>
-                <span className="text-lg font-black tabular-nums" style={{ color: cat.color }}>
-                  {scores[cat.id].toFixed(1)}
-                </span>
+                <span className="text-lg font-black tabular-nums" style={{ color: cat.color }}>{scores[cat.id].toFixed(1)}</span>
               </div>
-              <input 
-                type="range" min="0" max="5" step="0.1" 
-                value={scores[cat.id]}
-                onChange={(e) => {
-                  setScores(prev => ({ ...prev, [cat.id]: parseFloat(e.target.value) }));
-                  setIsEditing(true);
-                }}
-                className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-gray-900 hover:accent-amber-500 transition-all"
-              />
+              <input type="range" min="0" max="5" step="0.1" value={scores[cat.id]} onChange={(e) => { setScores(prev => ({ ...prev, [cat.id]: parseFloat(e.target.value) })); setIsEditing(true); }} className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-gray-900 hover:accent-amber-500 transition-all" />
             </div>
           ))}
 
           <div className="pt-6 flex justify-center">
-            <button
-               disabled={isSubmitting || !isEditing}
-               onClick={handleRatingSubmit}
-               className={`w-full max-w-xs py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${
-                 isEditing 
-                   ? 'bg-black text-white shadow-2xl hover:-translate-y-1' 
-                   : 'bg-gray-100 text-gray-400 cursor-default'
-               }`}
-            >
+            <button disabled={isSubmitting || !isEditing} onClick={handleRatingSubmit} className={`w-full max-w-xs py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${isEditing ? 'bg-black text-white shadow-2xl hover:-translate-y-1' : 'bg-gray-100 text-gray-400 cursor-default'}`}>
               {isSubmitting ? "Submitting..." : (scores.score_1 > 0 ? "Update Diagnostic" : "Confirm Multi-Diagnostic")}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="mt-12 p-4 bg-amber-50/50 rounded-2xl border border-amber-100/50 flex items-center gap-3 text-xs text-amber-800 font-medium">
+      {/* AI Inspector Section */}
+      <div className="mt-12 bg-gray-900 rounded-[2rem] p-8 border border-gray-800 relative overflow-hidden group">
+         <div className="absolute top-0 right-0 p-8 opacity-10">
+            <Sparkles className="w-24 h-24 text-white" />
+         </div>
+         <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="px-2 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded uppercase tracking-tighter">AI Inspector</div>
+              <h5 className="text-white font-bold flex items-center gap-2 italic">
+                <MessageSquareQuote className="w-4 h-4 text-gray-400" />
+                "인스펙터의 한마디"
+              </h5>
+            </div>
+            
+            {isAnalyzing ? (
+               <div className="flex items-center gap-3">
+                  <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  <p className="text-gray-400 text-sm animate-pulse">평점을 바탕으로 전문가의 조언을 생성 중입니다...</p>
+               </div>
+            ) : analysis ? (
+               <p className="text-lg text-white font-medium leading-relaxed font-serif italic">
+                 {analysis}
+               </p>
+            ) : (
+               <p className="text-gray-500 text-sm">평가를 완료하면 AI 인스펙터의 전문적인 분석 리포트를 받아보실 수 있습니다.</p>
+            )}
+         </div>
+      </div>
+
+      <div className="mt-8 flex items-center justify-center gap-2 text-xs text-gray-400 font-medium italic">
          <Info className="w-4 h-4 flex-shrink-0" />
          <p>평가 완료 시 작가에게 분석 레포트 데이터가 전달됩니다. 각 항목을 신중히 조절하여 작품의 다면적인 가치를 기록해 주세요.</p>
       </div>
