@@ -245,13 +245,14 @@ export function NotificationBell() {
                   <p className="text-xs text-gray-400 mt-2 max-w-[200px] leading-relaxed">
                     프로젝트를 업로드하거나<br/>다른 크리에이터와 소통해보세요!
                   </p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-6 rounded-full text-xs h-8 border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700"
-                    onClick={() => setOpen(false)} 
-                  >
-                    활동 시작하기
-                  </Button>
+                  <Link href="/project/upload" onClick={() => setOpen(false)}>
+                    <Button 
+                      variant="outline" 
+                      className="mt-6 rounded-full text-xs h-8 border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700"
+                    >
+                      첫 게시물을 등록해보세요
+                    </Button>
+                  </Link>
                 </div>
               ) : (
                 <div className="space-y-1 p-1">
