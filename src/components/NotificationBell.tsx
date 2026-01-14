@@ -304,7 +304,7 @@ export function NotificationBell() {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                          <Briefcase className="w-4 h-4 text-emerald-500" /> 연결하기 (Recruit)
+                          <Briefcase className="w-4 h-4 text-emerald-500" /> 연결하기
                         </Label>
                         <p className="text-[10px] text-gray-400 pl-6">채용/공모전 관심 분야 알림</p>
                       </div>
