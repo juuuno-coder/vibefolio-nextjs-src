@@ -928,7 +928,7 @@ export function ProjectDetailModalV2({
              }}
           >
             {/* 메인 이미지 영역 */}
-            <div className="w-[66vw] h-full bg-white flex flex-col relative rounded-t-xl overflow-hidden shadow-2xl">
+            <div className="w-[60vw] h-full bg-white flex flex-col relative rounded-t-xl overflow-hidden shadow-2xl transition-all duration-500">
               {/* X 버튼: 시인성 개선 (검정 반투명 배경) */}
               <button
                 onClick={() => onOpenChange(false)}
@@ -1252,9 +1252,9 @@ export function ProjectDetailModalV2({
 
             {/* 댓글 패널 (우측 사이드바 기능용) */}
             {commentsPanelOpen && (
-              <div className="w-[30%] h-full bg-white flex flex-col border-l border-gray-200 ml-4 rounded-t-xl overflow-hidden shadow-xl">
+              <div className="w-[28vw] h-full bg-white flex flex-col border-l border-gray-200 ml-4 rounded-t-xl overflow-hidden shadow-xl animate-in slide-in-from-right duration-500">
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white z-10">
-                  <h3 className="font-bold text-sm">댓글 ({comments.length})</h3>
+                  <h3 className="font-bold text-sm">활동 및 댓글 ({comments.length})</h3>
                   <button onClick={() => setCommentsPanelOpen(false)} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
                     <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
                   </button>
@@ -1275,11 +1275,48 @@ export function ProjectDetailModalV2({
                   </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white custom-scrollbar">
+                   {/* [Premium] System Activity Messages */}
+                   <div className="space-y-3 mb-6">
+                      <div className="p-3 rounded-xl bg-purple-50 border border-purple-100 flex items-center gap-3 animate-in fade-in slide-in-from-right duration-700">
+                         <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center text-white shadow-sm">
+                            <FontAwesomeIcon icon={faPaperPlane} className="w-3.5 h-3.5" />
+                         </div>
+                         <div>
+                            <p className="text-[10px] font-black text-purple-600 uppercase tracking-tighter">Private Inquiry</p>
+                            <p className="text-xs text-purple-900 font-bold tracking-tight">비밀 제안을 받았습니다 🔒</p>
+                         </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-blue-50 border border-blue-100 flex items-center gap-3 animate-in fade-in slide-in-from-right duration-700 delay-150">
+                         <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm">
+                            <FontAwesomeIcon icon={faRocket} className="w-3.5 h-3.5" />
+                         </div>
+                         <div>
+                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-tighter">New Update</p>
+                            <p className="text-xs text-blue-900 font-bold tracking-tight">새 에피소드를 배포했어요 🚀</p>
+                         </div>
+                      </div>
+                      
+                      {/* Hidden Secret Comment Reference */}
+                      <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 flex items-center gap-3 opacity-60">
+                         <div className="w-8 h-8 rounded-lg bg-gray-400 flex items-center justify-center text-white">
+                            <FontAwesomeIcon icon={faLock} className="w-3 h-3" />
+                         </div>
+                         <div>
+                            <p className="text-xs text-gray-500 font-medium italic">비밀 댓글입니다.</p>
+                         </div>
+                      </div>
+                   </div>
+
+                   {/* User Comments Feed */}
                    {comments.length > 0 ? (
-                       comments.map((comment) => (
-                          <CommentItem key={comment.id + 'panel'} comment={comment} onReply={(id, username) => setReplyingTo({ id, username })} onDelete={handleDeleteComment} currentUserId={currentUserId} projectOwnerId={project.userId} depth={0} />
-                       ))
+                       <>
+                         <div className="flex items-center gap-2 mb-2 text-[10px] font-black text-gray-300 px-1 uppercase tracking-widest border-b border-gray-50 pb-2">User Discussion</div>
+                         {comments.map((comment) => (
+                            <CommentItem key={comment.id + 'panel'} comment={comment} onReply={(id, username) => setReplyingTo({ id, username })} onDelete={handleDeleteComment} currentUserId={currentUserId} projectOwnerId={project.userId} depth={0} />
+                         ))}
+                       </>
                    ) : (
                        <div className="flex flex-col items-center justify-center h-40 text-gray-400 text-sm">
                           <FontAwesomeIcon icon={faComment} className="w-8 h-8 mb-2 opacity-20" />
