@@ -185,6 +185,22 @@ ${canvasData.revenueStreams}
 
       {/* Canvas Section */}
       <div className="-mt-20 container mx-auto px-4 pb-20 relative z-20">
+        
+        {/* Tool Switcher Tabs */}
+        <div className="flex justify-center mb-8">
+            <div className="bg-white/10 backdrop-blur-md p-1 rounded-xl flex gap-1 border border-white/20">
+                <button className="px-6 py-2.5 bg-white text-black rounded-lg font-bold text-sm shadow-lg transition-all flex items-center gap-2">
+                    <span className="text-lg">📊</span> 린 캔버스
+                </button>
+                <button 
+                    onClick={() => router.push('/tools/persona')}
+                    className="px-6 py-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-lg font-medium text-sm transition-all flex items-center gap-2"
+                >
+                    <span className="text-lg opacity-70">👤</span> 페르소나 정의 <span className="text-[10px] bg-green-500 text-black px-1.5 py-0.5 rounded-full font-bold">New</span>
+                </button>
+            </div>
+        </div>
+
         <div className={`transition-all duration-1000 ${isGenerated ? 'opacity-100 translate-y-0' : 'opacity-100 translate-y-0'}`}>
             
             {/* Toolbar */}

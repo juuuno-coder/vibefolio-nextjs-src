@@ -166,6 +166,7 @@ export default function TiptapUploadPage() {
       // Check for imported content from AI Tools (Lean Canvas, etc)
       const importedContent = localStorage.getItem('project_import_content');
       const importedTitle = localStorage.getItem('project_import_title');
+      const importType = localStorage.getItem('project_import_type');
       
       if (importedContent && !editId && !isVersionMode) {
           if (confirm('AI 기획 도구에서 작성된 내용이 있습니다. 프로젝트에 적용하시겠습니까?')) {
@@ -175,10 +176,12 @@ export default function TiptapUploadPage() {
               const html = importedContent
                 .replace(/### (.*?)\n/g, '<h3>$1</h3>')
                 .replace(/## (.*?)\n/g, '<h2>$1</h2>')
+                .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; border-radius: 8px; margin: 10px 0;" /><br/>')
                 .replace(/\n\n/g, '<br/><br/>')
                 .replace(/\n/g, '<br/>');
 
-              const finalHtml = `<h2>🚀 AI 기획안: ${importedTitle || 'Untitled'}</h2><br/>` + html;
+              const typeLabel = importType === 'persona' ? 'AI 페르소나 정의' : 'AI 린 캔버스 기획';
+              const finalHtml = `<h2>🚀 ${typeLabel}: ${importedTitle || 'Untitled'}</h2><br/>` + html;
               
               setContent(finalHtml);
               
