@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket } from "lucide-react";
+import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket, Sparkles, Wand2, Lightbulb, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
 import { ProposalCard } from "@/components/ProposalCard";
@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-type TabType = 'projects' | 'likes' | 'collections' | 'proposals' | 'comments';
+type TabType = 'projects' | 'likes' | 'collections' | 'proposals' | 'comments' | 'ai_tools';
+type AiToolType = 'planner' | 'feeback' | 'assistant';
 
 export default function MyPage() {
   const router = useRouter();
@@ -30,6 +31,7 @@ export default function MyPage() {
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [activeAiTool, setActiveAiTool] = useState<AiToolType>('planner');
   
   // 프로필 및 통계
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -379,6 +381,7 @@ export default function MyPage() {
     { id: 'collections' as TabType, label: '컬렉션', icon: Folder, color: 'text-blue-500', bgColor: 'bg-blue-500' },
     { id: 'proposals' as TabType, label: '받은 제안', icon: Send, color: 'text-green-500', bgColor: 'bg-green-500' },
     { id: 'comments' as TabType, label: '내 댓글', icon: MessageCircle, color: 'text-orange-500', bgColor: 'bg-orange-500' },
+    { id: 'ai_tools' as TabType, label: 'AI 도구', icon: Sparkles, color: 'text-purple-600', bgColor: 'bg-purple-600', isNew: true },
   ];
 
   return (
@@ -478,6 +481,11 @@ export default function MyPage() {
               >
                 <Icon size={18} fill={tab.id === 'likes' && isActive ? 'currentColor' : 'none'} />
                 {tab.label}
+                {tab.isNew && (
+                  <span className="ml-1.5 px-1.5 py-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[8px] font-black rounded-full shadow-sm animate-pulse">
+                    NEW
+                  </span>
+                )}
                 {isActive && <div className={`absolute bottom-0 left-0 w-full h-0.5 ${tab.bgColor}`} />}
               </button>
             );
@@ -658,6 +666,74 @@ export default function MyPage() {
                   <h3 className="text-lg font-medium text-gray-900">작성한 댓글이 없습니다</h3>
                 </div>
               )
+            )}
+
+            {/* AI 도구 탭 */}
+            {activeTab === 'ai_tools' && (
+              <div className="flex flex-col md:flex-row gap-8 min-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-700">
+                {/* 왼쪽 사이드 탭 */}
+                <div className="w-full md:w-64 shrink-0 flex flex-col gap-2">
+                  {[
+                    { id: 'planner', label: 'AI 프로젝트 플래너', icon: Lightbulb, desc: '프로젝트 기획 및 구조화' },
+                    { id: 'feeback', label: 'AI 피드백 도우미', icon: Zap, desc: '작품 리뷰 및 개선 제안' },
+                    { id: 'assistant', label: 'AI 콘텐츠 어시스턴트', icon: Wand2, desc: '텍스트 생성 및 다듬기' },
+                  ].map((tool) => (
+                    <button
+                      key={tool.id}
+                      onClick={() => setActiveAiTool(tool.id as AiToolType)}
+                      className={`flex items-start gap-4 p-4 rounded-2xl transition-all text-left group ${
+                        activeAiTool === tool.id 
+                          ? 'bg-white border-2 border-purple-100 shadow-md ring-4 ring-purple-50/50' 
+                          : 'hover:bg-white/50 border-2 border-transparent text-gray-500'
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                        activeAiTool === tool.id ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-purple-50 group-hover:text-purple-500'
+                      }`}>
+                        <tool.icon className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 overflow-hidden">
+                        <p className={`font-bold text-sm ${activeAiTool === tool.id ? 'text-gray-900' : 'text-gray-600'}`}>{tool.label}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5 truncate">{tool.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* 오른쪽 콘텐츠 영역 */}
+                <div className="flex-1 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8 md:p-12 relative overflow-hidden group">
+                  {/* Futuristic Background Decor */}
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-purple-50 rounded-full blur-3xl opacity-20 -mr-32 -mt-32 transition-all group-hover:opacity-40" />
+                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-50 rounded-full blur-3xl opacity-20 -ml-16 -mb-16 transition-all group-hover:opacity-40" />
+                  
+                  <div className="relative z-10 flex flex-col items-center justify-center h-full text-center max-w-xl mx-auto space-y-6 py-20">
+                    <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white shadow-xl shadow-purple-200 animate-bounce-slow">
+                      <Sparkles className="w-10 h-10" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">
+                        {activeAiTool === 'planner' && "AI 프로젝트 플래너가 곧 찾아옵니다"}
+                        {activeAiTool === 'feeback' && "AI 피드백 도우미가 곧 찾아옵니다"}
+                        {activeAiTool === 'assistant' && "AI 콘텐츠 어시스턴트가 곧 찾아옵니다"}
+                      </h3>
+                      <p className="text-gray-500 leading-relaxed font-medium">
+                        당신의 크리에이티브를 극대화할 수 있도록 <br/>
+                        강력한 바이브폴리오 AI 엔진이 준비 중입니다. ⚡️
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-full text-xs font-black uppercase tracking-widest border border-purple-100 shadow-sm">
+                      <Zap className="w-3 h-3 animate-pulse" />
+                      Under Construction
+                    </div>
+                    
+                    <p className="text-[10px] text-gray-400 max-w-sm mt-8">
+                      프로젝트 작성 페이지에서는 이미 실전 AI 보조 도구가 세팅되고 있습니다. 
+                      조금만 더 기다려주세요!
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
           </>
         )}
