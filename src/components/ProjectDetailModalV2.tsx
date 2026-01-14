@@ -26,6 +26,8 @@ import {
   faLock,
   faUnlock,
   faRocket,
+  faStar,
+  faFaceSmile,
 } from "@fortawesome/free-solid-svg-icons";
 
 import { VersionHistoryModal } from "./VersionHistoryModal";
@@ -927,8 +929,8 @@ export function ProjectDetailModalV2({
                if (e.target === e.currentTarget) onOpenChange(false);
              }}
           >
-            {/* 메인 이미지 영역 */}
-            <div className="w-[60vw] h-full bg-white flex flex-col relative rounded-t-xl overflow-hidden shadow-2xl transition-all duration-500">
+            {/* 메인 이미지 영역 (원본 너비 유지) */}
+            <div className="w-[66vw] h-full bg-white flex flex-col relative rounded-t-xl overflow-hidden shadow-2xl transition-all duration-500">
               {/* X 버튼: 시인성 개선 (검정 반투명 배경) */}
               <button
                 onClick={() => onOpenChange(false)}
@@ -1250,9 +1252,9 @@ export function ProjectDetailModalV2({
 
             </div>
 
-            {/* 댓글 패널 (우측 사이드바 기능용) */}
+            {/* 댓글 패널 (더 슬림하게 20vw 조정) */}
             {commentsPanelOpen && (
-              <div className="w-[28vw] h-full bg-white flex flex-col border-l border-gray-200 ml-4 rounded-t-xl overflow-hidden shadow-xl animate-in slide-in-from-right duration-500">
+              <div className="w-[20vw] h-full bg-white flex flex-col border-l border-gray-200 ml-4 rounded-t-xl overflow-hidden shadow-xl animate-in slide-in-from-right duration-500">
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white z-10">
                   <h3 className="font-bold text-sm">활동 및 댓글 ({comments.length})</h3>
                   <button onClick={() => setCommentsPanelOpen(false)} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
@@ -1289,12 +1291,33 @@ export function ProjectDetailModalV2({
                       </div>
 
                       <div className="p-3 rounded-xl bg-blue-50 border border-blue-100 flex items-center gap-3 animate-in fade-in slide-in-from-right duration-700 delay-150">
-                         <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm">
+                         <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white shadow-sm">
                             <FontAwesomeIcon icon={faRocket} className="w-3.5 h-3.5" />
                          </div>
                          <div>
                             <p className="text-[10px] font-black text-blue-600 uppercase tracking-tighter">New Update</p>
                             <p className="text-xs text-blue-900 font-bold tracking-tight">새 에피소드를 배포했어요 🚀</p>
+                         </div>
+                      </div>
+
+                      {/* [New] Stickers and Ratings Activity */}
+                      <div className="p-3 rounded-xl bg-pink-50 border border-pink-100 flex items-center gap-3 animate-in fade-in slide-in-from-right duration-700 delay-300">
+                         <div className="w-8 h-8 rounded-lg bg-pink-500 flex items-center justify-center text-white shadow-sm">
+                            <FontAwesomeIcon icon={faFaceSmile} className="w-3.5 h-3.5" />
+                         </div>
+                         <div>
+                            <p className="text-[10px] font-black text-pink-600 uppercase tracking-tighter">Sticker Feedback</p>
+                            <p className="text-xs text-pink-900 font-bold tracking-tight">응원 스티커를 남겼습니다 💖</p>
+                         </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-amber-50 border border-amber-100 flex items-center gap-3 animate-in fade-in slide-in-from-right duration-700 delay-500">
+                         <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-white shadow-sm">
+                            <FontAwesomeIcon icon={faStar} className="w-3.5 h-3.5" />
+                         </div>
+                         <div>
+                            <p className="text-[10px] font-black text-amber-600 uppercase tracking-tighter">Rating Feedback</p>
+                            <p className="text-xs text-amber-900 font-bold tracking-tight">평점 피드백을 남겼습니다 ⭐</p>
                          </div>
                       </div>
                       
