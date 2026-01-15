@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket, Sparkles, Wand2, Lightbulb, Zap } from "lucide-react";
+import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket, Sparkles, Wand2, Lightbulb, Zap, UserCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
 import { ProposalCard } from "@/components/ProposalCard";
@@ -21,7 +21,9 @@ import {
 import { Input } from "@/components/ui/input";
 
 type TabType = 'projects' | 'likes' | 'collections' | 'proposals' | 'comments' | 'ai_tools';
-type AiToolType = 'planner' | 'feeback' | 'assistant';
+type AiToolType = 'lean-canvas' | 'persona' | 'assistant';
+import { LeanCanvasModal } from "@/components/LeanCanvasModal";
+import { PersonaDefinitionModal } from "@/components/PersonaDefinitionModal";
 
 export default function MyPage() {
   const router = useRouter();
@@ -31,7 +33,7 @@ export default function MyPage() {
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const [activeAiTool, setActiveAiTool] = useState<AiToolType>('planner');
+  const [activeAiTool, setActiveAiTool] = useState<AiToolType>('lean-canvas');
   
   // 프로필 및 통계
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -47,6 +49,10 @@ export default function MyPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<any>(null);
   const [proposalModalOpen, setProposalModalOpen] = useState(false);
+  
+  // AI 도구 모달 상태
+  const [leanModalOpen, setLeanModalOpen] = useState(false);
+  const [personaModalOpen, setPersonaModalOpen] = useState(false);
   
   // 회원탈퇴 관련 상태
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -74,12 +80,12 @@ export default function MyPage() {
       try {
         const { data: dbProfile } = await supabase
           .from('profiles')
-          .select('bio, cover_image_url')
+          .select('username, nickname, bio, cover_image_url')
           .eq('id', authUser.id)
           .single();
 
         setUserProfile({
-          username: authProfile?.username || '사용자',
+          username: (dbProfile as any)?.nickname || (dbProfile as any)?.username || authProfile?.username || (authProfile as any)?.full_name || '사용자',
           email: authUser.email,
           profile_image_url: authProfile?.profile_image_url || '/globe.svg',
           role: authProfile?.role || 'user',
@@ -674,8 +680,8 @@ export default function MyPage() {
                 {/* 왼쪽 사이드 탭 */}
                 <div className="w-full md:w-64 shrink-0 flex flex-col gap-2">
                   {[
-                    { id: 'planner', label: 'AI 프로젝트 플래너', icon: Lightbulb, desc: '프로젝트 기획 및 구조화' },
-                    { id: 'feeback', label: 'AI 피드백 도우미', icon: Zap, desc: '작품 리뷰 및 개선 제안' },
+                    { id: 'lean-canvas', label: 'AI 린 캔버스', icon: Grid, desc: '사업 모델 구조화' },
+                    { id: 'persona', label: 'AI 고객 페르소나', icon: UserCircle2, desc: '고객 정의 및 분석' },
                     { id: 'assistant', label: 'AI 콘텐츠 어시스턴트', icon: Wand2, desc: '텍스트 생성 및 다듬기' },
                   ].map((tool) => (
                     <button
@@ -690,6 +696,7 @@ export default function MyPage() {
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
                         activeAiTool === tool.id ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-purple-50 group-hover:text-purple-500'
                       }`}>
+                        {/* icon이 string이 아니라 컴포넌트임 */}
                         <tool.icon className="w-5 h-5" />
                       </div>
                       <div className="flex-1 overflow-hidden">
@@ -712,25 +719,35 @@ export default function MyPage() {
                     </div>
                     <div>
                       <h3 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">
-                        {activeAiTool === 'planner' && "AI 프로젝트 플래너가 곧 찾아옵니다"}
-                        {activeAiTool === 'feeback' && "AI 피드백 도우미가 곧 찾아옵니다"}
-                        {activeAiTool === 'assistant' && "AI 콘텐츠 어시스턴트가 곧 찾아옵니다"}
+                        {activeAiTool === 'lean-canvas' && "AI 린 캔버스 생성기"}
+                        {activeAiTool === 'persona' && "AI 고객 페르소나 정의"}
+                        {activeAiTool === 'assistant' && "AI 콘텐츠 어시스턴트"}
                       </h3>
                       <p className="text-gray-500 leading-relaxed font-medium">
-                        당신의 크리에이티브를 극대화할 수 있도록 <br/>
-                        강력한 바이브폴리오 AI 엔진이 준비 중입니다. ⚡️
+                        {activeAiTool === 'lean-canvas' && "아이디어 입력만으로 비즈니스 모델을 한눈에 구조화하세요.\n스타트업과 1인 창업가를 위한 필수 도구입니다."}
+                        {activeAiTool === 'persona' && "우리 서비스의 핵심 고객은 누구일까요?\n가상 페르소나를 정의하고 니즈를 파악해보세요."}
+                        {activeAiTool === 'assistant' && "더 매력적인 문장을 찾고 계신가요?\nAI가 당신의 글을 다듬어드립니다. (준비 중)"}
                       </p>
                     </div>
                     
-                    <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-full text-xs font-black uppercase tracking-widest border border-purple-100 shadow-sm">
-                      <Zap className="w-3 h-3 animate-pulse" />
-                      Under Construction
-                    </div>
-                    
-                    <p className="text-[10px] text-gray-400 max-w-sm mt-8">
-                      프로젝트 작성 페이지에서는 이미 실전 AI 보조 도구가 세팅되고 있습니다. 
-                      조금만 더 기다려주세요!
-                    </p>
+                    {activeAiTool === 'lean-canvas' && (
+                       <Button onClick={() => setLeanModalOpen(true)} className="btn-primary rounded-full px-8 py-6 text-base shadow-lg shadow-purple-200">
+                           <Grid className="w-5 h-5 mr-2" /> 새 린 캔버스 만들기
+                       </Button>
+                    )}
+
+                    {activeAiTool === 'persona' && (
+                       <Button onClick={() => setPersonaModalOpen(true)} className="btn-primary rounded-full px-8 py-6 text-base shadow-lg shadow-purple-200 bg-indigo-600 hover:bg-indigo-700">
+                           <UserCircle2 className="w-5 h-5 mr-2" /> 페르소나 정의하기
+                       </Button>
+                    )}
+
+                    {activeAiTool === 'assistant' && (
+                        <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-full text-xs font-black uppercase tracking-widest border border-purple-100 shadow-sm">
+                            <Zap className="w-3 h-3 animate-pulse" />
+                            Coming Soon
+                        </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -742,6 +759,16 @@ export default function MyPage() {
       {/* 모달 */}
       <ProjectDetailModalV2 open={modalOpen} onOpenChange={setModalOpen} project={selectedProject} />
       <ProposalDetailModal open={proposalModalOpen} onOpenChange={setProposalModalOpen} proposal={selectedProposal} />
+      <LeanCanvasModal 
+        open={leanModalOpen} 
+        onOpenChange={setLeanModalOpen} 
+        onApply={() => {}} // 마이페이지에서는 적용 기능 없이 생성만 체험
+      />
+      <PersonaDefinitionModal 
+        open={personaModalOpen} 
+        onOpenChange={setPersonaModalOpen} 
+        onApply={() => {}} 
+      />
       
       {/* 회원탈퇴 확인 모달 */}
       <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
