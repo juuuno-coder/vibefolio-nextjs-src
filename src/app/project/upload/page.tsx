@@ -112,6 +112,7 @@ export default function TiptapUploadPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [projectBgColor, setProjectBgColor] = useState("#FFFFFF");
   const [contentSpacing, setContentSpacing] = useState(60);
+  const [showOriginal, setShowOriginal] = useState(false); // [New] Toggle for Reference Viewer
 
   useEffect(() => {
     const init = async () => {
@@ -1238,6 +1239,58 @@ export default function TiptapUploadPage() {
 
       {/* Main Layout: Editor + Sidebar */}
       <div className="max-w-[1600px] mx-auto flex pt-8 pb-20 px-6 gap-10">
+
+        {/* [New] Left Sidebar (Version Control) */}
+        {isVersionMode && (
+           <div className="hidden xl:flex flex-col w-[320px] flex-shrink-0 gap-6 sticky top-28 h-fit animate-in fade-in slide-in-from-left-4">
+              {/* 1. Version Info Input */}
+              <div className="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm space-y-4">
+                 <div>
+                    <label className="text-xs font-black text-blue-600 mb-2 block uppercase tracking-wider">New Version Name</label>
+                    <Input 
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="예) v1.2 다크모드 업데이트"
+                      className="bg-gray-50 border-gray-200 focus:bg-white transition-colors"
+                    />
+                 </div>
+                 <div className="text-[10px] text-gray-400 leading-relaxed">
+                    * 버전 이름은 사용자들에게 노출되는 업데이트 타이틀입니다.
+                 </div>
+              </div>
+
+              {/* 2. Previous Version Toggle */}
+              <div className="bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden">
+                 <button 
+                   onClick={() => setShowOriginal(!showOriginal)}
+                   className={`w-full flex items-center justify-between p-5 transition-colors ${showOriginal ? 'bg-amber-50 text-amber-700' : 'bg-white hover:bg-gray-50 text-gray-700'}`}
+                 >
+                    <div className="flex items-center gap-3">
+                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${showOriginal ? 'bg-amber-200 text-amber-800' : 'bg-gray-100 text-gray-400'}`}>
+                          <FontAwesomeIcon icon={faFileLines} className="w-3.5 h-3.5" />
+                       </div>
+                       <span className="font-bold text-sm">이전 내용 참고하기</span>
+                    </div>
+                    <FontAwesomeIcon icon={showOriginal ? faCheck : faArrowLeft} className={`w-3 h-3 transition-transform ${showOriginal ? '' : 'rotate-180'}`} />
+                 </button>
+
+                 {/* 3. Reference Viewer */}
+                 {showOriginal && (
+                    <div className="border-t border-amber-100 bg-amber-50/30 p-5 animate-in slide-in-from-top-2 duration-300">
+                       <div className="flex items-center justify-between mb-3">
+                          <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Original Reference</span>
+                          <span className="text-[10px] text-gray-400">Read Only</span>
+                       </div>
+                       <div className="bg-white rounded-xl border border-amber-100 p-4 max-h-[400px] overflow-y-auto custom-scrollbar shadow-inner">
+                          <div className="prose prose-sm max-w-none text-gray-500 text-xs opacity-80 pointer-events-none select-none grayscale-[0.5]">
+                             <div dangerouslySetInnerHTML={{ __html: previousContent || "<p class='text-center text-gray-300 py-4'>이전 버전 내용이 없습니다.</p>" }} />
+                          </div>
+                       </div>
+                    </div>
+                 )}
+              </div>
+           </div>
+        )}
         
         {/* Editor Area (Left/Center) */}
         <div className="flex-1 flex justify-center">
@@ -1253,51 +1306,6 @@ export default function TiptapUploadPage() {
             />
           </div>
 
-          {/* [Refined] Previous Content Side-by-Side Reference (Step 1) */}
-          {isVersionMode && previousContent && (
-            <div className="w-full max-w-[900px] mt-12 flex items-start gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-               {/* Left Version Info Column */}
-               <div className="w-32 flex-shrink-0 pt-6">
-                  <div className="sticky top-40 text-right">
-                     <div className="inline-block px-3 py-1 bg-amber-100 text-amber-600 text-[9px] font-black rounded-lg mb-2 shadow-sm border border-amber-200">ORIGINAL</div>
-                     <h5 className="text-2xl font-black text-gray-800 tracking-tighter mb-1">v{versions.length > 0 ? versions[0].version_name : '1.0'}</h5>
-                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{versions.length > 0 ? new Date(versions[0].created_at).toLocaleDateString() : 'Previous'}</p>
-                     <div className="w-full h-1 bg-amber-400/20 mt-4 rounded-full"></div>
-                  </div>
-               </div>
-
-               {/* Right Side Accordion Content */}
-               <div className="flex-1 overflow-hidden border-2 border-amber-100/50 rounded-[2.5rem] bg-white shadow-sm ring-8 ring-amber-50/20">
-                  <details className="group">
-                    <summary className="flex items-center justify-between p-8 cursor-pointer list-none hover:bg-amber-50/20 transition-all">
-                      <div className="flex items-center gap-4 text-left">
-                        <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shadow-inner">
-                          <FontAwesomeIcon icon={faFileLines} className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h4 className="font-black text-gray-900 text-sm">이전 글 내용 확인하기</h4>
-                          <p className="text-[10px] text-amber-600 font-bold tracking-tight">참조 모드로 열람 중입니다</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                         <span className="text-[10px] font-bold text-gray-300 mr-2 group-open:opacity-0 transition-opacity uppercase tracking-widest">Expand</span>
-                         <div className="w-8 h-8 rounded-full border border-amber-200 flex items-center justify-center text-amber-500 group-open:rotate-180 transition-transform shadow-sm">
-                            <span className="text-xs">▼</span>
-                         </div>
-                      </div>
-                    </summary>
-                    <div className="px-10 pb-10 border-t border-amber-50 max-h-[700px] overflow-y-auto custom-scrollbar">
-                      <div className="mt-8 prose prose-stone prose-sm max-w-none text-gray-400 select-all opacity-60 filter contrast-[0.9] pointer-events-none">
-                        <div dangerouslySetInnerHTML={{ __html: previousContent }} />
-                      </div>
-                      <div className="mt-12 py-4 border-t border-dashed border-amber-100 text-center">
-                         <p className="text-[10px] text-gray-400 italic font-medium">참조용 뷰어입니다. 텍스트를 드래그해서 복사할 수 있습니다.</p>
-                      </div>
-                    </div>
-                  </details>
-               </div>
-            </div>
-          )}
         </div>
 
         {/* Right Sidebar (Sticky) */}
