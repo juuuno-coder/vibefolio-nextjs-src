@@ -84,6 +84,7 @@ export default function TiptapUploadPage() {
   const [allowMichelinRating, setAllowMichelinRating] = useState(true);
   const [allowStickers, setAllowStickers] = useState(true);
   const [allowSecretComments, setAllowSecretComments] = useState(true);
+  const [isFeedbackRequested, setIsFeedbackRequested] = useState(false); // [Growth Mode]
   const [isAiGeneratingTitle, setIsAiGeneratingTitle] = useState(false);
   const [isAiGeneratingSummary, setIsAiGeneratingSummary] = useState(false);
   const [content, setContent] = useState("");
@@ -486,6 +487,7 @@ export default function TiptapUploadPage() {
             genres: finalGenres,
             fields: finalFields,
             tags: finalTags, 
+            is_feedback_requested: isFeedbackRequested, // [Growth Mode]
           }),
           assets: assets,
         }),
@@ -946,61 +948,88 @@ export default function TiptapUploadPage() {
 
             <div className="w-full h-px bg-gray-100 my-10"></div>
 
-            {/* 피드백 설정 섹션 */}
-            <div className="mb-12">
-               <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                 <FontAwesomeIcon icon={faComment} className="w-5 h-5 text-green-600" />
-                 피드백 설정
-               </h3>
-               <p className="text-sm text-gray-500 mb-8">프로젝트에 최적화된 피드백 방식을 선택하세요.</p>
-               
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                 {[
-                   { 
-                     id: 'michelin', 
-                     title: '미슐랭 평점', 
-                     desc: '별점(5점 만점)을 통해 냉정한 실력을 확인합니다.', 
-                     icon: '⭐', 
-                     status: allowMichelinRating, 
-                     setter: setAllowMichelinRating 
-                   },
-                   { 
-                     id: 'stickers', 
-                     title: '스티커 반응', 
-                     desc: '가볍고 기분 좋게 🚀🧪🤔 등의 반응을 받습니다.', 
-                     icon: '🚀', 
-                     status: allowStickers, 
-                     setter: setAllowStickers 
-                   },
-                   { 
-                     id: 'secret', 
-                     title: '비밀댓글 허용', 
-                     desc: '중요한 피드백이나 연락처를 비밀스럽게 받습니다.', 
-                     icon: '🔒', 
-                     status: allowSecretComments, 
-                     setter: setAllowSecretComments 
-                   }
-                 ].map((opt) => (
-                   <div 
-                     key={opt.id}
-                     onClick={() => opt.setter(!opt.status)}
-                     className={`cursor-pointer p-6 rounded-2xl border-2 transition-all duration-300 ${
-                       opt.status 
-                         ? 'border-green-500 bg-green-50/30' 
-                         : 'border-gray-100 bg-white hover:border-gray-300'
-                     }`}
-                   >
-                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-3xl">{opt.icon}</span>
-                        <div className={`w-10 h-6 rounded-full transition-colors relative ${opt.status ? 'bg-green-500' : 'bg-gray-200'}`}>
-                           <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${opt.status ? 'left-5' : 'left-1'}`} />
-                        </div>
-                     </div>
-                     <h4 className="font-bold text-gray-900 mb-1">{opt.title}</h4>
-                     <p className="text-xs text-gray-500 leading-relaxed font-normal">{opt.desc}</p>
-                   </div>
-                 ))}
+            {/* 프드백 설정 섹션 (Growth Mode Toggle) */}
+            <div className={`mb-12 transition-all duration-300 ${isFeedbackRequested ? 'p-8 bg-green-50/30 border-2 border-green-500/30' : 'p-6 bg-gray-50 border border-gray-200'} rounded-3xl`}>
+               <div className="flex items-center justify-between mb-6">
+                 <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isFeedbackRequested ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-400'}`}>
+                          <FontAwesomeIcon icon={faRocket} className="w-4 h-4" />
+                       </div>
+                       성장하기 (피드백 요청)
+                    </h3>
+                    <p className="text-sm text-gray-500">다른 크리에이터들에게 작품을 공개하고 피드백을 받아보세요.</p>
+                 </div>
+                 
+                 {/* Master Toggle */}
+                 <button
+                   type="button"
+                   onClick={() => setIsFeedbackRequested(!isFeedbackRequested)}
+                   className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                     isFeedbackRequested ? 'bg-green-600' : 'bg-gray-300'
+                   }`}
+                 >
+                   <span
+                     className={`${
+                       isFeedbackRequested ? 'translate-x-7' : 'translate-x-1'
+                     } inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-sm`}
+                   />
+                 </button>
                </div>
+               
+               {isFeedbackRequested && (
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2">
+                   {[
+                     { 
+                       id: 'michelin', 
+                       title: '미슐랭 평점', 
+                       desc: '별점을 통해 객관적인 평가를 받습니다.', 
+                       icon: '⭐', 
+                       status: allowMichelinRating, 
+                       setter: setAllowMichelinRating 
+                     },
+                     { 
+                       id: 'stickers', 
+                       title: '스티커 투표', 
+                       desc: '간단한 이모지로 반응을 수집합니다.', 
+                       icon: '🗳️', 
+                       status: allowStickers, 
+                       setter: setAllowStickers 
+                     },
+                     { 
+                       id: 'secret', 
+                       title: '비밀 제안/댓글', 
+                       desc: '프라이빗한 피드백과 제안을 허용합니다.', 
+                       icon: '🔒', 
+                       status: allowSecretComments, 
+                       setter: setAllowSecretComments 
+                     }
+                   ].map((opt) => (
+                     <div 
+                       key={opt.id}
+                       onClick={() => opt.setter(!opt.status)}
+                       className={`cursor-pointer p-4 rounded-2xl border-2 transition-all duration-200 select-none ${
+                         opt.status 
+                           ? 'border-green-500 bg-white shadow-md shadow-green-100' 
+                           : 'border-transparent bg-white/50 hover:bg-white text-gray-400'
+                       }`}
+                     >
+                       <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${opt.status ? 'bg-green-100' : 'bg-gray-100 grayscale'}`}>
+                             {opt.icon}
+                          </div>
+                          <div className="flex-1">
+                             <h4 className={`font-bold text-sm ${opt.status ? 'text-gray-900' : 'text-gray-500'}`}>{opt.title}</h4>
+                             <p className="text-[10px] text-gray-400 leading-tight mt-0.5">{opt.desc}</p>
+                          </div>
+                          <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${opt.status ? 'border-green-500 bg-green-500 text-white' : 'border-gray-300'}`}>
+                             {opt.status && <FontAwesomeIcon icon={faCheck} className="w-3 h-3" />}
+                          </div>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               )}
             </div>
 
             <div className="w-full h-px bg-gray-100 my-8"></div>

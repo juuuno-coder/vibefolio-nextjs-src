@@ -100,7 +100,8 @@ export function Header({
   const menuItems = [
     { label: "발견하기", path: "/" },
     { label: "연결하기", path: "/recruit" },
-    { label: "AI 도구", path: "/tools/lean-canvas" },
+    { label: "성장하기", path: "/growth" },
+    { label: "AI 도구", path: isAdmin ? "/tools/lean-canvas" : "#" },
   ];
 
   return (
@@ -121,16 +122,30 @@ export function Header({
               <Link 
                 key={item.label}
                 href={item.path}
-                className="text-[15px] font-medium text-gray-900 transition-colors hover:text-black/60 font-poppins relative group flex items-center"
+                onClick={(e) => {
+                   if (item.label === "AI 도구" && !isAdmin) {
+                      e.preventDefault();
+                   }
+                }}
+                className={`text-[15px] font-medium transition-colors font-poppins relative group flex items-center ${
+                   item.label === "AI 도구" && !isAdmin 
+                     ? "text-gray-400 cursor-not-allowed hover:text-gray-400" 
+                     : "text-gray-900 hover:text-black/60"
+                }`}
               >
                 {item.label}
                 {item.label === "연결하기" && (
                   <span className="absolute -top-1 -right-3 w-1 h-1 bg-green-500 rounded-full" />
                 )}
-                {item.label === "AI 도구" && (
-                    <span className="bg-purple-100 text-purple-600 text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1.5 align-middle">NEW</span>
+                {item.label === "성장하기" && (
+                  <span className="bg-orange-100 text-orange-600 text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1.5 align-middle tracking-tighter">NEW</span>
                 )}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black transition-all group-hover:w-full" />
+                {item.label === "AI 도구" && (
+                    <span className="bg-gray-100 text-gray-500 text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1.5 align-middle tracking-tighter">준비중</span>
+                )}
+                {item.label !== "AI 도구" && (
+                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black transition-all group-hover:w-full" />
+                )}
               </Link>
             ))}
           </nav>

@@ -170,6 +170,9 @@ interface ProjectDetailModalV2Props {
     userId?: string;
     rendering_type?: string;
     custom_data?: any;
+    allow_michelin_rating?: boolean;
+    allow_stickers?: boolean;
+    allow_secret_comments?: boolean;
   } | null;
 }
 
@@ -230,6 +233,12 @@ export function ProjectDetailModalV2({
   });
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [otherProjects, setOtherProjects] = useState<any[]>([]);
+
+  // [Growth Mode] Feedback Settings Derived State
+  const cData = project && typeof project.custom_data === 'string' ? JSON.parse(project.custom_data) : project?.custom_data;
+  const isFeedbackRequested = cData?.is_feedback_requested === true;
+  const allowMichelin = project?.allow_michelin_rating ?? true;
+  const allowStickers = project?.allow_stickers ?? true;
 
   // [New] 실시간 좋아요 수 동기화
   useEffect(() => {
@@ -1274,8 +1283,10 @@ export function ProjectDetailModalV2({
             {/* 댓글 패널 (더 슬림하게 22vw 조정) */}
             {commentsPanelOpen && (
               <div className="w-[22vw] h-full bg-white flex flex-col border-l border-gray-200 ml-4 rounded-t-xl overflow-hidden shadow-xl animate-in slide-in-from-right duration-500">
-                <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white z-10">
-                  <h3 className="font-bold text-sm">활동 및 댓글 ({comments.length})</h3>
+                <div className={`p-4 border-b flex items-center justify-between z-10 ${isFeedbackRequested ? 'bg-green-50/50 border-green-100' : 'bg-white border-gray-100'}`}>
+                  <h3 className={`font-bold text-sm ${isFeedbackRequested ? 'text-green-800 flex items-center gap-2' : ''}`}>
+                    {isFeedbackRequested ? <><FontAwesomeIcon icon={faRocket} /> 피드백 & 상세리뷰 </> : `활동 및 댓글 (${comments.length})`}
+                  </h3>
                   <button onClick={() => setCommentsPanelOpen(false)} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
                     <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
                   </button>

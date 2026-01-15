@@ -47,6 +47,15 @@ export async function GET(request: NextRequest) {
 
     // [New] 분야 필터 (project_fields 테이블 조인 대체)
     const field = searchParams.get('field');
+    const mode = searchParams.get('mode');
+
+    // [Growth Mode] Filter
+    if (mode === 'growth') {
+      // JSONB stored as text or JSON, ilike serves as a robust check for boolean flag in JSON string
+      // Matches both "is_feedback_requested":true and "is_feedback_requested": true
+      query = query.or('custom_data.ilike.%"is_feedback_requested":true%,custom_data.ilike.%"is_feedback_requested": true%');
+    }
+
     if (field && field !== 'all') {
        // 1. 해당 슬러그의 Field ID 조회
        const { data: fieldData } = await (supabase as any)

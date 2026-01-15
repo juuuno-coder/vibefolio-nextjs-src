@@ -11,12 +11,12 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
+import { FeedbackReportModal } from "./FeedbackReportModal";
+import { getCategoryName } from "@/lib/categoryMap";
 
 // 기본 폴백 이미지
 const FALLBACK_IMAGE = "/placeholder.svg";
 const FALLBACK_AVATAR = "/globe.svg";
-
-import { getCategoryName } from "@/lib/categoryMap";
 
 // Props 인터페이스 정의
 interface ImageCardProps {
@@ -51,6 +51,7 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
   ({ props, onClick, className, ...rest }, ref) => {
     const [imgError, setImgError] = useState(false);
     const [avatarError, setAvatarError] = useState(false);
+    const [showReportModal, setShowReportModal] = useState(false);
     const { user } = useAuth();
     const router = useRouter();
     
@@ -90,16 +91,6 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
     // 화면상의 좋아요 수 계산 (Optimistic UI 보정)
     const displayLikes = likes + (isLiked ? 1 : 0) - (props.likes && isLiked ? 0 : 0);
 
-    const handleLikeClick = (e: React.MouseEvent) => {
-      e.stopPropagation(); // 카드 클릭(모달 열기) 방지
-      
-      if (!user) {
-        toast.error("로그인이 필요합니다.");
-        return;
-      }
-      toggleLike();
-    };
-
     const handlePromote = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!confirm("내공 5점을 사용하여 '피드백 요청'을 등록하시겠습니까?\n프로젝트에 [FEEDBACK] 뱃지가 붙고 사람들의 주목을 받게 됩니다!")) return;
@@ -117,7 +108,6 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
             if (!res.ok) throw new Error(result.error || "요청 실패");
             
             toast.success("성공! 피드백 요청 배지가 부착되었습니다. 🎉");
-            // Optional: window.location.reload() or callback to refresh
         } catch(err: any) {
             toast.error(err.message);
         }
@@ -143,6 +133,20 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
                       <Megaphone className="w-4 h-4" /> 피드백 요청
                     </button>
                 )}
+                
+                {/* [Report Button] Only for Growth Mode */}
+                {props.is_feedback_requested && (
+                    <button 
+                      onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setShowReportModal(true);
+                      }}
+                      className="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-indigo-700 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center mb-2"
+                    >
+                      <BarChart3 className="w-4 h-4" /> 피드백 리포트
+                    </button>
+                )}
+
                 <div className="flex flex-col gap-2">
                     <button 
                       onClick={(e) => { 
@@ -227,15 +231,13 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
           )}
         </div>
 
-        {/* 하단 정보 영역 (복원) */}
+        {/* 하단 정보 영역 */}
         <div className="pt-3 px-1">
-          {/* 제목 */}
           <h3 className="font-bold text-gray-900 text-[15px] mb-2 truncate group-hover:text-green-600 transition-colors">
             {props.title || "제목 없음"}
           </h3>
           
           <div className="flex items-center justify-between">
-            {/* 좌측: 작성자 (작게) */}
             <div className="flex items-center gap-1.5 min-w-0">
                <div className="relative w-5 h-5 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
                   <OptimizedImage 
@@ -250,7 +252,6 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
                </span>
             </div>
             
-            {/* 우측: 좋아요 / 조회수 */}
             <div className="flex items-center gap-3 text-xs text-gray-400 flex-shrink-0">
                <div className="flex items-center gap-1" title={`좋아요 ${displayLikes}`}>
                   <Heart className={`w-3.5 h-3.5 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
@@ -263,6 +264,16 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
             </div>
           </div>
         </div>
+
+        {/* Feedback Report Modal */}
+        {showReportModal && (
+            <FeedbackReportModal 
+               open={showReportModal} 
+               onOpenChange={setShowReportModal}
+               projectTitle={props.title || "Untitled"}
+               projectId={props.id}
+            />
+        )}
       </div>
     );
   }

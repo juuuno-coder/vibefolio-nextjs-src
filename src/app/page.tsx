@@ -45,6 +45,11 @@ interface ImageDialogProps {
   fields?: string[]; // 복수 분야 (Slug)
   userId?: string;
   rendering_type?: string;
+  allow_michelin_rating?: boolean;
+  allow_stickers?: boolean;
+  allow_secret_comments?: boolean;
+  custom_data?: any;
+  is_feedback_requested?: boolean;
 }
 
 function HomeContent() {
@@ -211,6 +216,11 @@ function HomeContent() {
               fields: projectFields,
               userId: proj.user_id,
               rendering_type: proj.rendering_type,
+              allow_michelin_rating: proj.allow_michelin_rating,
+              allow_stickers: proj.allow_stickers,
+              allow_secret_comments: proj.allow_secret_comments,
+              custom_data: proj.custom_data,
+              is_feedback_requested: typeof proj.custom_data === 'string' ? JSON.parse(proj.custom_data)?.is_feedback_requested : proj.custom_data?.is_feedback_requested,
             } as ImageDialogProps;
           });
           
