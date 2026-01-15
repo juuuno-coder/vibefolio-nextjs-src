@@ -172,6 +172,60 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 });
     }
 
+    // [Point System] Growth Mode Check & Points Deduction
+    let isGrowthMode = false;
+    if (custom_data) {
+        try {
+            const parsed = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
+            if (parsed.is_feedback_requested) {
+                isGrowthMode = true;
+            }
+        } catch (e) { console.error('Custom data parse error', e); }
+    }
+
+    if (isGrowthMode) {
+        // 1. Check User Points
+        const { data: profile, error: profileError } = await (supabaseAdmin as any)
+            .from('profiles')
+            .select('points')
+            .eq('id', user_id)
+            .single();
+        
+        if (profileError || !profile) {
+            return NextResponse.json({ error: '사용자 정보를 찾을 수 없습니다.' }, { status: 400 });
+        }
+
+        const currentPoints = profile.points || 0;
+        const COST = 500;
+
+        if (currentPoints < COST) {
+            return NextResponse.json({ 
+                error: `내공이 부족합니다. (보유: ${currentPoints}점 / 필요: ${COST}점)`,
+                code: 'INSUFFICIENT_POINTS' 
+            }, { status: 402 });
+        }
+
+        // 2. Deduct Points
+        // Note: Ideally use a transaction or RPC, but doing sequential update for MVP.
+        const { error: updateError } = await (supabaseAdmin as any)
+            .from('profiles')
+            .update({ points: currentPoints - COST })
+            .eq('id', user_id);
+
+        if (updateError) {
+             return NextResponse.json({ error: '포인트 차감 중 오류가 발생했습니다.' }, { status: 500 });
+        }
+
+        // 3. Log Transaction
+        await (supabaseAdmin as any)
+            .from('point_logs')
+            .insert({
+                user_id: user_id,
+                amount: -COST,
+                reason: '성장하기 피드백 요청 (프로젝트 등록)'
+            });
+    }
+
     let { data, error } = await (supabaseAdmin as any)
       .from('Project')
       .insert([{ 
