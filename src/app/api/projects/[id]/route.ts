@@ -137,9 +137,12 @@ export async function PUT(
 
     // 3. 업데이트 수행 (supabaseAdmin 사용)
     const body = await request.json();
-    const { title, content_text, thumbnail_url, category_id, rendering_type, custom_data } = body;
+    const { 
+        title, content_text, thumbnail_url, category_id, rendering_type, custom_data,
+        allow_michelin_rating, allow_stickers, allow_secret_comments 
+    } = body;
 
-    const { data, error } = await (supabaseAdmin as any)
+    let { data, error } = await (supabaseAdmin as any)
       .from('Project')
       .update({
         title,
@@ -148,6 +151,9 @@ export async function PUT(
         category_id,
         rendering_type,
         custom_data,
+        allow_michelin_rating,
+        allow_stickers,
+        allow_secret_comments
       })
       .eq('project_id', id)
       .select(`
@@ -158,6 +164,32 @@ export async function PUT(
         )
       `)
       .single();
+
+    // Fallback: Handle Schema Cache Misses for Updates
+    if (error && error.message && (
+        error.message.includes("'allow_michelin_rating'") ||
+        error.message.includes("'allow_stickers'") ||
+        error.message.includes("'allow_secret_comments'")
+    )) {
+       console.warn("Update Error: Schema/Cache mismatch for optional columns. Retrying update without them.");
+       const retryResult = await (supabaseAdmin as any)
+        .from('Project')
+        .update({
+            title,
+            content_text,
+            thumbnail_url,
+            category_id,
+            rendering_type,
+            custom_data,
+            // Exclude new columns
+        })
+        .eq('project_id', id)
+        .select(`*, Category(category_id, name)`)
+        .single();
+        
+       data = retryResult.data;
+       error = retryResult.error;
+    }
 
     if (error) {
       console.error('프로젝트 수정 실패:', error);

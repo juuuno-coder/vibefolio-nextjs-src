@@ -238,12 +238,22 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
-    // Fallback: If 'summary' column is missing in DB schema, retry without it
-    if (error && error.message && error.message.includes("Could not find the 'summary' column")) {
-       console.warn("DB Schema mismatch: 'summary' column missing. Retrying without summary.");
+    // Fallback: Handle Schema Cache Misses (Missing Columns)
+    if (error && error.message && (
+        error.message.includes("Could not find the 'summary' column") ||
+        error.message.includes("'allow_michelin_rating'") ||
+        error.message.includes("'allow_stickers'") ||
+        error.message.includes("'allow_secret_comments'")
+    )) {
+       console.warn("DB Schema mismatch or Cache Stale: Optional columns missing. Retrying with basic fields.");
        const retryResult = await (supabaseAdmin as any)
         .from('Project')
-        .insert([{ user_id, category_id, title, content_text, thumbnail_url, rendering_type, custom_data, likes_count: 0, views_count: 0 }] as any)
+        .insert([{ 
+            user_id, category_id, title, 
+            // summary: summary, // Exclude summary to be safe
+            content_text, thumbnail_url, rendering_type, custom_data, 
+            likes_count: 0, views_count: 0 
+        }] as any)
         .select()
         .single();
         
