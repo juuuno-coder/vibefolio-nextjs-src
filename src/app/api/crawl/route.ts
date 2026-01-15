@@ -55,10 +55,10 @@ async function handleCrawl() {
     }
 
     let addedCount = 0;
-    let skippedCount = 0;
+    let updatedCount = 0;
     let errorCount = 0;
 
-    // DB 저장 (중복 체크)
+    // DB 저장 (중복 체크 및 업데이트)
     for (const item of result.items) {
       try {
         // 제목 기반 중복 체크
@@ -68,43 +68,48 @@ async function handleCrawl() {
           .eq('title', item.title)
           .maybeSingle();
 
-        if (!existing) {
-          const mainLink = item.officialLink || item.link;
-          const sourceLink = item.link;
-          
-          // 날짜 유효성 검사 - 유효하지 않은 날짜는 null로 처리
-          const isValidDate = (dateStr: string) => {
-            if (!dateStr || dateStr === '상시' || dateStr === '상시모집') return false;
-            const parsed = Date.parse(dateStr);
-            return !isNaN(parsed);
-          };
-          
-          const validDate = isValidDate(item.date) ? item.date : null;
-          const validStartDate = item.startDate && isValidDate(item.startDate) ? item.startDate : null;
+        const mainLink = item.officialLink || item.link;
+        const sourceLink = item.link;
+        
+        // 날짜 유효성 검사
+        const isValidDate = (dateStr: string) => {
+          if (!dateStr || dateStr === '상시' || dateStr === '상시모집') return false;
+          const parsed = Date.parse(dateStr);
+          return !isNaN(parsed);
+        };
+        
+        const validDate = isValidDate(item.date) ? item.date : null;
+        const validStartDate = item.startDate && isValidDate(item.startDate) ? item.startDate : null;
 
+        const itemData = {
+            title: item.title,
+            description: item.description,
+            type: item.type,
+            date: validDate,
+            company: item.company,
+            link: mainLink,
+            source_link: sourceLink,
+            thumbnail: item.image || item.thumbnail,
+            location: item.location,
+            prize: item.prize,
+            salary: item.salary,
+            application_target: item.applicationTarget,
+            sponsor: item.sponsor,
+            total_prize: item.totalPrize,
+            first_prize: item.firstPrize,
+            start_date: validStartDate,
+            category_tags: item.categoryTags,
+            crawled_at: new Date().toISOString()
+        };
+
+        if (!existing) {
+          // 신규 추가
           const { error: insertError } = await supabaseAdmin
             .from('recruit_items')
             .insert([{
-              title: item.title,
-              description: item.description,
-              type: item.type,
-              date: validDate,
-              company: item.company,
-              link: mainLink,
-              source_link: sourceLink,
-              thumbnail: item.image || item.thumbnail,
-              location: item.location,
-              prize: item.prize,
-              salary: item.salary,
-              application_target: item.applicationTarget,
-              sponsor: item.sponsor,
-              total_prize: item.totalPrize,
-              first_prize: item.firstPrize,
-              start_date: validStartDate,
-              category_tags: item.categoryTags,
+              ...itemData,
               is_approved: false,  // 관리자 승인 대기
               is_active: false,    // 승인 전 비활성
-              crawled_at: new Date().toISOString()
             }]);
 
           if (insertError) {
@@ -114,7 +119,18 @@ async function handleCrawl() {
             addedCount++;
           }
         } else {
-          skippedCount++;
+          // 기존 항목 업데이트 (상세 정보 갱신)
+          const { error: updateError } = await supabaseAdmin
+            .from('recruit_items')
+            .update(itemData)
+            .eq('id', existing.id);
+
+          if (updateError) {
+             console.error(`❌ Update Error [${item.title}]:`, updateError.message);
+             errorCount++;
+          } else {
+             updatedCount++;
+          }
         }
       } catch (itemError) {
         console.error(`❌ Item Error [${item.title}]:`, itemError);
@@ -124,7 +140,7 @@ async function handleCrawl() {
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     
-    console.log(`✅ [Crawl API] Completed in ${duration}s - Found: ${result.itemsFound}, Added: ${addedCount}, Skipped: ${skippedCount}, Errors: ${errorCount}`);
+    console.log(`✅ [Crawl API] Completed in ${duration}s - Found: ${result.itemsFound}, Added: ${addedCount}, Updated: ${updatedCount}, Errors: ${errorCount}`);
 
     return NextResponse.json({
       success: true,
@@ -133,10 +149,11 @@ async function handleCrawl() {
       stats: {
         found: result.itemsFound,
         added: addedCount,
-        skipped: skippedCount,
+        updated: updatedCount,
         errors: errorCount,
       }
     });
+
 
   } catch (error) {
     console.error('💥 [Crawl API] Fatal Error:', error);

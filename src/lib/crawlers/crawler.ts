@@ -74,7 +74,7 @@ function formatDateString(str: string): string | null {
 }
 
 // ============================================================
-// Wevity (Contest) - AI 키워드 필터 강화
+// Wevity (Contest) - 상세 요약 정보 강화
 // ============================================================
 async function crawlWevity(): Promise<CrawledItem[]> {
   // AI/영상 관련 카테고리 추가
@@ -194,10 +194,20 @@ async function crawlWevity(): Promise<CrawledItem[]> {
         
         // AI 연관성 점수 계산
         const aiScore = getAIRelevanceScore(title, category || '');
+
+        // Description 생성 로직 개선 (상세 정보 조합)
+        const descParts = [];
+        if (detailInfo.applicationTarget) descParts.push(`대상: ${detailInfo.applicationTarget}`);
+        if (detailInfo.totalPrize || detailInfo.prize) descParts.push(`시상: ${detailInfo.totalPrize || detailInfo.prize}`);
+        if (category) descParts.push(`분야: ${category}`);
+        
+        const richDescription = descParts.length > 0 
+          ? descParts.join(' / ') 
+          : (category || '공모전 정보를 확인하세요.');
         
         allItems.push({
           title,
-          description: category || '공모전 정보를 확인하세요.',
+          description: richDescription,
           type: 'contest',
           date: formattedDate || '상시모집',
           company: company,
@@ -232,7 +242,7 @@ async function crawlWevity(): Promise<CrawledItem[]> {
 }
 
 // ============================================================
-// Wanted (Job) - AI/ML 포지션 강화
+// Wanted (Job) - 상세 정보 크롤링 (주요업무, 자격요건)
 // ============================================================
 async function crawlWanted(): Promise<CrawledItem[]> {
   // AI/ML 관련 태그 ID 추가
@@ -253,31 +263,73 @@ async function crawlWanted(): Promise<CrawledItem[]> {
       const res = await fetch(url);
       if (!res.ok) continue;
       const data = await res.json();
-      
-      for (const job of (data.data || [])) {
-        if (seenIds.has(job.id)) continue;
+      const jobList = data.data || [];
+
+      // 병렬로 상세 정보 가져오기
+      const detailedJobs = await Promise.all(jobList.map(async (job: any) => {
+        if (seenIds.has(job.id)) return null;
         seenIds.add(job.id);
-        
-        const skills = (job.skill_tags || []).map((t: any) => t.title).join(', ');
-        const description = `기술스택: ${skills}`;
-        
-        // AI 연관성 점수
-        const aiScore = getAIRelevanceScore(job.position, description);
-        
-        allItems.push({
-          title: job.position,
-          description,
-          type: 'job',
-          date: job.due_time || '상시',
-          company: job.company?.name || 'Unknown',
-          location: job.address?.location || '서울',
-          link: `https://www.wanted.co.kr/wd/${job.id}`,
-          sourceUrl: 'https://www.wanted.co.kr',
-          image: job.title_img?.thumb || getThemedPlaceholder(job.position, 'job'),
-          salary: job.reward?.total ? `보상금: ${job.reward.total}` : undefined,
-          categoryTags: aiScore > 0 ? 'AI, 채용' : '채용',
-        });
-      }
+
+        try {
+            // 상세 API 호출
+            const detailRes = await fetch(`https://www.wanted.co.kr/api/v4/jobs/${job.id}`);
+            if (!detailRes.ok) throw new Error('Detail fetch failed');
+            const detailData = await detailRes.json();
+            const detail = detailData.job?.detail || {};
+
+            // 기술 스택
+            const skills = (job.skill_tags || []).map((t: any) => t.title).join(', ');
+            
+            // 설명 구성
+            const parts = [];
+            if (skills) parts.push(`[기술스택] ${skills}`);
+            if (detail.main_tasks) parts.push(`[주요업무] ${detail.main_tasks.substring(0, 100).replace(/\n/g, ' ')}...`);
+            if (detail.requirements) parts.push(`[자격요건] ${detail.requirements.substring(0, 100).replace(/\n/g, ' ')}...`);
+
+            const description = parts.length > 0 
+                ? parts.join('\n\n') 
+                : (skills ? `기술스택: ${skills}` : '상세 내용은 링크를 참고하세요.');
+
+            // AI 연관성 점수
+            const aiScore = getAIRelevanceScore(job.position, description);
+
+            return {
+                title: job.position,
+                description,
+                type: 'job',
+                date: job.due_time || '상시',
+                company: job.company?.name || 'Unknown',
+                location: job.address?.location || '서울',
+                link: `https://www.wanted.co.kr/wd/${job.id}`,
+                sourceUrl: 'https://www.wanted.co.kr',
+                image: job.title_img?.thumb || getThemedPlaceholder(job.position, 'job'),
+                salary: job.reward?.total ? `보상금: ${job.reward.total}` : undefined,
+                categoryTags: aiScore > 0 ? 'AI, 채용' : '채용',
+            } as CrawledItem;
+
+        } catch (err) {
+            // 상세 조회 실패 시 기본 정보만 반환
+            const skills = (job.skill_tags || []).map((t: any) => t.title).join(', ');
+            return {
+                title: job.position,
+                description: skills ? `기술스택: ${skills}` : '채용 정보를 확인하세요.',
+                type: 'job',
+                date: job.due_time || '상시',
+                company: job.company?.name || 'Unknown',
+                location: job.address?.location || '서울',
+                link: `https://www.wanted.co.kr/wd/${job.id}`,
+                sourceUrl: 'https://www.wanted.co.kr',
+                image: job.title_img?.thumb || getThemedPlaceholder(job.position, 'job'),
+                categoryTags: '채용',
+            } as CrawledItem;
+        }
+      }));
+
+      // null 제거 및 추가
+      detailedJobs.forEach(item => {
+        if (item) allItems.push(item);
+      });
+
     } catch (e) {
       console.error('Wanted crawl error:', e);
     }

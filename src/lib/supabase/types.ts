@@ -100,9 +100,9 @@ export type Database = {
         Relationships: [];
       };
       notices: {
-        Row: { id: number; title: string; content: string; is_important: boolean; is_visible: boolean; created_at: string; };
-        Insert: { id?: number; title: string; content: string; is_important?: boolean; is_visible?: boolean; created_at?: string; };
-        Update: { id?: number; title?: string; content?: string; is_important?: boolean; is_visible?: boolean; created_at?: string; };
+        Row: { id: number; title: string; content: string; is_important: boolean; is_visible: boolean; created_at: string; version: string | null; category: string; tags: string[] | null; };
+        Insert: { id?: number; title: string; content: string; is_important?: boolean; is_visible?: boolean; created_at?: string; version?: string | null; category?: string; tags?: string[] | null; };
+        Update: { id?: number; title?: string; content?: string; is_important?: boolean; is_visible?: boolean; created_at?: string; version?: string | null; category?: string; tags?: string[] | null; };
         Relationships: [];
       };
       notifications: {
@@ -235,9 +235,13 @@ export type Database = {
           views_count: number;
           created_at: string;
           updated_at: string;
+          allow_michelin_rating: boolean;
+          allow_stickers: boolean;
+          allow_secret_comments: boolean;
+          description: string | null;
         };
-        Insert: { project_id?: number; user_id: string; category_id: number; title: string; rendering_type?: string | null; custom_data?: string | null; thumbnail_url?: string | null; content_text?: string | null; views?: number; likes_count?: number; views_count?: number; created_at?: string; updated_at?: string; };
-        Update: { project_id?: number; user_id?: string; category_id?: number; title?: string; rendering_type?: string | null; custom_data?: string | null; thumbnail_url?: string | null; content_text?: string | null; views?: number; likes_count?: number; views_count?: number; created_at?: string; updated_at?: string; };
+        Insert: { project_id?: number; user_id: string; category_id: number; title: string; rendering_type?: string | null; custom_data?: string | null; thumbnail_url?: string | null; content_text?: string | null; views?: number; likes_count?: number; views_count?: number; created_at?: string; updated_at?: string; allow_michelin_rating?: boolean; allow_stickers?: boolean; allow_secret_comments?: boolean; description?: string | null; };
+        Update: { project_id?: number; user_id?: string; category_id?: number; title?: string; rendering_type?: string | null; custom_data?: string | null; thumbnail_url?: string | null; content_text?: string | null; views?: number; likes_count?: number; views_count?: number; created_at?: string; updated_at?: string; allow_michelin_rating?: boolean; allow_stickers?: boolean; allow_secret_comments?: boolean; description?: string | null; };
         Relationships: [];
       };
       Collection: {
@@ -297,6 +301,7 @@ export type Database = {
           status: string;
           created_at: string;
           updated_at: string;
+          updated_at: string; 
         };
         Insert: { proposal_id?: string; sender_id: string; receiver_id: string; title: string; content: string; status?: string; created_at?: string; updated_at?: string; };
         Update: { proposal_id?: string; sender_id?: string; receiver_id?: string; title?: string; content?: string; status?: string; created_at?: string; updated_at?: string; };

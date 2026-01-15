@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
 import { FeedbackReportModal } from "./FeedbackReportModal";
+import { FeedbackRequestModal } from "./FeedbackRequestModal";
 import { getCategoryName } from "@/lib/categoryMap";
 
 // 기본 폴백 이미지
@@ -52,6 +53,7 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
     const [imgError, setImgError] = useState(false);
     const [avatarError, setAvatarError] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
+    const [showFeedbackRequestModal, setShowFeedbackRequestModal] = useState(false);
     const { user } = useAuth();
     const router = useRouter();
     
@@ -91,26 +93,9 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
     // 화면상의 좋아요 수 계산 (Optimistic UI 보정)
     const displayLikes = likes + (isLiked ? 1 : 0) - (props.likes && isLiked ? 0 : 0);
 
-    const handlePromote = async (e: React.MouseEvent) => {
+    const handlePromote = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!confirm("내공 5점을 사용하여 '피드백 요청'을 등록하시겠습니까?\n프로젝트에 [FEEDBACK] 뱃지가 붙고 사람들의 주목을 받게 됩니다!")) return;
-
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) { toast.error("로그인이 필요합니다."); return; }
-
-            const res = await fetch(`/api/projects/${props.id}/promote`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${session.access_token}` }
-            });
-            
-            const result = await res.json();
-            if (!res.ok) throw new Error(result.error || "요청 실패");
-            
-            toast.success("성공! 피드백 요청 배지가 부착되었습니다. 🎉");
-        } catch(err: any) {
-            toast.error(err.message);
-        }
+        setShowFeedbackRequestModal(true);
     };
 
     return (
@@ -273,6 +258,16 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
                projectTitle={props.title || "Untitled"}
                projectId={props.id}
             />
+        )}
+        
+        {/* Feedback Request Modal (New) */}
+        {showFeedbackRequestModal && (
+             <FeedbackRequestModal 
+                open={showFeedbackRequestModal}
+                onOpenChange={setShowFeedbackRequestModal}
+                projectId={props.id}
+                projectTitle={props.title || "Untitled"}
+             />
         )}
       </div>
     );
