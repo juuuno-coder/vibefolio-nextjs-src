@@ -51,8 +51,6 @@ export async function GET(request: NextRequest) {
 
     // [Growth Mode] Filter
     if (mode === 'growth') {
-      // JSONB stored as text or JSON, ilike serves as a robust check for boolean flag in JSON string
-      // Matches both "is_feedback_requested":true and "is_feedback_requested": true
       query = query.or('custom_data.ilike.%"is_feedback_requested":true%,custom_data.ilike.%"is_feedback_requested": true%');
     }
 
@@ -122,7 +120,6 @@ export async function GET(request: NextRequest) {
 
         if (usersData && usersData.length > 0) {
           usersData.forEach((u: any) => {
-            // 프론트엔드가 기대하는 필드명으로 매핑 (username, avatar_url 등 다양한 케이스 대응)
             userMap.set(u.id, {
               username: u.username || u.nickname || u.name || u.display_name || u.email?.split('@')[0] || 'Unknown',
               avatar_url: u.avatar_url || u.profile_image_url || u.profileImage || u.image || '/globe.svg',
@@ -133,17 +130,15 @@ export async function GET(request: NextRequest) {
         }
 
         data.forEach((project: any) => {
-          // 프론트엔드가 users 객체를 기대한다면 users 키에 할당
           project.users = userMap.get(project.user_id) || { username: 'Unknown', avatar_url: '/globe.svg' };
-          // 호환성을 위해 User 키에도 할당 (혹시 모를 구형 코드 대응)
           project.User = project.users; 
         });
       }
     }
 
     return NextResponse.json({
-      projects: data, // Compatibility for some admin pages
-      data: data, // Alignment with pagination logic
+      projects: data, 
+      data: data, 
       metadata: {
         total: count || 0,
         page: page,
@@ -206,7 +201,6 @@ export async function POST(request: NextRequest) {
         }
 
         // 2. Deduct Points
-        // Note: Ideally use a transaction or RPC, but doing sequential update for MVP.
         const { error: updateError } = await (supabaseAdmin as any)
             .from('profiles')
             .update({ points: currentPoints - COST })
@@ -238,28 +232,8 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
-    // Fallback: Handle Schema Cache Misses (Missing Columns)
-    if (error && error.message && (
-        error.message.includes("Could not find the 'summary' column") ||
-        error.message.includes("'allow_michelin_rating'") ||
-        error.message.includes("'allow_stickers'") ||
-        error.message.includes("'allow_secret_comments'")
-    )) {
-       console.warn("DB Schema mismatch or Cache Stale: Optional columns missing. Retrying with basic fields.");
-       const retryResult = await (supabaseAdmin as any)
-        .from('Project')
-        .insert([{ 
-            user_id, category_id, title, 
-            // summary: summary, // Exclude summary to be safe
-            content_text, thumbnail_url, rendering_type, custom_data, 
-            likes_count: 0, views_count: 0 
-        }] as any)
-        .select()
-        .single();
-        
-       data = retryResult.data;
-       error = retryResult.error;
-    }
+    // ERROR: Fallback Logic Removed (Requested by User)
+    // If error occurs due to missing columns, it will flow to the standard error response below.
 
     if (error) {
       console.error('프로젝트 생성 실패:', error);
@@ -270,21 +244,18 @@ export async function POST(request: NextRequest) {
     }
 
     // [New] 표준화된 Fields 매핑 저장
-    // custom_data 내의 fields (slug 배열)를 확인하여 project_fields 테이블에 관계 설정
     if (data && data.project_id && custom_data) {
         try {
             const parsedCustom = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
-            const fieldSlugs = parsedCustom.fields; // e.g. ['it', 'finance']
+            const fieldSlugs = parsedCustom.fields; 
 
             if (Array.isArray(fieldSlugs) && fieldSlugs.length > 0) {
-                // 1. Slug에 해당하는 ID 조회
                 const { data: fieldRecords } = await (supabaseAdmin as any)
                     .from('fields')
                     .select('id, slug')
                     .in('slug', fieldSlugs);
 
                 if (fieldRecords && fieldRecords.length > 0) {
-                    // 2. project_fields 테이블에 매핑 데이터 삽입
                     const mappings = fieldRecords.map((f: any) => ({
                         project_id: data.project_id,
                         field_id: f.id,
@@ -307,9 +278,6 @@ export async function POST(request: NextRequest) {
     }
 
     // [Point System] Reward for Upload (General Projects)
-    // 성장하기 모드(-500)가 아닐 경우에만 +100 지급 (중복 지급 방지 및 경제 밸런스)
-    // 혹은 사용자 의도가 "업로드 행위 자체 보상"이라면 -500 하고 +100 해서 -400이 될 수도 있음.
-    // 하지만 "성장하기는 투자가 필요하다"는 개념이 강하므로, 일반 업로드 보상은 제외하는 것이 직관적임.
     if (!isGrowthMode && data && data.project_id) {
          try {
              // 1. Get current points
@@ -345,7 +313,7 @@ export async function POST(request: NextRequest) {
                     type: 'point',
                     title: '내공 획득! 🪙',
                     message: `프로젝트 업로드 보상으로 ${REWARD} 내공을 받았습니다.`,
-                    link: '/mypage', // Link to point history (later) or mypage
+                    link: '/mypage',
                     read: false
                 });
              
