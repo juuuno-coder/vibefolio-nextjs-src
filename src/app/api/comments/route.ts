@@ -197,20 +197,39 @@ export async function POST(request: NextRequest) {
 
     console.log('댓글 작성 성공:', data);
 
-    // [포인트 지급] 내 프로젝트가 아닌 경우에만 +1 점
+    // [Point System] Reward for Feedback (+100)
+    // 자신의 글이 아닌 경우에만 지급
     if (projectData && projectData.user_id !== user.id) {
       try {
-        const { error: rpcError } = await (supabaseAdmin as any).rpc('increment_feedback_points', { 
-          row_id: user.id, 
-          amount: 1 
-        });
-        if (rpcError) {
-          console.warn("포인트 지급 실패 (함수 없음 등):", rpcError);
-        } else {
-          console.log(`[Feedback Rewards] User ${user.id} gained 1 point.`);
-        }
+        const REWARD_FEEDBACK = 100;
+        
+        // 1. Get current
+        const { data: profile } = await (supabaseAdmin as any)
+            .from('profiles')
+            .select('points')
+            .eq('id', user.id)
+            .single();
+        
+        const currentPoints = profile?.points || 0;
+
+        // 2. Add
+        await (supabaseAdmin as any)
+            .from('profiles')
+            .update({ points: currentPoints + REWARD_FEEDBACK })
+            .eq('id', user.id);
+
+        // 3. Log
+        await (supabaseAdmin as any)
+            .from('point_logs')
+            .insert({
+                user_id: user.id,
+                amount: REWARD_FEEDBACK,
+                reason: '피드백 작성 보상 (댓글/리뷰)'
+            });
+            
+        console.log(`[Point System] User ${user.id} awarded ${REWARD_FEEDBACK} points for feedback.`);
       } catch (e) {
-        console.warn("포인트 지급 중 예외 발생:", e);
+        console.warn("포인트 지급 실패:", e);
       }
     }
 

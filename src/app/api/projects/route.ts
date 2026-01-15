@@ -296,6 +296,43 @@ export async function POST(request: NextRequest) {
         }
     }
 
+    // [Point System] Reward for Upload (General Projects)
+    // 성장하기 모드(-500)가 아닐 경우에만 +100 지급 (중복 지급 방지 및 경제 밸런스)
+    // 혹은 사용자 의도가 "업로드 행위 자체 보상"이라면 -500 하고 +100 해서 -400이 될 수도 있음.
+    // 하지만 "성장하기는 투자가 필요하다"는 개념이 강하므로, 일반 업로드 보상은 제외하는 것이 직관적임.
+    if (!isGrowthMode && data && data.project_id) {
+         try {
+             // 1. Get current points
+             const { data: profile } = await (supabaseAdmin as any)
+                .from('profiles')
+                .select('points')
+                .eq('id', user_id)
+                .single();
+             
+             const currentPoints = profile?.points || 0;
+             const REWARD = 100;
+
+             // 2. Add Points
+             await (supabaseAdmin as any)
+                .from('profiles')
+                .update({ points: currentPoints + REWARD })
+                .eq('id', user_id);
+
+             // 3. Log
+             await (supabaseAdmin as any)
+                .from('point_logs')
+                .insert({
+                    user_id: user_id,
+                    amount: REWARD,
+                    reason: '프로젝트 업로드 보상'
+                });
+             
+             console.log(`[Point System] Awarded ${REWARD} points to user ${user_id} for upload.`);
+         } catch (e) {
+             console.error('[Point System] Failed to award upload points:', e);
+         }
+    }
+    
     return NextResponse.json({ project: data }, { status: 201 });
   } catch (error: any) {
     console.error('서버 오류:', error);
