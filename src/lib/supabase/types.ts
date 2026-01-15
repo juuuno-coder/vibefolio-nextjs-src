@@ -37,9 +37,10 @@ export type Database = {
           bio: string | null;
           cover_image_url: string | null;
           updated_at: string | null;
+          points: number;
         };
-        Insert: { id: string; username?: string | null; avatar_url?: string | null; role?: string | null; bio?: string | null; cover_image_url?: string | null; updated_at?: string | null; };
-        Update: { id?: string; username?: string | null; avatar_url?: string | null; role?: string | null; bio?: string | null; cover_image_url?: string | null; updated_at?: string | null; };
+        Insert: { id: string; username?: string | null; avatar_url?: string | null; role?: string | null; bio?: string | null; cover_image_url?: string | null; updated_at?: string | null; points?: number; };
+        Update: { id?: string; username?: string | null; avatar_url?: string | null; role?: string | null; bio?: string | null; cover_image_url?: string | null; updated_at?: string | null; points?: number; };
         Relationships: [{ foreignKeyName: "profiles_id_fkey"; columns: ["id"]; isOneToOne: true; referencedRelation: "users"; referencedColumns: ["id"]; }];
       };
       like: {

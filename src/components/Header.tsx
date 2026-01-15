@@ -257,7 +257,7 @@ export function Header({
                                        <Zap size={12} className="text-orange-500 fill-orange-500" />
                                        <span className="text-xs font-bold text-gray-700">내공</span>
                                    </div>
-                                   <span className="text-xs font-extrabold text-orange-600 font-mono">{userProfile?.feedback_points || 0} P</span>
+                                   <span className="text-xs font-extrabold text-orange-600 font-mono">{userProfile?.points || 0} P</span>
                                </div>
                             </div>
                            <button onClick={() => router.push('/project/upload')} className="w-full text-left px-2 py-2 rounded-lg cursor-pointer text-green-600 hover:bg-green-50 text-sm font-medium flex items-center">

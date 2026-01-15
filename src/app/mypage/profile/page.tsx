@@ -9,7 +9,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Phone, MapPin, Link as LinkIcon, Upload } from "lucide-react";
+import { User, Mail, Phone, MapPin, Link as LinkIcon, Upload, AlertTriangle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { GENRE_CATEGORIES_WITH_ICONS as GENRE_CATEGORIES, FIELD_CATEGORIES_WITH_ICONS as FIELD_CATEGORIES } from "@/lib/ui-constants";
 
@@ -59,6 +67,11 @@ export default function ProfileSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  
+  // 회원탈퇴 관련 상태
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -288,6 +301,52 @@ export default function ProfileSettingsPage() {
       if (newFields.length > 3 && newFields.length > fields.length) return prev;
       return { ...prev, interests: { ...prev.interests, fields: newFields } };
     });
+  };
+
+  // 회원탈퇴 처리
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "회원탈퇴") {
+      alert("'회원탈퇴'를 정확히 입력해주세요.");
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
+      const response = await fetch('/api/auth/delete-account', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '회원탈퇴에 실패했습니다.');
+      }
+
+      // 로그아웃 처리
+      await supabase.auth.signOut();
+      
+      alert('계정이 성공적으로 삭제되었습니다. 이용해주셔서 감사합니다.');
+      window.location.href = '/'; 
+      
+    } catch (error) {
+      console.error('회원탈퇴 실패:', error);
+      alert(error instanceof Error ? error.message : '회원탈퇴에 실패했습니다.');
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
+      setDeleteConfirmText("");
+    }
   };
 
   if (!mounted || loading) {
@@ -609,6 +668,27 @@ export default function ProfileSettingsPage() {
           </CardContent>
         </Card>
 
+        {/* 계정 관리 (회원탈퇴) */}
+        <Card className="mb-6 border-red-100">
+           <CardHeader>
+             <CardTitle className="text-red-600">계정 관리</CardTitle>
+           </CardHeader>
+           <CardContent>
+              <div className="flex items-center justify-between">
+                 <div>
+                    <h4 className="font-medium text-gray-900">회원 탈퇴</h4>
+                    <p className="text-sm text-gray-500 mt-1">계정을 삭제하면 복구할 수 없습니다.</p>
+                 </div>
+                 <Button 
+                   variant="destructive" 
+                   onClick={() => setDeleteModalOpen(true)}
+                 >
+                   회원 탈퇴하기
+                 </Button>
+              </div>
+           </CardContent>
+        </Card>
+
 
 
         {/* 저장 버튼 */}
@@ -624,6 +704,63 @@ export default function ProfileSettingsPage() {
           </Button>
         </div>
       </div>
+      {/* 회원탈퇴 확인 모달 */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl text-red-600">회원탈퇴</DialogTitle>
+                <DialogDescription className="text-sm text-gray-500">
+                  이 작업은 되돌릴 수 없습니다.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <h4 className="font-semibold text-red-800 mb-2">⚠️ 삭제되는 데이터</h4>
+              <ul className="text-sm text-red-700 space-y-1">
+                <li>• 업로드한 모든 프로젝트</li>
+                <li>• 좋아요, 댓글, 팔로우 기록</li>
+                <li>• 컬렉션 및 저장된 항목</li>
+                <li>• 받은 제안 및 메시지</li>
+                <li>• 프로필 정보</li>
+              </ul>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                탈퇴를 확인하기 위해 아래에 <span className="font-bold text-red-600">"회원탈퇴"</span>를 입력해주세요.
+              </label>
+              <Input
+                placeholder="회원탈퇴"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                className="border-red-300 focus:ring-red-500"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>
+              취소
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteAccount}
+              disabled={deleteConfirmText !== "회원탈퇴" || isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? "처리중..." : "탈퇴하기"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -9,7 +9,7 @@ interface UserProfile {
   username: string;
   profile_image_url: string;
   role: string;
-  feedback_points?: number;
+  points?: number;
   interests?: {
     genres: string[];
     fields: string[];
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // 3. DB 상세 프로필 조회
         const { data: db, error } = await supabase
           .from('profiles')
-          .select('username, avatar_url, profile_image_url, role, interests, feedback_points')
+          .select('username, avatar_url, profile_image_url, role, interests, points')
           .eq('id', u.id)
           .single();
 
@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // 우선순위: Vibefolio 커스텀 이미지 > 구글/소셜 이미지 > 기본 로고
             profile_image_url: customImage || base.profile_image_url,
             role: (db as any).role || base.role,
-            feedback_points: (db as any).feedback_points || 0,
+            points: (db as any).points || 0,
             interests: (db as any).interests || base.interests,
           };
           setUserProfile(finalProfile);

@@ -444,14 +444,7 @@ export default function MyPage() {
                 <Button variant="outline" onClick={() => router.push('/mypage/profile')} className="w-full md:w-auto">
                   <Settings className="w-4 h-4 mr-2" /> 프로필 설정
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => setDeleteModalOpen(true)} 
-                  className="text-gray-400 hover:text-red-500 hover:bg-red-50"
-                  title="회원탈퇴"
-                >
-                  <UserMinus className="w-4 h-4" />
-                </Button>
+
               </div>
             </div>
             
