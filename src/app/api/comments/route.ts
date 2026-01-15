@@ -226,6 +226,18 @@ export async function POST(request: NextRequest) {
                 amount: REWARD_FEEDBACK,
                 reason: '피드백 작성 보상 (댓글/리뷰)'
             });
+
+        // 4. Send Notification
+        await (supabaseAdmin as any)
+            .from('notifications')
+            .insert({
+                user_id: user.id,
+                type: 'point',
+                title: '내공 획득! 🪙',
+                message: `상세 피드백 작성으로 ${REWARD_FEEDBACK} 내공을 받았습니다.`,
+                link: '/mypage',
+                read: false
+            });
             
         console.log(`[Point System] User ${user.id} awarded ${REWARD_FEEDBACK} points for feedback.`);
       } catch (e) {

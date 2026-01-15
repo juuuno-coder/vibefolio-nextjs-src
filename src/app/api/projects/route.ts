@@ -326,6 +326,18 @@ export async function POST(request: NextRequest) {
                     amount: REWARD,
                     reason: '프로젝트 업로드 보상'
                 });
+            
+             // 4. Send Notification
+             await (supabaseAdmin as any)
+                .from('notifications')
+                .insert({
+                    user_id: user_id,
+                    type: 'point',
+                    title: '내공 획득! 🪙',
+                    message: `프로젝트 업로드 보상으로 ${REWARD} 내공을 받았습니다.`,
+                    link: '/mypage', // Link to point history (later) or mypage
+                    read: false
+                });
              
              console.log(`[Point System] Awarded ${REWARD} points to user ${user_id} for upload.`);
          } catch (e) {
