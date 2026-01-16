@@ -113,7 +113,6 @@ export default function TiptapUploadPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [projectBgColor, setProjectBgColor] = useState("#FFFFFF");
   const [contentSpacing, setContentSpacing] = useState(60);
-  const [contentSpacing, setContentSpacing] = useState(60);
   const [showOriginal, setShowOriginal] = useState(false); // [New] Toggle for Reference Viewer
   const [collaboratorEmails, setCollaboratorEmails] = useState<string[]>([]); // [New] For new projects
 
