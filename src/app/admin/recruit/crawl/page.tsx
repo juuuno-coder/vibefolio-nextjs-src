@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   RefreshCw, 
@@ -13,7 +14,8 @@ import {
   XCircle,
   Clock,
   Activity,
-  ArrowLeft
+  ArrowLeft,
+  Search
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -47,6 +49,7 @@ export default function AdminRecruitCrawlPage() {
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [isCrawling, setIsCrawling] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [keyword, setKeyword] = useState("");
 
   // 크롤링 상태 및 로그 가져오기
   const fetchCrawlStatus = async () => {
@@ -123,6 +126,51 @@ export default function AdminRecruitCrawlPage() {
     }
   };
 
+  // 키워드 검색 크롤링 실행
+  const handleKeywordCrawl = async () => {
+    if (!keyword.trim()) {
+        toast.error("검색어를 입력해주세요");
+        return;
+    }
+
+    setIsCrawling(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("로그인이 필요합니다");
+        return;
+      }
+
+      toast.info(`'${keyword}' 관련 정보를 검색 및 수집합니다... (Web + MCP)`);
+
+      const response = await fetch('/api/crawl', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ keyword: keyword.trim(), type: 'contest' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Crawl failed');
+      }
+
+      const result = await response.json();
+      
+      toast.success(
+        `검색 완료! 발견: ${result.itemsFound}개, 추가: ${result.itemsAdded}개`
+      );
+      setKeyword("");
+      await fetchCrawlStatus();
+    } catch (error) {
+      console.error('Keyword crawl error:', error);
+      toast.error("검색 크롤링 실패. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setIsCrawling(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -152,7 +200,7 @@ export default function AdminRecruitCrawlPage() {
         </p>
       </div>
 
-      {/* 통계 카드 */}
+      {/* 통계 카드 (기존 유지) */}
       {statistics && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Card>
@@ -221,10 +269,42 @@ export default function AdminRecruitCrawlPage() {
         </div>
       )}
 
-      {/* 수동 크롤링 버튼 */}
+      {/* 키워드 검색 크롤링 (신규 기능 - MCP & Web Search) */}
+      <Card className="mb-6 border-blue-200 bg-blue-50/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="w-5 h-5 text-blue-600" />
+            키워드 검색 크롤링 (MCP & Web Search)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-3">
+             <Input 
+               placeholder="키워드 입력 (예: 카카오, 오설록 AI, 해커톤...)" 
+               value={keyword}
+               onChange={(e) => setKeyword(e.target.value)}
+               className="max-w-md bg-white"
+               onKeyDown={(e) => e.key === 'Enter' && handleKeywordCrawl()}
+             />
+             <Button 
+               onClick={handleKeywordCrawl}
+               disabled={isCrawling || !keyword.trim()}
+               className="bg-blue-600 hover:bg-blue-700 text-white"
+             >
+               {isCrawling ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
+               검색 및 수집 실행
+             </Button>
+          </div>
+          <p className="text-sm text-gray-500 mt-3">
+            💡 <strong>위비티, 네이버 뉴스, 해보자고(MCP)</strong>를 통해 해당 키워드와 관련된 공모전/활동을 정밀 검색하여 목록에 추가합니다.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* 수동 크롤링 버튼 (기존 유지) */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>수동 크롤링</CardTitle>
+          <CardTitle>카테고리별 수동 크롤링</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
@@ -273,7 +353,7 @@ export default function AdminRecruitCrawlPage() {
         </CardContent>
       </Card>
 
-      {/* 크롤링 로그 */}
+      {/* 크롤링 로그 (기존 유지) */}
       <Card>
         <CardHeader>
           <CardTitle>크롤링 히스토리</CardTitle>
@@ -350,7 +430,7 @@ export default function AdminRecruitCrawlPage() {
         </CardContent>
       </Card>
 
-      {/* 스케줄 정보 */}
+      {/* 스케줄 정보 (기존 유지) */}
       <Card className="mt-6">
         <CardHeader>
           <CardTitle>자동 크롤링 스케줄</CardTitle>

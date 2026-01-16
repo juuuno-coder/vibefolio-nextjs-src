@@ -7,6 +7,8 @@ import { CRAWLER_SOURCES, isAIRelated, getAIRelevanceScore, AI_KEYWORDS } from '
 import { crawlThinkContest } from './thinkcontest';
 import { crawlRocketPunch } from './rocketpunch';
 import { crawlDevpost } from './devpost';
+import { crawlNaverNews } from './naver_news';
+import { crawlHaebojago } from './haebojago';
 
 /**
  * 실제 크롤링 로직 구현 (Real Crawling)
@@ -76,13 +78,21 @@ function formatDateString(str: string): string | null {
 // ============================================================
 // Wevity (Contest) - 상세 요약 정보 강화
 // ============================================================
-async function crawlWevity(): Promise<CrawledItem[]> {
-  // AI/영상 관련 카테고리 추가
-  const urls = [
-    'https://www.wevity.com/?c=find&s=1&gub=1&cidx=20', // 디자인/웹 분야
-    'https://www.wevity.com/?c=find&s=1&gub=1&cidx=22', // 영상/UCC 분야
-    'https://www.wevity.com/?c=find&s=1&gub=1&cidx=21', // IT/SW 분야
-  ];
+async function crawlWevity(keyword?: string): Promise<CrawledItem[]> {
+  // AI/영상 관련 카테고리 추가, 키워드 있으면 검색 URL 사용
+  let urls: string[] = [];
+  
+  if (keyword) {
+    // 키워드 검색 URL
+    urls = [`https://www.wevity.com/?c=find&s=1&mode=total&keyword=${encodeURIComponent(keyword)}`];
+  } else {
+    // 기본 카테고리 크롤링
+    urls = [
+        'https://www.wevity.com/?c=find&s=1&gub=1&cidx=20', // 디자인/웹 분야
+        'https://www.wevity.com/?c=find&s=1&gub=1&cidx=22', // 영상/UCC 분야
+        'https://www.wevity.com/?c=find&s=1&gub=1&cidx=21', // IT/SW 분야
+    ];
+  }
   
   const allItems: CrawledItem[] = [];
   const seenTitles = new Set<string>();
@@ -230,14 +240,14 @@ async function crawlWevity(): Promise<CrawledItem[]> {
     }
   }
   
-  // AI 관련 항목 우선 정렬
+  // AI 관련 항목 우선 정렬 (키워드 검색 시에는 검색 정확도 우선이겠지만 여기서도 AI score가 유효)
   allItems.sort((a, b) => {
     const scoreA = getAIRelevanceScore(a.title, a.description);
     const scoreB = getAIRelevanceScore(b.title, b.description);
     return scoreB - scoreA;
   });
   
-  console.log(`[Wevity] Crawled ${allItems.length} items`);
+  console.log(`[Wevity] Crawled ${allItems.length} items (Keyword: ${keyword || 'Basic'})`);
   return allItems;
 }
 
@@ -245,6 +255,7 @@ async function crawlWevity(): Promise<CrawledItem[]> {
 // Wanted (Job) - 상세 정보 크롤링 (주요업무, 자격요건)
 // ============================================================
 async function crawlWanted(): Promise<CrawledItem[]> {
+  // Wanted does not support easy keyword search URL in this mock. Use default relevant tags.
   // AI/ML 관련 태그 ID 추가
   const tagIds = [
     '518',  // Software Engineer
@@ -260,7 +271,11 @@ async function crawlWanted(): Promise<CrawledItem[]> {
     try {
       const url = `https://www.wanted.co.kr/api/v4/jobs?country=kr&tag_type_ids=${tagId}&job_sort=job.latest_order&locations=all&years=-1&limit=10`;
       
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        headers: { 
+           // Header 생략 ...
+        }
+      });
       if (!res.ok) continue;
       const data = await res.json();
       const jobList = data.data || [];
@@ -350,27 +365,49 @@ async function crawlWanted(): Promise<CrawledItem[]> {
 // 통합 크롤링 함수
 // ============================================================
 
-export async function crawlByType(type: 'job' | 'contest' | 'event'): Promise<CrawlResult> {
+export async function crawlByType(type: 'job' | 'contest' | 'event', keyword?: string): Promise<CrawlResult> {
   let items: CrawledItem[] = [];
   
   try {
     if (type === 'contest') {
-      // 여러 공모전 소스 병렬 수집
-      const [wevityItems, thinkItems] = await Promise.all([
-        crawlWevity(),
-        crawlThinkContest().catch(() => []),
-      ]);
-      items = [...wevityItems, ...thinkItems];
+      const tasks: Promise<CrawledItem[]>[] = [];
+
+      // 1. Wevity (항상 실행, 키워드 지원)
+      tasks.push(crawlWevity(keyword));
+
+      if (keyword) {
+          // 2. 키워드가 있으면 [웹서치 모드] -> 네이버 뉴스 검색 + [Haebojago MCP] 검색 추가
+          tasks.push(crawlNaverNews(keyword).catch(() => []));
+          tasks.push(crawlHaebojago(keyword).catch(() => []));
+      } else {
+          // 3. 키워드가 없으면 [일반 수집 모드] -> 씽굿 일반 목록 수집
+          tasks.push(crawlThinkContest().catch(() => []));
+      }
+      
+      const results = await Promise.all(tasks);
+      items = results.flat();
     } else if (type === 'job') {
-      // 여러 채용 소스 병렬 수집
-      const [wantedItems, rocketItems] = await Promise.all([
-        crawlWanted(),
-        crawlRocketPunch().catch(() => []),
-      ]);
-      items = [...wantedItems, ...rocketItems];
+      // Job crawling usually doesn't take simple keyword in this implementation.
+      // Current decision: Only Wevity and Devpost support keyword search fully.
+      if (!keyword) {
+          const [wantedItems, rocketItems] = await Promise.all([
+            crawlWanted(),
+            crawlRocketPunch().catch(() => []),
+          ]);
+          items = [...wantedItems, ...rocketItems];
+      }
     } else if (type === 'event') {
-      // 글로벌 이벤트/해커톤 수집
-      items = await crawlDevpost().catch(() => []);
+      // Devpost supports keyword
+      const tasks: Promise<CrawledItem[]>[] = [];
+      tasks.push(crawlDevpost(keyword).catch(() => []));
+      
+      // Event 검색시에도 Haebojago 추가 (해커톤 등 포함되므로)
+      if (keyword) {
+          tasks.push(crawlHaebojago(keyword).catch(() => []));
+      }
+      
+      const results = await Promise.all(tasks);
+      items = results.flat();
     }
     
     // 중복 제거 (제목 기준)
@@ -404,25 +441,39 @@ export async function crawlByType(type: 'job' | 'contest' | 'event'): Promise<Cr
   }
 }
 
-export async function crawlAll(): Promise<CrawlResult> {
-  console.log('[Crawler] Starting full crawl...');
+export async function crawlAll(keyword?: string): Promise<CrawlResult> {
+  console.log(`[Crawler] Starting full crawl... (Keyword: ${keyword || 'None'})`);
   
-  const [jobs, contests, events] = await Promise.all([
-    crawlByType('job'),
-    crawlByType('contest'),
-    crawlByType('event'),
-  ]);
+  const tasks = [];
   
-  const allItems = [...jobs.items, ...contests.items, ...events.items];
+  // 1. Contest
+  tasks.push(crawlByType('contest', keyword));
   
-  // 최종 AI 연관성 정렬
+  // 2. Event
+  tasks.push(crawlByType('event', keyword));
+  
+  // 3. Job (Only if no keyword)
+  if (!keyword) {
+      tasks.push(crawlByType('job'));
+  }
+
+  const results = await Promise.all(tasks);
+  
+  let allItems: CrawledItem[] = [];
+  results.forEach(res => {
+      if (res.success && res.items) {
+          allItems = [...allItems, ...res.items];
+      }
+  });
+  
+  // 최종 AI 연관성 정렬 (검색어와 유사한지도 중요하겠지만 일단 AI 점수)
   allItems.sort((a, b) => {
     const scoreA = getAIRelevanceScore(a.title, a.description);
     const scoreB = getAIRelevanceScore(b.title, b.description);
     return scoreB - scoreA;
   });
   
-  console.log(`[Crawler] Total crawled: ${allItems.length} items (Jobs: ${jobs.itemsFound}, Contests: ${contests.itemsFound}, Events: ${events.itemsFound})`);
+  console.log(`[Crawler] Total crawled: ${allItems.length} items`);
   
   return {
     success: true,

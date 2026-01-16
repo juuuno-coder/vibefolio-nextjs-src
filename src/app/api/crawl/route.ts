@@ -24,31 +24,43 @@ export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
   
+  // URL 쿼리 파라미터에서 키워드 추출 (GET 방식 테스트용)
+  const searchParams = request.nextUrl.searchParams;
+  const keyword = searchParams.get('keyword') || undefined;
+  
   // CRON_SECRET이 설정되어 있으면 확인
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
     console.log('[Crawl API] Unauthorized cron request');
     // 보안을 위해 401 반환 대신 로그만 남기고 진행 (Vercel cron은 헤더 없이 호출)
   }
 
-  return handleCrawl();
+  return handleCrawl(keyword);
 }
 
 /**
- * POST 요청 처리 (수동 실행용)
+ * POST 요청 처리 (수동 실행용 - 키워드 검색 포함)
  */
 export async function POST(request: NextRequest) {
-  return handleCrawl();
+  let keyword: string | undefined;
+  try {
+    const body = await request.json();
+    keyword = body.keyword;
+  } catch (e) {
+    // Body parsing error or empty body
+  }
+  return handleCrawl(keyword);
 }
 
 /**
  * 크롤링 로직
  */
-async function handleCrawl() {
+async function handleCrawl(keyword?: string) {
   try {
-    console.log('🚀 [Crawl API] Starting scheduled crawl...');
+    console.log(`🚀 [Crawl API] Starting crawl... (Keyword: ${keyword || 'Auto'})`);
     const startTime = Date.now();
     
-    const result = await crawlAll();
+    // 키워드가 있으면 해당 키워드로 검색 크롤링 수행
+    const result = await crawlAll(keyword);
     
     if (!result.success) {
       throw new Error(result.error || 'Crawl failed');

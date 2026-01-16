@@ -32,8 +32,9 @@ function parseEnglishDate(dateStr: string): string {
  * Devpost 해커톤 크롤링
  * AI/ML 관련 해커톤 및 챌린지 수집
  */
-export async function crawlDevpost(): Promise<CrawledItem[]> {
-  const url = 'https://devpost.com/hackathons?search=AI&status[]=open&status[]=upcoming';
+export async function crawlDevpost(keyword?: string): Promise<CrawledItem[]> {
+  const searchTerm = keyword ? encodeURIComponent(keyword) : 'AI';
+  const url = `https://devpost.com/hackathons?search=${searchTerm}&status[]=open&status[]=upcoming`;
   
   try {
     const res = await fetch(url, {
@@ -158,7 +159,7 @@ export async function crawlDevpost(): Promise<CrawledItem[]> {
       return scoreB - scoreA;
     });
     
-    console.log(`[Devpost] Crawled ${items.length} items`);
+    console.log(`[Devpost] Crawled ${items.length} items (Keyword: ${keyword || 'AI'})`);
     return items;
     
   } catch (e) {
