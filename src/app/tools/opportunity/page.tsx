@@ -18,8 +18,17 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 
+const CATEGORIES = [
+  { id: 'opportunity', label: '🔭 기회 탐색', desc: '전국의 공모전, 해커톤, 대외활동을 찾아드립니다.', placeholder: '예: 카카오 공모전, 대학생 해커톤...' },
+  { id: 'job', label: '💼 AI 채용', desc: '프롬프트 엔지니어, AI 아티스트 등 새로운 기회를 잡으세요.', placeholder: '예: 프롬프트 엔지니어, 영상 편집...' },
+  { id: 'trend', label: '📰 트렌드', desc: '놓치면 안 될 최신 AI 기술 뉴스와 인사이트를 요약해드립니다.', placeholder: '예: Sora, ChatGPT 5, LLM 트렌드...' },
+  { id: 'recipe', label: '👨‍🍳 레시피', desc: '원하는 스타일의 이미지 생성 프롬프트와 워크플로우를 알려드립니다.', placeholder: '예: 사이버펑크 스타일, 수채화풍 로고...' },
+  { id: 'tool', label: '🛠️ 도구 추천', desc: '작업 목적에 딱 맞는 최고의 AI 도구를 추천해드립니다.', placeholder: '예: 배경 제거, 동영상 업스케일링, 목소리 변조...' },
+];
+
 export default function OpportunityFinderPage() {
   const [keyword, setKeyword] = useState("");
+  const [activeTab, setActiveTab] = useState("opportunity");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -40,7 +49,7 @@ export default function OpportunityFinderPage() {
             'Content-Type': 'application/json',
             ...(session ? { 'Authorization': `Bearer ${session.access_token}` } : {})
         },
-        body: JSON.stringify({ keyword })
+        body: JSON.stringify({ keyword, category: activeTab })
       });
 
       const data = await res.json();
@@ -54,12 +63,21 @@ export default function OpportunityFinderPage() {
     }
   };
 
+  const handleTabChange = (id: string) => {
+    setActiveTab(id);
+    setSearched(false);
+    setResults([]);
+    setKeyword(""); // Clear keyword when changing tabs for UX clarity
+  };
+
+  const currentCategory = CATEGORIES.find(c => c.id === activeTab);
+
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         
         {/* Header Section */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -74,19 +92,41 @@ export default function OpportunityFinderPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-4xl font-bold text-gray-900 mb-4"
+            className="text-4xl font-bold text-gray-900 mb-2"
           >
-            AI 공모전 탐색기
+            Vibefolio AI Intelligence
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-lg text-gray-600 max-w-2xl mx-auto"
+            className="text-gray-500"
           >
-            "카카오 공모전", "대학생 디자인 해커톤" 같이 물어보세요.<br/>
-            <strong>해보자고(MCP)</strong> 인공지능이 숨겨진 기회까지 찾아드립니다.
+            크리에이터를 위한 AI 인텔리전스 엔진
           </motion.p>
+        </div>
+
+        {/* Categories (Tabs) */}
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
+            {CATEGORIES.map((cat) => (
+                <button
+                key={cat.id}
+                onClick={() => handleTabChange(cat.id)}
+                className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200 ${
+                    activeTab === cat.id 
+                    ? 'bg-gray-900 text-white shadow-lg transform scale-105' 
+                    : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200 hover:border-gray-300'
+                }`}
+                >
+                {cat.label}
+                </button>
+            ))}
+        </div>
+
+        <div className="text-center mb-6 min-h-[1.5rem]">
+            <p className="text-lg text-gray-700 font-medium animate-fade-in">
+                {currentCategory?.desc}
+            </p>
         </div>
 
         {/* Search Bar */}
@@ -99,7 +139,7 @@ export default function OpportunityFinderPage() {
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="예: 서울 대학생 봉사활동, 삼성전자 아이디어 공모전, AI 해커톤..." 
+                  placeholder={currentCategory?.placeholder}
                   className="pl-12 h-14 text-lg bg-transparent border-gray-200 focus:ring-2 focus:ring-blue-500 rounded-xl"
                 />
               </div>
@@ -111,7 +151,7 @@ export default function OpportunityFinderPage() {
                 {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "검색하기"}
               </Button>
             </div>
-            {/* Cost Info Tooltip equivalent */}
+            {/* Cost Info Tooltip */}
             <div className="mt-3 text-center text-xs text-gray-400">
                * AI 검색은 '해보자고' MCP 엔진을 사용하며, 실시간 외부 데이터를 수집합니다.
             </div>
@@ -124,8 +164,8 @@ export default function OpportunityFinderPage() {
             <div className="text-center py-20">
               <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
               <p className="text-gray-500 text-lg animate-pulse">
-                AI가 전국 방방곡곡의 공모전을 찾고 있어요...<br/>
-                <span className="text-sm">(위비티, 네이버 뉴스, 해보자고 엔진 가동 중)</span>
+                AI가 정보를 수집하고 분석 중입니다...<br/>
+                <span className="text-sm">(Engine: Haebojago MCP)</span>
               </p>
             </div>
           )}
@@ -135,8 +175,7 @@ export default function OpportunityFinderPage() {
               <span className="text-6xl mb-4 block">😅</span>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">검색 결과가 없습니다</h3>
               <p className="text-gray-500">
-                다른 키워드로 검색해보시는 건 어떨까요?<br/>
-                예: "디자인 공모전", "대학생 마케터"
+                다른 키워드로 검색해보시는 건 어떨까요?
               </p>
             </div>
           )}
@@ -151,68 +190,61 @@ export default function OpportunityFinderPage() {
               >
                 <Card className="overflow-hidden hover:shadow-lg transition-shadow border-gray-100 group">
                   <div className="flex flex-col md:flex-row">
-                    {/* Thumbnail Section */}
-                    {item.image && (
-                      <div className="w-full md:w-48 h-48 md:h-auto relative overflow-hidden bg-gray-100">
-                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                         <img 
-                           src={item.image} 
-                           alt={item.title} 
-                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                         />
-                         <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
-                            {item.company}
-                         </div>
-                      </div>
-                    )}
                     
                     {/* Content Section */}
                     <div className="flex-1 p-6 flex flex-col justify-between">
                       <div>
                         <div className="flex items-start justify-between mb-2">
-                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
                             {item.title}
                           </h3>
-                          {item.categoryTags?.includes('AI') && (
-                            <span className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 shrink-0 ml-2">
-                              <Sparkles className="w-3 h-3" /> AI 추천
-                            </span>
-                          )}
+                          <span className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-medium shrink-0 ml-2 uppercase">
+                            {item.type || activeTab}
+                          </span>
                         </div>
                         
-                        <p className="text-sm text-gray-600 line-clamp-2 mb-4">
+                        <div className="text-sm text-gray-600 mb-4 whitespace-pre-wrap leading-relaxed">
                           {item.description}
-                        </p>
+                        </div>
 
+                        {/* Metadata Row */}
                         <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-4">
-                          <div className="flex items-center gap-1.5">
-                            <Building className="w-4 h-4" />
-                            {item.company}
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                             <Calendar className="w-4 h-4" />
-                             {item.date}
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                             <MapPin className="w-4 h-4" />
-                             {item.location}
-                          </div>
+                          {item.company && item.company !== 'Unknown' && item.company !== 'MCP Intelligence' && (
+                            <div className="flex items-center gap-1.5 font-medium text-gray-700">
+                              <Building className="w-4 h-4" />
+                              {item.company}
+                            </div>
+                          )}
+                          {item.date && (
+                             <div className="flex items-center gap-1.5">
+                                <Calendar className="w-4 h-4" />
+                                {item.date}
+                             </div>
+                          )}
+                          {item.location && item.location !== 'Online' && (
+                             <div className="flex items-center gap-1.5">
+                                <MapPin className="w-4 h-4" />
+                                {item.location}
+                             </div>
+                          )}
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between pt-4 border-t border-gray-50 mt-auto">
                         <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">
-                           출처: {item.sourceUrl?.includes('haebojago') ? '✨ 해보자고(MCP)' : new URL(item.sourceUrl || 'https://vibefolio.com').hostname}
+                           출처: {item.sourceUrl?.includes('haebojago') ? '✨ 해보자고(MCP)' : 'Vibefolio'}
                         </span>
                         
-                        <a 
-                          href={item.link} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-800 transition-colors"
-                        >
-                          자세히 보기 <ExternalLink className="w-4 h-4" />
-                        </a>
+                        {item.link && (
+                            <a 
+                            href={item.link} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-800 transition-colors"
+                            >
+                            자세히 보기 <ExternalLink className="w-4 h-4" />
+                            </a>
+                        )}
                       </div>
                     </div>
                   </div>
