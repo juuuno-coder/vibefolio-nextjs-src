@@ -59,53 +59,29 @@ export function MichelinRating({ projectId }: MichelinRatingProps) {
 
   const fetchRatingData = async () => {
     try {
-      const { data, error } = await (supabase as any)
-        .from('ProjectRating')
-        .select('*')
-        .eq('project_id', parseInt(projectId));
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        const aggs = data.reduce((acc: any, curr: any) => {
-          acc.score_1 += Number(curr.score_1 || 0);
-          acc.score_2 += Number(curr.score_2 || 0);
-          acc.score_3 += Number(curr.score_3 || 0);
-          acc.score_4 += Number(curr.score_4 || 0);
-          return acc;
-        }, { score_1: 0, score_2: 0, score_3: 0, score_4: 0 });
-
-        const newAvgs = {
-          score_1: Number((aggs.score_1 / data.length).toFixed(1)),
-          score_2: Number((aggs.score_2 / data.length).toFixed(1)),
-          score_3: Number((aggs.score_3 / data.length).toFixed(1)),
-          score_4: Number((aggs.score_4 / data.length).toFixed(1)),
-        };
-        setAverages(newAvgs);
-        setTotalAvg(Number((Object.values(newAvgs).reduce((a,b)=>a+b, 0) / 4).toFixed(1)));
-        setTotalCount(data.length);
-        
-        // 데이터 로드 시 AI 분석 실행
-        fetchAIAnalysis(newAvgs);
-      }
-
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: myData } = await (supabase as any)
-          .from('ProjectRating')
-          .select('*')
-          .eq('project_id', parseInt(projectId))
-          .eq('user_id', session.user.id)
-          .single();
-        
-        if (myData) {
+      const headers: any = {};
+      if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+
+      const res = await fetch(`/api/projects/${projectId}/rating`, { headers });
+      const data = await res.json();
+
+      if (data.success) {
+        setAverages(data.averages);
+        setTotalAvg(data.totalAvg);
+        setTotalCount(data.totalCount);
+
+        if (data.myRating) {
           setScores({
-            score_1: Number(myData.score_1 || 0),
-            score_2: Number(myData.score_2 || 0),
-            score_3: Number(myData.score_3 || 0),
-            score_4: Number(myData.score_4 || 0),
+            score_1: Number(data.myRating.score_1 || 0),
+            score_2: Number(data.myRating.score_2 || 0),
+            score_3: Number(data.myRating.score_3 || 0),
+            score_4: Number(data.myRating.score_4 || 0),
           });
         }
+        
+        // 데이터 로드 시 AI 분석 실행
+        fetchAIAnalysis(data.averages);
       }
     } catch (e) {
       console.error("Failed to load ratings", e);
@@ -125,16 +101,19 @@ export function MichelinRating({ projectId }: MichelinRatingProps) {
 
     setIsSubmitting(true);
     try {
-      const { error } = await (supabase as any)
-        .from('ProjectRating')
-        .upsert({
-          project_id: parseInt(projectId),
-          user_id: session.user.id,
+      const res = await fetch(`/api/projects/${projectId}/rating`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
           ...scores,
           score: currentTotalAvg
-        }, { onConflict: 'project_id, user_id' });
+        })
+      });
 
-      if (error) throw error;
+      if (!res.ok) throw new Error('Failed to submit rating');
       
       setIsEditing(false);
       toast.success(`전문 평가가 등록되었습니다! (평균 ${currentTotalAvg}점)`);

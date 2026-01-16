@@ -277,6 +277,36 @@ export async function POST(request: NextRequest) {
         }
     }
 
+    // [New] 공동 제작자 추가 (Collaborators)
+    const { collaborator_emails } = body;
+    if (data && data.project_id && Array.isArray(collaborator_emails) && collaborator_emails.length > 0) {
+        try {
+             // 이메일로 User ID 조회 (profiles 테이블 사용 가정)
+             const { data: users } = await (supabaseAdmin as any)
+                .from('profiles')
+                .select('id, email') // profiles에 이메일이 있다고 가정 (Trigger로 동기화됨을 전제)
+                .in('email', collaborator_emails);
+             
+             if (users && users.length > 0) {
+                 const currentCollaborators = users.map((u: any) => ({
+                     project_id: data.project_id,
+                     user_id: u.id
+                 }));
+
+                 const { error: collabError } = await (supabaseAdmin as any)
+                     .from('project_collaborators')
+                     .insert(currentCollaborators);
+                 
+                 if (collabError) console.error('[API] Collaborators insert error:', collabError);
+                 else console.log(`[API] Added ${users.length} collaborators.`);
+             } else {
+                 console.log('[API] No users found for given emails');
+             }
+        } catch (e) {
+            console.error('[API] Failed to add collaborators:', e);
+        }
+    }
+
     // [Point System] Reward for Upload (General Projects)
     if (!isGrowthMode && data && data.project_id) {
          try {

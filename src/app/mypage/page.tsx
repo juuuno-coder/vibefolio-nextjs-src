@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket, Sparkles, Wand2, Lightbulb, Zap, UserCircle2 } from "lucide-react";
+import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket, Sparkles, Wand2, Lightbulb, Zap, UserCircle2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
 import { ProposalCard } from "@/components/ProposalCard";
@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 type TabType = 'projects' | 'likes' | 'collections' | 'proposals' | 'comments' | 'ai_tools';
-type AiToolType = 'lean-canvas' | 'persona' | 'assistant';
+type AiToolType = 'lean-canvas' | 'persona' | 'assistant' | 'opportunity';
 import { LeanCanvasModal } from "@/components/LeanCanvasModal";
 import { PersonaDefinitionModal } from "@/components/PersonaDefinitionModal";
 
@@ -33,7 +33,7 @@ export default function MyPage() {
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const [activeAiTool, setActiveAiTool] = useState<AiToolType>('lean-canvas');
+  const [activeAiTool, setActiveAiTool] = useState<AiToolType>('opportunity');
   
   // 프로필 및 통계
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -673,6 +673,7 @@ export default function MyPage() {
                 {/* 왼쪽 사이드 탭 */}
                 <div className="w-full md:w-64 shrink-0 flex flex-col gap-2">
                   {[
+                    { id: 'opportunity', label: 'AI 기회 탐색기', icon: Search, desc: '공모전/채용/트렌드 검색' },
                     { id: 'lean-canvas', label: 'AI 린 캔버스', icon: Grid, desc: '사업 모델 구조화' },
                     { id: 'persona', label: 'AI 고객 페르소나', icon: UserCircle2, desc: '고객 정의 및 분석' },
                     { id: 'assistant', label: 'AI 콘텐츠 어시스턴트', icon: Wand2, desc: '텍스트 생성 및 다듬기' },
@@ -715,11 +716,13 @@ export default function MyPage() {
                         {activeAiTool === 'lean-canvas' && "AI 린 캔버스 생성기"}
                         {activeAiTool === 'persona' && "AI 고객 페르소나 정의"}
                         {activeAiTool === 'assistant' && "AI 콘텐츠 어시스턴트"}
+                        {activeAiTool === 'opportunity' && "AI 기회 탐색기"}
                       </h3>
                       <p className="text-gray-500 leading-relaxed font-medium">
                         {activeAiTool === 'lean-canvas' && "아이디어 입력만으로 비즈니스 모델을 한눈에 구조화하세요.\n스타트업과 1인 창업가를 위한 필수 도구입니다."}
                         {activeAiTool === 'persona' && "우리 서비스의 핵심 고객은 누구일까요?\n가상 페르소나를 정의하고 니즈를 파악해보세요."}
                         {activeAiTool === 'assistant' && "더 매력적인 문장을 찾고 계신가요?\nAI가 당신의 글을 다듬어드립니다. (준비 중)"}
+                        {activeAiTool === 'opportunity' && "나에게 딱 맞는 공모전, 채용 정보, AI 트렌드를 찾아보세요.\n해보자고(MCP) 엔진이 실시간으로 기회를 포착해드립니다."}
                       </p>
                     </div>
                     
@@ -732,6 +735,12 @@ export default function MyPage() {
                     {activeAiTool === 'persona' && (
                        <Button onClick={() => setPersonaModalOpen(true)} className="btn-primary rounded-full px-8 py-6 text-base shadow-lg shadow-purple-200 bg-indigo-600 hover:bg-indigo-700">
                            <UserCircle2 className="w-5 h-5 mr-2" /> 페르소나 정의하기
+                       </Button>
+                    )}
+
+                    {activeAiTool === 'opportunity' && (
+                       <Button onClick={() => router.push('/tools/opportunity')} className="btn-primary rounded-full px-8 py-6 text-base shadow-lg shadow-blue-200 bg-blue-600 hover:bg-blue-700">
+                           <Search className="w-5 h-5 mr-2" /> 탐색기 시작하기
                        </Button>
                     )}
 

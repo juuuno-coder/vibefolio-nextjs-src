@@ -11,6 +11,7 @@ import { EmbedModal, AssetModal, Asset, StyleModal, CTAButtonModal, SettingsModa
 import { PhotoGridModal, GridLayout } from "@/components/editor/PhotoGridModal";
 import { LightroomModal } from "@/components/editor/LightroomModal";
 import { LeanCanvasModal } from "@/components/LeanCanvasModal";
+import { CollaboratorManager } from "@/components/CollaboratorManager";
 import '@/components/editor/tiptap.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -112,7 +113,9 @@ export default function TiptapUploadPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [projectBgColor, setProjectBgColor] = useState("#FFFFFF");
   const [contentSpacing, setContentSpacing] = useState(60);
+  const [contentSpacing, setContentSpacing] = useState(60);
   const [showOriginal, setShowOriginal] = useState(false); // [New] Toggle for Reference Viewer
+  const [collaboratorEmails, setCollaboratorEmails] = useState<string[]>([]); // [New] For new projects
 
   useEffect(() => {
     const init = async () => {
@@ -479,6 +482,7 @@ export default function TiptapUploadPage() {
           summary: finalSummary, // API에서 처리하는지 확인 필요, 없으면 무시됨
           description: finalSummary, // description으로도 보냄 (API 호환성)
           content_text: content, // Tiptap HTML content
+          collaborator_emails: !editId ? collaboratorEmails : [], // [New] 신규 프로젝트 생성 시 공동 제작자 추가
           thumbnail_url: coverUrl, // URL Update
           rendering_type: 'rich_text',
           allow_michelin_rating: allowMichelinRating,
@@ -797,7 +801,19 @@ export default function TiptapUploadPage() {
                   />
                  </div>
                  
-                 {/* Side Info */}
+                 {/* 태그 입력 (기존 로직 유지) */}
+                 {/* ... Tag Input UI Placeholder if needed ... */}
+                 
+                 {/* Collaborators Section */}
+                 <div className="pt-8 border-t border-gray-100">
+                    <CollaboratorManager 
+                        projectId={editId || undefined} 
+                        initialCollaborators={collaboratorEmails}
+                        onChange={setCollaboratorEmails} 
+                    />
+                 </div>
+
+                 {/* Settings Modal (Advanced) */}
                  <div className="w-1/3 text-sm text-gray-500 space-y-4 pt-2">
                     <p>
                        매력적인 커버 이미지는 조회수를 높이는 가장 좋은 방법입니다. 
