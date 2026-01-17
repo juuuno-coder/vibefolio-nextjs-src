@@ -34,6 +34,34 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
+    // [Scheduled Publishing] Filter out future posts unless it's the owner requesting
+    // Note: Since we don't have session verification here easily (without header parsing), 
+    // we default to filtering. The client usually requests 'mypage' data via client-side query 
+    // or specific API. If authentication is presented, we could bypass.
+    // However, for simplicity and safety: always filter details for public list.
+    // If 'userId' is present, we might want to check ownership, but let's stick to Safe Default.
+    // (MyPage uses client-side fetch usually with direct RLS, but here we enforce API logic)
+    
+    // Check Authorization header to see if the requester is the owner of the requested userId profile
+    const authHeader = request.headers.get('Authorization');
+    let isOwner = false;
+    
+    if (userId && authHeader) {
+        try {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user } } = await supabase.auth.getUser(token);
+            if (user && user.id === userId) {
+                isOwner = true;
+            }
+        } catch (e) {}
+    }
+
+    if (!isOwner) {
+       // Filter: scheduled_at IS NULL OR scheduled_at <= NOW()
+       const nowISO = new Date().toISOString();
+       query = query.or(`scheduled_at.is.null,scheduled_at.lte.${nowISO}`);
+    }
+
     // 검색어 필터
     if (search) {
       query = query.or(`title.ilike.%${search}%,content_text.ilike.%${search}%`);
@@ -160,7 +188,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { 
       user_id, category_id, title, summary, content_text, thumbnail_url, rendering_type, custom_data,
-      allow_michelin_rating, allow_stickers, allow_secret_comments 
+      allow_michelin_rating, allow_stickers, allow_secret_comments, scheduled_at 
     } = body;
 
     if (!user_id || !category_id || !title) {

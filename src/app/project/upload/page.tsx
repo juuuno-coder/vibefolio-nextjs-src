@@ -33,6 +33,7 @@ import {
   faComment,
   faStar,
   faRocket,
+  faClock,
   faUser, // Add faUser
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -103,6 +104,9 @@ export default function TiptapUploadPage() {
   const [editor, setEditor] = useState<Editor | null>(null);
   const sidebarFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Scheduled Publishing State
+  const [scheduledAt, setScheduledAt] = useState<string>(''); // YYYY-MM-DDTHH:mm:ss
+
   // Modal States
   const [embedModalOpen, setEmbedModalOpen] = useState(false);
   const [embedModalType, setEmbedModalType] = useState<"media" | "prototype" | "3d">("media");
@@ -171,6 +175,13 @@ export default function TiptapUploadPage() {
                   } catch (e) {
                     console.error("Custom data parse error", e);
                   }
+                }
+                
+                if (project.scheduled_at) {
+                    // Convert UTC to local datetime-local format (YYYY-MM-DDTHH:mm:ss)
+                    const date = new Date(project.scheduled_at);
+                    const localIso = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 19);
+                    setScheduledAt(localIso);
                 }
             }
           }
@@ -490,11 +501,12 @@ export default function TiptapUploadPage() {
           allow_michelin_rating: allowMichelinRating,
           allow_stickers: allowStickers,
           allow_secret_comments: allowSecretComments,
+          scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null, // [New] Scheduled Publishing
           custom_data: JSON.stringify({
             genres: finalGenres,
             fields: finalFields,
             tags: finalTags, 
-            is_feedback_requested: isFeedbackRequested, // [Growth Mode]
+            is_feedback_requested: isFeedbackRequested,
           }),
           assets: assets,
         }),
@@ -723,7 +735,7 @@ export default function TiptapUploadPage() {
        .replace(/\n/g, '<br/>');
 
     editor.chain().focus().insertContent(html).run();
- };
+  };
 
   if (step === 'info') {
     return (
@@ -1156,8 +1168,32 @@ export default function TiptapUploadPage() {
                   </details>
                </div>
             )}
-
-            <div className="w-full h-px bg-gray-100 my-8"></div>
+            {/* 예약 발행 설정 UI */}
+            <div className="flex justify-end mb-4">
+               <div className="inline-flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm hover:border-green-400 transition-colors">
+                  <label htmlFor="scheduled-at" className="text-sm font-bold text-gray-700 flex items-center gap-2 cursor-pointer select-none">
+                     <FontAwesomeIcon icon={faClock} className={scheduledAt ? "text-green-600" : "text-gray-400"} />
+                     <span className={scheduledAt ? "text-green-700" : ""}>{scheduledAt ? "예약됨" : "예약 발행 설정"}</span>
+                  </label>
+                  <input 
+                     type="datetime-local" 
+                     id="scheduled-at"
+                     step="1"
+                     value={scheduledAt}
+                     onChange={(e) => setScheduledAt(e.target.value)}
+                     className="bg-transparent border border-gray-100 rounded px-2 py-1 text-sm text-gray-800 focus:outline-none focus:border-green-500 transition-colors"
+                  />
+                  {scheduledAt && (
+                     <button 
+                        onClick={() => setScheduledAt('')}
+                        className="text-xs text-red-500 hover:text-red-700 ml-2 font-medium"
+                        title="예약 취소"
+                     >
+                        취소
+                     </button>
+                  )}
+               </div>
+            </div>
 
             {/* 발행 버튼 */}
             <div className="flex justify-end gap-4">

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket, Sparkles, Wand2, Lightbulb, Zap, UserCircle2, Search } from "lucide-react";
+import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket, Sparkles, Wand2, Lightbulb, Zap, UserCircle2, Search, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/ImageCard";
 import { ProposalCard } from "@/components/ProposalCard";
@@ -131,7 +131,7 @@ export default function MyPage() {
         if (activeTab === 'projects') {
           const { data } = await supabase
             .from('Project')
-            .select('project_id, title, thumbnail_url, likes_count, views_count, created_at, content_text, rendering_type, custom_data')
+            .select('project_id, title, thumbnail_url, likes_count, views_count, created_at, content_text, rendering_type, custom_data, scheduled_at')
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
           
@@ -146,6 +146,7 @@ export default function MyPage() {
             rendering_type: p.rendering_type || 'image',
             alt_description: p.title || '',
             custom_data: p.custom_data,
+            scheduled_at: p.scheduled_at, // [New]
           })));
           
         } else if (activeTab === 'likes') {
@@ -540,9 +541,16 @@ export default function MyPage() {
                         <img 
                           src={project.thumbnail_url || '/placeholder.jpg'}
                           alt={project.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${project.scheduled_at && new Date(project.scheduled_at) > new Date() ? 'grayscale-[0.5]' : ''}`}
                           onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.jpg'; }}
                         />
+                        {/* 예약 뱃지 */}
+                        {project.scheduled_at && new Date(project.scheduled_at) > new Date() && (
+                          <div className="absolute top-3 left-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full shadow-md z-20 flex items-center gap-1.5 animate-pulse">
+                            <Clock size={12} strokeWidth={3} />
+                            <span>{new Date(project.scheduled_at).toLocaleString()} 예약됨</span>
+                          </div>
+                        )}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 px-2">
                           <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white h-9 px-3 text-xs" onClick={() => {
                              setSelectedProject({
