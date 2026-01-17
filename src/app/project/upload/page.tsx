@@ -735,7 +735,7 @@ export default function TiptapUploadPage() {
   };
 
   if (step === 'info') {
-    const infoContent = (
+    return (
       <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-white to-green-50 py-12 px-4 transition-all duration-500 ease-in-out animate-in fade-in slide-in-from-bottom-4">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8 flex items-center justify-between">
@@ -1223,7 +1223,6 @@ export default function TiptapUploadPage() {
         </div>
       </div>
     );
-    return infoContent;
   }
 
   // Content Step
