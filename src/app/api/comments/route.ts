@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { projectId, content, parentCommentId, mentionedUserId, isSecret } = body;
+    const { projectId, content, parentCommentId, mentionedUserId, isSecret, locationX, locationY } = body;
 
     console.log('댓글 작성 요청:', { 
       userId: user.id, 
@@ -156,6 +156,8 @@ export async function POST(request: NextRequest) {
       parentCommentId, 
       mentionedUserId,
       isSecret,
+      locationX, 
+      locationY
     });
 
     if (!projectId || !content) {
@@ -182,6 +184,8 @@ export async function POST(request: NextRequest) {
           parent_comment_id: parentCommentId || null,
           mentioned_user_id: mentionedUserId || null,
           is_secret: isSecret || false,
+          location_x: locationX || null,
+          location_y: locationY || null,
         },
       ] as any)
       .select('*')

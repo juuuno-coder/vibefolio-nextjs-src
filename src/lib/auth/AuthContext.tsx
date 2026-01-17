@@ -115,6 +115,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [updateState]);
 
+  // [New] Realtime Point Update Listener
+  useEffect(() => {
+    if (!user) return;
+
+    const profileChannel = supabase
+      .channel(`profile:${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newProfile = payload.new as any;
+          if (newProfile) {
+            setUserProfile((prev) => {
+               if(!prev) return null;
+               // Only update if points changed (or other critical fields)
+               if(newProfile.points !== prev.points) {
+                   return { ...prev, points: newProfile.points };
+               }
+               return prev;
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profileChannel);
+    };
+  }, [user]);
+
   // ====== 자동 로그아웃 로직 (user 변경 시 실행) ======
   // Note: AutoLogoutProvider가 별도로 존재하므로 여기서는 제거하거나, 
   // AuthContext가 중심이라면 여기서 관리해야 합니다. 

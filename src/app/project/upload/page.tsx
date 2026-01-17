@@ -33,7 +33,10 @@ import {
   faComment,
   faStar,
   faRocket,
+  faUser, // Add faUser
 } from "@fortawesome/free-solid-svg-icons";
+
+
 import { supabase } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/supabase/storage";
 import { GENRE_TO_CATEGORY_ID, GENRE_CATEGORIES, FIELD_CATEGORIES } from '@/lib/constants';
@@ -800,34 +803,25 @@ export default function TiptapUploadPage() {
                   />
                  </div>
                  
-                 {/* 태그 입력 (기존 로직 유지) */}
-                 {/* ... Tag Input UI Placeholder if needed ... */}
-                 
-                 {/* Collaborators Section */}
-                 <div className="pt-8 border-t border-gray-100">
-                    <CollaboratorManager 
-                        projectId={editId || undefined} 
-                        initialCollaborators={collaboratorEmails}
-                        onChange={setCollaboratorEmails} 
-                    />
-                 </div>
-
-                 {/* Settings Modal (Advanced) */}
-                 <div className="w-1/3 text-sm text-gray-500 space-y-4 pt-2">
-                    <p>
-                       매력적인 커버 이미지는 조회수를 높이는 가장 좋은 방법입니다. 
-                       프로젝트의 핵심을 잘 보여주는 고화질 이미지를 선택하세요.
-                    </p>
-                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                       <h4 className="font-semibold text-gray-700 mb-2">팁</h4>
-                       <ul className="space-y-1 list-disc list-inside text-gray-500 text-xs">
-                          <li>텍스트가 너무 많지 않은 이미지</li>
-                          <li>16:9 비율이 가장 좋습니다</li>
-                          <li>애니메이션(GIF)도 지원합니다</li>
-                       </ul>
-                    </div>
                  </div>
               </div>
+            </div>
+
+            {/* 공동 제작자 관리 (Layout Fix: Separated from Cover Image) */}
+            <div className="space-y-4">
+               <label className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                 <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center">
+                    <FontAwesomeIcon icon={faUser} className="w-4 h-4" />
+                 </div>
+                 공동 제작자 관리
+               </label>
+               <div className="bg-white p-2 rounded-2xl border border-gray-100">
+                  <CollaboratorManager 
+                      projectId={editId || undefined} 
+                      initialCollaborators={collaboratorEmails}
+                      onChange={setCollaboratorEmails} 
+                  />
+               </div>
             </div>
 
             <div className="w-full h-px bg-gray-100"></div>
@@ -1050,7 +1044,7 @@ export default function TiptapUploadPage() {
 
             <div className="w-full h-px bg-gray-100 my-8"></div>
 
-            {/* [New] Project Evolution Timeline Preview */}
+            {/* [New] Project Evolution Timeline Preview (Editable) */}
             <div className="mb-20 animate-in fade-in slide-in-from-bottom-8 duration-1000">
                <div className="flex items-center gap-3 mb-8">
                   <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100">
@@ -1058,7 +1052,7 @@ export default function TiptapUploadPage() {
                   </div>
                   <div>
                     <h3 className="text-xl font-black text-gray-900 leading-tight">Project Evolution</h3>
-                    <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Timeline Preview</p>
+                    <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Timeline Preview (Editable)</p>
                   </div>
                </div>
 
@@ -1068,18 +1062,32 @@ export default function TiptapUploadPage() {
                   </div>
                   
                   <div className="relative z-10 space-y-12">
-                     {/* Upcoming New Version (The one being created) */}
-                     <div className="relative pl-12 h-20">
+                     {/* Upcoming New Version (The one being created, Editable) */}
+                     <div className="relative pl-12 h-auto min-h-[5rem]">
                         <div className="absolute left-1 top-0 bottom-[-48px] w-px bg-gradient-to-b from-blue-500 via-blue-200 to-gray-100"></div>
                         <div className="absolute left-0 top-2 w-3 h-3 rounded-full bg-blue-500 ring-4 ring-blue-100 animate-pulse"></div>
                         
                         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                           <div className="space-y-1.5">
+                           <div className="space-y-1.5 flex-1">
                               <div className="flex items-center gap-2">
-                                 <h4 className="text-lg font-black text-gray-900">{title || "새 버전 이름"}</h4>
-                                 <span className="px-2 py-0.5 bg-blue-600 text-white text-[9px] font-black rounded uppercase tracking-tighter shadow-sm">NEW RELEASE</span>
+                                 {/* Editable Title */}
+                                 <input 
+                                   type="text"
+                                   value={title}
+                                   onChange={(e) => setTitle(e.target.value)}
+                                   placeholder="새 버전 이름 (예: v1.0)"
+                                   className="text-lg font-black text-gray-900 bg-transparent border-none focus:ring-0 p-0 placeholder:text-gray-300 w-full"
+                                 />
+                                 <span className="px-2 py-0.5 bg-blue-600 text-white text-[9px] font-black rounded uppercase tracking-tighter shadow-sm whitespace-nowrap">NEW RELEASE</span>
                               </div>
-                              <p className="text-sm text-gray-500 font-medium italic leading-relaxed">"{summary || "이번 업데이트의 핵심 내용을 적어주세요."}"</p>
+                              {/* Editable Summary (Textarea) */}
+                              <textarea 
+                                value={summary}
+                                onChange={(e) => setSummary(e.target.value)}
+                                placeholder="이번 업데이트의 핵심 내용을 적어주세요."
+                                className="w-full bg-transparent border-none focus:ring-0 p-0 text-sm text-gray-500 font-medium italic leading-relaxed resize-none h-auto min-h-[3rem] placeholder:text-gray-300 placeholder:not-italic"
+                                rows={2}
+                              />
                            </div>
                            <div className="text-right">
                               <span className="text-[10px] font-black text-gray-400 border border-gray-200 px-2 py-1 rounded-lg">COMING SOON</span>
@@ -1159,8 +1167,8 @@ export default function TiptapUploadPage() {
                >
                  취소
                </button>
-              <Button
-                onClick={handleSubmit}
+               <Button
+                onClick={() => handleSubmit()}
                 disabled={isSubmitting}
                 className="h-16 px-12 text-lg font-bold bg-green-600 hover:bg-green-700 text-white rounded-xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all"
               >

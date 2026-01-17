@@ -28,6 +28,7 @@ import {
   faRocket,
   faStar,
   faFaceSmile,
+  faMapPin, // New Icon for Pin Mode
 } from "@fortawesome/free-solid-svg-icons";
 
 import { VersionHistoryModal } from "./VersionHistoryModal";
@@ -234,6 +235,11 @@ export function ProjectDetailModalV2({
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [otherProjects, setOtherProjects] = useState<any[]>([]);
 
+  // [New] Pin Mode State
+  const [isPinMode, setIsPinMode] = useState(false);
+  const [tempPin, setTempPin] = useState<{x: number, y: number} | null>(null);
+  const [activePinId, setActivePinId] = useState<string | null>(null);
+
   // [Growth Mode] Feedback Settings Derived State
   const cData = project && typeof project.custom_data === 'string' ? JSON.parse(project.custom_data) : project?.custom_data;
   const isFeedbackRequested = cData?.is_feedback_requested === true;
@@ -339,6 +345,9 @@ export function ProjectDetailModalV2({
           content: c.content,
           created_at: c.created_at,
           is_secret: c.is_secret,
+          // [New] Location Data mapping
+          location_x: c.location_x, 
+          location_y: c.location_y
         }));
         setComments(mappedComments);
       }
@@ -652,6 +661,9 @@ export function ProjectDetailModalV2({
           content: newComment,
           parentCommentId: replyingTo?.id || null,
           isSecret: newCommentSecret,
+          // [New] Send Location Data
+          locationX: tempPin?.x,
+          locationY: tempPin?.y
         }),
       });
       
@@ -666,6 +678,8 @@ export function ProjectDetailModalV2({
         setNewComment('');
         setNewCommentSecret(false);
         setReplyingTo(null);
+        setTempPin(null);
+        setIsPinMode(false);
 
         // [New] 댓글 알림 전송 (본인 프로젝트가 아닐 경우)
         if (project.userId && project.userId !== session.user.id) {
@@ -766,14 +780,75 @@ export function ProjectDetailModalV2({
                   dangerouslySetInnerHTML={{ __html: unescapeHtml(project.description || '') }}
                 />
               ) : (
-                <img
-                  src={project.urls.full}
-                  alt={project.alt_description || "Project Image"}
-                  className="w-auto max-w-full h-auto object-contain cursor-zoom-in mx-auto"
-                  style={{ maxWidth: '90%' }}
-                  onClick={() => setLightboxOpen(true)}
-                />
-              )}
+                    <div className="relative inline-block">
+                        {/* Image with Click Handler for Pin Mode */}
+                        <img
+                          src={project.urls.full}
+                          alt={project.alt_description || "Project Image"}
+                          className={`max-w-full h-auto object-contain shadow-sm ${isPinMode ? 'cursor-crosshair' : 'cursor-zoom-in'}`}
+                          onClick={(e) => {
+                             if (isPinMode) {
+                                // Calculate % coordinates
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                                setTempPin({ x, y });
+                                setCommentsPanelOpen(true); // Open panel to type comment
+                                
+                                // Focus input if possible
+                                setTimeout(() => {
+                                    const input = document.querySelector('textarea[placeholder="댓글 작성..."]') as HTMLTextAreaElement;
+                                    if(input) input.focus();
+                                }, 100);
+                             } else {
+                                setLightboxOpen(true);
+                             }
+                          }}
+                        />
+                        
+                        {/* Render Existing Pins */}
+                        {comments.map((comment) => {
+                            if (comment.location_x != null && comment.location_y != null) {
+                                return (
+                                    <div
+                                        key={`pin-${comment.comment_id}`}
+                                        className="absolute w-8 h-8 -ml-4 -mt-8 z-10 group"
+                                        style={{ left: `${comment.location_x}%`, top: `${comment.location_y}%` }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActivePinId(comment.comment_id);
+                                            setCommentsPanelOpen(true);
+                                        }}
+                                    >
+                                        <div className={`w-full h-full flex items-center justify-center drop-shadow-md transition-transform hover:scale-110 cursor-pointer ${activePinId === comment.comment_id ? 'text-green-600 scale-125' : 'text-red-500'}`}>
+                                            <FontAwesomeIcon icon={faMapPin} className="w-full h-full filter drop-shadow-sm" />
+                                        </div>
+                                        {/* Tooltip on Hover */}
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white p-2 rounded-lg shadow-xl text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                                            <div className="font-bold mb-1 truncate">{comment.user_name}</div>
+                                            <div className="text-gray-600 line-clamp-2">{comment.content}</div>
+                                            <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white"></div>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })}
+
+                        {/* Render Temp Pin */}
+                        {tempPin && (
+                             <div
+                                className="absolute w-8 h-8 -ml-4 -mt-8 z-20 animate-bounce"
+                                style={{ left: `${tempPin.x}%`, top: `${tempPin.y}%` }}
+                            >
+                                <FontAwesomeIcon icon={faMapPin} className="w-full h-full text-green-500 drop-shadow-lg" />
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap">
+                                    작성 중...
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                  )}
               
               {/* 액션 아이콘들 - 이미지 아래 */}
               <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100">
@@ -1016,12 +1091,91 @@ export function ProjectDetailModalV2({
                       dangerouslySetInnerHTML={{ __html: unescapeHtml(project.description || '') }}
                     />
                   ) : (
-                    <img
-                      src={project.urls.full}
-                      alt={project.alt_description || "Project Image"}
-                      className="max-w-full h-auto object-contain cursor-zoom-in shadow-sm"
-                      onClick={() => setLightboxOpen(true)}
-                    />
+                    <div className="relative inline-block w-full">
+                        {/* Image with Click Handler for Pin Mode */}
+                        <img
+                          src={project.urls.full}
+                          alt={project.alt_description || "Project Image"}
+                          className={`w-auto max-w-full h-auto object-contain mx-auto shadow-sm ${isPinMode ? 'cursor-crosshair' : 'cursor-zoom-in'}`}
+                          style={{ maxHeight: '80vh' }}
+                          draggable={false}
+                          onClick={(e) => {
+                             if (isPinMode) {
+                                // Calculate % coordinates
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                                setTempPin({ x, y });
+                                setCommentsPanelOpen(true); // Open panel to type comment
+                                
+                                // Focus input if possible
+                                setTimeout(() => {
+                                    const input = document.querySelector('textarea[placeholder="댓글 작성..."]') as HTMLTextAreaElement;
+                                    if(input) input.focus();
+                                }, 100);
+                             } else {
+                                setLightboxOpen(true);
+                             }
+                          }}
+                        />
+                        
+                        {/* Render Existing Pins */}
+                        {comments.map((comment) => {
+                            if (comment.location_x != null && comment.location_y != null) {
+                                return (
+                                    <div
+                                        key={`pin-${comment.comment_id}`}
+                                        className="absolute w-8 h-8 -ml-4 -mt-8 z-10 group"
+                                        style={{ left: `${comment.location_x}%`, top: `${comment.location_y}%` }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActivePinId(comment.comment_id);
+                                            setCommentsPanelOpen(true);
+                                        }}
+                                    >
+                                        <div className={`w-full h-full flex items-center justify-center drop-shadow-md transition-transform hover:scale-110 cursor-pointer ${activePinId === comment.comment_id ? 'text-green-600 scale-125' : 'text-red-500'}`}>
+                                            <FontAwesomeIcon icon={faMapPin} className="w-full h-full filter drop-shadow-sm" />
+                                        </div>
+                                        {/* Tooltip on Hover */}
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white p-2 rounded-lg shadow-xl text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                                            <div className="font-bold mb-1 truncate">{comment.user_name}</div>
+                                            <div className="text-gray-600 line-clamp-2">{comment.content}</div>
+                                            <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white"></div>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })}
+
+                        {/* Render Temp Pin */}
+                        {tempPin && (
+                             <div
+                                className="absolute w-8 h-8 -ml-4 -mt-8 z-20 animate-bounce"
+                                style={{ left: `${tempPin.x}%`, top: `${tempPin.y}%` }}
+                            >
+                                <FontAwesomeIcon icon={faMapPin} className="w-full h-full text-green-500 drop-shadow-lg" />
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap">
+                                    작성 중...
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                  )}
+
+                        {/* Render Temp Pin */}
+                        {tempPin && (
+                             <div
+                                className="absolute w-8 h-8 -ml-4 -mt-8 z-20 animate-bounce"
+                                style={{ left: `${tempPin.x}%`, top: `${tempPin.y}%` }}
+                            >
+                                <FontAwesomeIcon icon={faMapPin} className="w-full h-full text-green-500 drop-shadow-lg" />
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap">
+                                    작성 중...
+                                </div>
+                            </div>
+                        )}
+                    </div>
                   )}
                   {/* RichText가 아닐 경우의 텍스트 설명 */}
                   {project.rendering_type !== 'rich_text' && project.description && (
@@ -1155,28 +1309,7 @@ export function ProjectDetailModalV2({
                 </Avatar>
               </button>
 
-              {/* [New] New Episode Button for Owner */}
-              {String(currentUserId) === String(project.userId) && (
-                <div className="relative group flex items-center mb-2">
-                   <button 
-                    onClick={() => {
-                        window.location.href = `/project/upload?mode=version&projectId=${project.id}`;
-                    }} 
-                    className="w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 bg-white text-gray-700 hover:bg-indigo-600 hover:text-white"
-                  >
-                    <div className="relative">
-                        <FontAwesomeIcon icon={faRocket} className="w-5 h-5" />
-                        <span className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white shadow-sm ring-2 ring-white">
-                            N
-                        </span>
-                    </div>
-                  </button>
-                  <div className="absolute right-full mr-3 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-md">
-                     새 에피소드 발행
-                     <div className="absolute top-1/2 -translate-y-1/2 -right-1 border-4 border-transparent border-l-gray-900"></div>
-                  </div>
-                </div>
-              )}
+              {/* [New] New Episode Button Removed as per request */}
 
               {isLoggedIn && project.userId && currentUserId !== project.userId && (
                 <div className="flex flex-col items-center mb-2">

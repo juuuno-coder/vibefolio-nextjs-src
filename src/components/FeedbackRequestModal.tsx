@@ -78,7 +78,10 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-white rounded-3xl p-0 overflow-hidden">
+      <DialogContent 
+        className="max-w-2xl bg-white rounded-3xl p-0 overflow-hidden" 
+        onClick={(e) => e.stopPropagation()} // Prevent bubbling to underlying cards
+      >
         
         {/* Header / Banner Area */}
         <div className="bg-gradient-to-r from-orange-500 to-red-500 p-8 text-white text-center">
@@ -157,7 +160,7 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
                             />
                             <div>
                                 <p className="font-bold text-slate-900 group-hover:text-orange-600 transition-colors">상세 피드백 허용</p>
-                                <p className="text-sm text-slate-500">유저들이 이미지 위에 직접 코멘트를 달 수 있도록 허용합니다.</p>
+                                <p className="text-sm text-slate-500">유저들이 장문의 리뷰와 전문적인 미슐랭 평가를 남길 수 있습니다.</p>
                             </div>
                         </label>
 
