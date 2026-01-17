@@ -1160,23 +1160,9 @@ export function ProjectDetailModalV2({
                                 </div>
                             </div>
                         )}
-                    </div>
+                     </div>
                   )}
 
-                        {/* Render Temp Pin */}
-                        {tempPin && (
-                             <div
-                                className="absolute w-8 h-8 -ml-4 -mt-8 z-20 animate-bounce"
-                                style={{ left: `${tempPin.x}%`, top: `${tempPin.y}%` }}
-                            >
-                                <FontAwesomeIcon icon={faMapPin} className="w-full h-full text-green-500 drop-shadow-lg" />
-                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap">
-                                    작성 중...
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                  )}
                   {/* RichText가 아닐 경우의 텍스트 설명 */}
                   {project.rendering_type !== 'rich_text' && project.description && (
                      <div className="max-w-3xl w-full mt-12 text-lg text-gray-700 leading-8 whitespace-pre-wrap break-keep">
@@ -1189,8 +1175,17 @@ export function ProjectDetailModalV2({
                 <div className="w-full mt-24 border-t border-gray-100">
                    
                    {/* Feedback Integration Section */}
-             {((project as any).allow_michelin_rating || (project as any).allow_stickers) && (
-               <div className="w-full mt-24 border-t border-gray-100 pt-12 space-y-8">
+                   {/* Feedback Integration Section */}
+             {(project as any).is_feedback_requested && ((project as any).allow_michelin_rating || (project as any).allow_stickers) && (
+               <div id="feedback-section" className="w-full mt-24 border-t-2 border-dashed border-gray-100 pt-16 pb-8 space-y-12">
+                 <div className="text-center mb-8 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                    <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-full border border-gray-200 text-gray-600 shadow-sm">
+                       <FontAwesomeIcon icon={faComment} className="w-4 h-4 text-gray-400" />
+                       <span className="text-sm font-bold tracking-wide">Review & Feedback</span>
+                    </span>
+                    <p className="text-xs text-gray-400 mt-4 font-medium">크리에이터의 성장을 위해 솔직한 의견을 남겨주세요.</p>
+                 </div>
+
                  {(project as any).allow_michelin_rating && (
                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                      <MichelinRating projectId={project.id} />
