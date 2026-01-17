@@ -123,6 +123,13 @@ export default function TiptapUploadPage() {
   const [showOriginal, setShowOriginal] = useState(false); // [New] Toggle for Reference Viewer
   const [collaboratorEmails, setCollaboratorEmails] = useState<string[]>([]); // [New] For new projects
 
+  const handleLightroomImport = (images: string[]) => {
+    if (!editor || images.length === 0) return;
+    images.forEach(url => {
+      editor.chain().focus().setImage({ src: url }).run();
+    });
+  };
+
   const handleLeanCanvasApply = (markdownContent: string) => {
     if (!editor) return;
     
@@ -727,18 +734,8 @@ export default function TiptapUploadPage() {
     }, 100);
   };
 
-  // Lightroom에서 이미지 가져오기
-  const handleLightroomImport = (images: string[]) => {
-    if (!editor || images.length === 0) return;
-    
-    // 이미지들을 에디터에 삽입
-    images.forEach(url => {
-      editor.chain().focus().setImage({ src: url }).run();
-    });
-  };
-
   if (step === 'info') {
-    return (
+    const infoContent = (
       <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-white to-green-50 py-12 px-4 transition-all duration-500 ease-in-out animate-in fade-in slide-in-from-bottom-4">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8 flex items-center justify-between">
@@ -1226,6 +1223,7 @@ export default function TiptapUploadPage() {
         </div>
       </div>
     );
+    return infoContent;
   }
 
   // Content Step
