@@ -123,6 +123,19 @@ export default function TiptapUploadPage() {
   const [showOriginal, setShowOriginal] = useState(false); // [New] Toggle for Reference Viewer
   const [collaboratorEmails, setCollaboratorEmails] = useState<string[]>([]); // [New] For new projects
 
+  const handleLeanCanvasApply = (markdownContent: string) => {
+    if (!editor) return;
+    
+    // Simple Markdown to HTML conversion
+    let html = markdownContent
+       .replace(/### (.*?)\n/g, '<h3>$1</h3>')
+       .replace(/## (.*?)\n/g, '<h2>$1</h2>')
+       .replace(/\n\n/g, '<br/><br/>')
+       .replace(/\n/g, '<br/>');
+
+    editor.chain().focus().insertContent(html).run();
+  };
+
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -724,21 +737,6 @@ export default function TiptapUploadPage() {
     });
   };
 
-  const handleLeanCanvasApply = (markdownContent: string) => {
-    if (!editor) return;
-    
-    // Simple Markdown to HTML conversion
-    let html = markdownContent
-       .replace(/### (.*?)\n/g, '<h3>$1</h3>')
-       .replace(/## (.*?)\n/g, '<h2>$1</h2>')
-       .replace(/\n\n/g, '<br/><br/>')
-       .replace(/\n/g, '<br/>');
-
-    editor.chain().focus().insertContent(html).run();
-  }; // End of handleLeanCanvasApply
-
-  // Force Separation to Prevent Parser Issues ==========================================================
-  // ====================================================================================================
 
   const isInfoStep = step === 'info';
 
