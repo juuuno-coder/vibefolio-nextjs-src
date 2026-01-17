@@ -13,6 +13,8 @@ export interface Notification {
   message: string;
   link?: string;
   read: boolean;
+  action_label?: string; // [New]
+  action_url?: string; // [New]
   createdAt: string;
   sender?: {
     id: string;
@@ -57,6 +59,8 @@ export function useNotifications(): UseNotificationsReturn {
           title,
           message,
           link,
+          action_label,
+          action_url,
           read,
           created_at,
           sender_id
@@ -95,6 +99,8 @@ export function useNotifications(): UseNotificationsReturn {
           title: n.title,
           message: n.message,
           link: n.link,
+          action_label: n.action_label,
+          action_url: n.action_url,
           read: n.read,
           createdAt: n.created_at,
           sender: senderProfile ? {
@@ -260,6 +266,8 @@ export async function createNotification({
   message,
   link,
   senderId,
+  actionLabel,
+  actionUrl
 }: {
   userId: string;
   type: Notification["type"];
@@ -267,6 +275,8 @@ export async function createNotification({
   message: string;
   link?: string;
   senderId?: string;
+  actionLabel?: string;
+  actionUrl?: string;
 }) {
   try {
     const { error } = await (supabase.from("notifications") as any).insert({
@@ -275,6 +285,8 @@ export async function createNotification({
       title,
       message,
       link,
+      action_label: actionLabel,
+      action_url: actionUrl,
       sender_id: senderId,
       read: false,
     });

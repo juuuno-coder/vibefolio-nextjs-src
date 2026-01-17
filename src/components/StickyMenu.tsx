@@ -36,6 +36,7 @@ import {
   faIndustry,
   faXmark,
   faCheck,
+  faSeedling, // Import if available, else check library. 'faSeedling' is standard free solid.
 } from "@fortawesome/free-solid-svg-icons";
 
 // 카테고리 항목의 TypeScript 인터페이스 정의
@@ -82,6 +83,7 @@ interface StickyMenuProps {
 // 새로운 메인 카테고리 (장르) - Font Awesome 아이콘
 const categories: Category[] = [
   { iconSolid: faHeart, label: "관심사", value: "interests" },
+  { iconSolid: faSeedling, label: "성장하기", value: "growth" }, // [New]
   { iconSolid: faLayerGroup, label: "전체", value: "all" },
   { iconSolid: faCamera, label: "포토", value: "photo" },
   { iconSolid: faWandMagicSparkles, label: "웹툰/애니", value: "animation" },

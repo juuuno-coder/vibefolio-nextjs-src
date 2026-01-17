@@ -108,8 +108,23 @@ function NotificationItem({ notification, onRead }: NotificationItemProps) {
         <p className="text-xs text-gray-500 line-clamp-2 mt-1 leading-relaxed">
           {notification.message}
         </p>
-        <p className="text-[10px] text-gray-400 mt-1.5 font-medium">
-          {formatTime(notification.createdAt)}
+        <p className="text-[10px] text-gray-400 mt-1.5 font-medium flex items-center justify-between">
+          <span>{formatTime(notification.createdAt)}</span>
+          {notification.action_label && notification.action_url && (
+             <Button 
+                size="sm" 
+                variant="default"
+                className="h-6 text-[10px] px-2 bg-green-600 hover:bg-green-700 text-white shadow-sm ml-2 shrink-0"
+                onClick={(e) => {
+                    e.stopPropagation(); // prevent parent click
+                    e.preventDefault();
+                    if (!notification.read) onRead(notification.id);
+                    window.location.href = notification.action_url!;
+                }}
+             >
+                {notification.action_label}
+             </Button>
+          )}
         </p>
       </div>
 

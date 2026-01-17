@@ -11,6 +11,52 @@ const supabaseAdmin = createClient(
   { auth: { persistSession: false } }
 );
 
+// [New] 최근 검색 기록 조회
+export async function GET(req: NextRequest) {
+  try {
+     const authHeader = req.headers.get('Authorization');
+     if (!authHeader) return NextResponse.json({ history: [] }); // 비로그인은 기록 없음
+
+     const token = authHeader.replace('Bearer ', '');
+     const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+     
+     if (!user) return NextResponse.json({ history: [] });
+
+     // 최근 10개의 고유 검색어 조회
+     const { data: logs } = await supabaseAdmin
+        .from('ai_search_logs')
+        .select('keyword, search_type, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+     if (!logs || logs.length === 0) return NextResponse.json({ history: [] });
+
+     // 클라이언트에서 중복 제거 및 포맷팅 (Log 테이블 컬럼명 확인: search_type vs category)
+     // 코드 55라인에서 `search_type: category`로 넣고 있음.
+     const uniqueHistory: any[] = [];
+     const seen = new Set();
+     
+     for (const log of logs) {
+         const key = `${log.keyword}-${log.search_type}`; // 키워드+카테고리 조합으로 유니크 체크
+         if (!seen.has(key)) {
+             seen.add(key);
+             uniqueHistory.push({
+                 keyword: log.keyword,
+                 category: log.search_type || 'opportunity',
+                 created_at: log.created_at
+             });
+         }
+         if (uniqueHistory.length >= 7) break; // 최대 7개
+     }
+
+     return NextResponse.json({ history: uniqueHistory });
+
+  } catch (error: any) {
+     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { keyword, category = 'opportunity' } = await request.json();

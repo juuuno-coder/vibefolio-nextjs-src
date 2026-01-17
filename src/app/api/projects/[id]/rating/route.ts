@@ -160,6 +160,30 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
           // Notification logic should be here or handled by DB trigger on Comment
       }
 
+      // [New] 3. Notification for Project Owner
+      // Fetch Project Owner ID
+      const { data: projectData } = await supabaseAdmin
+        .from('Project')
+        .select('user_id, title')
+        .eq('project_id', projectId)
+        .single();
+        
+      if (projectData && projectData.user_id !== user.id) {
+          // Send Notification
+          await supabaseAdmin
+            .from('notifications')
+            .insert({
+                user_id: projectData.user_id,
+                type: 'rating',
+                title: '새로운 미슐랭 평가 도착! 📊',
+                message: `${maskedName}님이 '${projectData.title}' 프로젝트를 평가했습니다. (평균 ${score}점)`,
+                link: `/projects/${projectId}`,
+                action_label: '분석 리포트 보기',
+                action_url: `/projects/${projectId}#rating-section`, // Anchor to section
+                sender_id: user.id
+            });
+      }
+
       return NextResponse.json({ success: true });
 
   } catch (error: any) {

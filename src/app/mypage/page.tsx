@@ -24,6 +24,7 @@ type TabType = 'projects' | 'likes' | 'collections' | 'proposals' | 'comments' |
 type AiToolType = 'lean-canvas' | 'persona' | 'assistant' | 'opportunity';
 import { LeanCanvasModal } from "@/components/LeanCanvasModal";
 import { PersonaDefinitionModal } from "@/components/PersonaDefinitionModal";
+import { AiOpportunityExplorer } from "@/components/tools/AiOpportunityExplorer";
 
 export default function MyPage() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function MyPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [activeAiTool, setActiveAiTool] = useState<AiToolType>('opportunity');
+  const [isExplorationStarted, setIsExplorationStarted] = useState(false); // [New] 인라인 탐색 시작 여부
   
   // 프로필 및 통계
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -680,7 +682,10 @@ export default function MyPage() {
                   ].map((tool) => (
                     <button
                       key={tool.id}
-                      onClick={() => setActiveAiTool(tool.id as AiToolType)}
+                      onClick={() => {
+                        setActiveAiTool(tool.id as AiToolType);
+                        setIsExplorationStarted(false); // 탭 변경 시 초기화
+                      }}
                       className={`flex items-start gap-4 p-4 rounded-2xl transition-all text-left group ${
                         activeAiTool === tool.id 
                           ? 'bg-white border-2 border-purple-100 shadow-md ring-4 ring-purple-50/50' 
@@ -739,7 +744,7 @@ export default function MyPage() {
                     )}
 
                     {activeAiTool === 'opportunity' && (
-                       <Button onClick={() => router.push('/tools/opportunity')} className="btn-primary rounded-full px-8 py-6 text-base shadow-lg shadow-blue-200 bg-blue-600 hover:bg-blue-700">
+                       <Button onClick={() => setIsExplorationStarted(true)} className="btn-primary rounded-full px-8 py-6 text-base shadow-lg shadow-blue-200 bg-blue-600 hover:bg-blue-700">
                            <Search className="w-5 h-5 mr-2" /> 탐색기 시작하기
                        </Button>
                     )}
@@ -751,6 +756,25 @@ export default function MyPage() {
                         </div>
                     )}
                   </div>
+                  
+                  {/* Inline Explorer View */}
+                  {isExplorationStarted && activeAiTool === 'opportunity' && (
+                    <div className="absolute inset-0 z-20 bg-white p-6 md:p-8 animate-in slide-in-from-right duration-300 overflow-hidden flex flex-col">
+                        <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
+                            <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                                <Search className="w-5 h-5 text-purple-600" /> AI 기회 탐색기
+                            </h3>
+                            <Button variant="ghost" size="sm" onClick={() => setIsExplorationStarted(false)} className="text-gray-400 hover:text-gray-600">
+                                닫기
+                            </Button>
+                        </div>
+                        <div className="flex-1 overflow-hidden relative">
+                           <AiOpportunityExplorer embedded />
+                        </div>
+                    </div>
+                  )}
+                  
+                  {/* Background Decor (Only visible when not started) - Actually parent has overflow hidden so z-10 works */}
                 </div>
               </div>
             )}

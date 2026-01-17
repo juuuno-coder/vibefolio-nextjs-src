@@ -255,6 +255,11 @@ function HomeContent() {
   // 필터링 로직 강화 (카테고리 + 분야 + 관심사) - 검색어는 서버 사이드에서 처리됨
   // 필터링 로직 강화 (카테고리 + 분야 + 관심사) - 복수 선택 지원
   const filtered = projects.filter(p => {
+    // 0. [New] 성장하기(Growth) 탭 로직
+    if (selectedCategory === "growth") {
+        return p.is_feedback_requested === true;
+    }
+
     // 1. 관심사 탭 ("interests") 선택 시 로직 (OR 조건: 하나라도 맞으면 노출)
     if (selectedCategory === "interests") {
       if (!userInterests) return false;
