@@ -3,17 +3,27 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import TiptapEditor from "@/components/editor/TiptapEditor";
+import TiptapEditor from "@/components/editor/TiptapEditor"; // Already dynamic internally
 import { EditorSidebar } from "@/components/editor/EditorSidebar";
-import { EmbedModal, AssetModal, Asset, StyleModal, CTAButtonModal, SettingsModal } from "@/components/editor/EditorBlocks";
-import { PhotoGridModal, GridLayout } from "@/components/editor/PhotoGridModal";
-import { LightroomModal } from "@/components/editor/LightroomModal";
-import { LeanCanvasModal } from "@/components/LeanCanvasModal";
-import { CollaboratorManager } from "@/components/CollaboratorManager";
 import '@/components/editor/tiptap.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type { GridLayout } from "@/components/editor/PhotoGridModal";
+import type { Asset } from "@/components/editor/EditorBlocks";
+
+// Dynamic Imports for Code Splitting (Bundle Size Optimization)
+const EmbedModal = dynamic(() => import("@/components/editor/EditorBlocks").then(mod => mod.EmbedModal), { ssr: false });
+const AssetModal = dynamic(() => import("@/components/editor/EditorBlocks").then(mod => mod.AssetModal), { ssr: false });
+const StyleModal = dynamic(() => import("@/components/editor/EditorBlocks").then(mod => mod.StyleModal), { ssr: false });
+const CTAButtonModal = dynamic(() => import("@/components/editor/EditorBlocks").then(mod => mod.CTAButtonModal), { ssr: false });
+const SettingsModal = dynamic(() => import("@/components/editor/EditorBlocks").then(mod => mod.SettingsModal), { ssr: false });
+const PhotoGridModal = dynamic(() => import("@/components/editor/PhotoGridModal").then(mod => mod.PhotoGridModal), { ssr: false });
+const LightroomModal = dynamic(() => import("@/components/editor/LightroomModal").then(mod => mod.LightroomModal), { ssr: false });
+const LeanCanvasModal = dynamic(() => import("@/components/LeanCanvasModal").then(mod => mod.LeanCanvasModal), { ssr: false });
+const CollaboratorManager = dynamic(() => import("@/components/CollaboratorManager").then(mod => mod.CollaboratorManager), { ssr: false });
+
 import {
   faCamera,
   faWandMagicSparkles,
