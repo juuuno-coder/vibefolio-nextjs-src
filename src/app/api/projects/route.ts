@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/client';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { GENRE_TO_CATEGORY_ID } from '@/lib/constants';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-// 서비스 키가 있으면 어드민 클라이언트 사용, 없으면 일반 클라이언트 사용
-const supabaseAdmin = supabaseServiceKey 
-  ? createClient(supabaseUrl, supabaseServiceKey) 
-  : supabase;
+// 캐시 설정 제거 (실시간 디버깅)
 
 // 캐시 설정 제거 (실시간 디버깅)
 export const revalidate = 0; 
