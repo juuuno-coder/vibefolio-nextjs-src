@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket, Sparkles, Wand2, Lightbulb, Zap, UserCircle2, Search, Clock } from "lucide-react";
+import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, EyeOff, Lock, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket, Sparkles, Wand2, Lightbulb, Zap, UserCircle2, Search, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileManager } from "@/components/ProfileManager";
 import { ImageCard } from "@/components/ImageCard";
@@ -161,7 +161,7 @@ export default function MyPage() {
         if (activeTab === 'projects') {
           const { data } = await supabase
             .from('Project')
-            .select('project_id, title, thumbnail_url, likes_count, views_count, created_at, content_text, rendering_type, custom_data, scheduled_at')
+            .select('project_id, title, thumbnail_url, likes_count, views_count, created_at, content_text, rendering_type, custom_data, scheduled_at, visibility')
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
           
@@ -176,7 +176,8 @@ export default function MyPage() {
             rendering_type: p.rendering_type || 'image',
             alt_description: p.title || '',
             custom_data: p.custom_data,
-            scheduled_at: p.scheduled_at, // [New]
+            scheduled_at: p.scheduled_at,
+            visibility: p.visibility || 'public', // [New]
           })));
           
         } else if (activeTab === 'likes') {
@@ -308,6 +309,28 @@ export default function MyPage() {
       alert("프로젝트가 삭제되었습니다.");
     } catch (err) {
       alert("삭제에 실패했습니다.");
+    }
+  };
+
+  // 프로젝트 공개여부 토글
+  const handleToggleVisibility = async (projectId: string, currentVisibility: string) => {
+    const newVisibility = currentVisibility === 'public' ? 'private' : 'public';
+    try {
+      const { error } = await supabase
+        .from('Project')
+        .update({ visibility: newVisibility })
+        .eq('project_id', projectId);
+
+      if (error) throw error;
+
+      setProjects(prev => prev.map(p => 
+        p.id === projectId ? { ...p, visibility: newVisibility } : p
+      ));
+      
+      // toast success (optional)
+    } catch (err) {
+      console.error(err);
+      alert("상태 변경에 실패했습니다.");
     }
   };
   
@@ -583,7 +606,14 @@ export default function MyPage() {
                             <span>{new Date(project.scheduled_at).toLocaleString()} 예약됨</span>
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 px-2">
+                        {/* 비공개 뱃지 */}
+                        {project.visibility === 'private' && (
+                           <div className="absolute top-3 right-3 bg-gray-800 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md z-20 flex items-center gap-1.5 opacity-90">
+                             <Lock size={12} strokeWidth={3} />
+                             <span>비공개</span>
+                           </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 px-2 flex-wrap content-center">
                           <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white h-9 px-3 text-xs" onClick={() => {
                              setSelectedProject({
                                ...project,
@@ -597,6 +627,13 @@ export default function MyPage() {
                              setModalOpen(true);
                           }}>
                             <Eye className="w-3.5 h-3.5 mr-1" /> 보기
+                          </Button>
+                          <Button size="sm" variant={project.visibility === 'public' ? "secondary" : "destructive"} className={`h-9 px-3 text-xs ${project.visibility === 'public' ? 'bg-white/90 hover:bg-white text-gray-900' : 'bg-gray-700 hover:bg-gray-600 border-0 text-white'}`} onClick={(e) => {
+                             e.stopPropagation();
+                             handleToggleVisibility(project.id, project.visibility);
+                          }}>
+                            {project.visibility === 'public' ? <Eye className="w-3.5 h-3.5 mr-1" /> : <EyeOff className="w-3.5 h-3.5 mr-1" />}
+                            {project.visibility === 'public' ? '공개중' : '비공개'}
                           </Button>
                           <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white h-9 px-3 text-xs" onClick={() => router.push(`/project/upload?edit=${project.id}`)}>
                             <Edit className="w-3.5 h-3.5 mr-1" /> 수정

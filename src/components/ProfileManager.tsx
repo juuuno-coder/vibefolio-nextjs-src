@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase/client";
-import { Loader2, Globe, Github, Twitter, Instagram, Settings, Check, X, Copy, ExternalLink } from "lucide-react";
+import { Loader2, Globe, Github, Twitter, Instagram, Settings, Check, X, Copy, ExternalLink, Eye, EyeOff } from "lucide-react";
 
 interface ProfileManagerProps {
   user: any; // 현재 사용자 정보
@@ -21,6 +22,8 @@ export function ProfileManager({ user, onUpdate }: ProfileManagerProps) {
   const [checking, setChecking] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   
+  const [isPublic, setIsPublic] = useState(true);
+
   const [formData, setFormData] = useState({
     username: "",
     bio: "",
@@ -41,6 +44,8 @@ export function ProfileManager({ user, onUpdate }: ProfileManagerProps) {
         twitter: user.social_links?.twitter || "",
         instagram: user.social_links?.instagram || "",
       });
+      // undefined인 경우(기존 데이터) 기본값 true
+      setIsPublic(user.is_public !== false);
       setUsernameAvailable(null);
     }
   }, [user, open]);
@@ -72,7 +77,7 @@ export function ProfileManager({ user, onUpdate }: ProfileManagerProps) {
         .select('id')
         .eq('username', username)
         .neq('id', user.id) // 내 아이디는 제외
-        .maybeSingle(); // single() 대신 maybeSingle() 사용 (없으면 null 반환)
+        .maybeSingle(); 
 
       setUsernameAvailable(!data); // 데이터가 없으면 사용 가능
     } catch (error) {
@@ -105,6 +110,7 @@ export function ProfileManager({ user, onUpdate }: ProfileManagerProps) {
           username: formData.username,
           bio: formData.bio,
           social_links: social_links,
+          is_public: isPublic,
         })
         .eq('id', user.id);
 
@@ -140,6 +146,24 @@ export function ProfileManager({ user, onUpdate }: ProfileManagerProps) {
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+           {/* 공개 여부 스위치 */}
+           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+             <div className="flex items-center gap-3">
+               <div className={`p-2 rounded-full ${isPublic ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'}`}>
+                 {isPublic ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+               </div>
+               <div>
+                 <Label className="text-base font-bold text-gray-900 cursor-pointer" onClick={() => setIsPublic(!isPublic)}>프로필 공개</Label>
+                 <p className="text-sm text-gray-500">
+                   {isPublic 
+                     ? "누구나 내 프로필 페이지를 볼 수 있습니다." 
+                     : "나만 내 프로필을 볼 수 있습니다."}
+                 </p>
+               </div>
+             </div>
+             <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+           </div>
+
           {/* 1. 기본 정보 */}
           <div className="space-y-4">
             <div className="space-y-2">

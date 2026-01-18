@@ -1,33 +1,33 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server'; // Updated import
 import { ImageCard } from '@/components/ImageCard';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mail, MapPin, Link as LinkIcon, Calendar, Github, Twitter, Instagram, Globe } from 'lucide-react';
+import { Mail, MapPin, Link as LinkIcon, Calendar, Github, Twitter, Instagram, Globe, Lock } from 'lucide-react'; // Added Lock
 import Image from 'next/image';
 
 // 예약된 경로 제외 (혹시 모를 충돌 방지)
 const RESERVED_ROUTES = ['admin', 'api', 'login', 'signup', 'mypage', 'auth', 'project', 'recruit', 'robots.txt', 'sitemap.xml'];
-
-// 서버 사이드 데이터 페칭을 위한 Supabase 클라이언트 (읽기 전용)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 type Props = {
   params: { username: string };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const supabase = createClient();
   const { data: profile } = await supabase
     .from('profiles')
-    .select('username, bio, avatar_url, cover_image_url')
+    .select('username, bio, avatar_url, cover_image_url, is_public')
     .eq('username', params.username)
     .single();
 
   if (!profile) return { title: 'User not found' };
+
+  if (profile.is_public === false) {
+      return { title: '비공개 프로필' };
+  }
 
   return {
     title: `${profile.username} | Vibefolio`,
@@ -40,11 +40,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PublicProfilePage({ params }: Props) {
   const { username } = params;
+  const supabase = createClient();
 
   // 예약된 경로 체크
   if (RESERVED_ROUTES.includes(username)) {
     notFound();
   }
+  
+  // 현재 로그인한 사용자 확인 (본인 확인용)
+  const { data: { user } } = await supabase.auth.getUser();
 
   // 1. 프로필 정보 조회
   const { data: profile, error: profileError } = await supabase
@@ -52,12 +56,34 @@ export default async function PublicProfilePage({ params }: Props) {
     .select(`
       *,
       users:id (email, nickname) 
-    `) // users 테이블 조인 (닉네임 가져오기)
+    `) 
     .eq('username', username)
     .single();
 
   if (profileError || !profile) {
     notFound();
+  }
+
+  // 비공개 프로필 접근 제어
+  const isOwner = user?.id === profile.id;
+  if (profile.is_public === false && !isOwner) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center max-w-md w-full">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Lock className="w-10 h-10 text-gray-400" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">비공개 프로필입니다</h1>
+            <p className="text-gray-500 mb-8">
+                이 사용자의 프로필은 비공개로 설정되어 있습니다.<br/>
+                프로필 소유자만 볼 수 있습니다.
+            </p>
+            <Link href="/">
+                <Button className="w-full">메인으로 돌아가기</Button>
+            </Link>
+        </div>
+      </div>
+    );
   }
 
   // 2. 프로젝트 목록 조회 (공개된 것만)
