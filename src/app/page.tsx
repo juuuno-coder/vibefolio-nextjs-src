@@ -100,17 +100,16 @@ function HomeContent() {
     }
   }, [user, userProfile, loading]);
 
-  // Auth 상태 변경 시 관심 카테고리 정보만 로드 (자동 적용 X)
+  // Auth 상태 변경 시 관심 카테고리 정보만 로드 (userProfile 우선)
   useEffect(() => {
-    if (user) {
-      const interests = user.user_metadata?.interests;
-      if (interests) {
-        setUserInterests(interests);
-      }
+    if (userProfile?.interests) {
+      setUserInterests(userProfile.interests);
+    } else if (user?.user_metadata?.interests) {
+      setUserInterests(user.user_metadata.interests);
     } else {
       setUserInterests(null);
     }
-  }, [user]);
+  }, [user, userProfile]);
 
   // 정렬 함수
   const sortProjects = useCallback((list: ImageDialogProps[], type: string) => {
