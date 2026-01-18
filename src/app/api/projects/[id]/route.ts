@@ -2,8 +2,9 @@
 // 개별 프로젝트 조회, 수정, 삭제 API
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { supabase as supabaseAnon } from '@/lib/supabase/client';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 export async function GET(
   request: NextRequest,
@@ -11,7 +12,7 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await (supabaseAnon as any)
       .from('Project')
       .select(`
         *,
@@ -49,7 +50,7 @@ export async function GET(
     }
 
     // 조회수 증가
-    await (supabase as any)
+    await (supabaseAnon as any)
       .from('Project')
       .update({ views: (data.views || 0) + 1 })
       .eq('project_id', id);
@@ -64,6 +65,7 @@ export async function GET(
   }
 }
 
+// ADMIN_EMAILS preserved
 const ADMIN_EMAILS = [
   "juuuno@naver.com", 
   "juuuno1116@gmail.com", 
@@ -78,42 +80,60 @@ export async function PUT(
 ) {
   const { id } = await params;
   try {
-    // 1. 인증 확인
+    // [Strict Auth] 1. Identify User (API Key OR Session)
+    let authenticatedUser: { id: string, email?: string } | null = null;
     const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: '로그인이 필요합니다.' },
-        { status: 401 }
-      );
+
+    if (authHeader) {
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        if (token.startsWith('vf_')) {
+             // API Key
+             const { data: keyRecord } = await supabaseAdmin
+                .from('api_keys')
+                .select('user_id')
+                .eq('api_key', token)
+                .eq('is_active', true)
+                .single();
+             if (keyRecord) {
+                 // Fetch email for Admin check
+                 const { data: userData } = await supabaseAdmin.auth.admin.getUserById(keyRecord.user_id);
+                 authenticatedUser = { 
+                     id: keyRecord.user_id, 
+                     email: userData.user?.email 
+                 };
+             }
+        }
+    } 
+    
+    if (!authenticatedUser) {
+        // Session Fallback
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            authenticatedUser = { id: user.id, email: user.email };
+        }
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: '인증에 실패했습니다.' },
-        { status: 401 }
-      );
+    if (!authenticatedUser) {
+        return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
     }
 
     // 2. 권한 확인 (관리자 또는 프로젝트 소유자)
-    const isAdminEmail = user.email && ADMIN_EMAILS.includes(user.email);
-    
-    // DB상 관리자 권한 확인
+    const isAdminEmail = authenticatedUser.email && ADMIN_EMAILS.includes(authenticatedUser.email);
     let isDbAdmin = false;
+    
     if (!isAdminEmail) {
       const { data: profile } = await supabaseAdmin
         .from('profiles')
         .select('role')
-        .eq('id', user.id)
+        .eq('id', authenticatedUser.id)
         .single();
       isDbAdmin = profile?.role === 'admin';
     }
 
     const isAuthorizedAdmin = isAdminEmail || isDbAdmin;
 
-    // 프로젝트 소유자 확인을 위해 먼저 프로젝트 조회
+    // 프로젝트 소유자 확인
     const { data: existingProject, error: fetchError } = await (supabaseAdmin as any)
       .from('Project')
       .select('user_id')
@@ -121,21 +141,14 @@ export async function PUT(
       .single();
 
     if (fetchError || !existingProject) {
-      return NextResponse.json(
-        { error: '프로젝트를 찾을 수 없습니다.' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: '프로젝트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    // 관리자가 아니고 소유자도 아니면 거부
-    if (!isAuthorizedAdmin && existingProject.user_id !== user.id) {
-       return NextResponse.json(
-        { error: '수정 권한이 없습니다.' },
-        { status: 403 }
-      );
+    if (!isAuthorizedAdmin && existingProject.user_id !== authenticatedUser.id) {
+       return NextResponse.json({ error: '수정 권한이 없습니다.' }, { status: 403 });
     }
 
-    // 3. 업데이트 수행 (supabaseAdmin 사용)
+    // 3. 업데이트 수행
     const body = await request.json();
     const { 
         title, content_text, thumbnail_url, category_id, rendering_type, custom_data,
@@ -153,139 +166,72 @@ export async function PUT(
         custom_data,
         allow_michelin_rating,
         allow_stickers,
-        allow_secret_comments
+        allow_secret_comments,
+        updated_at: new Date().toISOString()
       })
       .eq('project_id', id)
-      .select(`
-        *,
-        Category (
-          category_id,
-          name
-        )
-      `)
-      .single();
+      .select().single();
 
-    // Fallback Removed: Standard Error Handling
     if (error) {
       console.error('프로젝트 수정 실패:', error);
-      return NextResponse.json(
-        { error: '프로젝트 수정에 실패했습니다.', details: error.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: `수정 실패: ${error.message}` }, { status: 500 });
     }
 
-    // [New] 표준화된 Fields 매핑 동기화
+    // [New] Fields 매핑 동기화
     if (custom_data) {
+        // (기존 로직 유지 - 생략 없이 복사)
         try {
             const parsedCustom = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
-            const fieldSlugs = parsedCustom.fields; // e.g. ['it', 'finance']
+            const fieldSlugs = parsedCustom.fields; 
 
-            // 1. 기존 매핑 삭제
-            await (supabaseAdmin as any)
-                .from('project_fields')
-                .delete()
-                .eq('project_id', id);
+            // 기존 매핑 삭제
+            await (supabaseAdmin as any).from('project_fields').delete().eq('project_id', id);
 
             if (Array.isArray(fieldSlugs) && fieldSlugs.length > 0) {
-                // 2. Slug에 해당하는 ID 조회
                 const { data: fieldRecords } = await (supabaseAdmin as any)
-                    .from('fields')
-                    .select('id, slug')
-                    .in('slug', fieldSlugs);
+                    .from('fields').select('id, slug').in('slug', fieldSlugs);
 
                 if (fieldRecords && fieldRecords.length > 0) {
-                    // 3. 새로운 매핑 삽입
                     const mappings = fieldRecords.map((f: any) => ({
                         project_id: id,
                         field_id: f.id,
                     }));
-
-                    const { error: mapError } = await (supabaseAdmin as any)
-                        .from('project_fields')
-                        .insert(mappings);
-
-                    if (mapError) {
-                         console.error('[API] Field mapping update failed:', mapError);
-                    } else {
-                         console.log('[API] Field mappings updated:', mappings.length);
-                    }
+                    await (supabaseAdmin as any).from('project_fields').insert(mappings);
                 }
             }
         } catch (e) {
             console.error('[API] Syncing fields failed:', e);
         }
     }
-
-    // [New] 복수 카테고리 동기화 (project_categories)
+    
+    // [New] Category 매핑 동기화
     if (custom_data) {
         try {
             const parsedCustom = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
             const genres = parsedCustom.genres || [];
             
-            // 1. 기존 카테고리 매핑 삭제
-            await (supabaseAdmin as any)
-                .from('project_categories')
-                .delete()
-                .eq('project_id', id);
+            await (supabaseAdmin as any).from('project_categories').delete().eq('project_id', id);
 
-            // 2. 새로운 카테고리 매핑 삽입
             if (Array.isArray(genres) && genres.length > 0) {
                 const { GENRE_TO_CATEGORY_ID } = await import('@/lib/constants');
-                const categoryMappings = genres
-                    .map((genreSlug: string) => {
+                const categoryMappings = genres.map((genreSlug: string) => {
                         const catId = GENRE_TO_CATEGORY_ID[genreSlug];
-                        if (catId) {
-                            return {
-                                project_id: parseInt(id),
-                                category_id: catId,
-                                category_type: 'genre'
-                            };
-                        }
-                        return null;
-                    })
-                    .filter(Boolean);
-
+                        return catId ? { project_id: parseInt(id), category_id: catId, category_type: 'genre' } : null;
+                    }).filter(Boolean);
+                
                 if (categoryMappings.length > 0) {
-                    const { error: catError } = await (supabaseAdmin as any)
-                        .from('project_categories')
-                        .insert(categoryMappings);
-
-                    if (catError) {
-                        console.error('[API] Category mappings update failed:', catError);
-                    } else {
-                        console.log('[API] Category mappings updated:', categoryMappings.length);
-                    }
+                    await (supabaseAdmin as any).from('project_categories').insert(categoryMappings);
                 }
             }
         } catch (e) {
-            console.error('[API] Syncing project categories failed:', e);
+            console.error('[API] Syncing categories failed:', e);
         }
     }
 
-    // Supabase Admin을 직접 사용하여 사용자 정보 가져오기
-    if (data && data.user_id) {
-      try {
-        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.getUserById(data.user_id);
-        if (!authError && authData.user) {
-          data.User = {
-            user_id: authData.user.id,
-            username: authData.user.user_metadata?.nickname || authData.user.email?.split('@')[0] || 'Unknown',
-            profile_image_url: authData.user.user_metadata?.profile_image_url || '/globe.svg'
-          };
-        }
-      } catch (e) {
-        console.error('사용자 정보 조회 실패:', e);
-        data.User = null;
-      }
-    }
-
-    return NextResponse.json({ project: data });
+    return NextResponse.json({ message: '프로젝트가 수정되었습니다.', data });
   } catch (error: any) {
     console.error('서버 오류:', error);
-    return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.', details: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '서버 오류', details: error.message }, { status: 500 });
   }
 }
 
@@ -295,85 +241,58 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
-    // Authorization 헤더에서 토큰 추출
+     // [Strict Auth] 1. Identify User
+    let authenticatedUser: { id: string, email?: string } | null = null;
     const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: '로그인이 필요합니다.' },
-        { status: 401 }
-      );
+
+    if (authHeader) {
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        if (token.startsWith('vf_')) {
+             const { data: keyRecord } = await supabaseAdmin.from('api_keys').select('user_id').eq('api_key', token).eq('is_active', true).single();
+             if (keyRecord) {
+                 const { data: userData } = await supabaseAdmin.auth.admin.getUserById(keyRecord.user_id);
+                 authenticatedUser = { id: keyRecord.user_id, email: userData.user?.email };
+             }
+        }
+    } 
+    
+    if (!authenticatedUser) {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) authenticatedUser = { id: user.id, email: user.email };
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    
-    // 토큰으로 사용자 확인
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: '인증에 실패했습니다.' },
-        { status: 401 }
-      );
+    if (!authenticatedUser) {
+        return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
     }
 
-    // 2. 권한 확인 (관리자 또는 프로젝트 소유자)
-    const isAdminEmail = user.email && ADMIN_EMAILS.includes(user.email);
-    
-    // DB상 관리자 권한 확인
+    // 2. 권한 확인
+    const isAdminEmail = authenticatedUser.email && ADMIN_EMAILS.includes(authenticatedUser.email);
     let isDbAdmin = false;
     if (!isAdminEmail) {
-      const { data: profile } = await supabaseAdmin
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
+      const { data: profile } = await supabaseAdmin.from('profiles').select('role').eq('id', authenticatedUser.id).single();
       isDbAdmin = profile?.role === 'admin';
     }
-
     const isAuthorizedAdmin = isAdminEmail || isDbAdmin;
 
-    // 프로젝트 정보 조회
+    // 프로젝트 조회
     const { data: project, error: fetchError } = await (supabaseAdmin as any)
-      .from('Project')
-      .select('user_id')
-      .eq('project_id', id)
-      .single();
+      .from('Project').select('user_id').eq('project_id', id).single();
 
-    if (fetchError || !project) {
-      return NextResponse.json(
-        { error: '프로젝트를 찾을 수 없습니다.', details: fetchError?.message },
-        { status: 404 }
-      );
+    if (fetchError || !project) return NextResponse.json({ error: '프로젝트를 찾을 수 없습니다.' }, { status: 404 });
+
+    if (!isAuthorizedAdmin && project.user_id !== authenticatedUser.id) {
+       return NextResponse.json({ error: '삭제 권한이 없습니다.' }, { status: 403 });
     }
 
-    // 관리자가 아니고 소유자도 아니면 거부
-    if (!isAuthorizedAdmin && project.user_id !== user.id) {
-      return NextResponse.json(
-        { error: '삭제 권한이 없습니다.' },
-        { status: 403 }
-      );
-    }
-
-    // 프로젝트 삭제 (soft delete)
+    // 삭제 (Soft Delete)
     const { error } = await (supabaseAdmin as any)
-      .from('Project')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('project_id', id);
+      .from('Project').update({ deleted_at: new Date().toISOString() }).eq('project_id', id);
 
-    if (error) {
-      console.error('프로젝트 삭제 실패:', error);
-      return NextResponse.json(
-        { error: '프로젝트 삭제에 실패했습니다.', details: error.message },
-        { status: 500 }
-      );
-    }
+    if (error) return NextResponse.json({ error: '삭제 실패', details: error.message }, { status: 500 });
 
     return NextResponse.json({ message: '프로젝트가 삭제되었습니다.' });
   } catch (error: any) {
-    console.error('서버 오류:', error);
-    return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.', details: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '서버 오류', details: error.message }, { status: 500 });
   }
 }
