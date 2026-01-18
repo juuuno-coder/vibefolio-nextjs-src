@@ -185,11 +185,43 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // [New] API Key Authentication Logic
+    const authHeader = request.headers.get('Authorization');
+    let authenticatedUserId: string | null = null;
+    let isApiContext = false;
+
+    if (authHeader && authHeader.startsWith('Bearer vf_')) {
+        const apiKey = authHeader.replace('Bearer ', '');
+        const { data: keyRecord } = await supabaseAdmin
+            .from('api_keys')
+            .select('user_id')
+            .eq('api_key', apiKey)
+            .eq('is_active', true)
+            .single();
+        
+        if (keyRecord) {
+            authenticatedUserId = keyRecord.user_id;
+            isApiContext = true;
+        } else {
+             return NextResponse.json({ error: 'Invalid API Key' }, { status: 401 });
+        }
+    }
+
     const body = await request.json();
-    const { 
+    let { 
       user_id, category_id, title, summary, content_text, thumbnail_url, rendering_type, custom_data,
-      allow_michelin_rating, allow_stickers, allow_secret_comments, scheduled_at 
+      allow_michelin_rating, allow_stickers, allow_secret_comments, scheduled_at, visibility
     } = body;
+
+    // Force user_id if authenticated via API Key
+    if (authenticatedUserId) {
+        user_id = authenticatedUserId;
+    }
+
+    // Default category for API usage if missing
+    if (isApiContext && !category_id) {
+        category_id = 1; 
+    }
 
     if (!user_id || !category_id || !title) {
       return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 });
@@ -255,6 +287,8 @@ export async function POST(request: NextRequest) {
         allow_michelin_rating: allow_michelin_rating ?? true, 
         allow_stickers: allow_stickers ?? true, 
         allow_secret_comments: allow_secret_comments ?? true,
+        scheduled_at: scheduled_at ? new Date(scheduled_at).toISOString() : null,
+        visibility: visibility || 'public',
         likes_count: 0, views_count: 0 
       }] as any)
       .select()
