@@ -82,7 +82,7 @@ export function AiPersonaChat({ onGenerate }: AiPersonaChatProps) {
 
   return (
     <div className="flex flex-col h-full bg-white relative">
-      <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+      <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white/95 backdrop-blur-sm z-10 shrink-0">
         <div>
             <h2 className="text-xl font-black text-gray-900 flex items-center gap-2 mb-1">
                 <UserCircle2 className="mb-0.5 w-6 h-6 text-blue-600"/> 

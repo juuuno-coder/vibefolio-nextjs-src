@@ -2,9 +2,10 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";  // Keep using Textarea for chat input consistency
-import { Loader2, Send, Bot, User, Search, ExternalLink, Building, Calendar, MapPin, Newspaper, Lightbulb, PenTool, Hash } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea"; 
+import { Loader2, Send, Bot, User, Building, MapPin, Newspaper, Lightbulb, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { SearchResultDetailModal } from "@/components/SearchResultDetailModal";
 
 interface Message {
   id: string;
@@ -23,10 +24,15 @@ export function AiOpportunityChat({ category }: AiOpportunityChatProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  
+  // Modal State
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Reset messages when category changes
+    // Reset messages/session when category changes
     const initialMessages: Record<string, string> = {
         'job': "안녕하세요! AI 관련 채용 정보나 알바, 공모전 정보를 찾아드릴까요? \n찾으시는 직무나 키워드를 말씀해주세요. (예: 프롬프트 엔지니어, 데이터 라벨링)",
         'trend': "최신 AI 기술 트렌드와 뉴스를 요약해드립니다. \n궁금한 주제가 있으신가요? (예: Sora, LLM, 생성형 AI)",
@@ -41,7 +47,7 @@ export function AiOpportunityChat({ category }: AiOpportunityChatProps) {
             content: initialMessages[category] || "무엇을 도와드릴까요?" 
         }
     ]);
-    setSessionId(null); // Reset session on category change
+    setSessionId(null);
   }, [category]);
 
   useEffect(() => {
@@ -95,13 +101,10 @@ export function AiOpportunityChat({ category }: AiOpportunityChatProps) {
     }
   };
 
-  const getCategoryName = (cat: string) => {
-      if(cat === 'job') return '채용 정보';
-      if(cat === 'trend') return '트렌드';
-      if(cat === 'recipe') return '레시피';
-      if(cat === 'tool') return '도구';
-      return '정보';
-  }
+  const handleOpenDetail = (item: any) => {
+      setSelectedItem(item);
+      setDetailModalOpen(true);
+  };
 
   return (
     <div className="flex flex-col h-full bg-white relative">
@@ -130,7 +133,12 @@ export function AiOpportunityChat({ category }: AiOpportunityChatProps) {
                     {m.type === 'result-list' && m.data && (
                         <div className="w-full grid gap-3 mt-2">
                             {m.data.map((item, idx) => (
-                                <ResultCard key={idx} category={category} item={item} />
+                                <ResultCard 
+                                    key={idx} 
+                                    category={category} 
+                                    item={item} 
+                                    onClick={() => handleOpenDetail(item)}
+                                />
                             ))}
                         </div>
                     )}
@@ -183,11 +191,19 @@ export function AiOpportunityChat({ category }: AiOpportunityChatProps) {
             </div>
         </div>
       </div>
+
+      {/* Result Detail Modal */}
+      <SearchResultDetailModal 
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+        category={category}
+        item={selectedItem}
+      />
     </div>
   );
 }
 
-function ResultCard({ category, item }: { category: string, item: any }) {
+function ResultCard({ category, item, onClick }: { category: string, item: any, onClick: () => void }) {
     if (category === 'job') {
         return (
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
@@ -206,8 +222,8 @@ function ResultCard({ category, item }: { category: string, item: any }) {
                         <span key={i} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full whitespace-nowrap">{t}</span>
                     ))}
                 </div>
-                <Button variant="outline" size="sm" className="w-full text-indigo-600 border-indigo-100 hover:bg-indigo-50" asChild>
-                    <a href="#" target="_blank">상세 보기 <ExternalLink className="w-3 h-3 ml-1" /></a>
+                <Button variant="outline" size="sm" className="w-full text-indigo-600 border-indigo-100 hover:bg-indigo-50" onClick={onClick}>
+                    상세 보기 <ExternalLink className="w-3 h-3 ml-1" />
                 </Button>
             </div>
         )
@@ -223,16 +239,17 @@ function ResultCard({ category, item }: { category: string, item: any }) {
                 <p className="text-sm text-gray-600 line-clamp-2 mb-3">{item.summary}</p>
                 <div className="flex justify-between items-center text-xs text-gray-400">
                     <span>{item.source} · {item.date}</span>
-                    <a href="#" className="flex items-center text-indigo-600 hover:underline">원문 <ExternalLink className="w-3 h-3 ml-1" /></a>
+                    <button onClick={onClick} className="flex items-center text-indigo-600 hover:underline">
+                        원문 <ExternalLink className="w-3 h-3 ml-1" />
+                    </button>
                 </div>
             </div>
         )
     }
     if (category === 'recipe') {
         return (
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex gap-4">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex gap-4 cursor-pointer" onClick={onClick}>
                 <div className="w-20 h-20 bg-gray-100 rounded-lg shrink-0 overflow-hidden">
-                     {/* Placeholder for image */}
                     <div className="w-full h-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
                         <Lightbulb className="w-8 h-8 text-amber-500/50" />
                     </div>
@@ -245,16 +262,22 @@ function ResultCard({ category, item }: { category: string, item: any }) {
                              <span key={i} className="px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[10px] rounded-md">{t}</span>
                          ))}
                      </div>
-                     <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-gray-500 hover:text-amber-600">
-                         프롬프트 복사
-                     </Button>
+                      <div className="flex items-center justify-between">
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-gray-500 hover:text-amber-600" onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(item.snippet || "");
+                            toast.success("프롬프트 복사됨");
+                        }}>
+                            프롬프트 복사
+                        </Button>
+                    </div>
                 </div>
             </div>
         )
     }
     // Tool
     return (
-        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
              <div className="flex items-start gap-3">
                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center shrink-0 text-2xl">
                      {item.icon || "🛠️"}
@@ -265,37 +288,12 @@ function ResultCard({ category, item }: { category: string, item: any }) {
                      <p className="text-sm text-gray-600 line-clamp-2 mb-2">{item.desc}</p>
                      <div className="flex gap-2">
                          <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">Free</span>
-                         <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">Web</span>
                      </div>
                  </div>
+                 <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-400 hover:text-blue-600">
+                    <ExternalLink className="w-4 h-4" />
+                 </Button>
              </div>
         </div>
     )
-}
-
-function generateMockResults(category: string, query: string) {
-    if (category === 'job') {
-        return [
-            { type: '채용', title: 'Generative AI Prompt Engineer', company: 'TechCorp', location: '서울 강남구', date: '마감임박', tags: ['Python', 'LLM', 'Creative'] },
-            { type: '해커톤', title: '제 5회 AI 융합 아이디어 해커톤', company: 'AI협회', location: '온라인', date: 'D-3', tags: ['상금1000만', '대학생'] },
-            { type: '채용', title: 'AI 서비스 기획자 (Junior)', company: 'StartUp A', location: '판교', date: '상시채용', tags: ['PM', 'UX'] }
-        ];
-    }
-    if (category === 'trend') {
-        return [
-            { title: 'OpenAI, 새로운 모델 GPT-5 출시 예고?', summary: '최근 루머에 따르면 차세대 모델의 추론 능력이 비약적으로 상승했다고 합니다.', source: 'TechCrunch', date: '2시간 전' },
-            { title: '생성형 AI, 저작권 문제의 새로운 국면', summary: '주요 아티스트들이 AI 기업을 상대로 제기한 소송의 첫 판결이 나왔습니다.', source: 'TheVerge', date: '어제' },
-        ];
-    }
-    if (category === 'recipe') {
-        return [
-            { title: 'Cyberpunk Neon City', model: 'Midjourney v6', tags: ['Neon', 'Sci-fi', 'Cityscape'] },
-            { title: 'Watercolor Portrait', model: 'Stable Diffusion XL', tags: ['Artistic', 'Soft', 'Portrait'] },
-        ];
-    }
-    return [
-        { name: 'Remove.bg', category: 'Image Editing', desc: '이미지 배경을 5초 만에 자동으로 제거해주는 AI 도구입니다.', icon: '🖼️' },
-        { name: 'Gamma', category: 'Presentation', desc: '텍스트만 입력하면 아름다운 PPT 슬라이드를 만들어줍니다.', icon: '📊' },
-        { name: 'Vrew', category: 'Video Editing', desc: '영상 자막 자동 생성 및 AI 컷 편집을 지원하는 에디터.', icon: '🎬' },
-    ];
 }
