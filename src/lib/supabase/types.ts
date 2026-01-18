@@ -213,6 +213,53 @@ export type Database = {
         Relationships: [];
       };
 
+      project_categories: {
+        Row: {
+          project_id: number;
+          category_id: number;
+          category_type: string;
+          created_at: string;
+        };
+        Insert: { project_id: number; category_id: number; category_type?: string; created_at?: string; };
+        Update: { project_id?: number; category_id?: number; category_type?: string; created_at?: string; };
+        Relationships: [];
+      };
+      project_versions: {
+        Row: {
+          version_id: number;
+          project_id: number;
+          version_tag: string;
+          version_name: string | null;
+          changelog: string | null;
+          release_type: string | null;
+          snapshot_data: Json | null;
+          released_at: string;
+          created_at: string;
+        };
+        Insert: { version_id?: number; project_id: number; version_tag: string; version_name?: string | null; changelog?: string | null; release_type?: string | null; snapshot_data?: Json | null; released_at?: string; created_at?: string; };
+        Update: { version_id?: number; project_id?: number; version_tag?: string; version_name?: string | null; changelog?: string | null; release_type?: string | null; snapshot_data?: Json | null; released_at?: string; created_at?: string; };
+        Relationships: [];
+      };
+      api_keys: {
+        Row: {
+          key_id: number;
+          user_id: string;
+          api_key: string;
+          key_name: string | null;
+          key_prefix: string | null;
+          scopes: string[] | null;
+          rate_limit_per_minute: number;
+          is_active: boolean;
+          last_used_at: string | null;
+          expires_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: { key_id?: number; user_id: string; api_key: string; key_name?: string | null; key_prefix?: string | null; scopes?: string[] | null; rate_limit_per_minute?: number; is_active?: boolean; last_used_at?: string | null; expires_at?: string | null; created_at?: string; updated_at?: string; };
+        Update: { key_id?: number; user_id?: string; api_key?: string; key_name?: string | null; key_prefix?: string | null; scopes?: string[] | null; rate_limit_per_minute?: number; is_active?: boolean; last_used_at?: string | null; expires_at?: string | null; created_at?: string; updated_at?: string; };
+        Relationships: [];
+      };
+
       // --- PascalCase Tables (Used in many components) ---
       Category: {
         Row: { category_id: number; name: string; parent_id: number | null; };
@@ -239,9 +286,10 @@ export type Database = {
           allow_stickers: boolean;
           allow_secret_comments: boolean;
           description: string | null;
+          visibility: string;
         };
-        Insert: { project_id?: number; user_id: string; category_id: number; title: string; rendering_type?: string | null; custom_data?: string | null; thumbnail_url?: string | null; content_text?: string | null; views?: number; likes_count?: number; views_count?: number; created_at?: string; updated_at?: string; allow_michelin_rating?: boolean; allow_stickers?: boolean; allow_secret_comments?: boolean; description?: string | null; };
-        Update: { project_id?: number; user_id?: string; category_id?: number; title?: string; rendering_type?: string | null; custom_data?: string | null; thumbnail_url?: string | null; content_text?: string | null; views?: number; likes_count?: number; views_count?: number; created_at?: string; updated_at?: string; allow_michelin_rating?: boolean; allow_stickers?: boolean; allow_secret_comments?: boolean; description?: string | null; };
+        Insert: { project_id?: number; user_id: string; category_id: number; title: string; rendering_type?: string | null; custom_data?: string | null; thumbnail_url?: string | null; content_text?: string | null; views?: number; likes_count?: number; views_count?: number; created_at?: string; updated_at?: string; allow_michelin_rating?: boolean; allow_stickers?: boolean; allow_secret_comments?: boolean; description?: string | null; visibility?: string; };
+        Update: { project_id?: number; user_id?: string; category_id?: number; title?: string; rendering_type?: string | null; custom_data?: string | null; thumbnail_url?: string | null; content_text?: string | null; views?: number; likes_count?: number; views_count?: number; created_at?: string; updated_at?: string; allow_michelin_rating?: boolean; allow_stickers?: boolean; allow_secret_comments?: boolean; description?: string | null; visibility?: string; };
         Relationships: [];
       };
       Collection: {
@@ -301,7 +349,6 @@ export type Database = {
           status: string;
           created_at: string;
           updated_at: string;
-          updated_at: string; 
         };
         Insert: { proposal_id?: string; sender_id: string; receiver_id: string; title: string; content: string; status?: string; created_at?: string; updated_at?: string; };
         Update: { proposal_id?: string; sender_id?: string; receiver_id?: string; title?: string; content?: string; status?: string; created_at?: string; updated_at?: string; };
@@ -315,7 +362,12 @@ export type Database = {
       };
     };
     Views: { [_ in never]: never; };
-    Functions: { [_ in never]: never; };
+    Functions: {
+      generate_api_key: {
+        Args: Record<string, never>;
+        Returns: string;
+      };
+    };
     Enums: { [_ in never]: never; };
     CompositeTypes: { [_ in never]: never; };
   };

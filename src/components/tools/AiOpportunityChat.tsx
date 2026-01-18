@@ -222,8 +222,19 @@ function ResultCard({ category, item, onClick }: { category: string, item: any, 
                         <span key={i} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full whitespace-nowrap">{t}</span>
                     ))}
                 </div>
-                <Button variant="outline" size="sm" className="w-full text-indigo-600 border-indigo-100 hover:bg-indigo-50" onClick={onClick}>
-                    상세 보기 <ExternalLink className="w-3 h-3 ml-1" />
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full text-indigo-600 border-indigo-100 hover:bg-indigo-50" 
+                    onClick={() => {
+                        if (item.link) {
+                            window.open(item.link, '_blank', 'noopener,noreferrer');
+                        } else {
+                            onClick();
+                        }
+                    }}
+                >
+                    {item.link ? '원문 보기' : '상세 보기'} <ExternalLink className="w-3 h-3 ml-1" />
                 </Button>
             </div>
         )
@@ -239,7 +250,16 @@ function ResultCard({ category, item, onClick }: { category: string, item: any, 
                 <p className="text-sm text-gray-600 line-clamp-2 mb-3">{item.summary}</p>
                 <div className="flex justify-between items-center text-xs text-gray-400">
                     <span>{item.source} · {item.date}</span>
-                    <button onClick={onClick} className="flex items-center text-indigo-600 hover:underline">
+                    <button 
+                        onClick={() => {
+                            if (item.link) {
+                                window.open(item.link, '_blank', 'noopener,noreferrer');
+                            } else {
+                                onClick();
+                            }
+                        }} 
+                        className="flex items-center text-indigo-600 hover:underline"
+                    >
                         원문 <ExternalLink className="w-3 h-3 ml-1" />
                     </button>
                 </div>
@@ -248,7 +268,13 @@ function ResultCard({ category, item, onClick }: { category: string, item: any, 
     }
     if (category === 'recipe') {
         return (
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex gap-4 cursor-pointer" onClick={onClick}>
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex gap-4 cursor-pointer" onClick={() => {
+                if (item.link) {
+                    window.open(item.link, '_blank', 'noopener,noreferrer');
+                } else {
+                    onClick();
+                }
+            }}>
                 <div className="w-20 h-20 bg-gray-100 rounded-lg shrink-0 overflow-hidden">
                     <div className="w-full h-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
                         <Lightbulb className="w-8 h-8 text-amber-500/50" />
@@ -277,7 +303,13 @@ function ResultCard({ category, item, onClick }: { category: string, item: any, 
     }
     // Tool
     return (
-        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
+            if (item.link) {
+                window.open(item.link, '_blank', 'noopener,noreferrer');
+            } else {
+                onClick();
+            }
+        }}>
              <div className="flex items-start gap-3">
                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center shrink-0 text-2xl">
                      {item.icon || "🛠️"}

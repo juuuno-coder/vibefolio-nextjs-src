@@ -39,4 +39,5 @@ function getSupabaseClient(): SupabaseClient<Database> {
 }
 
 export const supabase = getSupabaseClient();
-// export { supabaseAdmin } from './admin';
+export { getSupabaseClient as createClient };
+// export { supabaseAdmin} from './admin';

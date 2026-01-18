@@ -29,6 +29,7 @@ import {
   faStar,
   faFaceSmile,
   faMapPin, // New Icon for Pin Mode
+  faClock,
 } from "@fortawesome/free-solid-svg-icons";
 
 import { VersionHistoryModal } from "./VersionHistoryModal";
@@ -873,6 +874,17 @@ export function ProjectDetailModalV2({
                   >
                     <FontAwesomeIcon icon={faComment} className="w-5 h-5" />
                   </button>
+                  {versions.length > 0 && (
+                    <button 
+                      onClick={() => setHistoryModalOpen(true)}
+                      className="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center relative"
+                    >
+                      <FontAwesomeIcon icon={faClock} className="w-5 h-5" />
+                      <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                        {versions.length}
+                      </span>
+                    </button>
+                  )}
                 </div>
                 <button 
                   onClick={() => setShareModalOpen(true)}
@@ -1079,6 +1091,19 @@ export function ProjectDetailModalV2({
                     </div>
                   </div>
                 </button>
+                
+                {/* 버전 히스토리 버튼 */}
+                {versions.length > 0 && (
+                  <Button
+                    onClick={() => setHistoryModalOpen(true)}
+                    variant="outline"
+                    size="sm"
+                    className="ml-auto text-xs gap-2"
+                  >
+                    <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
+                    버전 히스토리 ({versions.length})
+                  </Button>
+                )}
               </div>
               
               {/* 스크롤 가능한 본문 영역 */}

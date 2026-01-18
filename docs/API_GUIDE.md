@@ -1,352 +1,190 @@
-# Vibefolio API 가이드
+# Vibefolio Public API 사용 가이드
 
-이 문서는 Supabase 데이터베이스와 연동된 API 사용 방법을 설명합니다.
+외부 애플리케이션에서 Vibefolio에 프로젝트를 자동으로 등록하고 관리할 수 있는 Public API입니다.
 
-## 📋 목차
+## 🔑 API Key 발급
 
-1. [인증 API](#인증-api)
-2. [프로젝트 API](#프로젝트-api)
-3. [좋아요 API](#좋아요-api)
-4. [댓글 API](#댓글-api)
+1. [Vibefolio](https://vibefolio.net)에 로그인
+2. **마이페이지** → **AI 도구** → **API 설정** 이동
+3. **새 API 키 생성** 버튼 클릭
+4. 생성된 API 키를 안전한 곳에 보관 (한 번만 표시됨)
 
----
+## 📡 Base URL
 
-## 🔐 인증 API
+```
+https://vibefolio.net/api/v1
+```
 
-### 회원가입
+## 🔐 인증
 
-```typescript
-POST /api/auth/signup
+모든 API 요청에는 `Authorization` 헤더가 필요합니다:
 
-// Request Body
+```bash
+Authorization: Bearer {YOUR_API_KEY}
+```
+
+## 📚 API Endpoints
+
+### 1. 프로젝트 생성
+
+새 프로젝트를 Vibefolio에 등록합니다.
+
+**Endpoint:** `POST /projects`
+
+**Request Body:**
+
+```json
 {
-  "email": "user@example.com",
-  "password": "password123",
-  "nickname": "사용자닉네임" // 선택사항
-}
-
-// Response (201)
-{
-  "message": "회원가입이 완료되었습니다.",
-  "user": {
-    "user_id": 1,
-    "email": "user@example.com",
-    "nickname": "사용자닉네임",
-    "profile_image_url": null,
-    "created_at": "2025-12-10T00:00:00Z",
-    "role": "user"
+  "title": "My Awesome App",
+  "description": "AI 기반 포트폴리오 관리 도구",
+  "content": "<h1>프로젝트 소개</h1><p>상세 내용...</p>",
+  "visibility": "public",
+  "categories": ["webapp", "design"],
+  "tech_stack": ["Next.js", "TypeScript", "Supabase"],
+  "thumbnail_base64": "data:image/png;base64,iVBORw0KG...",
+  "screenshots_base64": ["data:image/png;base64,..."],
+  "live_url": "https://my-app.vercel.app",
+  "repo_url": "https://github.com/user/my-app",
+  "version": {
+    "tag": "1.0.0",
+    "name": "Initial Release",
+    "changelog": "첫 번째 릴리스",
+    "release_type": "initial"
   }
 }
 ```
 
-### 로그인
+**Response:**
 
-```typescript
-POST /api/auth/login
-
-// Request Body
+```json
 {
-  "email": "user@example.com",
-  "password": "password123"
-}
-
-// Response (200)
-{
-  "message": "로그인 성공",
-  "user": {
-    "user_id": 1,
-    "email": "user@example.com",
-    "nickname": "사용자닉네임",
-    "profile_image_url": null,
-    "role": "user"
+  "success": true,
+  "project": {
+    "id": 123,
+    "title": "My Awesome App",
+    "url": "https://vibefolio.net/project/123",
+    "thumbnail_url": "https://...",
+    "visibility": "public",
+    "created_at": "2026-01-18T12:00:00Z"
   }
 }
 ```
 
----
+### 2. 프로젝트 목록 조회
 
-## 📁 프로젝트 API
+내 프로젝트 목록을 가져옵니다.
 
-### 프로젝트 목록 조회
+**Endpoint:** `GET /projects?page=1&limit=20`
 
-```typescript
-GET /api/projects
-GET /api/projects?category=AI
-GET /api/projects?userId=1
-GET /api/projects?limit=10
+**Response:**
 
-// Response (200)
+```json
 {
+  "success": true,
   "projects": [
     {
-      "project_id": 1,
-      "user_id": 1,
-      "category_id": 2,
-      "title": "프로젝트 제목",
-      "content_text": "프로젝트 설명",
+      "project_id": 123,
+      "title": "My Awesome App",
+      "description": "...",
       "thumbnail_url": "https://...",
-      "views": 100,
-      "created_at": "2025-12-10T00:00:00Z",
-      "User": {
-        "user_id": 1,
-        "nickname": "사용자닉네임",
-        "profile_image_url": null
-      },
-      "Category": {
-        "category_id": 2,
-        "name": "AI"
-      }
+      "visibility": "public",
+      "created_at": "2026-01-18T12:00:00Z",
+      "views_count": 150,
+      "likes_count": 25
     }
-  ]
-}
-```
-
-### 프로젝트 생성
-
-```typescript
-POST /api/projects
-
-// Request Body
-{
-  "user_id": 1,
-  "category_id": 2,
-  "title": "새 프로젝트",
-  "content_text": "프로젝트 설명",
-  "thumbnail_url": "https://...",
-  "rendering_type": "image", // 선택사항
-  "custom_data": "{}" // 선택사항
-}
-
-// Response (201)
-{
-  "project": { /* 프로젝트 객체 */ }
-}
-```
-
-### 개별 프로젝트 조회
-
-```typescript
-GET /api/projects/[id]
-
-// Response (200)
-{
-  "project": {
-    "project_id": 1,
-    "title": "프로젝트 제목",
-    // ... 프로젝트 정보
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 1
   }
 }
 ```
 
-### 프로젝트 수정
+### 3. 프로젝트 조회
 
-```typescript
-PUT /api/projects/[id]
+특정 프로젝트의 상세 정보를 가져옵니다.
 
-// Request Body
+**Endpoint:** `GET /projects/{id}`
+
+### 4. 프로젝트 수정
+
+기존 프로젝트를 업데이트합니다.
+
+**Endpoint:** `PUT /projects/{id}`
+
+### 5. 프로젝트 삭제
+
+프로젝트를 삭제합니다 (Soft Delete).
+
+**Endpoint:** `DELETE /projects/{id}`
+
+### 6. 새 버전 추가
+
+프로젝트의 새 버전을 등록합니다.
+
+**Endpoint:** `POST /projects/{id}/versions`
+
+**Request Body:**
+
+```json
 {
-  "title": "수정된 제목",
-  "content_text": "수정된 설명",
-  "category_id": 3
-}
-
-// Response (200)
-{
-  "project": { /* 수정된 프로젝트 */ }
-}
-```
-
-### 프로젝트 삭제
-
-```typescript
-DELETE /api/projects/[id]
-
-// Response (200)
-{
-  "message": "프로젝트가 삭제되었습니다."
-}
-```
-
----
-
-## ❤️ 좋아요 API
-
-### 좋아요 토글 (추가/제거)
-
-```typescript
-POST /api/likes
-
-// Request Body
-{
-  "user_id": 1,
-  "project_id": 1
-}
-
-// Response (200) - 좋아요 추가
-{
-  "liked": true,
-  "message": "좋아요를 추가했습니다."
-}
-
-// Response (200) - 좋아요 제거
-{
-  "liked": false,
-  "message": "좋아요가 취소되었습니다."
+  "version_tag": "1.0.1",
+  "version_name": "Bug Fix Release",
+  "changelog": "버그 수정 및 성능 개선",
+  "release_type": "patch"
 }
 ```
 
-### 좋아요 여부 확인
+### 7. 버전 목록 조회
 
-```typescript
-GET /api/likes?userId=1&projectId=1
+프로젝트의 모든 버전을 가져옵니다.
 
-// Response (200)
-{
-  "liked": true
-}
+**Endpoint:** `GET /projects/{id}/versions`
+
+## 🚀 사용 예시
+
+### cURL
+
+```bash
+curl -X POST https://vibefolio.net/api/v1/projects \
+  -H "Authorization: Bearer vf_abc123..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "My Project",
+    "description": "Project description",
+    "visibility": "public",
+    "categories": ["webapp"]
+  }'
 ```
 
-### 사용자의 좋아요 목록
+### JavaScript/TypeScript
 
 ```typescript
-GET /api/likes?userId=1
+const API_KEY = "vf_abc123...";
+const BASE_URL = "https://vibefolio.net/api/v1";
 
-// Response (200)
-{
-  "likes": [
-    {
-      "user_id": 1,
-      "project_id": 1,
-      "created_at": "2025-12-10T00:00:00Z",
-      "Project": { /* 프로젝트 정보 */ }
-    }
-  ]
-}
-```
-
-### 프로젝트의 좋아요 수
-
-```typescript
-GET /api/likes?projectId=1
-
-// Response (200)
-{
-  "count": 42
-}
-```
-
----
-
-## 💬 댓글 API
-
-### 댓글 목록 조회
-
-```typescript
-GET /api/comments?projectId=1
-
-// Response (200)
-{
-  "comments": [
-    {
-      "comment_id": 1,
-      "user_id": 1,
-      "project_id": 1,
-      "content": "댓글 내용",
-      "parent_comment_id": null,
-      "created_at": "2025-12-10T00:00:00Z",
-      "User": {
-        "user_id": 1,
-        "nickname": "사용자닉네임",
-        "profile_image_url": null
-      }
-    }
-  ]
-}
-```
-
-### 댓글 작성
-
-```typescript
-POST /api/comments
-
-// Request Body
-{
-  "user_id": 1,
-  "project_id": 1,
-  "content": "댓글 내용",
-  "parent_comment_id": null // 대댓글인 경우 부모 댓글 ID
-}
-
-// Response (201)
-{
-  "comment": { /* 댓글 객체 */ }
-}
-```
-
-### 댓글 삭제
-
-```typescript
-DELETE /api/comments?commentId=1
-
-// Response (200)
-{
-  "message": "댓글이 삭제되었습니다."
-}
-```
-
----
-
-## 🔧 사용 예제
-
-### React 컴포넌트에서 사용
-
-```typescript
-// 프로젝트 목록 조회
-const fetchProjects = async () => {
-  const response = await fetch("/api/projects");
-  const data = await response.json();
-  return data.projects;
-};
-
-// 좋아요 토글
-const toggleLike = async (userId: number, projectId: number) => {
-  const response = await fetch("/api/likes", {
+async function createProject(data: any) {
+  const response = await fetch(`${BASE_URL}/projects`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id: userId, project_id: projectId }),
+    headers: {
+      Authorization: `Bearer ${API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
   });
-  return await response.json();
-};
 
-// 댓글 작성
-const createComment = async (
-  userId: number,
-  projectId: number,
-  content: string
-) => {
-  const response = await fetch("/api/comments", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id: userId, project_id: projectId, content }),
-  });
   return await response.json();
-};
+}
 ```
 
----
+## ⚠️ Rate Limiting
 
-## 📝 참고사항
+- 기본 제한: **60 requests/minute**
+- 제한 초과 시 `429 Too Many Requests` 응답
 
-1. **인증**: 현재는 간단한 이메일/비밀번호 인증을 사용합니다. 추후 JWT 토큰 기반 인증으로 업그레이드할 수 있습니다.
+## 🔒 보안
 
-2. **에러 처리**: 모든 API는 에러 발생 시 다음 형식으로 응답합니다:
-
-   ```json
-   {
-     "error": "에러 메시지"
-   }
-   ```
-
-3. **페이지네이션**: 현재는 limit 파라미터만 지원합니다. 추후 offset 기반 페이지네이션을 추가할 수 있습니다.
-
-4. **파일 업로드**: 이미지 업로드는 Supabase Storage를 사용하는 것을 권장합니다.
+- API 키는 **절대 공개 저장소에 커밋하지 마세요**
+- 환경 변수로 관리하세요
+- 주기적으로 API 키를 갱신하세요

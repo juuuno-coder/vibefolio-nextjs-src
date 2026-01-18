@@ -216,6 +216,52 @@ export async function PUT(
         }
     }
 
+    // [New] 복수 카테고리 동기화 (project_categories)
+    if (custom_data) {
+        try {
+            const parsedCustom = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
+            const genres = parsedCustom.genres || [];
+            
+            // 1. 기존 카테고리 매핑 삭제
+            await (supabaseAdmin as any)
+                .from('project_categories')
+                .delete()
+                .eq('project_id', id);
+
+            // 2. 새로운 카테고리 매핑 삽입
+            if (Array.isArray(genres) && genres.length > 0) {
+                const { GENRE_TO_CATEGORY_ID } = await import('@/lib/constants');
+                const categoryMappings = genres
+                    .map((genreSlug: string) => {
+                        const catId = GENRE_TO_CATEGORY_ID[genreSlug];
+                        if (catId) {
+                            return {
+                                project_id: parseInt(id),
+                                category_id: catId,
+                                category_type: 'genre'
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (categoryMappings.length > 0) {
+                    const { error: catError } = await (supabaseAdmin as any)
+                        .from('project_categories')
+                        .insert(categoryMappings);
+
+                    if (catError) {
+                        console.error('[API] Category mappings update failed:', catError);
+                    } else {
+                        console.log('[API] Category mappings updated:', categoryMappings.length);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('[API] Syncing project categories failed:', e);
+        }
+    }
+
     // Supabase Admin을 직접 사용하여 사용자 정보 가져오기
     if (data && data.user_id) {
       try {

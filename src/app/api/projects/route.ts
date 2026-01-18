@@ -305,6 +305,53 @@ export async function POST(request: NextRequest) {
         }
     }
 
+    // [New] 복수 카테고리 저장 (project_categories)
+    if (data && data.project_id && custom_data) {
+        try {
+            const parsedCustom = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
+            const genres = parsedCustom.genres || [];
+            const fields = parsedCustom.fields || [];
+            
+            const categoryMappings: Array<{ project_id: number; category_id: number; category_type: string }> = [];
+
+            // Genres → category_type: 'genre'
+            if (Array.isArray(genres) && genres.length > 0) {
+                genres.forEach((genreSlug: string) => {
+                    const catId = GENRE_TO_CATEGORY_ID[genreSlug];
+                    if (catId) {
+                        categoryMappings.push({
+                            project_id: data.project_id,
+                            category_id: catId,
+                            category_type: 'genre'
+                        });
+                    }
+                });
+            }
+
+            // Fields → category_type: 'field' (필요시 별도 매핑 테이블 사용 가능)
+            // 현재는 fields를 태그처럼 저장 (향후 확장 가능)
+            if (Array.isArray(fields) && fields.length > 0) {
+                // fields는 slug 형태이므로, 필요시 Category 테이블에서 조회하거나
+                // 단순히 custom_data에만 저장 (현재 구조 유지)
+                // 여기서는 genres만 project_categories에 저장
+            }
+
+            if (categoryMappings.length > 0) {
+                const { error: catError } = await (supabaseAdmin as any)
+                    .from('project_categories')
+                    .insert(categoryMappings);
+
+                if (catError) {
+                    console.error('[API] Category mappings insert failed:', catError);
+                } else {
+                    console.log('[API] Category mappings created:', categoryMappings.length);
+                }
+            }
+        } catch (e) {
+            console.error('[API] Saving project categories failed:', e);
+        }
+    }
+
     // [New] 공동 제작자 추가 (Collaborators)
     const { collaborator_emails } = body;
     if (data && data.project_id && Array.isArray(collaborator_emails) && collaborator_emails.length > 0) {

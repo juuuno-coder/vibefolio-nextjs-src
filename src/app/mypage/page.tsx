@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 type TabType = 'projects' | 'likes' | 'collections' | 'proposals' | 'comments' | 'ai_tools';
-type AiToolType = 'lean-canvas' | 'persona' | 'assistant' | 'job' | 'trend' | 'recipe' | 'tool';
+type AiToolType = 'lean-canvas' | 'persona' | 'assistant' | 'job' | 'trend' | 'recipe' | 'tool' | 'api-settings';
 import { LeanCanvasModal, type LeanCanvasData } from "@/components/LeanCanvasModal";
 import { PersonaDefinitionModal } from "@/components/PersonaDefinitionModal";
 import { AiOpportunityExplorer } from "@/components/tools/AiOpportunityExplorer";
@@ -31,6 +31,7 @@ import { AiPersonaChat } from "@/components/tools/AiPersonaChat";
 import { AiAssistantChat, type AssistantData } from "@/components/tools/AiAssistantChat";
 import { AssistantResultModal } from "@/components/AssistantResultModal";
 import { PersonaData } from "@/components/PersonaDefinitionModal";
+import { ApiKeyManager } from "@/components/ApiKeyManager";
 
 export default function MyPage() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function MyPage() {
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const [activeAiTool, setActiveAiTool] = useState<AiToolType>('job');
+  const [activeAiTool, setActiveAiTool] = useState<AiToolType>('api-settings');
   const [isExplorationStarted, setIsExplorationStarted] = useState(false);
   
   // AI 도구 데이터 지속성 상태
@@ -714,6 +715,7 @@ export default function MyPage() {
                     { id: 'recipe', label: 'AI 레시피', icon: Lightbulb, desc: '프롬프트 & 워크플로우' },
                     { id: 'tool', label: 'AI 도구 추천', icon: Zap, desc: '유용한 에이전트 & 서비스' },
                     { type: 'divider' },
+                    { id: 'api-settings', label: 'API 설정', icon: Settings, desc: '외부 연동 키 관리' },
                     { id: 'lean-canvas', label: 'AI 린 캔버스', icon: Grid, desc: '사업 모델 구조화' },
                     { id: 'persona', label: 'AI 고객 페르소나', icon: UserCircle2, desc: '고객 정의 및 분석' },
                     { id: 'assistant', label: 'AI 콘텐츠 어시스턴트', icon: Wand2, desc: '텍스트 생성 및 다듬기' },
@@ -786,6 +788,10 @@ export default function MyPage() {
                    ) : activeAiTool === 'assistant' ? (
                         <div className="h-full relative z-10">
                              <AiAssistantChat onGenerate={handleAssistantGenerate} />
+                        </div>
+                   ) : activeAiTool === 'api-settings' ? (
+                        <div className="h-full relative z-10 p-8">
+                             <ApiKeyManager />
                         </div>
                    ) : (
                     <div className="relative z-10 flex flex-col items-center justify-center h-full text-center max-w-xl mx-auto space-y-6 py-20 px-8">
