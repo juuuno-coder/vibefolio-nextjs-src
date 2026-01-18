@@ -13,30 +13,7 @@ import {
   Settings, Check, X, Copy, ExternalLink, 
   Eye, EyeOff, Terminal, Key, Plus, Trash2, RefreshCw
 } from "lucide-react";
-
-// 상수 (src/lib/constants.ts에서 가져오거나 여기에 정의)
-// 편의상 여기에 핵심 데이터만 정의 (빠른 복구)
-const AVAILABLE_GENRES = [
-    { id: 'photo', label: '사진' },
-    { id: 'video', label: '영상' },
-    { id: 'graphic', label: '그래픽' },
-    { id: '3d', label: '3D' },
-    { id: 'product', label: '제품' },
-    { id: 'uxui', label: 'UX/UI' },
-    { id: 'archi', label: '건축/인테리어' },
-    { id: 'fashion', label: '패션' },
-    { id: 'art', label: '순수예술' },
-    { id: 'dev', label: '개발' },
-];
-
-const AVAILABLE_FIELDS = [
-    { id: 'student', label: '학생' },
-    { id: 'junior', label: '주니어(1-3년)' },
-    { id: 'senior', label: '시니어(4년+)' },
-    { id: 'freelancer', label: '프리랜서' },
-    { id: 'team', label: '팀/스튜디오' },
-    { id: 'company', label: '기업' },
-];
+import { GENRE_CATEGORIES_WITH_ICONS, FIELD_CATEGORIES_WITH_ICONS } from "@/lib/ui-constants";
 
 interface ProfileManagerProps {
   user: any; 
@@ -303,12 +280,12 @@ export function ProfileManager({ user, onUpdate }: ProfileManagerProps) {
                 <div className="space-y-4">
                     <Label className="text-lg">관심 장르</Label>
                     <div className="flex flex-wrap gap-2">
-                        {AVAILABLE_GENRES.map(g => (
+                        {GENRE_CATEGORIES_WITH_ICONS.map(g => (
                             <button
-                                key={g.id}
-                                onClick={() => toggleGenre(g.id)}
+                                key={g.value}
+                                onClick={() => toggleGenre(g.value)}
                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${
-                                    interests.genres.includes(g.id)
+                                    interests.genres.includes(g.value)
                                     ? 'bg-green-50 border-green-500 text-green-700'
                                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                                 }`}
@@ -322,12 +299,12 @@ export function ProfileManager({ user, onUpdate }: ProfileManagerProps) {
                 <div className="space-y-4">
                     <Label className="text-lg">활동 형태</Label>
                     <div className="flex flex-wrap gap-2">
-                        {AVAILABLE_FIELDS.map(f => (
+                        {FIELD_CATEGORIES_WITH_ICONS.map(f => (
                             <button
-                                key={f.id}
-                                onClick={() => toggleField(f.id)}
+                                key={f.value}
+                                onClick={() => toggleField(f.value)}
                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${
-                                    interests.fields.includes(f.id)
+                                    interests.fields.includes(f.value)
                                     ? 'bg-purple-50 border-purple-500 text-purple-700'
                                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                                 }`}
