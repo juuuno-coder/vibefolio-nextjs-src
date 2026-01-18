@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket, Sparkles, Wand2, Lightbulb, Zap, UserCircle2, Search, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ProfileManager } from "@/components/ProfileManager";
 import { ImageCard } from "@/components/ImageCard";
 import { ProposalCard } from "@/components/ProposalCard";
 import { CommentCard } from "@/components/CommentCard";
@@ -109,7 +110,7 @@ export default function MyPage() {
       try {
         const { data: dbProfile } = await supabase
           .from('profiles')
-          .select('username, nickname, bio, cover_image_url')
+          .select('username, nickname, bio, cover_image_url, social_links')
           .eq('id', authUser.id)
           .single();
 
@@ -120,6 +121,8 @@ export default function MyPage() {
           role: authProfile?.role || 'user',
           bio: (dbProfile as any)?.bio || '',
           cover_image_url: (dbProfile as any)?.cover_image_url || null,
+          social_links: (dbProfile as any)?.social_links || {},
+          id: authUser.id, 
         });
         // 통계 로드 최적화: head: true를 써서 데이터 본문 없이 카운트만 가져옴
         const getCount = async (query: any) => {
@@ -471,10 +474,12 @@ export default function MyPage() {
                 <p className="text-gray-500 text-sm md:text-base mt-1">{userProfile?.email}</p>
               </div>
               <div className="md:pb-2 flex gap-2">
-                <Button variant="outline" onClick={() => router.push('/mypage/profile')} className="w-full md:w-auto">
-                  <Settings className="w-4 h-4 mr-2" /> 프로필 설정
-                </Button>
-
+                {userProfile?.id && (
+                  <ProfileManager 
+                    user={userProfile} 
+                    onUpdate={() => window.location.reload()} 
+                  />
+                )}
               </div>
             </div>
             
