@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";  // Keep using Textarea for chat input consistency
 import { Loader2, Send, Bot, User, Search, ExternalLink, Building, Calendar, MapPin, Newspaper, Lightbulb, PenTool, Hash } from "lucide-react";
-import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 interface Message {
   id: string;
@@ -22,6 +22,7 @@ export function AiOpportunityChat({ category }: AiOpportunityChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export function AiOpportunityChat({ category }: AiOpportunityChatProps) {
         'recipe': "이미지 생성 프롬프트나 워크플로우를 찾아드릴게요. \n원하는 스타일이나 도구를 알려주세요. (예: 미드저니, 스테이블 디퓨전, 사이버펑크 스타일)",
         'tool': "작업에 필요한 AI 도구를 추천해드립니다. \n어떤 작업을 하고 싶으신가요? (예: 배경 제거, 목소리 변조, 영상 편집)"
     };
-
+    
     setMessages([
         { 
             id: 'welcome', 
@@ -40,6 +41,7 @@ export function AiOpportunityChat({ category }: AiOpportunityChatProps) {
             content: initialMessages[category] || "무엇을 도와드릴까요?" 
         }
     ]);
+    setSessionId(null); // Reset session on category change
   }, [category]);
 
   useEffect(() => {
@@ -51,25 +53,46 @@ export function AiOpportunityChat({ category }: AiOpportunityChatProps) {
     
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input };
     setMessages(prev => [...prev, userMsg]);
-    setInput("");
     setIsLoading(true);
 
-    // Simulate Network / Search Display
-    setTimeout(() => {
-        // Mock Result Generation based on Category
-        const mockResults = generateMockResults(category, input);
+    const currentInput = input;
+    setInput("");
+
+    try {
+        const res = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: currentInput,
+                category,
+                sessionId
+            })
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch");
+
+        const data = await res.json();
         
+        if (data.sessionId && !sessionId) {
+            setSessionId(data.sessionId);
+        }
+
         const responseMsg: Message = {
             id: (Date.now()+1).toString(),
             role: 'assistant',
-            content: `"${input}"에 대한 ${getCategoryName(category)} 검색 결과입니다.`,
+            content: data.answer,
             type: 'result-list',
-            data: mockResults
+            data: data.results
         };
 
         setMessages(prev => [...prev, responseMsg]);
+        
+    } catch (error) {
+        toast.error("정보를 가져오는데 실패했습니다.");
+        console.error(error);
+    } finally {
         setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const getCategoryName = (cat: string) => {
