@@ -21,8 +21,8 @@ import {
 import { Input } from "@/components/ui/input";
 
 type TabType = 'projects' | 'likes' | 'collections' | 'proposals' | 'comments' | 'ai_tools';
-type AiToolType = 'lean-canvas' | 'persona' | 'assistant' | 'opportunity';
-import { LeanCanvasModal } from "@/components/LeanCanvasModal";
+type AiToolType = 'lean-canvas' | 'persona' | 'assistant' | 'job' | 'trend' | 'recipe' | 'tool';
+import { LeanCanvasModal, type LeanCanvasData } from "@/components/LeanCanvasModal";
 import { PersonaDefinitionModal } from "@/components/PersonaDefinitionModal";
 import { AiOpportunityExplorer } from "@/components/tools/AiOpportunityExplorer";
 
@@ -34,10 +34,11 @@ export default function MyPage() {
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const [activeAiTool, setActiveAiTool] = useState<AiToolType>('opportunity');
-  const [isExplorationStarted, setIsExplorationStarted] = useState(false); // [New] 인라인 탐색 시작 여부
+  const [activeAiTool, setActiveAiTool] = useState<AiToolType>('job');
+  const [isExplorationStarted, setIsExplorationStarted] = useState(false);
   
-  // 프로필 및 통계
+  // AI 도구 데이터 지속성 상태
+  const [savedLeanCanvas, setSavedLeanCanvas] = useState<LeanCanvasData | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [stats, setStats] = useState({ projects: 0, likes: 0, collections: 0, followers: 0, following: 0 });
   
@@ -678,111 +679,116 @@ export default function MyPage() {
             )}
 
             {/* AI 도구 탭 */}
-            {activeTab === 'ai_tools' && (
+{activeTab === 'ai_tools' && (
               <div className="flex flex-col md:flex-row gap-8 min-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {/* 왼쪽 사이드 탭 */}
                 <div className="w-full md:w-64 shrink-0 flex flex-col gap-2">
                   {[
-                    { id: 'opportunity', label: 'AI 기회 탐색기', icon: Search, desc: '공모전/채용/트렌드 검색' },
+                    { id: 'job', label: 'AI 채용 정보', icon: Search, desc: '실시간 채용 & 공모전' },
+                    { id: 'trend', label: 'AI 트렌드', icon: Rocket, desc: '최신 AI 뉴스 & 동향' },
+                    { id: 'recipe', label: 'AI 레시피', icon: Lightbulb, desc: '프롬프트 & 워크플로우' },
+                    { id: 'tool', label: 'AI 도구 추천', icon: Zap, desc: '유용한 에이전트 & 서비스' },
+                    { type: 'divider' },
                     { id: 'lean-canvas', label: 'AI 린 캔버스', icon: Grid, desc: '사업 모델 구조화' },
                     { id: 'persona', label: 'AI 고객 페르소나', icon: UserCircle2, desc: '고객 정의 및 분석' },
                     { id: 'assistant', label: 'AI 콘텐츠 어시스턴트', icon: Wand2, desc: '텍스트 생성 및 다듬기' },
-                  ].map((tool) => (
-                    <button
-                      key={tool.id}
-                      onClick={() => {
-                        setActiveAiTool(tool.id as AiToolType);
-                        setIsExplorationStarted(false); // 탭 변경 시 초기화
-                      }}
-                      className={`flex items-start gap-4 p-4 rounded-2xl transition-all text-left group ${
-                        activeAiTool === tool.id 
-                          ? 'bg-white border-2 border-purple-100 shadow-md ring-4 ring-purple-50/50' 
-                          : 'hover:bg-white/50 border-2 border-transparent text-gray-500'
-                      }`}
-                    >
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                        activeAiTool === tool.id ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-purple-50 group-hover:text-purple-500'
-                      }`}>
-                        {/* icon이 string이 아니라 컴포넌트임 */}
-                        <tool.icon className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1 overflow-hidden">
-                        <p className={`font-bold text-sm ${activeAiTool === tool.id ? 'text-gray-900' : 'text-gray-600'}`}>{tool.label}</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5 truncate">{tool.desc}</p>
-                      </div>
-                    </button>
-                  ))}
+                  ].map((tool, idx) => {
+                    if (tool.type === 'divider') {
+                        return <div key={`div-${idx}`} className="h-px bg-gray-100 my-2 mx-4" />;
+                    }
+                    const menuItem = tool as { id: string, label: string, icon: any, desc: string };
+                    return (
+                        <button
+                        key={menuItem.id}
+                        onClick={() => {
+                            setActiveAiTool(menuItem.id as AiToolType);
+                            setIsExplorationStarted(false); 
+                        }}
+                        className={`flex items-start gap-4 p-4 rounded-2xl transition-all text-left group ${
+                            activeAiTool === menuItem.id 
+                            ? 'bg-white border-2 border-purple-100 shadow-md ring-4 ring-purple-50/50' 
+                            : 'hover:bg-white/50 border-2 border-transparent text-gray-500'
+                        }`}
+                        >
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                            activeAiTool === menuItem.id ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-purple-50 group-hover:text-purple-500'
+                        }`}>
+                            <menuItem.icon className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                            <p className={`font-bold text-sm ${activeAiTool === menuItem.id ? 'text-gray-900' : 'text-gray-600'}`}>{menuItem.label}</p>
+                            <p className="text-[10px] text-gray-400 mt-0.5 truncate">{menuItem.desc}</p>
+                        </div>
+                        </button>
+                    )
+                  })}
                 </div>
 
                 {/* 오른쪽 콘텐츠 영역 */}
-                <div className="flex-1 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8 md:p-12 relative overflow-hidden group">
+                <div className="flex-1 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-0 md:p-0 relative overflow-hidden group">
                   {/* Futuristic Background Decor */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-purple-50 rounded-full blur-3xl opacity-20 -mr-32 -mt-32 transition-all group-hover:opacity-40" />
-                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-50 rounded-full blur-3xl opacity-20 -ml-16 -mb-16 transition-all group-hover:opacity-40" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-purple-50 rounded-full blur-3xl opacity-20 -mr-32 -mt-32 transition-all group-hover:opacity-40 pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-50 rounded-full blur-3xl opacity-20 -ml-16 -mb-16 transition-all group-hover:opacity-40 pointer-events-none" />
                   
-                  <div className="relative z-10 flex flex-col items-center justify-center h-full text-center max-w-xl mx-auto space-y-6 py-20">
-                    <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white shadow-xl shadow-purple-200 animate-bounce-slow">
-                      <Sparkles className="w-10 h-10" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">
-                        {activeAiTool === 'lean-canvas' && "AI 린 캔버스 생성기"}
-                        {activeAiTool === 'persona' && "AI 고객 페르소나 정의"}
-                        {activeAiTool === 'assistant' && "AI 콘텐츠 어시스턴트"}
-                        {activeAiTool === 'opportunity' && "AI 기회 탐색기"}
-                      </h3>
-                      <p className="text-gray-500 leading-relaxed font-medium">
-                        {activeAiTool === 'lean-canvas' && "아이디어 입력만으로 비즈니스 모델을 한눈에 구조화하세요.\n스타트업과 1인 창업가를 위한 필수 도구입니다."}
-                        {activeAiTool === 'persona' && "우리 서비스의 핵심 고객은 누구일까요?\n가상 페르소나를 정의하고 니즈를 파악해보세요."}
-                        {activeAiTool === 'assistant' && "더 매력적인 문장을 찾고 계신가요?\nAI가 당신의 글을 다듬어드립니다. (준비 중)"}
-                        {activeAiTool === 'opportunity' && "나에게 딱 맞는 공모전, 채용 정보, AI 트렌드를 찾아보세요.\n해보자고(MCP) 엔진이 실시간으로 기회를 포착해드립니다."}
-                      </p>
-                    </div>
-                    
-                    {activeAiTool === 'lean-canvas' && (
-                       <Button onClick={() => setLeanModalOpen(true)} className="btn-primary rounded-full px-8 py-6 text-base shadow-lg shadow-purple-200">
-                           <Grid className="w-5 h-5 mr-2" /> 새 린 캔버스 만들기
-                       </Button>
-                    )}
-
-                    {activeAiTool === 'persona' && (
-                       <Button onClick={() => setPersonaModalOpen(true)} className="btn-primary rounded-full px-8 py-6 text-base shadow-lg shadow-purple-200 bg-indigo-600 hover:bg-indigo-700">
-                           <UserCircle2 className="w-5 h-5 mr-2" /> 페르소나 정의하기
-                       </Button>
-                    )}
-
-                    {activeAiTool === 'opportunity' && (
-                       <Button onClick={() => setIsExplorationStarted(true)} className="btn-primary rounded-full px-8 py-6 text-base shadow-lg shadow-blue-200 bg-blue-600 hover:bg-blue-700">
-                           <Search className="w-5 h-5 mr-2" /> 탐색기 시작하기
-                       </Button>
-                    )}
-
-                    {activeAiTool === 'assistant' && (
-                        <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-full text-xs font-black uppercase tracking-widest border border-purple-100 shadow-sm">
-                            <Zap className="w-3 h-3 animate-pulse" />
-                            Coming Soon
+                  {['job', 'trend', 'recipe', 'tool'].includes(activeAiTool) ? (
+                       <div className="h-full flex flex-col relative z-10">
+                           <div className="p-8 pb-4 border-b border-gray-50 bg-white/50 backdrop-blur-sm">
+                               <h2 className="text-xl font-black text-gray-900 flex items-center gap-2 mb-1">
+                                  {activeAiTool === 'job' && <><Search className="text-blue-500 w-6 h-6"/> AI 채용 정보</>}
+                                  {activeAiTool === 'trend' && <><Rocket className="text-purple-500 w-6 h-6"/> AI 트렌드</>}
+                                  {activeAiTool === 'recipe' && <><Lightbulb className="text-amber-500 w-6 h-6"/> AI 레시피</>}
+                                  {activeAiTool === 'tool' && <><Zap className="text-yellow-500 w-6 h-6"/> AI 도구 추천</>}
+                               </h2>
+                               <p className="text-sm text-gray-500 pl-8">
+                                  {activeAiTool === 'job' && "최신 AI 프롬프트 엔지니어링 채용 공고와 해커톤 정보를 확인하세요."}
+                                  {activeAiTool === 'trend' && "매일 업데이트되는 글로벌 AI 업계의 최신 동향과 뉴스 링크를 제공합니다."}
+                                  {activeAiTool === 'recipe' && "다양한 이미지 생성 프롬프트 스타일과 워크플로우를 발견하고 적용해보세요."}
+                                  {activeAiTool === 'tool' && "작업 효율을 극대화해줄 최신 AI 에이전트와 서비스를 추천해드립니다."}
+                               </p>
+                           </div>
+                           <div className="flex-1 overflow-hidden">
+                               {/* @ts-ignore: Prop 'hideTabs' will be added in next step */}
+                               <AiOpportunityExplorer embedded initialCategory={activeAiTool} hideTabs />
+                           </div>
+                       </div>
+                   ) : (
+                    <div className="relative z-10 flex flex-col items-center justify-center h-full text-center max-w-xl mx-auto space-y-6 py-20 px-8">
+                        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white shadow-xl shadow-purple-200 animate-bounce-slow">
+                        <Sparkles className="w-10 h-10" />
                         </div>
-                    )}
-                  </div>
-                  
-                  {/* Inline Explorer View */}
-                  {isExplorationStarted && activeAiTool === 'opportunity' && (
-                    <div className="absolute inset-0 z-20 bg-white p-6 md:p-8 animate-in slide-in-from-right duration-300 overflow-hidden flex flex-col">
-                        <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
-                            <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
-                                <Search className="w-5 h-5 text-purple-600" /> AI 기회 탐색기
-                            </h3>
-                            <Button variant="ghost" size="sm" onClick={() => setIsExplorationStarted(false)} className="text-gray-400 hover:text-gray-600">
-                                닫기
-                            </Button>
+                        <div>
+                        <h3 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">
+                            {activeAiTool === 'lean-canvas' && "AI 린 캔버스 생성기"}
+                            {activeAiTool === 'persona' && "AI 고객 페르소나 정의"}
+                            {activeAiTool === 'assistant' && "AI 콘텐츠 어시스턴트"}
+                        </h3>
+                        <p className="text-gray-500 leading-relaxed font-medium">
+                            {activeAiTool === 'lean-canvas' && "아이디어 입력만으로 비즈니스 모델을 한눈에 구조화하세요.\n스타트업과 1인 창업가를 위한 필수 도구입니다."}
+                            {activeAiTool === 'persona' && "우리 서비스의 핵심 고객은 누구일까요?\n가상 페르소나를 정의하고 니즈를 파악해보세요."}
+                            {activeAiTool === 'assistant' && "더 매력적인 문장을 찾고 계신가요?\nAI가 당신의 글을 다듬어드립니다. (준비 중)"}
+                        </p>
                         </div>
-                        <div className="flex-1 overflow-hidden relative">
-                           <AiOpportunityExplorer embedded />
-                        </div>
+                        
+                        {activeAiTool === 'lean-canvas' && (
+                        <Button onClick={() => setLeanModalOpen(true)} className="btn-primary rounded-full px-8 py-6 text-base shadow-lg shadow-purple-200">
+                            <Grid className="w-5 h-5 mr-2" /> 새 린 캔버스 만들기
+                        </Button>
+                        )}
+
+                        {activeAiTool === 'persona' && (
+                        <Button onClick={() => setPersonaModalOpen(true)} className="btn-primary rounded-full px-8 py-6 text-base shadow-lg shadow-purple-200 bg-indigo-600 hover:bg-indigo-700">
+                            <UserCircle2 className="w-5 h-5 mr-2" /> 페르소나 정의하기
+                        </Button>
+                        )}
+
+                        {activeAiTool === 'assistant' && (
+                            <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-full text-xs font-black uppercase tracking-widest border border-purple-100 shadow-sm">
+                                <Zap className="w-3 h-3 animate-pulse" />
+                                Coming Soon
+                            </div>
+                        )}
                     </div>
-                  )}
-                  
-                  {/* Background Decor (Only visible when not started) - Actually parent has overflow hidden so z-10 works */}
+                   )}
                 </div>
               </div>
             )}
@@ -796,7 +802,8 @@ export default function MyPage() {
       <LeanCanvasModal 
         open={leanModalOpen} 
         onOpenChange={setLeanModalOpen} 
-        onApply={() => {}} // 마이페이지에서는 적용 기능 없이 생성만 체험
+        onSave={(data) => setSavedLeanCanvas(data)}
+        initialData={savedLeanCanvas || undefined}
       />
       <PersonaDefinitionModal 
         open={personaModalOpen} 

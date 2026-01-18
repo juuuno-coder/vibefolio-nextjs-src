@@ -30,13 +30,31 @@ interface HistoryItem {
   created_at: string;
 }
 
-export function AiOpportunityExplorer({ embedded = false }: { embedded?: boolean }) {
+export function AiOpportunityExplorer({ 
+  embedded = false, 
+  initialCategory, 
+  hideTabs = false 
+}: { 
+  embedded?: boolean; 
+  initialCategory?: string; 
+  hideTabs?: boolean; 
+}) {
   const [keyword, setKeyword] = useState("");
-  const [activeTab, setActiveTab] = useState("opportunity");
+  const [activeTab, setActiveTab] = useState(initialCategory || "opportunity");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]); // [New] History State
+
+  // [New] Update activeTab when initialCategory changes
+  useEffect(() => {
+    if (initialCategory) {
+        setActiveTab(initialCategory);
+        setSearched(false);
+        setResults([]);
+        setKeyword("");
+    }
+  }, [initialCategory]);
 
   // [New] Fetch History
   const fetchHistory = async () => {
@@ -137,7 +155,7 @@ export function AiOpportunityExplorer({ embedded = false }: { embedded?: boolean
         )}
 
         {/* Categories (Tabs) */}
-        {!embedded && (
+        {!embedded && !hideTabs && (
             <div className="flex flex-wrap justify-center gap-2 mb-8">
                 {CATEGORIES.map((cat) => (
                     <button
@@ -156,7 +174,7 @@ export function AiOpportunityExplorer({ embedded = false }: { embedded?: boolean
         )}
 
         {/* Embedded Mode Tabs (Simplified) */}
-        {embedded && (
+        {embedded && !hideTabs && (
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
                 {CATEGORIES.map((cat) => (
                     <button
