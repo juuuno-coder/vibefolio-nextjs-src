@@ -228,6 +228,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 });
     }
 
+    // [Validation] Verify User ID Exists to prevent FK Error
+    const { data: userExists } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('id', user_id)
+        .single();
+    
+    if (!userExists) {
+        return NextResponse.json({ 
+            error: `유효하지 않은 User ID입니다: ${user_id}. (Vibefolio DB에 존재하지 않는 사용자)`,
+            code: 'USER_NOT_FOUND'
+        }, { status: 400 });
+    }
+
     // [Point System] Growth Mode Check & Points Deduction
     let isGrowthMode = false;
     if (custom_data) {
