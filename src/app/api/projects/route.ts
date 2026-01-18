@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { supabase as supabaseAnon } from '@/lib/supabase/client'; // Rename to avoid confusion
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server'; // For Session Auth
 import { GENRE_TO_CATEGORY_ID } from '@/lib/constants';
-
-// 캐시 설정 제거 (실시간 디버깅)
 
 // 캐시 설정 제거 (실시간 디버깅)
 export const revalidate = 0; 
@@ -20,7 +19,7 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     // 필요한 필드만 선택 (최적화) - 안전하게 모든 컬럼 조회 (관계 제거)
-    let query = (supabase as any)
+    let query = (supabaseAnon as any)
       .from('Project')
       .select('*') 
       .is('deleted_at', null) 
@@ -42,7 +41,7 @@ export async function GET(request: NextRequest) {
     if (userId && authHeader) {
         try {
             const token = authHeader.replace('Bearer ', '');
-            const { data: { user } } = await supabase.auth.getUser(token);
+            const { data: { user } } = await supabaseAnon.auth.getUser(token);
             if (user && user.id === userId) {
                 isOwner = true;
             }
@@ -77,12 +76,12 @@ export async function GET(request: NextRequest) {
 
     if (field && field !== 'all') {
        // 1. 해당 슬러그의 Field ID 조회
-       const { data: fieldData } = await (supabase as any)
+       const { data: fieldData } = await (supabaseAnon as any)
          .from('fields').select('id').eq('slug', field).single();
        
        if (fieldData) {
           // 2. 해당 Field를 가진 프로젝트 ID들 조회
-          const { data: pFields } = await (supabase as any)
+          const { data: pFields } = await (supabaseAnon as any)
              .from('project_fields').select('project_id').eq('field_id', fieldData.id);
           
           if (pFields && pFields.length > 0) {
@@ -114,7 +113,7 @@ export async function GET(request: NextRequest) {
 
       if (userIds.length > 0) {
         // users 테이블 조회 (일반 클라이언트 사용 - Admin 키 없을 때 대비)
-        const targetClient = process.env.SUPABASE_SERVICE_ROLE_KEY ? supabaseAdmin : supabase;
+        const targetClient = process.env.SUPABASE_SERVICE_ROLE_KEY ? supabaseAdmin : supabaseAnon;
         
         // 가능한 테이블 이름들 (프로젝트마다 다를 수 있음)
         const possibleTables = ['users', 'profiles', 'User'];
@@ -178,15 +177,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // [New] API Key Authentication Logic
-    const authHeader = request.headers.get('Authorization');
     let authenticatedUserId: string | null = null;
     let isApiContext = false;
+    const authHeader = request.headers.get('Authorization');
 
+    // [1] API Key Authentication (Strict)
     if (authHeader) {
-        // 유연한 파싱: 'Bearer ' 접두사가 있든 없든, vf_로 시작하는 키 추출 시도
+        // Bearer 접두사 제거 (대소문자 무관)
         const token = authHeader.replace(/^Bearer\s+/i, '').trim();
         
+        // vf_로 시작하면 API Key로 간주
         if (token.startsWith('vf_')) {
              const { data: keyRecord, error: keyError } = await supabaseAdmin
                 .from('api_keys')
@@ -198,37 +198,57 @@ export async function POST(request: NextRequest) {
              if (keyRecord) {
                  authenticatedUserId = keyRecord.user_id;
                  isApiContext = true;
-                 console.log(`[API] Authed User: ${authenticatedUserId}`);
+                 console.log(`[API] Key Auth Success User: ${authenticatedUserId}`);
              } else {
-                 console.warn(`[API] Key validation failed: ${keyError?.message || 'No record'}`);
-                 // 401을 리턴하지 않고 Body의 user_id를 믿어보는 Fallback 허용 (사용자 요청 대응)
+                 console.warn(`[API] Invalid Key: ${token}`);
+                 return NextResponse.json({ error: 'Invalid API Key', code: 'INVALID_KEY' }, { status: 401 });
              }
+        } else {
+             // vf_가 아니면 토큰 형식이 잘못됨 (JWT 인증은 이 경로로 처리하지 않음)
+             return NextResponse.json({ error: 'Invalid Authorization Header Format', code: 'INVALID_AUTH_FORMAT' }, { status: 401 });
         }
+    } 
+    // [2] Session Authentication (Cookie) - Only if no Auth Header
+    else {
+        // 서버 컴포넌트용 클라이언트 생성 (쿠키 자동 처리)
+        const supabase = createClient();
+        const { data: { user }, error: sessionError } = await supabase.auth.getUser();
+        
+        if (user) {
+            authenticatedUserId = user.id;
+            // console.log(`[API] Session Auth Success User: ${authenticatedUserId}`);
+        } else {
+            // 세션 없음 -> 인증 실패
+            console.warn('[API] No Session found');
+            return NextResponse.json({ error: 'Authentication Required (Login or API Key)', code: 'AUTH_REQUIRED' }, { status: 401 });
+        }
+    }
+
+    // 최종 인증 실패 확인
+    if (!authenticatedUserId) {
+        return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 });
     }
 
     const body = await request.json();
     let { 
-      user_id, category_id, title, summary, content_text, thumbnail_url, rendering_type, custom_data,
+      // user_id는 Body에서 받더라도 무시하고, 인증된 ID를 사용함 (보안 강화)
+      category_id, title, summary, content_text, thumbnail_url, rendering_type, custom_data,
       allow_michelin_rating, allow_stickers, allow_secret_comments, scheduled_at, visibility
     } = body;
 
-    // Force user_id if authenticated via API Key
-    if (authenticatedUserId) {
-        user_id = authenticatedUserId;
-    } else if (user_id) {
-        console.log(`[API] Using Body UserID: ${user_id}`);
-    }
+    // [Strict] 인증된 사용자 ID가 곧 작성자 ID입니다.
+    const user_id = authenticatedUserId;
 
     // Default category for API usage if missing
     if (isApiContext && !category_id) {
         category_id = 1; 
     }
 
-    if (!user_id || !category_id || !title) {
-      return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 });
+    if (!category_id || !title) {
+      return NextResponse.json({ error: '필수 필드가 누락되었습니다 (Category, Title).', code: 'MISSING_FIELDS' }, { status: 400 });
     }
 
-    // [Validation] Verify User ID Exists to prevent FK Error
+    // [Validation] Verify User Exists in Profiles (Double Check)
     const { data: userExists } = await supabaseAdmin
         .from('profiles')
         .select('id')
@@ -237,8 +257,8 @@ export async function POST(request: NextRequest) {
     
     if (!userExists) {
         return NextResponse.json({ 
-            error: `유효하지 않은 User ID입니다: ${user_id}. (Vibefolio DB에 존재하지 않는 사용자)`,
-            code: 'USER_NOT_FOUND'
+            error: `User Profile Not Found: ${user_id}`,
+            code: 'USER_PROFILE_NOT_FOUND' 
         }, { status: 400 });
     }
 
@@ -333,24 +353,19 @@ export async function POST(request: NextRequest) {
                     .in('slug', fieldSlugs);
 
                 if (fieldRecords && fieldRecords.length > 0) {
-                    const mappings = fieldRecords.map((f: any) => ({
-                        project_id: data.project_id,
-                        field_id: f.id,
-                    }));
-
-                    const { error: mapError } = await (supabaseAdmin as any)
-                        .from('project_fields')
-                        .insert(mappings);
-
-                    if (mapError) {
-                         console.error('[API] Field mapping insert failed:', mapError);
-                    } else {
-                         console.log('[API] Field mappings created:', mappings.length);
-                    }
+                     const mappingData = fieldRecords.map((f: any) => ({
+                         project_id: data.project_id,
+                         field_id: f.id
+                     }));
+                     
+                     await (supabaseAdmin as any)
+                        .from('project_fields') // Changed from project_fields_mapping to project_fields based on GET handler
+                        .insert(mappingData);
                 }
             }
         } catch (e) {
-            console.error('[API] Standardizing fields failed:', e);
+            console.error('Field mapping error', e); 
+            // Mapping 실패가 전체 실패는 아님
         }
     }
 
