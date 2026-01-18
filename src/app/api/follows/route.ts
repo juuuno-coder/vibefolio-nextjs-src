@@ -3,25 +3,46 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
-// 팔로우 토글 (팔로우/언팔로우)
+// Helper for Strict Auth
+async function validateUser(request: NextRequest) {
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        if (token.startsWith('vf_')) {
+             const { data: keyRecord } = await supabaseAdmin
+                .from('api_keys')
+                .select('user_id')
+                .eq('api_key', token)
+                .eq('is_active', true)
+                .single();
+             if (keyRecord) return { id: keyRecord.user_id };
+        }
+    }
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) return { id: user.id };
+    return null;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { follower_id, following_id } = body;
+    const authenticatedUser = await validateUser(request);
+    if (!authenticatedUser) {
+        return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+    }
+    const follower_id = authenticatedUser.id;
 
-    if (!follower_id || !following_id) {
-      return NextResponse.json(
-        { error: '필수 필드가 누락되었습니다.' },
-        { status: 400 }
-      );
+    const body = await request.json();
+    const { following_id } = body; // follower_id is ignored from body
+
+    if (!following_id) {
+       return NextResponse.json({ error: 'following_id 필수' }, { status: 400 });
     }
 
     if (follower_id === following_id) {
-      return NextResponse.json(
-        { error: '자기 자신을 팔로우할 수 없습니다.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '자기 자신을 팔로우할 수 없습니다.' }, { status: 400 });
     }
 
     // 이미 팔로우 중인지 확인
@@ -40,43 +61,19 @@ export async function POST(request: NextRequest) {
         .eq('follower_id', follower_id)
         .eq('following_id', following_id);
 
-      if (error) {
-        console.error('언팔로우 실패:', error);
-        return NextResponse.json(
-          { error: '언팔로우에 실패했습니다.' },
-          { status: 500 }
-        );
-      }
-
-      return NextResponse.json({
-        following: false,
-        message: '팔로우를 취소했습니다.',
-      });
+      if (error) return NextResponse.json({ error: '언팔로우 실패' }, { status: 500 });
+      return NextResponse.json({ following: false, message: '언팔로우' });
     } else {
       // 팔로우
       const { error } = await (supabaseAdmin as any)
         .from('Follow')
         .insert([{ follower_id, following_id }] as any);
 
-      if (error) {
-        console.error('팔로우 실패:', error);
-        return NextResponse.json(
-          { error: '팔로우에 실패했습니다.' },
-          { status: 500 }
-        );
-      }
-
-      return NextResponse.json({
-        following: true,
-        message: '팔로우 했습니다.',
-      });
+      if (error) return NextResponse.json({ error: '팔로우 실패' }, { status: 500 });
+      return NextResponse.json({ following: true, message: '팔로우 완료' });
     }
   } catch (error) {
-    console.error('서버 오류:', error);
-    return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '서버 오류' }, { status: 500 });
   }
 }
 
@@ -87,9 +84,8 @@ export async function GET(request: NextRequest) {
     const followerId = searchParams.get('followerId');
     const followingId = searchParams.get('followingId');
     const userId = searchParams.get('userId');
-    const type = searchParams.get('type'); // 'followers' | 'following'
+    const type = searchParams.get('type');
 
-    // 팔로우 여부 확인
     if (followerId && followingId) {
       const { data } = await supabaseAdmin
         .from('Follow')
@@ -97,39 +93,23 @@ export async function GET(request: NextRequest) {
         .eq('follower_id', followerId)
         .eq('following_id', followingId)
         .single();
-
       return NextResponse.json({ following: !!data });
     }
 
-    // 사용자의 팔로워/팔로잉 목록 조회
     if (userId && type) {
       if (type === 'followers') {
-        // 나를 팔로우하는 사람들
         const { data: follows, error, count } = await supabaseAdmin
           .from('Follow')
           .select('follower_id, created_at', { count: 'exact' })
           .eq('following_id', userId)
           .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('팔로워 조회 실패:', error);
-          return NextResponse.json(
-            { error: '팔로워 조회에 실패했습니다.' },
-            { status: 500 }
-          );
-        }
+        if (error) return NextResponse.json({ error: '팔로워 조회 실패' }, { status: 500 });
 
-        // 프로필 정보 별도 조회
         if (follows && follows.length > 0) {
           const followerIds = follows.map((f: any) => f.follower_id);
-          const { data: profiles } = await supabaseAdmin
-            .from('profiles')
-            .select('id, username, avatar_url')
-            .in('id', followerIds);
-
-          const profileMap = new Map(
-            profiles?.map((p: any) => [p.id, p]) || []
-          );
+          const { data: profiles } = await supabaseAdmin.from('profiles').select('id, username, avatar_url').in('id', followerIds);
+          const profileMap = new Map(profiles?.map((p: any) => [p.id, p]) || []);
 
           const enrichedFollowers = follows.map((follow: any) => {
             const profile = profileMap.get(follow.follower_id);
@@ -142,38 +122,22 @@ export async function GET(request: NextRequest) {
               } : null
             };
           });
-
           return NextResponse.json({ followers: enrichedFollowers, count: count || 0 });
         }
-
         return NextResponse.json({ followers: [], count: 0 });
       } else if (type === 'following') {
-        // 내가 팔로우하는 사람들
         const { data: followingData, error: followingError, count: followingCount } = await supabaseAdmin
           .from('Follow')
           .select('following_id, created_at', { count: 'exact' })
           .eq('follower_id', userId)
           .order('created_at', { ascending: false });
 
-        if (followingError) {
-          console.error('팔로잉 조회 실패:', followingError);
-          return NextResponse.json(
-            { error: '팔로잉 조회에 실패했습니다.' },
-            { status: 500 }
-          );
-        }
+        if (followingError) return NextResponse.json({ error: '팔로잉 조회 실패' }, { status: 500 });
 
-        // 프로필 정보 별도 조회
         if (followingData && followingData.length > 0) {
           const followingIds = followingData.map((f: any) => f.following_id);
-          const { data: profiles } = await supabaseAdmin
-            .from('profiles')
-            .select('id, username, avatar_url')
-            .in('id', followingIds);
-
-          const profileMap = new Map(
-            profiles?.map((p: any) => [p.id, p]) || []
-          );
+          const { data: profiles } = await supabaseAdmin.from('profiles').select('id, username, avatar_url').in('id', followingIds);
+          const profileMap = new Map(profiles?.map((p: any) => [p.id, p]) || []);
 
           const enrichedFollowing = followingData.map((follow: any) => {
             const profile = profileMap.get(follow.following_id);
@@ -186,41 +150,19 @@ export async function GET(request: NextRequest) {
               } : null
             };
           });
-
           return NextResponse.json({ following: enrichedFollowing, count: followingCount || 0 });
         }
-
         return NextResponse.json({ following: [], count: 0 });
       }
     }
 
-    // 팔로워/팔로잉 수 조회
     if (userId) {
-      const { count: followersCount } = await supabaseAdmin
-        .from('Follow')
-        .select('*', { count: 'exact', head: true })
-        .eq('following_id', userId);
-
-      const { count: followingCount } = await supabaseAdmin
-        .from('Follow')
-        .select('*', { count: 'exact', head: true })
-        .eq('follower_id', userId);
-
-      return NextResponse.json({
-        followersCount: followersCount || 0,
-        followingCount: followingCount || 0,
-      });
+      const { count: followersCount } = await supabaseAdmin.from('Follow').select('*', { count: 'exact', head: true }).eq('following_id', userId);
+      const { count: followingCount } = await supabaseAdmin.from('Follow').select('*', { count: 'exact', head: true }).eq('follower_id', userId);
+      return NextResponse.json({ followersCount: followersCount || 0, followingCount: followingCount || 0 });
     }
-
-    return NextResponse.json(
-      { error: 'userId 또는 followerId/followingId가 필요합니다.' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: '파라미터 필요' }, { status: 400 });
   } catch (error) {
-    console.error('서버 오류:', error);
-    return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '서버 오류' }, { status: 500 });
   }
 }

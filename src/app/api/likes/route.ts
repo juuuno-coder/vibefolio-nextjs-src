@@ -3,85 +3,71 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
+
+// Helper for Strict Auth
+async function validateUser(request: NextRequest) {
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        if (token.startsWith('vf_')) {
+             const { data: keyRecord } = await supabaseAdmin
+                .from('api_keys')
+                .select('user_id')
+                .eq('api_key', token)
+                .eq('is_active', true)
+                .single();
+             if (keyRecord) return { id: keyRecord.user_id };
+        }
+    }
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) return { id: user.id };
+    return null;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    // Authorization 헤더에서 토큰 추출
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: '로그인이 필요합니다.' },
-        { status: 401 }
-      );
+    const authenticatedUser = await validateUser(request);
+    if (!authenticatedUser) {
+       return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
     }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: '인증에 실패했습니다.' },
-        { status: 401 }
-      );
-    }
+    const userId = authenticatedUser.id;
 
     const body = await request.json();
     const { projectId } = body;
 
     if (!projectId) {
-      return NextResponse.json(
-        { error: '프로젝트 ID가 필요합니다.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '프로젝트 ID가 필요합니다.' }, { status: 400 });
     }
 
-    // 이미 좋아요가 있는지 확인 (필요한 필드만 조회)
+    // 이미 좋아요가 있는지 확인
     const { data: existingLike } = await supabaseAdmin
       .from('Like')
-      .select('user_id, project_id, created_at')
-      .eq('user_id', user.id)
+      .select('user_id, project_id')
+      .eq('user_id', userId)
       .eq('project_id', projectId)
       .single();
 
     if (existingLike) {
-      // 좋아요 제거
       const { error } = await (supabaseAdmin as any)
         .from('Like')
         .delete()
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('project_id', projectId);
 
-      if (error) {
-        console.error('좋아요 제거 실패:', error);
-        return NextResponse.json(
-          { error: '좋아요 제거에 실패했습니다.' },
-          { status: 500 }
-        );
-      }
-
-      return NextResponse.json({ liked: false, message: '좋아요가 취소되었습니다.' });
+      if (error) return NextResponse.json({ error: '좋아요 제거 실패' }, { status: 500 });
+      return NextResponse.json({ liked: false, message: '좋아요 취소' });
     } else {
-      // 좋아요 추가
       const { error } = await (supabaseAdmin as any)
         .from('Like')
-        .insert([{ user_id: user.id, project_id: projectId }] as any);
+        .insert([{ user_id: userId, project_id: projectId }] as any);
 
-      if (error) {
-        console.error('좋아요 추가 실패:', error);
-        return NextResponse.json(
-          { error: '좋아요 추가에 실패했습니다.' },
-          { status: 500 }
-        );
-      }
-
-      return NextResponse.json({ liked: true, message: '좋아요를 추가했습니다.' });
+      if (error) return NextResponse.json({ error: '좋아요 추가 실패' }, { status: 500 });
+      return NextResponse.json({ liked: true, message: '좋아요 추가' });
     }
   } catch (error) {
-    console.error('서버 오류:', error);
-    return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '서버 오류' }, { status: 500 });
   }
 }
 
@@ -92,53 +78,34 @@ export async function GET(request: NextRequest) {
     const projectId = searchParams.get('projectId');
 
     if (userId && projectId) {
-      // 특정 프로젝트에 대한 좋아요 여부 확인 (필드 최소화)
       const { data } = await supabaseAdmin
         .from('Like')
         .select('user_id')
         .eq('user_id', userId)
         .eq('project_id', projectId)
         .single();
-
       return NextResponse.json({ liked: !!data });
     } else if (userId) {
-      // 사용자가 좋아요한 모든 프로젝트 조회
       const { data: likes, error } = await supabaseAdmin
         .from('Like')
         .select('project_id, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('좋아요 목록 조회 실패:', error);
-        return NextResponse.json(
-          { error: '좋아요 목록 조회에 실패했습니다.' },
-          { status: 500 }
-        );
-      }
+      if (error) return NextResponse.json({ error: '좋아요 목록 조회 실패' }, { status: 500 });
 
-      // 프로젝트 정보 별도 조회
       if (likes && likes.length > 0) {
         const projectIds = likes.map((like: any) => like.project_id);
-        
-        const { data: projects, error: projectError } = await supabaseAdmin
+        const { data: projects } = await supabaseAdmin
           .from('Project')
           .select('project_id, title, thumbnail_url, user_id')
           .in('project_id', projectIds);
 
-        if (!projectError && projects) {
-          // 프로젝트 작성자 정보 조회 (profiles 테이블 사용)
+        if (projects) {
           const userIds = [...new Set(projects.map((p: any) => p.user_id))];
-          const { data: profiles } = await supabaseAdmin
-            .from('profiles')
-            .select('id, username, avatar_url')
-            .in('id', userIds);
+          const { data: profiles } = await supabaseAdmin.from('profiles').select('id, username, avatar_url').in('id', userIds);
+          const profileMap = new Map(profiles?.map((p: any) => [p.id, p]) || []);
 
-          const profileMap = new Map(
-            profiles?.map((p: any) => [p.id, p]) || []
-          );
-
-          // 데이터 병합
           const enrichedLikes = likes.map((like: any) => {
             const project = projects.find((p: any) => p.project_id === like.project_id);
             if (project) {
@@ -157,39 +124,20 @@ export async function GET(request: NextRequest) {
             }
             return like;
           });
-
           return NextResponse.json({ likes: enrichedLikes });
         }
       }
-
       return NextResponse.json({ likes: likes || [] });
     } else if (projectId) {
-      // 프로젝트의 좋아요 수 조회
       const { count, error } = await supabaseAdmin
         .from('Like')
         .select('project_id', { count: 'exact', head: true })
         .eq('project_id', projectId);
-
-      if (error) {
-        console.error('좋아요 수 조회 실패:', error);
-        return NextResponse.json(
-          { error: '좋아요 수 조회에 실패했습니다.' },
-          { status: 500 }
-        );
-      }
-
+      if (error) return NextResponse.json({ error: '좋아요 수 조회 실패' }, { status: 500 });
       return NextResponse.json({ count: count || 0 });
     }
-
-    return NextResponse.json(
-      { error: 'userId 또는 projectId가 필요합니다.' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: '파라미터 필요' }, { status: 400 });
   } catch (error) {
-    console.error('서버 오류:', error);
-    return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '서버 오류' }, { status: 500 });
   }
 }
