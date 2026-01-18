@@ -55,7 +55,7 @@ export default function SignupPage() {
           description: "이메일을 확인하여 계정을 활성화해주세요.",
           duration: 5000,
         });
-        router.push("/login");
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
       }
     } catch (error: any) {
       console.error("[Signup] Error:", error);
