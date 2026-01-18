@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-type TabType = 'projects' | 'likes' | 'collections' | 'proposals' | 'comments' | 'ai_tools';
+type TabType = 'projects' | 'likes' | 'collections' | 'proposals' | 'comments' | 'ai_tools' | 'settings';
 type AiToolType = 'lean-canvas' | 'persona' | 'assistant' | 'job' | 'trend' | 'recipe' | 'tool' | 'api-settings';
 import { LeanCanvasModal, type LeanCanvasData } from "@/components/LeanCanvasModal";
 import { PersonaDefinitionModal } from "@/components/PersonaDefinitionModal";
@@ -92,25 +92,15 @@ export default function MyPage() {
   const { user: authUser, userProfile: authProfile, loading: authLoading } = useAuth();
   
   // 1. 초기화 - 사용자 정보 및 통계 로드
-  useEffect(() => {
-    if (authLoading) return;
-    if (!authUser) {
-      router.push('/login');
-      return;
-    }
-
-    const initStats = async () => {
+  // 1. 초기화 - 사용자 정보 및 통계 로드
+  const initStats = async () => {
+      if (!authUser) return;
       setUserId(authUser.id);
-      
-      // 기존에 로드된 프로필이 있으면 즉시 연동하고 추가 정보 로드
-      if (authProfile) {
-        // ... (existing)
-      }
       
       try {
         const { data: dbProfile } = await supabase
           .from('profiles')
-          .select('username, nickname, bio, cover_image_url, social_links')
+          .select('username, nickname, bio, cover_image_url, social_links, interests, is_public')
           .eq('id', authUser.id)
           .single();
 
@@ -122,9 +112,11 @@ export default function MyPage() {
           bio: (dbProfile as any)?.bio || '',
           cover_image_url: (dbProfile as any)?.cover_image_url || null,
           social_links: (dbProfile as any)?.social_links || {},
+          interests: (dbProfile as any)?.interests,
+          is_public: (dbProfile as any)?.is_public,
           id: authUser.id, 
         });
-        // 통계 로드 최적화: head: true를 써서 데이터 본문 없이 카운트만 가져옴
+
         const getCount = async (query: any) => {
           const { count, error } = await query;
           return error ? 0 : (count || 0);
@@ -144,8 +136,14 @@ export default function MyPage() {
       } finally {
         setInitialized(true);
       }
-    };
-    
+  };
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!authUser) {
+      router.push('/login');
+      return;
+    }
     initStats();
   }, [authUser, authProfile, authLoading, router]);
 
@@ -319,7 +317,7 @@ export default function MyPage() {
       const { error } = await supabase
         .from('Project')
         .update({ visibility: newVisibility })
-        .eq('project_id', projectId);
+        .eq('project_id', parseInt(projectId));
 
       if (error) throw error;
 
@@ -444,6 +442,7 @@ export default function MyPage() {
     { id: 'proposals' as TabType, label: '받은 제안', icon: Send, color: 'text-green-500', bgColor: 'bg-green-500' },
     { id: 'comments' as TabType, label: '내 댓글', icon: MessageCircle, color: 'text-orange-500', bgColor: 'bg-orange-500' },
     { id: 'ai_tools' as TabType, label: 'AI 도구', icon: Sparkles, color: 'text-purple-600', bgColor: 'bg-purple-600', isNew: true },
+    { id: 'settings' as TabType, label: '설정', icon: Settings, color: 'text-gray-700', bgColor: 'bg-gray-700' },
   ];
 
   return (
@@ -498,10 +497,9 @@ export default function MyPage() {
               </div>
               <div className="md:pb-2 flex gap-2">
                 {userProfile?.id && (
-                  <ProfileManager 
-                    user={userProfile} 
-                    onUpdate={() => window.location.reload()} 
-                  />
+                  <Button onClick={() => setActiveTab('settings')} variant="outline" size="sm" className="gap-2 rounded-full border-gray-200">
+                    <Settings className="w-4 h-4" /> 설정
+                  </Button>
                 )}
               </div>
             </div>
@@ -846,6 +844,11 @@ export default function MyPage() {
                    )}
                 </div>
               </div>
+            )}
+            {activeTab === 'settings' && userProfile && (
+               <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
+                  <ProfileManager user={userProfile} onUpdate={initStats} />
+               </div>
             )}
           </>
         )}
