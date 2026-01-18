@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     console.log('[Resend Webhook] Received:', body);
 
     // Resend inbound email 데이터 구조
+    // https://resend.com/docs/dashboard/webhooks/event-types#email-received
     const {
       from,
       to,
@@ -25,18 +26,20 @@ export async function POST(request: NextRequest) {
       attachments,
     } = body;
 
+    console.log('[Resend Webhook] Parsed:', { from, to, subject, hasText: !!text, hasHtml: !!html });
+
     // 수신 이메일 저장
     const { error } = await (supabaseAdmin as any)
       .from('received_emails')
       .insert({
-        from_email: from,
-        to_email: to,
+        from_email: from || body.from_email || 'unknown',
+        to_email: to || body.to_email || 'unknown',
         subject: subject || '(제목 없음)',
-        text_content: text,
-        html_content: html,
-        headers: headers,
-        attachments: attachments,
-        raw_data: body,
+        text_content: text || body.text || '',
+        html_content: html || body.html || '',
+        headers: headers || {},
+        attachments: attachments || [],
+        raw_data: body, // 전체 데이터 저장 (디버깅용)
       });
 
     if (error) {
