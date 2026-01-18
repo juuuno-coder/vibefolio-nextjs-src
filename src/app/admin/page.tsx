@@ -27,6 +27,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   TrendingUp,
+  Mail,
 } from "lucide-react";
 import {
   ComposedChart,
@@ -291,6 +292,15 @@ export default function AdminPage() {
       bgColor: "bg-orange-50",
       path: "/admin/inquiries",
       count: stats.totalInquiries,
+    },
+    {
+      title: "이메일 관리",
+      description: "이메일 발송 및 수신 관리",
+      icon: Mail,
+      color: "text-cyan-500",
+      bgColor: "bg-cyan-50",
+      path: "/admin/emails",
+      count: 0,
     },
     {
       title: "사용자 관리",

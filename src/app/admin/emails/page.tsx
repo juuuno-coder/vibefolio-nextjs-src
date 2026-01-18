@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Mail, Send, Inbox, Trash2, Plus, RefreshCw } from "lucide-react";
+import { Mail, Send, Inbox, Trash2, RefreshCw, Reply, X, Eye } from "lucide-react";
 
 export default function AdminEmailPage() {
   const [emails, setEmails] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
+  const [selectedEmail, setSelectedEmail] = useState<any | null>(null);
+  const [isReplyMode, setIsReplyMode] = useState(false);
   
   // 이메일 발송 폼
   const [sendForm, setForm] = useState({
@@ -64,6 +66,8 @@ export default function AdminEmailPage() {
           subject: "",
           message: "",
         });
+        setIsReplyMode(false);
+        setSelectedEmail(null);
       } else {
         toast.error(data.error || "이메일 발송 실패");
       }
@@ -75,8 +79,23 @@ export default function AdminEmailPage() {
     }
   };
 
+  // 답장 모드 활성화
+  const handleReply = (email: any) => {
+    setIsReplyMode(true);
+    setForm({
+      from: email.to_email || "vibefolio@vibefolio.net",
+      to: email.from_email,
+      subject: `Re: ${email.subject}`,
+      message: `\n\n---\n원본 메시지:\n발신: ${email.from_email}\n제목: ${email.subject}\n\n${email.text_content || ""}`,
+    });
+    setSelectedEmail(null);
+  };
+
   useEffect(() => {
     fetchEmails();
+    // 30초마다 자동 새로고침
+    const interval = setInterval(fetchEmails, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -89,7 +108,7 @@ export default function AdminEmailPage() {
             <p className="text-gray-600 mt-1">Resend를 통한 이메일 발송 및 수신 관리</p>
           </div>
           <Button onClick={fetchEmails} variant="outline" className="gap-2">
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             새로고침
           </Button>
         </div>
@@ -97,14 +116,39 @@ export default function AdminEmailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* 이메일 발송 */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <Send className="w-5 h-5 text-green-600" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <Send className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {isReplyMode ? "답장 작성" : "이메일 발송"}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {isReplyMode ? "수신 이메일에 답장하기" : "사용자에게 이메일 보내기"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">이메일 발송</h2>
-                <p className="text-sm text-gray-600">사용자에게 이메일 보내기</p>
-              </div>
+              {isReplyMode && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsReplyMode(false);
+                    setForm({
+                      from: "vibefolio@vibefolio.net",
+                      to: "",
+                      subject: "",
+                      message: "",
+                    });
+                  }}
+                  className="gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  취소
+                </Button>
+              )}
             </div>
 
             <form onSubmit={handleSendEmail} className="space-y-4">
@@ -133,6 +177,7 @@ export default function AdminEmailPage() {
                   onChange={(e) => setForm({ ...sendForm, to: e.target.value })}
                   placeholder="user@example.com"
                   className="h-11"
+                  disabled={isReplyMode}
                 />
               </div>
 
@@ -157,7 +202,7 @@ export default function AdminEmailPage() {
                   value={sendForm.message}
                   onChange={(e) => setForm({ ...sendForm, message: e.target.value })}
                   placeholder="이메일 내용을 입력하세요..."
-                  rows={8}
+                  rows={isReplyMode ? 12 : 8}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
                 />
               </div>
@@ -175,7 +220,7 @@ export default function AdminEmailPage() {
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    이메일 발송
+                    {isReplyMode ? "답장 보내기" : "이메일 발송"}
                   </>
                 )}
               </Button>
@@ -190,7 +235,9 @@ export default function AdminEmailPage() {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-gray-900">수신 이메일</h2>
-                <p className="text-sm text-gray-600">받은 이메일 목록</p>
+                <p className="text-sm text-gray-600">
+                  vibefolio@, support@ 수신함 ({emails.length}개)
+                </p>
               </div>
             </div>
 
@@ -203,7 +250,7 @@ export default function AdminEmailPage() {
                 <Mail className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500">수신된 이메일이 없습니다</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  Resend Webhook 설정이 필요합니다
+                  MX 레코드 설정 후 이메일을 받을 수 있습니다
                 </p>
               </div>
             ) : (
@@ -211,16 +258,38 @@ export default function AdminEmailPage() {
                 {emails.map((email, index) => (
                   <div
                     key={index}
-                    className="p-4 border border-gray-200 rounded-lg hover:border-green-300 transition-colors"
+                    className="p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:shadow-sm transition-all cursor-pointer"
+                    onClick={() => setSelectedEmail(email)}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-900">{email.from}</p>
-                        <p className="text-sm text-gray-600 mt-1">{email.subject}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold text-gray-900 truncate">{email.from_email}</p>
+                          <span className="text-xs text-gray-400 shrink-0">
+                            {new Date(email.created_at).toLocaleDateString('ko-KR')}
+                          </span>
+                        </div>
+                        <p className="text-sm font-medium text-gray-700 truncate">{email.subject}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          수신: {email.to_email}
+                        </p>
                       </div>
-                      <span className="text-xs text-gray-400">{email.date}</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleReply(email);
+                        }}
+                        className="gap-1 text-green-600 hover:text-green-700 hover:bg-green-50"
+                      >
+                        <Reply className="w-3 h-3" />
+                        답장
+                      </Button>
                     </div>
-                    <p className="text-sm text-gray-700 line-clamp-2">{email.text}</p>
+                    <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                      {email.text_content || "(내용 없음)"}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -228,22 +297,75 @@ export default function AdminEmailPage() {
           </div>
         </div>
 
-        {/* 설정 안내 */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-          <h3 className="font-bold text-blue-900 mb-3">📧 이메일 수신 설정 (Resend)</h3>
-          <div className="space-y-2 text-sm text-blue-800">
-            <p><strong>1. Resend 대시보드</strong> → Domains → vibefolio.net</p>
-            <p><strong>2. Inbound</strong> 탭 → Enable Inbound</p>
-            <p><strong>3. MX 레코드 추가</strong> (DNS 설정):</p>
-            <div className="bg-white p-3 rounded-lg mt-2 font-mono text-xs">
-              <p>Type: MX</p>
-              <p>Name: @</p>
-              <p>Value: inbound.resend.com</p>
-              <p>Priority: 10</p>
+        {/* 이메일 상세 모달 */}
+        {selectedEmail && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+              <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Eye className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">이메일 상세</h3>
+                    <p className="text-sm text-gray-600">{selectedEmail.from_email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleReply(selectedEmail)}
+                    className="gap-2 bg-green-600 hover:bg-green-700"
+                  >
+                    <Reply className="w-4 h-4" />
+                    답장
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setSelectedEmail(null)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="p-6 overflow-y-auto max-h-[60vh]">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">제목</label>
+                    <p className="text-lg font-bold text-gray-900 mt-1">{selectedEmail.subject}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase">발신</label>
+                      <p className="text-sm text-gray-900 mt-1">{selectedEmail.from_email}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase">수신</label>
+                      <p className="text-sm text-gray-900 mt-1">{selectedEmail.to_email}</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">수신 시간</label>
+                    <p className="text-sm text-gray-900 mt-1">
+                      {new Date(selectedEmail.created_at).toLocaleString('ko-KR')}
+                    </p>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-gray-200">
+                    <label className="text-xs font-semibold text-gray-500 uppercase mb-2 block">내용</label>
+                    <div className="bg-gray-50 rounded-lg p-4 whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">
+                      {selectedEmail.text_content || "(내용 없음)"}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="mt-3"><strong>4. Webhook 설정</strong> → POST /api/webhooks/resend</p>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
