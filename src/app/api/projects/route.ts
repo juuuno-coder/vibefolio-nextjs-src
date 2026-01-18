@@ -183,20 +183,26 @@ export async function POST(request: NextRequest) {
     let authenticatedUserId: string | null = null;
     let isApiContext = false;
 
-    if (authHeader && authHeader.startsWith('Bearer vf_')) {
-        const apiKey = authHeader.replace('Bearer ', '');
-        const { data: keyRecord } = await supabaseAdmin
-            .from('api_keys')
-            .select('user_id')
-            .eq('api_key', apiKey)
-            .eq('is_active', true)
-            .single();
+    if (authHeader) {
+        // 유연한 파싱: 'Bearer ' 접두사가 있든 없든, vf_로 시작하는 키 추출 시도
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
         
-        if (keyRecord) {
-            authenticatedUserId = keyRecord.user_id;
-            isApiContext = true;
-        } else {
-             return NextResponse.json({ error: 'Invalid API Key' }, { status: 401 });
+        if (token.startsWith('vf_')) {
+             const { data: keyRecord, error: keyError } = await supabaseAdmin
+                .from('api_keys')
+                .select('user_id')
+                .eq('api_key', token)
+                .eq('is_active', true)
+                .single();
+            
+             if (keyRecord) {
+                 authenticatedUserId = keyRecord.user_id;
+                 isApiContext = true;
+                 console.log(`[API] Authed User: ${authenticatedUserId}`);
+             } else {
+                 console.warn(`[API] Key validation failed: ${keyError?.message || 'No record'}`);
+                 // 401을 리턴하지 않고 Body의 user_id를 믿어보는 Fallback 허용 (사용자 요청 대응)
+             }
         }
     }
 
@@ -209,6 +215,8 @@ export async function POST(request: NextRequest) {
     // Force user_id if authenticated via API Key
     if (authenticatedUserId) {
         user_id = authenticatedUserId;
+    } else if (user_id) {
+        console.log(`[API] Using Body UserID: ${user_id}`);
     }
 
     // Default category for API usage if missing
