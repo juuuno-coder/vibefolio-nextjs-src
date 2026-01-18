@@ -25,6 +25,12 @@ type AiToolType = 'lean-canvas' | 'persona' | 'assistant' | 'job' | 'trend' | 'r
 import { LeanCanvasModal, type LeanCanvasData } from "@/components/LeanCanvasModal";
 import { PersonaDefinitionModal } from "@/components/PersonaDefinitionModal";
 import { AiOpportunityExplorer } from "@/components/tools/AiOpportunityExplorer";
+import { AiLeanCanvasChat } from "@/components/tools/AiLeanCanvasChat";
+import { AiOpportunityChat } from "@/components/tools/AiOpportunityChat";
+import { AiPersonaChat } from "@/components/tools/AiPersonaChat";
+import { AiAssistantChat, type AssistantData } from "@/components/tools/AiAssistantChat";
+import { AssistantResultModal } from "@/components/AssistantResultModal";
+import { PersonaData } from "@/components/PersonaDefinitionModal";
 
 export default function MyPage() {
   const router = useRouter();
@@ -56,6 +62,25 @@ export default function MyPage() {
   // AI 도구 모달 상태
   const [leanModalOpen, setLeanModalOpen] = useState(false);
   const [personaModalOpen, setPersonaModalOpen] = useState(false);
+  const [assistantModalOpen, setAssistantModalOpen] = useState(false);
+
+  const [savedPersona, setSavedPersona] = useState<PersonaData | null>(null);
+  const [savedAssistant, setSavedAssistant] = useState<AssistantData | null>(null);
+  
+  const handleLeanCanvasGenerate = (data: LeanCanvasData) => {
+    setSavedLeanCanvas(data);
+    setLeanModalOpen(true);
+  };
+
+  const handlePersonaGenerate = (data: PersonaData) => {
+    setSavedPersona(data);
+    setPersonaModalOpen(true);
+  };
+
+  const handleAssistantGenerate = (data: AssistantData) => {
+    setSavedAssistant(data);
+    setAssistantModalOpen(true);
+  };
   
   // 회원탈퇴 관련 상태
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -747,46 +772,28 @@ export default function MyPage() {
                                </p>
                            </div>
                            <div className="flex-1 overflow-hidden">
-                               {/* @ts-ignore: Prop 'hideTabs' will be added in next step */}
-                               <AiOpportunityExplorer embedded initialCategory={activeAiTool} hideTabs />
+                               <AiOpportunityChat category={activeAiTool as 'job' | 'trend' | 'recipe' | 'tool'} />
                            </div>
                        </div>
+                   ) : activeAiTool === 'lean-canvas' ? (
+                        <div className="h-full relative z-10">
+                             <AiLeanCanvasChat onGenerate={handleLeanCanvasGenerate} />
+                        </div>
+                   ) : activeAiTool === 'persona' ? (
+                        <div className="h-full relative z-10">
+                             <AiPersonaChat onGenerate={handlePersonaGenerate} />
+                        </div>
+                   ) : activeAiTool === 'assistant' ? (
+                        <div className="h-full relative z-10">
+                             <AiAssistantChat onGenerate={handleAssistantGenerate} />
+                        </div>
                    ) : (
                     <div className="relative z-10 flex flex-col items-center justify-center h-full text-center max-w-xl mx-auto space-y-6 py-20 px-8">
-                        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white shadow-xl shadow-purple-200 animate-bounce-slow">
-                        <Sparkles className="w-10 h-10" />
+                        {/* Fallback Intro or Empty State */}
+                        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-400">
+                             <Sparkles className="w-10 h-10" />
                         </div>
-                        <div>
-                        <h3 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">
-                            {activeAiTool === 'lean-canvas' && "AI 린 캔버스 생성기"}
-                            {activeAiTool === 'persona' && "AI 고객 페르소나 정의"}
-                            {activeAiTool === 'assistant' && "AI 콘텐츠 어시스턴트"}
-                        </h3>
-                        <p className="text-gray-500 leading-relaxed font-medium">
-                            {activeAiTool === 'lean-canvas' && "아이디어 입력만으로 비즈니스 모델을 한눈에 구조화하세요.\n스타트업과 1인 창업가를 위한 필수 도구입니다."}
-                            {activeAiTool === 'persona' && "우리 서비스의 핵심 고객은 누구일까요?\n가상 페르소나를 정의하고 니즈를 파악해보세요."}
-                            {activeAiTool === 'assistant' && "더 매력적인 문장을 찾고 계신가요?\nAI가 당신의 글을 다듬어드립니다. (준비 중)"}
-                        </p>
-                        </div>
-                        
-                        {activeAiTool === 'lean-canvas' && (
-                        <Button onClick={() => setLeanModalOpen(true)} className="btn-primary rounded-full px-8 py-6 text-base shadow-lg shadow-purple-200">
-                            <Grid className="w-5 h-5 mr-2" /> 새 린 캔버스 만들기
-                        </Button>
-                        )}
-
-                        {activeAiTool === 'persona' && (
-                        <Button onClick={() => setPersonaModalOpen(true)} className="btn-primary rounded-full px-8 py-6 text-base shadow-lg shadow-purple-200 bg-indigo-600 hover:bg-indigo-700">
-                            <UserCircle2 className="w-5 h-5 mr-2" /> 페르소나 정의하기
-                        </Button>
-                        )}
-
-                        {activeAiTool === 'assistant' && (
-                            <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-full text-xs font-black uppercase tracking-widest border border-purple-100 shadow-sm">
-                                <Zap className="w-3 h-3 animate-pulse" />
-                                Coming Soon
-                            </div>
-                        )}
+                        <p className="text-gray-500">도구를 선택해주세요.</p>
                     </div>
                    )}
                 </div>
@@ -808,7 +815,16 @@ export default function MyPage() {
       <PersonaDefinitionModal 
         open={personaModalOpen} 
         onOpenChange={setPersonaModalOpen} 
+        onSave={(data) => setSavedPersona(data)}
+        initialData={savedPersona || undefined}
         onApply={() => {}} 
+      />
+      <AssistantResultModal
+        open={assistantModalOpen}
+        onOpenChange={setAssistantModalOpen}
+        onSave={(data) => setSavedAssistant(data)}
+        initialData={savedAssistant || undefined}
+        onApply={() => {}}
       />
       
       {/* 회원탈퇴 확인 모달 */}
