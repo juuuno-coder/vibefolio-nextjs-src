@@ -198,6 +198,7 @@ export default function TiptapUploadPage() {
                 setTitle(project.title || "");
                 setSummary(project.description || "");
                 setContent(project.content_text || "");
+                setVisibility(project.visibility || 'public'); // Load visibility setting
                 setCoverPreview(project.thumbnail_url || project.image_url);
                 
                 if (project.custom_data) {
