@@ -151,15 +151,21 @@ export async function PUT(
     // 3. 업데이트 수행
     const body = await request.json();
     const { 
-        title, content_text, thumbnail_url, category_id, rendering_type, custom_data,
+        title, content_text, description, summary, alt_description, 
+        thumbnail_url, category_id, rendering_type, custom_data,
         allow_michelin_rating, allow_stickers, allow_secret_comments 
     } = body;
+
+    // description이 없으면 content_text를 사용 (하위 호환성)
+    const finalDescription = description !== undefined ? description : content_text;
 
     let { data, error } = await (supabaseAdmin as any)
       .from('Project')
       .update({
         title,
-        content_text,
+        description: finalDescription,
+        summary,
+        alt_description,
         thumbnail_url,
         category_id,
         rendering_type,
@@ -170,7 +176,14 @@ export async function PUT(
         updated_at: new Date().toISOString()
       })
       .eq('project_id', id)
-      .select().single();
+      .select(`
+        *,
+        Category (
+          category_id,
+          name
+        )
+      `)
+      .single();
 
     if (error) {
       console.error('프로젝트 수정 실패:', error);

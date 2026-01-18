@@ -232,7 +232,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     let { 
       // user_id는 Body에서 받더라도 무시하고, 인증된 ID를 사용함 (보안 강화)
-      category_id, title, summary, content_text, thumbnail_url, rendering_type, custom_data,
+      category_id, title, summary, content_text, description, alt_description, thumbnail_url, rendering_type, custom_data,
       allow_michelin_rating, allow_stickers, allow_secret_comments, scheduled_at, visibility
     } = body;
 
@@ -318,7 +318,10 @@ export async function POST(request: NextRequest) {
     let { data, error } = await (supabaseAdmin as any)
       .from('Project')
       .insert([{ 
-        user_id, category_id, title, summary, content_text, thumbnail_url, rendering_type, custom_data, 
+        user_id, category_id, title, summary, content_text, 
+        description: description !== undefined ? description : content_text,
+        alt_description,
+        thumbnail_url, rendering_type, custom_data, 
         allow_michelin_rating: allow_michelin_rating ?? true, 
         allow_stickers: allow_stickers ?? true, 
         allow_secret_comments: allow_secret_comments ?? true,
