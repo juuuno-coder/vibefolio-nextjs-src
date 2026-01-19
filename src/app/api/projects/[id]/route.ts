@@ -133,10 +133,10 @@ export async function PUT(
 
     const isAuthorizedAdmin = isAdminEmail || isDbAdmin;
 
-    // 프로젝트 소유자 확인
+    // 프로젝트 소유자 확인 및 기존 데이터 조회 (Merge용)
     const { data: existingProject, error: fetchError } = await (supabaseAdmin as any)
       .from('Project')
-      .select('user_id')
+      .select('user_id, custom_data')
       .eq('project_id', id)
       .single();
 
@@ -159,38 +159,41 @@ export async function PUT(
     } = body;
 
     // [Robustness] Normalize Content
-    let finalContent = content_text || content || bodyContent || text; // Only update if provided
+    let finalContent = content_text || content || bodyContent || text; 
 
-    // description이 없으면 content_text를 사용 (하위 호환성)
-    // 단, 이번 요청에서 description이 명시적으로 오지 않았다면 기존 description을 유지해야 하므로 이곳에서 강제로 덮어쓰지 않음. 
-    // 로직 보완: finalContent가 있으면 그 앞부분을 description으로 쓸 수도 있지만, 보통 클라이언트가 둘 다 보냄.
-    // 여기선 description이 명시적으로 왔을 때만 업데이트 대상에 포함.
-
-    // Assets & Custom Data Handling
-    let finalCustomData = custom_data;
-    if (custom_data || assets) {
+    // Assets & Custom Data Handling (Smart Merge)
+    let finalCustomData = undefined; // undefined면 업데이트 쿼리에서 제외됨
+    
+    // 뭔가 변경사항(custom_data, assets)이 있을 때만 계산
+    if (custom_data !== undefined || assets !== undefined) {
         try {
-            // If custom_data is provided, parse it. If not, we might need to fetch existing to merge? 
-            // For API efficiency, we assume 'custom_data' in PUT replaces existing or merges if logic is complex. 
-            // Here we assume client sends full custom_data usually. 
-            // But if ONLY assets is sent, we should be careful. 
-            // Simplified: If custom_data provided, use it. If assets provided, merge into it.
+            // 1) 기존 데이터 파싱
             let baseData = {};
-            if (custom_data) {
-                baseData = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
+            if (existingProject.custom_data) {
+                baseData = typeof existingProject.custom_data === 'string' 
+                    ? JSON.parse(existingProject.custom_data) 
+                    : existingProject.custom_data;
             }
-            
+
+            // 2) 새 custom_data 병합 (있다면)
+            if (custom_data) {
+                const newCustom = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
+                // Shallow Merge: 기존 키 유지, 새 키 덮어쓰기
+                baseData = { ...baseData, ...newCustom };
+            }
+
+            // 3) Assets 덮어쓰기 (있다면)
             if (assets) {
                 (baseData as any).assets = assets;
             }
-            
-            // If we have valid changes, stringify it.
-            if (Object.keys(baseData).length > 0) {
-                finalCustomData = JSON.stringify(baseData);
-            }
+
+            finalCustomData = JSON.stringify(baseData);
         } catch (e) {
-            // Fallback
+            console.error('[API] Custom Data Merge Error:', e);
+            // 파싱 에러 시 안전하게: 기존 거 무시하고 새 거만 적용 시도하거나, 에러 리턴?
+            // 여기선 assets가 있으면 그것만이라도 살리는 방향
             if (assets) finalCustomData = JSON.stringify({ assets });
+            else if (custom_data) finalCustomData = typeof custom_data === 'string' ? custom_data : JSON.stringify(custom_data);
         }
     }
 
@@ -202,12 +205,16 @@ export async function PUT(
     if (title !== undefined) updatePayload.title = title;
     if (finalContent !== undefined) updatePayload.content_text = finalContent;
     if (description !== undefined) updatePayload.description = description;
+    // description이 없다고 바로 content_text로 덮어쓰지 않음 (의도적 삭제일 수도, Partial일 수도)
+    // 단, "생성"이 아니라 "수정"이므로 명시적으로 보낸 값만 처리가 원칙.
+    
     if (summary !== undefined) updatePayload.summary = summary;
     if (alt_description !== undefined) updatePayload.alt_description = alt_description;
     if (thumbnail_url !== undefined) updatePayload.thumbnail_url = thumbnail_url;
     if (category_id !== undefined) updatePayload.category_id = category_id;
     if (rendering_type !== undefined) updatePayload.rendering_type = rendering_type;
-    if (finalCustomData !== undefined) updatePayload.custom_data = finalCustomData;
+    if (finalCustomData !== undefined) updatePayload.custom_data = finalCustomData; // 병합된 결과 적용
+    
     if (allow_michelin_rating !== undefined) updatePayload.allow_michelin_rating = allow_michelin_rating;
     if (allow_stickers !== undefined) updatePayload.allow_stickers = allow_stickers;
     if (allow_secret_comments !== undefined) updatePayload.allow_secret_comments = allow_secret_comments;
@@ -233,11 +240,13 @@ export async function PUT(
     }
 
     // [New] Fields 매핑 동기화
-    if (custom_data) {
-        // (기존 로직 유지 - 생략 없이 복사)
+    // custom_data가 변경되었을 때만 수행 (finalCustomData가 있으면)
+    if (finalCustomData) { 
+        // ... (existing field sync logic with finalCustomData)
         try {
-            const parsedCustom = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
-            const fieldSlugs = parsedCustom.fields; 
+             // Use finalCustomData strictly
+             const parsedCustom = JSON.parse(finalCustomData);
+             const fieldSlugs = parsedCustom.fields; 
 
             // 기존 매핑 삭제
             await (supabaseAdmin as any).from('project_fields').delete().eq('project_id', id);
@@ -260,9 +269,9 @@ export async function PUT(
     }
     
     // [New] Category 매핑 동기화
-    if (custom_data) {
+    if (finalCustomData) { // Use finalCustomData here too
         try {
-            const parsedCustom = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
+            const parsedCustom = JSON.parse(finalCustomData); // Use finalCustomData
             const genres = parsedCustom.genres || [];
             
             await (supabaseAdmin as any).from('project_categories').delete().eq('project_id', id);
