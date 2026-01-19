@@ -150,31 +150,73 @@ export async function PUT(
 
     // 3. 업데이트 수행
     const body = await request.json();
-    const { 
-        title, content_text, description, summary, alt_description, 
+    let { 
+        title, content_text, content, body: bodyContent, text, // Content variants
+        description, summary, alt_description, 
         thumbnail_url, category_id, rendering_type, custom_data,
-        allow_michelin_rating, allow_stickers, allow_secret_comments 
+        allow_michelin_rating, allow_stickers, allow_secret_comments,
+        scheduled_at, visibility, assets
     } = body;
 
+    // [Robustness] Normalize Content
+    let finalContent = content_text || content || bodyContent || text; // Only update if provided
+
     // description이 없으면 content_text를 사용 (하위 호환성)
-    const finalDescription = description !== undefined ? description : content_text;
+    // 단, 이번 요청에서 description이 명시적으로 오지 않았다면 기존 description을 유지해야 하므로 이곳에서 강제로 덮어쓰지 않음. 
+    // 로직 보완: finalContent가 있으면 그 앞부분을 description으로 쓸 수도 있지만, 보통 클라이언트가 둘 다 보냄.
+    // 여기선 description이 명시적으로 왔을 때만 업데이트 대상에 포함.
+
+    // Assets & Custom Data Handling
+    let finalCustomData = custom_data;
+    if (custom_data || assets) {
+        try {
+            // If custom_data is provided, parse it. If not, we might need to fetch existing to merge? 
+            // For API efficiency, we assume 'custom_data' in PUT replaces existing or merges if logic is complex. 
+            // Here we assume client sends full custom_data usually. 
+            // But if ONLY assets is sent, we should be careful. 
+            // Simplified: If custom_data provided, use it. If assets provided, merge into it.
+            let baseData = {};
+            if (custom_data) {
+                baseData = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
+            }
+            
+            if (assets) {
+                (baseData as any).assets = assets;
+            }
+            
+            // If we have valid changes, stringify it.
+            if (Object.keys(baseData).length > 0) {
+                finalCustomData = JSON.stringify(baseData);
+            }
+        } catch (e) {
+            // Fallback
+            if (assets) finalCustomData = JSON.stringify({ assets });
+        }
+    }
+
+    // Build Update Object dynamically
+    const updatePayload: any = {
+        updated_at: new Date().toISOString()
+    };
+
+    if (title !== undefined) updatePayload.title = title;
+    if (finalContent !== undefined) updatePayload.content_text = finalContent;
+    if (description !== undefined) updatePayload.description = description;
+    if (summary !== undefined) updatePayload.summary = summary;
+    if (alt_description !== undefined) updatePayload.alt_description = alt_description;
+    if (thumbnail_url !== undefined) updatePayload.thumbnail_url = thumbnail_url;
+    if (category_id !== undefined) updatePayload.category_id = category_id;
+    if (rendering_type !== undefined) updatePayload.rendering_type = rendering_type;
+    if (finalCustomData !== undefined) updatePayload.custom_data = finalCustomData;
+    if (allow_michelin_rating !== undefined) updatePayload.allow_michelin_rating = allow_michelin_rating;
+    if (allow_stickers !== undefined) updatePayload.allow_stickers = allow_stickers;
+    if (allow_secret_comments !== undefined) updatePayload.allow_secret_comments = allow_secret_comments;
+    if (scheduled_at !== undefined) updatePayload.scheduled_at = scheduled_at ? new Date(scheduled_at).toISOString() : null;
+    if (visibility !== undefined) updatePayload.visibility = visibility;
 
     let { data, error } = await (supabaseAdmin as any)
       .from('Project')
-      .update({
-        title,
-        description: finalDescription,
-        summary,
-        alt_description,
-        thumbnail_url,
-        category_id,
-        rendering_type,
-        custom_data,
-        allow_michelin_rating,
-        allow_stickers,
-        allow_secret_comments,
-        updated_at: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq('project_id', id)
       .select(`
         *,
