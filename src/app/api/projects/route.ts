@@ -49,9 +49,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (!isOwner) {
-       // Filter: scheduled_at IS NULL OR scheduled_at <= NOW()
+       // [Security Filter]
+       // 1. Scheduled Posts: Hide future posts
        const nowISO = new Date().toISOString();
-       query = query.or(`scheduled_at.is.null,scheduled_at.lte.${nowISO}`);
+       // 2. Visibility: Only show 'public' posts (hide 'private' and 'unlisted')
+       query = query
+         .eq('visibility', 'public')
+         .or(`scheduled_at.is.null,scheduled_at.lte.${nowISO}`);
     }
 
     // 검색어 필터
@@ -69,9 +73,9 @@ export async function GET(request: NextRequest) {
     const field = searchParams.get('field');
     const mode = searchParams.get('mode');
 
-    // [Growth Mode] Filter
+    // [Growth Mode] Filter: 정석적인 JSONB Contains 연산자 사용
     if (mode === 'growth') {
-      query = query.or('custom_data.ilike.%"is_feedback_requested":true%,custom_data.ilike.%"is_feedback_requested": true%');
+       query = query.contains('custom_data', { is_feedback_requested: true });
     }
 
     if (field && field !== 'all') {
