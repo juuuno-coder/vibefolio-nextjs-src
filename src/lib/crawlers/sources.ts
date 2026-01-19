@@ -246,3 +246,64 @@ export function getAIRelevanceScore(title: string, description: string = ''): nu
   
   return Math.min(score, 100);
 }
+
+/**
+ * 날짜 문자열 파싱 (다양한 형식 지원)
+ */
+export function formatDateString(str: string): string | null {
+  if (!str) return null;
+  const cleaned = str.replace(/[^\d.]/g, '').replace(/^\.+|\.+$/g, '');
+  const parts = cleaned.split('.');
+  
+  let year, month, day;
+  
+  if (parts.length === 3) {
+    year = parts[0];
+    month = parts[1].padStart(2, '0');
+    day = parts[2].padStart(2, '0');
+    if (year.length === 2) year = '20' + year;
+  } else if (parts.length === 2) {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    month = parts[0].padStart(2, '0');
+    day = parts[1].padStart(2, '0');
+    
+    // 지능형 연도 추론
+    year = currentYear.toString();
+    
+    if (now.getMonth() < 3 && parseInt(month) > 9) {
+      year = (currentYear - 1).toString();
+    } else if (now.getMonth() > 9 && parseInt(month) < 3) {
+      year = (currentYear + 1).toString();
+    }
+  } else {
+    return null;
+  }
+  
+  const result = `${year}-${month}-${day}`;
+  return isNaN(Date.parse(result)) ? null : result;
+}
+
+/**
+ * 제목 키워드를 분석하여 고화질 테마 이미지를 반환합니다.
+ */
+export function getThemedPlaceholder(title: string, type: string): string {
+  const t = title.toLowerCase();
+  let keyword = "artificial-intelligence"; // Default
+
+  if (type === 'contest') {
+    if (t.includes('디자인') || t.includes('디지털아트') || t.includes('미디어')) keyword = "abstract-art";
+    else if (t.includes('해커톤') || t.includes('sw') || t.includes('it') || t.includes('ai')) keyword = "cyber-coding";
+    else if (t.includes('광고') || t.includes('영상') || t.includes('숏폼')) keyword = "video-production";
+    else if (t.includes('아이디어') || t.includes('기획')) keyword = "creative-brainstorm";
+    else keyword = "premium-banner";
+  } else if (type === 'job') {
+    if (t.includes('ai') || t.includes('ml') || t.includes('딥러닝')) keyword = "artificial-intelligence";
+    else keyword = "minimal-office";
+  } else {
+    keyword = "event-concert";
+  }
+
+  // Unsplash Source API (Random but keyword-themed)
+  return `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=800&h=600&sig=${encodeURIComponent(title)}`;
+}

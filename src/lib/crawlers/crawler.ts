@@ -3,77 +3,13 @@
 
 import * as cheerio from 'cheerio';
 import { CrawledItem, CrawlResult } from './types';
-import { CRAWLER_SOURCES, isAIRelated, getAIRelevanceScore, AI_KEYWORDS } from './sources';
+import { isAIRelated, getAIRelevanceScore, getThemedPlaceholder, formatDateString } from './sources';
 import { crawlThinkContest } from './thinkcontest';
 import { crawlRocketPunch } from './rocketpunch';
 import { crawlDevpost } from './devpost';
 import { crawlNaverNews } from './naver_news';
 import { crawlHaebojago } from './haebojago';
-
-/**
- * 실제 크롤링 로직 구현 (Real Crawling)
- */
-
-/**
- * 제목 키워드를 분석하여 고화질 테마 이미지를 반환합니다.
- */
-function getThemedPlaceholder(title: string, type: string): string {
-  const t = title.toLowerCase();
-  let keyword = "artificial-intelligence"; // Default
-
-  if (type === 'contest') {
-    if (t.includes('디자인') || t.includes('디지털아트') || t.includes('미디어')) keyword = "abstract-art";
-    else if (t.includes('해커톤') || t.includes('sw') || t.includes('it') || t.includes('ai')) keyword = "cyber-coding";
-    else if (t.includes('광고') || t.includes('영상') || t.includes('숏폼')) keyword = "video-production";
-    else if (t.includes('아이디어') || t.includes('기획')) keyword = "creative-brainstorm";
-    else keyword = "premium-banner";
-  } else if (type === 'job') {
-    if (t.includes('ai') || t.includes('ml') || t.includes('딥러닝')) keyword = "artificial-intelligence";
-    else keyword = "minimal-office";
-  } else {
-    keyword = "event-concert";
-  }
-
-  // Unsplash Source API (Random but keyword-themed)
-  return `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=800&h=600&sig=${encodeURIComponent(title)}`;
-}
-
-/**
- * 날짜 문자열 파싱 (다양한 형식 지원)
- */
-function formatDateString(str: string): string | null {
-  if (!str) return null;
-  const cleaned = str.replace(/[^\d.]/g, '').replace(/^\.+|\.+$/g, '');
-  const parts = cleaned.split('.');
-  
-  let year, month, day;
-  
-  if (parts.length === 3) {
-    year = parts[0];
-    month = parts[1].padStart(2, '0');
-    day = parts[2].padStart(2, '0');
-    if (year.length === 2) year = '20' + year;
-  } else if (parts.length === 2) {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    month = parts[0].padStart(2, '0');
-    day = parts[1].padStart(2, '0');
-    
-    // 지능형 연도 추론
-    year = currentYear.toString();
-    
-    if (now.getMonth() < 3 && parseInt(month) > 9) {
-      year = (currentYear - 1).toString();
-    } else if (now.getMonth() > 9 && parseInt(month) < 3) {
-      year = (currentYear + 1).toString();
-    }
-  } else {
-    return null;
-  }
-  
-  const result = `${year}-${month}-${day}`;
-  return isNaN(Date.parse(result)) ? null : result;
-}
+import { crawlMcpSearch } from './search_mcp';
 
 // ============================================================
 // Wevity (Contest) - 상세 요약 정보 강화
@@ -369,27 +305,26 @@ export async function crawlByType(type: 'job' | 'contest' | 'event', keyword?: s
   let items: CrawledItem[] = [];
   
   try {
-    if (type === 'contest') {
-      const tasks: Promise<CrawledItem[]>[] = [];
+    const tasks: Promise<CrawledItem[]>[] = [];
 
+    if (type === 'contest') {
       // 1. Wevity (항상 실행, 키워드 지원)
       tasks.push(crawlWevity(keyword));
 
       if (keyword) {
-          // 2. 키워드가 있으면 [웹서치 모드] -> 네이버 뉴스 검색 + [Haebojago MCP] 검색 추가
+          // 2. 키워드가 있으면 [웹서치 모드] -> 네이버 뉴스 + Haebojago + [New] MCP Search
           tasks.push(crawlNaverNews(keyword).catch(() => []));
           tasks.push(crawlHaebojago(keyword).catch(() => []));
+          tasks.push(crawlMcpSearch(keyword).catch(() => []));
       } else {
           // 3. 키워드가 없으면 [일반 수집 모드] -> 씽굿 일반 목록 수집
           tasks.push(crawlThinkContest().catch(() => []));
       }
-      
-      const results = await Promise.all(tasks);
-      items = results.flat();
     } else if (type === 'job') {
-      // Job crawling usually doesn't take simple keyword in this implementation.
-      // Current decision: Only Wevity and Devpost support keyword search fully.
-      if (!keyword) {
+      if (keyword) {
+          // 키워드가 있으면 MCP Search 활용 (Job 특화 검색)
+          tasks.push(crawlMcpSearch(keyword).catch(() => []));
+      } else {
           const [wantedItems, rocketItems] = await Promise.all([
             crawlWanted(),
             crawlRocketPunch().catch(() => []),
@@ -398,16 +333,18 @@ export async function crawlByType(type: 'job' | 'contest' | 'event', keyword?: s
       }
     } else if (type === 'event') {
       // Devpost supports keyword
-      const tasks: Promise<CrawledItem[]>[] = [];
       tasks.push(crawlDevpost(keyword).catch(() => []));
       
-      // Event 검색시에도 Haebojago 추가 (해커톤 등 포함되므로)
       if (keyword) {
           tasks.push(crawlHaebojago(keyword).catch(() => []));
+          tasks.push(crawlMcpSearch(keyword).catch(() => []));
       }
-      
-      const results = await Promise.all(tasks);
-      items = results.flat();
+    }
+    
+    // Execute all tasks (if any were pushed)
+    if (tasks.length > 0) {
+        const results = await Promise.all(tasks);
+        items = [...items, ...results.flat()];
     }
     
     // 중복 제거 (제목 기준)
@@ -452,11 +389,9 @@ export async function crawlAll(keyword?: string): Promise<CrawlResult> {
   // 2. Event
   tasks.push(crawlByType('event', keyword));
   
-  // 3. Job (Only if no keyword)
-  if (!keyword) {
-      tasks.push(crawlByType('job'));
-  }
-
+  // 3. Job (keyword가 있으면 Job도 crawlByType(job, keyword)로 처리되므로 안심)
+  tasks.push(crawlByType('job', keyword));
+  
   const results = await Promise.all(tasks);
   
   let allItems: CrawledItem[] = [];
@@ -466,7 +401,7 @@ export async function crawlAll(keyword?: string): Promise<CrawlResult> {
       }
   });
   
-  // 최종 AI 연관성 정렬 (검색어와 유사한지도 중요하겠지만 일단 AI 점수)
+  // 최종 AI 연관성 정렬
   allItems.sort((a, b) => {
     const scoreA = getAIRelevanceScore(a.title, a.description);
     const scoreB = getAIRelevanceScore(b.title, b.description);
