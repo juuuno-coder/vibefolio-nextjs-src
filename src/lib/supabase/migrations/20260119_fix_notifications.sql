@@ -1,5 +1,5 @@
 
--- 1. Ensure 'notifications' table is in the 'supabase_realtime' publication
+-- 1. Setup Realtime (Idempotent)
 do $$
 begin
   if not exists (
@@ -15,11 +15,14 @@ end $$;
 -- 2. Enable RLS
 alter table public.notifications enable row level security;
 
--- 3. Policy for specific access control
-
--- Drop existing policies to avoid conflicts (optional/safe logic)
+-- 3. Drop ALL existing policies to prevent "already exists" errors
+-- (Even if they don't exist, these commands won't fail)
 drop policy if exists "Users can view their own notifications" on public.notifications;
+drop policy if exists "Users can insert notifications for themselves" on public.notifications;
 drop policy if exists "Enable insert for authenticated users" on public.notifications;
+drop policy if exists "Users can update their own notifications" on public.notifications;
+
+-- 4. Re-create Policies
 
 -- Allow users to view their own notifications
 create policy "Users can view their own notifications"
