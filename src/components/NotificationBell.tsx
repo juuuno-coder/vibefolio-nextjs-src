@@ -176,17 +176,14 @@ export function NotificationBell() {
   const handleTestNotification = async () => {
     if (!user) return;
     try {
-      await createNotification({
-         userId: user.id,
-         type: 'system',
-         title: '테스트 알림입니다 ✨',
-         message: '알림 시스템이 정상적으로 작동하고 있습니다. 멋지죠?',
-         link: '/mypage',
-         senderId: user.id 
-      });
-      toast.success("테스트 알림을 보냈습니다!");
+      toast.loading("서버에 알림 요청 중...");
+      const res = await fetch('/api/test-notification', { method: 'POST' });
+      if (!res.ok) throw new Error('API Error');
+      
+      // 성공 메시지는 Realtime 이벤트가 오면 뜹니다.
+      // toast.success("테스트 알림을 보냈습니다! (도착을 기다려주세요)");
     } catch (e) {
-      toast.error("알림 발송 실패");
+      toast.error("알림 요청 실패");
     }
   };
 
