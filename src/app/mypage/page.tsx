@@ -755,7 +755,7 @@ export default function MyPage() {
                     { id: 'recipe', label: 'AI 레시피', icon: Lightbulb, desc: '프롬프트 & 워크플로우' },
                     { id: 'tool', label: 'AI 도구 추천', icon: Zap, desc: '유용한 에이전트 & 서비스' },
                     { type: 'divider' },
-                    { id: 'api-settings', label: 'API 설정', icon: Settings, desc: '외부 연동 키 관리' },
+
                     { id: 'lean-canvas', label: 'AI 린 캔버스', icon: Grid, desc: '사업 모델 구조화' },
                     { id: 'persona', label: 'AI 고객 페르소나', icon: UserCircle2, desc: '고객 정의 및 분석' },
                     { id: 'assistant', label: 'AI 콘텐츠 어시스턴트', icon: Wand2, desc: '텍스트 생성 및 다듬기' },
@@ -829,10 +829,7 @@ export default function MyPage() {
                         <div className="h-full relative z-10">
                              <AiAssistantChat onGenerate={handleAssistantGenerate} />
                         </div>
-                   ) : activeAiTool === 'api-settings' ? (
-                        <div className="h-full relative z-10 p-8">
-                             <ApiKeyManager />
-                        </div>
+
                    ) : (
                     <div className="relative z-10 flex flex-col items-center justify-center h-full text-center max-w-xl mx-auto space-y-6 py-20 px-8">
                         {/* Fallback Intro or Empty State */}
