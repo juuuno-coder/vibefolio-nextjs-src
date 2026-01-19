@@ -159,6 +159,36 @@ function GrowthContent() {
             </p>
          </div>
 
+         {/* Feature Update Banner */}
+         <div 
+            onClick={() => router.push('/updates/feedback-features')}
+            className="max-w-3xl mx-auto mt-8 mb-16 relative overflow-hidden rounded-2xl bg-[#0d0d12] border border-gray-800/50 shadow-xl cursor-pointer group hover:translate-y-[-2px] transition-all duration-300 ring-1 ring-white/5"
+         >
+             <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-green-500/10 rounded-full blur-[60px] -mr-20 -mt-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+             
+             <div className="relative px-6 py-6 sm:px-10 sm:py-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div className="flex-1 text-center sm:text-left">
+                   <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-gradient-to-r from-green-500 to-emerald-400 rounded-md text-[10px] font-black text-white mb-3 shadow-lg tracking-wide uppercase">
+                      New Features
+                   </div>
+                   <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 leading-tight">
+                      더 강력해진 피드백 도구를 만나보세요
+                   </h3>
+                   <p className="text-gray-400 text-xs sm:text-sm font-medium">
+                      미슐랭 평점 시스템 ⭐️ &middot; 스티커 피드백 😊 &middot; 시크릿 제안 🔒
+                   </p>
+                </div>
+                <div className="flex-shrink-0">
+                    <span className="text-sm font-bold text-white group-hover:text-green-400 transition-colors flex items-center gap-2">
+                       자세히 보기 
+                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 transform group-hover:translate-x-1 transition-transform">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                       </svg>
+                    </span>
+                </div>
+             </div>
+         </div>
+
          {/* Grid */}
          {loading ? (
            <ProjectGridSkeleton count={8} />
