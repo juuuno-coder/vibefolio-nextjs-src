@@ -64,20 +64,32 @@ export async function GET(request: NextRequest) {
        return NextResponse.json({ error: 'Failed to fetch history' }, { status: 500 });
     }
 
-    // Process data to find the last assistant message for preview
+    // Process data to find the last *meaningful* assistant message
     const history = sessions.map((session: any) => {
         const messages = session.ai_chat_messages || [];
-        // Sort messages by created_at just in case
+        // Sort messages by created_at
         messages.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         
-        const lastAssistantMessage = [...messages].reverse().find((m: any) => m.role === 'assistant');
+        // Find the last assistant message that looks like a result (has markdown headers or sufficient length)
+        // This avoids picking up short closing remarks like "Any other questions?"
+        const reversedMessages = [...messages].reverse();
+        
+        let targetMessage = reversedMessages.find((m: any) => 
+            m.role === 'assistant' && 
+            (m.content?.includes('###') || m.content?.includes('**') || m.content?.length > 100)
+        );
+
+        // Fallback: If no structured message found, just take the last assistant message
+        if (!targetMessage) {
+            targetMessage = reversedMessages.find((m: any) => m.role === 'assistant');
+        }
         
         return {
             id: session.id,
             title: session.title || 'Untitled Session',
             toolType: session.tool_type,
             createdAt: session.created_at,
-            resultContent: lastAssistantMessage?.content || null,
+            resultContent: targetMessage?.content || null,
             messageCount: messages.length
         };
     });
