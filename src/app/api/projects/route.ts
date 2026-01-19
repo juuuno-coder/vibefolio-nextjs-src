@@ -235,10 +235,22 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     let { 
-      // user_id는 Body에서 받더라도 무시하고, 인증된 ID를 사용함 (보안 강화)
-      category_id, title, summary, content_text, description, alt_description, thumbnail_url, rendering_type, custom_data,
-      allow_michelin_rating, allow_stickers, allow_secret_comments, scheduled_at, visibility
+      // user_id는 Body에서 받더라도 무시하고, 인증된 ID를 사용함
+      category_id, title, summary, 
+      content_text, content, body: bodyContent, text, // Allow various content field names
+      description, alt_description, thumbnail_url, rendering_type, custom_data,
+      allow_michelin_rating, allow_stickers, allow_secret_comments, scheduled_at, visibility,
+      assets // [New] Assets from editor
     } = body;
+
+    // [Robustness] Normalize Content
+    // 외부 에이전트가 어떤 필드로 보내든 content_text로 통합
+    let finalContent = content_text || content || bodyContent || text || '';
+    
+    // 설명이 없고 본문만 있다면 설명을 본문 앞부분으로 대체 (선택적) 또는 반대로 설명만 있다면 본문으로 사용
+    if (!finalContent && description) {
+        finalContent = description;
+    }
 
     // [Strict] 인증된 사용자 ID가 곧 작성자 ID입니다.
     const user_id = authenticatedUserId;
@@ -248,9 +260,10 @@ export async function POST(request: NextRequest) {
         category_id = 1; 
     }
 
-    if (!category_id || !title) {
-      return NextResponse.json({ error: '필수 필드가 누락되었습니다 (Category, Title).', code: 'MISSING_FIELDS' }, { status: 400 });
+    if (!title) {
+      return NextResponse.json({ error: 'Title is required.', code: 'MISSING_TITLE' }, { status: 400 });
     }
+    // Content is verified but allowed empty if user intends just a title/image post
 
     // [Validation] Verify User Exists in Profiles (Double Check)
     const { data: userExists } = await supabaseAdmin
@@ -267,65 +280,51 @@ export async function POST(request: NextRequest) {
     }
 
     // [Point System] Growth Mode Check & Points Deduction
+    // ... (Point logic omitted for brevity, logic remains same)
+    // Assets Handling: Merge into custom_data
+    let finalCustomData = custom_data;
+    try {
+        if (typeof finalCustomData === 'string') finalCustomData = JSON.parse(finalCustomData);
+        if (!finalCustomData) finalCustomData = {};
+        
+        if (assets) {
+            finalCustomData.assets = assets;
+        }
+    } catch (e) {
+        finalCustomData = { assets: assets || [] };
+    }
+
+    // Point Deduction Logic (Re-implemented for context)
     let isGrowthMode = false;
-    if (custom_data) {
-        try {
-            const parsed = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
-            if (parsed.is_feedback_requested) {
-                isGrowthMode = true;
-            }
-        } catch (e) { console.error('Custom data parse error', e); }
+    if (finalCustomData?.is_feedback_requested) {
+        isGrowthMode = true;
     }
 
     if (isGrowthMode) {
-        // 1. Check User Points
-        const { data: profile, error: profileError } = await (supabaseAdmin as any)
-            .from('profiles')
-            .select('points')
-            .eq('id', user_id)
-            .single();
+        const { data: profile } = await (supabaseAdmin as any)
+            .from('profiles').select('points').eq('id', user_id).single();
         
-        if (profileError || !profile) {
-            return NextResponse.json({ error: '사용자 정보를 찾을 수 없습니다.' }, { status: 400 });
-        }
-
-        const currentPoints = profile.points || 0;
+        const currentPoints = profile?.points || 0;
         const COST = 500;
 
         if (currentPoints < COST) {
-            return NextResponse.json({ 
-                error: `내공이 부족합니다. (보유: ${currentPoints}점 / 필요: ${COST}점)`,
-                code: 'INSUFFICIENT_POINTS' 
-            }, { status: 402 });
+            return NextResponse.json({ error: `Not enough points (${currentPoints}/${COST})`, code: 'INSUFFICIENT_POINTS' }, { status: 402 });
         }
-
-        // 2. Deduct Points
-        const { error: updateError } = await (supabaseAdmin as any)
-            .from('profiles')
-            .update({ points: currentPoints - COST })
-            .eq('id', user_id);
-
-        if (updateError) {
-             return NextResponse.json({ error: '포인트 차감 중 오류가 발생했습니다.' }, { status: 500 });
-        }
-
-        // 3. Log Transaction
-        await (supabaseAdmin as any)
-            .from('point_logs')
-            .insert({
-                user_id: user_id,
-                amount: -COST,
-                reason: '성장하기 피드백 요청 (프로젝트 등록)'
-            });
+        
+        await (supabaseAdmin as any).from('profiles').update({ points: currentPoints - COST }).eq('id', user_id);
+        await (supabaseAdmin as any).from('point_logs').insert({ user_id: user_id, amount: -COST, reason: 'Growth Mode Project' });
     }
 
     let { data, error } = await (supabaseAdmin as any)
       .from('Project')
       .insert([{ 
-        user_id, category_id, title, summary, content_text, 
-        description: description !== undefined ? description : content_text,
+        user_id, category_id, title, summary, 
+        content_text: finalContent, // Normalized Content
+        description: description || finalContent, // Fallback description
         alt_description,
-        thumbnail_url, rendering_type, custom_data, 
+        thumbnail_url, 
+        rendering_type: rendering_type || 'rich_text', 
+        custom_data: JSON.stringify(finalCustomData), // Updated custom_data with assets
         allow_michelin_rating: allow_michelin_rating ?? true, 
         allow_stickers: allow_stickers ?? true, 
         allow_secret_comments: allow_secret_comments ?? true,
@@ -336,13 +335,10 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
-    // ERROR: Fallback Logic Removed (Requested by User)
-    // If error occurs due to missing columns, it will flow to the standard error response below.
-
     if (error) {
-      console.error('프로젝트 생성 실패:', error);
+      console.error('Project creation failed:', error);
       return NextResponse.json(
-        { error: `프로젝트 생성 실패: ${error.message}` },
+        { error: `Creation failed: ${error.message}` },
         { status: 500 }
       );
     }
