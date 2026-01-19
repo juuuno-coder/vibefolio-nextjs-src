@@ -419,9 +419,39 @@ export async function POST(request: NextRequest) {
         }
     }
 
+    // [New] 컬렉션(시리즈)에 추가 (새 에피소드 연결)
+    const { collaborator_emails, collection_id } = body;
+    
+    if (data && data.project_id && collection_id) {
+        try {
+             // 1. 컬렉션 소유권 확인
+             const { data: collection } = await (supabaseAdmin as any)
+                .from('Collection')
+                .select('user_id')
+                .eq('collection_id', collection_id)
+                .single();
+             
+             if (collection && collection.user_id === user_id) {
+                 // 2. 컬렉션에 추가
+                 await (supabaseAdmin as any)
+                    .from('CollectionItem')
+                    .insert({ 
+                        collection_id: collection_id, 
+                        project_id: data.project_id 
+                    });
+                 console.log(`[API] Added project ${data.project_id} to collection ${collection_id}`);
+             } else {
+                 console.warn(`[API] Collection ${collection_id} not found or not owned by user ${user_id}`);
+             }
+        } catch (e) {
+            console.error('[API] Failed to add to collection:', e);
+        }
+    }
+
     // [New] 공동 제작자 추가 (Collaborators)
-    const { collaborator_emails } = body;
+    // const { collaborator_emails } = body; (Moved up)
     if (data && data.project_id && Array.isArray(collaborator_emails) && collaborator_emails.length > 0) {
+
         try {
              // 이메일로 User ID 조회 (profiles 테이블 사용 가정)
              const { data: users } = await (supabaseAdmin as any)
