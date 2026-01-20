@@ -13,22 +13,9 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    // 1. 사용자 인증 확인 (헤더 토큰 우선, 없으면 쿠키)
-    // RLS 문제 해결을 위해 Admin 클라이언트로 조회하되, 코드 레벨에서 권한을 검증합니다.
-    let user = null;
-    const authHeader = request.headers.get('Authorization');
-    if (authHeader) {
-        const token = authHeader.replace('Bearer ', '');
-        const { data: userData } = await supabaseAdmin.auth.getUser(token);
-        user = userData.user;
-    } else {
-        const supabase = createClient();
-        const { data: { user: cookieUser } } = await supabase.auth.getUser();
-        user = cookieUser;
-    }
-
-    // 2. Admin 권한으로 프로젝트 조회 (RLS 우회하여 확실하게 데이터 가져옴)
-    const { data, error } = await supabaseAdmin
+    // [Standard Auth] Use standard authenticated client relying on RLS policies
+    const supabase = createClient();
+    const { data, error } = await supabase
       .from('Project')
       .select(`
         *,
@@ -40,26 +27,15 @@ export async function GET(
       .eq('project_id', id)
       .single() as { data: any, error: any };
 
-    if (error || !data) {
+    if (error) {
       console.error('프로젝트 조회 실패:', error);
       return NextResponse.json(
-        { error: '프로젝트를 찾을 수 없습니다.', details: error?.message },
+        { error: '프로젝트를 찾을 수 없습니다.', details: error.message },
         { status: 404 }
       );
     }
 
-    // 3. 권한 검증: 공개 프로젝트이거나 소유자인 경우에만 허용
-    const isOwner = user && user.id === data.user_id;
-    const isPublic = !data.visibility || data.visibility === 'public';
-
-    if (!isPublic && !isOwner) {
-      return NextResponse.json(
-        { error: '접근 권한이 없습니다. (비공개 프로젝트)' },
-        { status: 403 }
-      );
-    }
-
-    // 4. Supabase Admin을 직접 사용하여 사용자 정보 가져오기 (작성자 프로필)
+    // 작성자 정보 가져오기 (이미 RLS 통과했으므로 데이터 존재)
     if (data && data.user_id) {
       try {
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.getUserById(data.user_id);
@@ -71,12 +47,11 @@ export async function GET(
           };
         }
       } catch (e) {
-        console.error('사용자 정보 조회 실패:', e);
         data.User = null;
       }
     }
 
-    // 5. 조회수 증가 (본인이 아닐 때만? 보통은 그냥 증가시킴)
+    // 조회수 증가는 시스템 권한으로 실행 (RLS 무시해야 함)
     await supabaseAdmin
       .from('Project')
       .update({ views: (data.views || 0) + 1 })
