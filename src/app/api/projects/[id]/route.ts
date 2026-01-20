@@ -7,14 +7,30 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { GENRE_TO_CATEGORY_ID } from '@/lib/constants';
 
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   try {
-    // [Standard Auth] Use standard authenticated client relying on RLS policies
-    const supabase = createClient();
+    // [Standard Auth] Support both Header Token (API/Client) and Cookie (SSR)
+    let supabase;
+    const authHeader = request.headers.get('Authorization');
+    
+    if (authHeader) {
+        // Create client with Authorization header (Enforces RLS with Token)
+        supabase = createSupabaseClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            { global: { headers: { Authorization: authHeader } } }
+        );
+    } else {
+        // Fallback to Cookie-based client
+        supabase = createClient();
+    }
+
     const { data, error } = await supabase
       .from('Project')
       .select(`
@@ -28,14 +44,14 @@ export async function GET(
       .single() as { data: any, error: any };
 
     if (error) {
-      console.error('프로젝트 조회 실패:', error);
+      console.error('프로젝트 조회 실패 (GET):', error);
       return NextResponse.json(
         { error: '프로젝트를 찾을 수 없습니다.', details: error.message },
         { status: 404 }
       );
     }
 
-    // 작성자 정보 가져오기 (이미 RLS 통과했으므로 데이터 존재)
+    // 작성자 정보 가져오기 (RLS 통과 후 데이터 확장)
     if (data && data.user_id) {
       try {
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.getUserById(data.user_id);
