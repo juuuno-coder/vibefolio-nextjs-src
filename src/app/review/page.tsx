@@ -86,7 +86,19 @@ function ReviewContent() {
   const [proposalOpen, setProposalOpen] = useState(false);
 
   // Computed from Project settings & URL params
-  const config = project?.custom_data || {};
+  const config = React.useMemo(() => {
+    if (!project?.custom_data) return {};
+    if (typeof project.custom_data === 'string') {
+      try {
+        return JSON.parse(project.custom_data);
+      } catch (e) {
+        console.error("Failed to parse custom_data:", e);
+        return {};
+      }
+    }
+    return project.custom_data;
+  }, [project]);
+
   const isAB = config.isABMode || modeParam === 'ab' || !!userUrl2;
   const url1 = config.url1 || (userUrl1 ? decodeURIComponent(userUrl1) : null);
   const url2 = config.url2 || (userUrl2 ? decodeURIComponent(userUrl2) : null);
@@ -94,19 +106,20 @@ function ReviewContent() {
   // 1. Auth & Data Fetch
   useEffect(() => {
     const init = async () => {
-      // Auth Check (Optional for link-sharing convenience)
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Removed rigid redirect - allow guests to view and evaluate
-      // Logic inside components (MichelinRating, etc) will handle restricted actions or show demo mode for guests.
-      
+      console.log("[Review] Detecting projectId...", { 
+        paramProjectId, 
+        pathname, 
+        detectedId: projectId 
+      });
+
       // Project Data Fetch
       if (!projectId) {
-        toast.error("프로젝트 ID가 유효하지 않습니다.");
+        console.warn("[Review] No projectId found.");
         setLoading(false);
         return;
       }
 
+      console.log("[Review] Fetching project data for ID:", projectId);
       const { data, error } = await supabase
         .from('Project')
         .select('project_id, title, user_id, custom_data')
@@ -114,16 +127,17 @@ function ReviewContent() {
         .single();
 
       if (error || !data) {
-        console.error("Project fetch error:", error);
-        toast.error("프로젝트 정보를 불러올 수 없습니다.");
+        console.error("[Review] Project fetch error:", error);
+        toast.error(`프로젝트(${projectId}) 정보를 불러올 수 없습니다.`);
       } else {
+        console.log("[Review] Project data loaded:", data);
         setProject(data as any);
       }
       setLoading(false);
     };
 
     init();
-  }, [projectId, router, params]);
+  }, [projectId]); // Simplified dependency array to avoid unnecessary re-runs
 
   // Handle Resize for A/B view
   useEffect(() => {
