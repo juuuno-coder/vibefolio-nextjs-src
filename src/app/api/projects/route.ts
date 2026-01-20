@@ -487,17 +487,37 @@ export async function POST(request: NextRequest) {
     // [Point System] Reward for Upload (General Projects)
     if (!isGrowthMode && data && data.project_id) {
          try {
-             // 1. Get current points
-             const { data: profile } = await (supabaseAdmin as any)
-                .from('profiles')
-                .select('points')
-                .eq('id', user_id)
-                .single();
-             
-             const currentPoints = profile?.points || 0;
-             const REWARD = 100;
+             // [New] 일일 보상 한도 체크 (하루 최대 3회)
+             const todayStart = new Date();
+             todayStart.setHours(0,0,0,0);
+             const todayISO = todayStart.toISOString();
 
-             // 2. Add Points
+             const { count: dailyCount, error: countError } = await (supabaseAdmin as any)
+                .from('point_logs')
+                .select('*', { count: 'exact', head: true }) // head: true means count only
+                .eq('user_id', user_id)
+                .eq('reason', '프로젝트 업로드 보상')
+                .gte('created_at', todayISO);
+             
+             if (countError) {
+                 console.error('[Point System] Failed to check daily limit:', countError);
+             }
+
+             if ((dailyCount || 0) >= 3) {
+                 console.log(`[Point System] Daily upload reward limit reached for user ${user_id} (Count: ${dailyCount})`);
+             } else {
+                 // 1. Get current points
+                 const { data: profile } = await (supabaseAdmin as any)
+                    .from('profiles')
+                    .select('points')
+                    .eq('id', user_id)
+                    .single();
+                 
+                 const currentPoints = profile?.points || 0;
+                 const REWARD = 100;
+    
+                 // 2. Add Points
+
              await (supabaseAdmin as any)
                 .from('profiles')
                 .update({ points: currentPoints + REWARD })
@@ -525,6 +545,7 @@ export async function POST(request: NextRequest) {
                 });
              
              console.log(`[Point System] Awarded ${REWARD} points to user ${user_id} for upload.`);
+             } // Close else
          } catch (e) {
              console.error('[Point System] Failed to award upload points:', e);
          }
