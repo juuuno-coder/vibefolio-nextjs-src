@@ -111,36 +111,9 @@ export function useNotifications(): UseNotificationsReturn {
         };
       });
 
-      // [시스템 알림 주입] 모든 유저에게 보여줄 알림
-      const systemNotifs: Notification[] = [
-        {
-          id: 'system-project-upload',
-          type: 'system',
-          title: '첫 게시물을 등록해보세요! 🚀',
-          message: '멋진 작업물을 공유하고 피드백을 받아보세요.',
-          link: '/project/upload-v2',
-          read: false,
-          createdAt: new Date().toISOString(),
-          sender: undefined
-        },
-        {
-          id: 'system-welcome',
-          type: 'system',
-          title: 'Vibefolio에 오신 것을 환영합니다! 🎉',
-          message: '나만의 포트폴리오를 만들고 전 세계 크리에이터들과 소통해보세요.',
-          link: '/mypage/profile',
-          read: false, 
-          createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1시간 전
-          sender: undefined
-        }
-      ].map(n => ({
-        ...n,
-        read: localStorage.getItem(`notification_read_${n.id}`) === 'true'
-      } as Notification));
-
-      // 시스템 알림을 목록 최상단에 추가 (이미 읽은 건 뒤로 보내도 되지만, 일단 상단 노출)
-      formatted = [...systemNotifs, ...formatted];
-
+      // [Removed] 하드코딩된 시스템 알림 제거
+      // formatted = [...systemNotifs, ...formatted];
+      
       setNotifications(formatted);
     } catch (error) {
       console.error("[Notifications] 로드 실패:", error);
@@ -153,14 +126,7 @@ export function useNotifications(): UseNotificationsReturn {
   const markAsRead = useCallback(async (id: string) => {
     if (!user) return;
 
-    // 시스템 알림은 로컬 스토리지에 저장
-    if (id.startsWith('system-')) {
-      localStorage.setItem(`notification_read_${id}`, 'true');
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-      );
-      return;
-    }
+    // [Removed] 시스템 알림 로컬 스토리지 처리 제거
 
     try {
       await (supabase
