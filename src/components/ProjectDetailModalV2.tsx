@@ -235,6 +235,8 @@ export function ProjectDetailModalV2({
   });
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [otherProjects, setOtherProjects] = useState<any[]>([]);
+  // [New] Dynamic Title for Related Projects Section
+  const [otherProjectsTitle, setOtherProjectsTitle] = useState("이 크리에이터의 다른 프로젝트");
 
   // [New] Pin Mode State
   const [isPinMode, setIsPinMode] = useState(false);
@@ -372,20 +374,64 @@ export function ProjectDetailModalV2({
         }
       }
 
-      // 6. 작성자의 다른 프로젝트 조회
+      // 6. 관련 프로젝트 조회 (시리즈 에피소드 우선)
       if (project.userId) {
         try {
-          const { data: others } = await supabase
-            .from('Project')
-            .select('project_id, title, thumbnail_url')
-            .eq('user_id', project.userId)
-            .neq('project_id', parseInt(project.id))
-            .order('created_at', { ascending: false })
-            .limit(4);
-          
-          setOtherProjects(others || []);
+           let foundEpisodes = false;
+
+           // A. 컬렉션(시리즈) 확인
+           const { data: collectionItem } = await supabase
+             .from('CollectionItem')
+             .select('collection_id, Collection(title)')
+             .eq('project_id', parseInt(project.id))
+             .maybeSingle();
+           
+           if (collectionItem && collectionItem.Collection) {
+               const colTitle = (collectionItem.Collection as any).title;
+               
+               // 컬렉션 내 다른 프로젝트 ID 조회
+               const { data: items } = await supabase
+                   .from('CollectionItem')
+                   .select('project_id')
+                   .eq('collection_id', collectionItem.collection_id)
+                   .neq('project_id', parseInt(project.id));
+                
+               if (items && items.length > 0) {
+                   const pIds = items.map((i: any) => i.project_id);
+                   
+                   // 프로젝트 정보 조회 (삭제된 것 제외)
+                   const { data: episodes } = await supabase
+                       .from('Project')
+                       .select('project_id, title, thumbnail_url')
+                       .in('project_id', pIds)
+                       .is('deleted_at', null)
+                       .order('created_at', { ascending: false })
+                       .limit(4);
+                    
+                   if (episodes && episodes.length > 0) {
+                       setOtherProjects(episodes);
+                       setOtherProjectsTitle(`'${colTitle}' 시리즈의 에피소드`);
+                       foundEpisodes = true;
+                   }
+               }
+           }
+
+           // B. 시리즈가 없으면 작가의 다른 프로젝트 (삭제된 것 제외)
+           if (!foundEpisodes) {
+              const { data: others } = await supabase
+                .from('Project')
+                .select('project_id, title, thumbnail_url')
+                .eq('user_id', project.userId)
+                .neq('project_id', parseInt(project.id))
+                .is('deleted_at', null) // [Fix] Filter deleted
+                .order('created_at', { ascending: false })
+                .limit(4);
+              
+              setOtherProjects(others || []);
+              setOtherProjectsTitle("이 크리에이터의 다른 프로젝트");
+           }
         } catch (e) {
-          console.error("Other projects fetch error:", e);
+          console.error("Related projects fetch error:", e);
         }
       }
     };
@@ -931,7 +977,7 @@ export function ProjectDetailModalV2({
               {/* 작성자의 다른 프로젝트 (모바일) */}
               {otherProjects.length > 0 && (
                 <div className="px-4 py-6 bg-gray-50 border-t border-gray-100">
-                  <h3 className="text-sm font-bold text-gray-900 mb-4">이 크리에이터의 다른 프로젝트</h3>
+                  <h3 className="text-sm font-bold text-gray-900 mb-4">{otherProjectsTitle}</h3>
                   <div className="grid grid-cols-2 gap-3">
                     {otherProjects.map((p) => (
                       <a key={p.project_id} href={`/project/${p.project_id}`} className="block group">
@@ -1292,7 +1338,7 @@ export function ProjectDetailModalV2({
                    {otherProjects.length > 0 && (
                      <div className="bg-white py-12 border-b border-gray-100">
                        <div className="max-w-4xl mx-auto px-6">
-                         <h3 className="text-lg font-bold text-gray-900 mb-6 text-center">이 크리에이터의 다른 프로젝트</h3>
+                         <h3 className="text-lg font-bold text-gray-900 mb-6 text-center">{otherProjectsTitle}</h3>
                          <div className="grid grid-cols-4 gap-6">
                            {otherProjects.map((p) => (
                              <a key={p.project_id} href={`/project/${p.project_id}`} className="block group cursor-pointer">
