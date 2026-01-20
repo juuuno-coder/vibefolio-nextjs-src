@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
@@ -50,12 +50,29 @@ interface ProjectData {
 function ReviewContent() {
   const params = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   
   // URL Params
-  const projectId = params.get('projectId');
+  const paramProjectId = params.get('projectId');
   const userUrl1 = params.get('url') || params.get('url1');
   const userUrl2 = params.get('url2');
   const modeParam = params.get('mode'); // 'single' | 'ab'
+
+  // Determine Project ID (from param or pathname)
+  const projectId = React.useMemo(() => {
+    if (paramProjectId) return paramProjectId;
+    
+    // Try to extract ID from pathname (e.g., "/60")
+    const parts = pathname.split('/').filter(Boolean);
+    if (parts.length === 1 && !isNaN(Number(parts[0]))) {
+      return parts[0];
+    }
+    // Handle Case where it's /review/60
+    if (parts.length === 2 && parts[0] === 'review' && !isNaN(Number(parts[1]))) {
+      return parts[1];
+    }
+    return null;
+  }, [paramProjectId, pathname]);
 
   // State
   const [phase, setPhase] = useState<ReviewPhase>('cloche');
