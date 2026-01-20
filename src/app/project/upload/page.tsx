@@ -630,9 +630,8 @@ export default function TiptapUploadPage() {
         
         if (urls.length > 0) {
            editor.chain().focus().run();
-           urls.forEach(url => {
-               editor.chain().setImage({ src: url }).run();
-           });
+           const html = urls.map(url => `<img src="${url}" />`).join('<p></p>');
+           editor.chain().focus().insertContent(html).run();
         }
       } catch (error) {
         console.error('Image upload failed:', error);
@@ -1336,7 +1335,7 @@ export default function TiptapUploadPage() {
 
   // Content Step
   return (
-    <div className="w-full min-h-screen bg-gray-50/50">
+    <div className="w-full min-h-screen bg-gray-100">
       {/* Fixed Header */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm backdrop-blur-sm bg-white/95">
         <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">

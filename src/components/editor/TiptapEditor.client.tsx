@@ -248,11 +248,10 @@ export default function TiptapEditor({
       try {
         const urls = await Promise.all(imageFiles.map(file => uploadImage(file)));
         if (urls.length > 0) {
-            editor.chain().focus().setImage({ src: urls[0] }).run(); // First one normally
-            // Insert others
-            urls.slice(1).forEach(url => {
-                editor.chain().setImage({ src: url }).run();
-            });
+            editor.chain().focus().run();
+            // Insert all images at once using HTML
+            const html = urls.map(url => `<img src="${url}" />`).join('<p></p>');
+            editor.chain().focus().insertContent(html).run();
         }
       } catch (error) {
         console.error('Image upload failed:', error);
