@@ -43,13 +43,7 @@ export async function GET(
     // 2. Fetch Data (Securely via Admin)
     const { data, error } = await (supabaseAdmin as any)
       .from('Project')
-      .select(`
-        *,
-        Category (
-          category_id,
-          name
-        )
-      `)
+      .select('*')
       .eq('project_id', id)
       .single();
 
@@ -270,13 +264,7 @@ export async function PUT(
       .from('Project')
       .update(updatePayload)
       .eq('project_id', id)
-      .select(`
-        *,
-        Category (
-          category_id,
-          name
-        )
-      `)
+      .select('*')
       .single();
 
     if (error) {
