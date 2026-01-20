@@ -28,6 +28,18 @@ export const CustomImageExtension = Image.extend({
     };
   },
 
+  parseHTML() {
+    return [
+      {
+        tag: 'img[src]',
+      },
+    ]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['img', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)]
+  },
+
   addNodeView() {
     return ({ node, getPos, editor }) => {
       const container = document.createElement('div');
