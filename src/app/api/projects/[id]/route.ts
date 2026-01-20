@@ -15,23 +15,33 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    // [Standard Auth] Support both Header Token (API/Client) and Cookie (SSR)
-    let supabase;
+    // [Application-Level Security]
+    // RLS Context issues in Next.js API Routes can cause "load failed" errors even for owners.
+    // We solve this by implementing strict Application-Level Authorization:
+    // 1. Verify User Identity (via Token or Cookie)
+    // 2. Fetch Data (via Admin Client, ensuring availability)
+    // 3. Verify Ownership/Visibility explicitly in code before returning
+
+    let user = null;
     const authHeader = request.headers.get('Authorization');
-    
+
+    // 1. Identify User
     if (authHeader) {
-        // Create client with Authorization header (Enforces RLS with Token)
-        supabase = createSupabaseClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            { global: { headers: { Authorization: authHeader } } }
-        );
-    } else {
-        // Fallback to Cookie-based client
-        supabase = createClient();
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        // Try getting user from Auth (JWT Verification)
+        const { data: { user: authUser }, error } = await supabaseAdmin.auth.getUser(token);
+        user = authUser;
+    } 
+    
+    if (!user) {
+        // Fallback to Cookie Session
+        const supabase = createClient();
+        const { data: { user: cookieUser } } = await supabase.auth.getUser();
+        user = cookieUser;
     }
 
-    const { data, error } = await supabase
+    // 2. Fetch Data (Securely via Admin)
+    const { data, error } = await (supabaseAdmin as any)
       .from('Project')
       .select(`
         *,
@@ -41,18 +51,30 @@ export async function GET(
         )
       `)
       .eq('project_id', id)
-      .single() as { data: any, error: any };
+      .single();
 
-    if (error) {
-      console.error('프로젝트 조회 실패 (GET):', error);
+    if (error || !data) {
+      console.error('프로젝트 조회 실패 (App-Level):', error);
       return NextResponse.json(
-        { error: '프로젝트를 찾을 수 없습니다.', details: error.message },
+        { error: '프로젝트를 찾을 수 없습니다.', details: error?.message },
         { status: 404 }
       );
     }
 
-    // 작성자 정보 가져오기 (RLS 통과 후 데이터 확장)
-    if (data && data.user_id) {
+    // 3. Authorization Check (Strict)
+    const isOwner = user && user.id === data.user_id;
+    const isPublic = !data.visibility || data.visibility === 'public'; // Default to public if null for legacy compatibility
+
+    // If not public AND not owner, deny access
+    if (!isPublic && !isOwner) {
+        return NextResponse.json(
+            { error: '접근 권한이 없습니다. (비공개 프로젝트)' },
+            { status: 403 }
+        );
+    }
+
+    // 4. Populate User Info (If accessible)
+    if (data.user_id) {
       try {
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.getUserById(data.user_id);
         if (!authError && authData.user) {
@@ -67,7 +89,7 @@ export async function GET(
       }
     }
 
-    // 조회수 증가는 시스템 권한으로 실행 (RLS 무시해야 함)
+    // 5. Update Views (Admin)
     await supabaseAdmin
       .from('Project')
       .update({ views: (data.views || 0) + 1 })
