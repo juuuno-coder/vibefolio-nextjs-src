@@ -2,6 +2,15 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  const hostname = request.headers.get('host');
+
+  // Subdomain rewrite: review.vibefolio.net -> /review
+  if (hostname === 'review.vibefolio.net' && url.pathname === '/') {
+    url.pathname = '/review';
+    return NextResponse.rewrite(url);
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
