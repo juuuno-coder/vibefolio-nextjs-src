@@ -974,6 +974,20 @@ export function ProjectDetailModalV2({
                 <p className="text-sm text-gray-500 mb-4 text-center">{authorBio}</p>
               </div>
 
+              {/* Mobile Feedback Integration Section */}
+              {isFeedbackRequested && ((project as any).allow_michelin_rating || (project as any).allow_stickers) && (
+                <div className="w-full px-4 py-8 bg-gray-50 border-t border-gray-100 space-y-8">
+                  <div className="text-center">
+                    <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-gray-200 text-gray-600 shadow-sm text-xs font-bold">
+                       <FontAwesomeIcon icon={faComment} className="w-3 h-3 text-gray-400" />
+                       Review & Feedback
+                    </span>
+                  </div>
+                  {(project as any).allow_michelin_rating && <div className="scale-90 origin-top"><MichelinRating projectId={project.id} /></div>}
+                  {(project as any).allow_stickers && <div className="scale-90 origin-top"><FeedbackPoll projectId={project.id} /></div>}
+                </div>
+              )}
+
               {/* 작성자의 다른 프로젝트 (모바일) */}
               {otherProjects.length > 0 && (
                 <div className="px-4 py-6 bg-gray-50 border-t border-gray-100">
