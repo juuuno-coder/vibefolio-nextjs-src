@@ -167,29 +167,37 @@ export default function TiptapUploadPage() {
         return;
       }
       setUserId(user.id);
-      const token = session.access_token;
 
       // 수정 모드 또는 버전 모드일 경우 데이터 로드 (권한 체크 및 컨텍스트용)
       if (editId || isVersionMode) {
-        // ID to fetch: editId if editing, projectIdParam if versioning
-        const targetId = editId || projectIdParam;
+        const targetId = Number(editId || projectIdParam);
         
         try {
-          const res = await fetch(`/api/projects/${targetId}`, {
-            headers: {
-              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            }
-          });
-          if (!res.ok) throw new Error("프로젝트를 불러올 수 없습니다.");
-          const { project } = await res.json();
+          const { data: projectData, error: fetchError } = await supabase
+              .from('Project')
+              .select(`
+                *,
+                Category (
+                  category_id,
+                  name
+                )
+              `)
+              .eq('project_id', targetId)
+              .single();
+
+          if (fetchError || !projectData) {
+             console.error("Fetch error:", fetchError);
+             throw new Error('프로젝트를 불러오는데 실패했습니다.');
+          }
           
-          if (project) {
-            // 본인 프로젝트인지 확인
-            if (project.user_id !== user.id) {
+          // Cast to any to bypass strict type checks for missing generated columns (like image_url, scheduled_at)
+          const project = projectData as any;
+
+          if (project.user_id !== user.id) {
                toast.error("권한이 없습니다.");
                router.push("/");
                return;
-            }
+          }
 
             if (isVersionMode) {
                 // 버전 모드: 원본 제목만 저장하고 에디터는 비움
@@ -205,7 +213,14 @@ export default function TiptapUploadPage() {
                 setTitle(project.title || "");
                 setSummary(project.description || "");
                 setContent(project.content_text || "");
-                setVisibility(project.visibility || 'public'); // Load visibility setting
+                
+                // Load visibility setting
+                if (project.visibility) {
+                    setVisibility(project.visibility as 'public' | 'private' | 'unlisted');
+                } else {
+                    setVisibility('public');
+                }
+
                 setCoverPreview(project.thumbnail_url || project.image_url);
                 
                 if (project.custom_data) {
@@ -213,29 +228,28 @@ export default function TiptapUploadPage() {
                     const custom = typeof project.custom_data === 'string' ? JSON.parse(project.custom_data) : project.custom_data;
                     if (custom.genres) setSelectedGenres(custom.genres);
                     if (custom.fields) setSelectedFields(custom.fields);
+                    if (custom.is_feedback_requested !== undefined) setIsFeedbackRequested(custom.is_feedback_requested);
                   } catch (e) {
                     console.error("Custom data parse error", e);
                   }
                 }
                 
                 if (project.scheduled_at) {
-                    // Convert UTC to local datetime-local format (YYYY-MM-DDTHH:mm:ss)
                     const date = new Date(project.scheduled_at);
                     const localIso = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 19);
                     setScheduledAt(localIso);
                 }
                 
-                // Load visibility setting
-                if (project.visibility) {
-                    setVisibility(project.visibility as 'public' | 'private' | 'unlisted');
-                }
+                // Load feedback settings if available
+                if (project.allow_michelin_rating !== undefined) setAllowMichelinRating(project.allow_michelin_rating);
+                if (project.allow_stickers !== undefined) setAllowStickers(project.allow_stickers);
+                if (project.allow_secret_comments !== undefined) setAllowSecretComments(project.allow_secret_comments);
             }
-          }
         } catch (error) {
           console.error("Load project error:", error);
           toast.error("프로젝트 정보를 불러오는데 실패했습니다.");
+          return; // Stop further processing if failed
         }
-        return; // 수정/버전 모드면 임시저장 복구 패스
       }
 
       // Check for imported content from AI Tools (Lean Canvas, etc)
@@ -264,52 +278,59 @@ export default function TiptapUploadPage() {
               localStorage.removeItem('project_import_content');
               localStorage.removeItem('project_import_title');
               localStorage.removeItem('project_import_type');
-              return; // Skip draft loading
+              return; // Skip draft loading if import used
           } else {
              localStorage.removeItem('project_import_content');
              localStorage.removeItem('project_import_title');
           }
       }
 
-      // 로컬스토리지에서 임시 저장된 데이터 복구 (신규 작성 시에만)
-      const savedDraft = localStorage.getItem('project_draft');
-      if (savedDraft) {
-        try {
-          const draft = JSON.parse(savedDraft);
-          if (confirm('임시 저장된 작업이 있습니다. 불러오시겠습니까?')) {
-            setTitle(draft.title || '');
-            setSummary(draft.summary || '');
-            setContent(draft.content || '');
-            setSelectedGenres(draft.genres || []);
-            setSelectedFields(draft.fields || []);
+      // 로컬스토리지에서 임시 저장된 데이터 복구 (신규 작성 시에만 - imported가 없거나 거절했을 때)
+      if (!editId && !isVersionMode) {
+          const savedDraft = localStorage.getItem('project_draft');
+          if (savedDraft) {
+            try {
+              const draft = JSON.parse(savedDraft);
+              if (confirm('임시 저장된 작업이 있습니다. 불러오시겠습니까?')) {
+                setTitle(draft.title || '');
+                setSummary(draft.summary || '');
+                setContent(draft.content || '');
+                setSelectedGenres(draft.genres || []);
+                setSelectedFields(draft.fields || []);
+              }
+            } catch (e) {
+              console.error('Draft load error:', e);
+            }
           }
-        } catch (e) {
-          console.error('Draft load error:', e);
-        }
       }
 
-      // 사용자 관심사 로드
-      try {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('interests')
-          .eq('id', user.id)
-          .single();
+      // 사용자 관심사 로드 (신규 작성 시에만)
+      if (!editId && !isVersionMode) {
+        try {
+            const { data: userData } = await supabase
+            .from('users') // 'profiles'가 맞을 수도 있으나 기존 코드 존중 ('users' view possibly)
+            .select('interests') // profiles 테이블이면 'interests' 컬럼 확인 필요.
+            // 일단 기존 코드가 'users'였으면 그대로 둠, 하지만 보통 profiles임. 
+            // 여기서는 기존 코드 로직을 그대로 복원합니다.
+            .eq('id', user.id)
+            .single();
 
-        if (userData) {
-          const interests = (userData as any).interests;
-          if (interests && !savedDraft) {
-            if (interests.genres) setSelectedGenres(interests.genres);
-            if (interests.fields) setSelectedFields(interests.fields);
-          }
+            if (userData) {
+            const interests = (userData as any).interests;
+            // setGenre/Fields logic
+            if (interests) {
+                 if (interests.genres) setSelectedGenres(interests.genres);
+                 if (interests.fields) setSelectedFields(interests.fields);
+            }
+            }
+        } catch (error) {
+            // console.error("관심사 로드 실패:", error); // 무시
         }
-      } catch (error) {
-        console.error("관심사 로드 실패:", error);
       }
     };
     
     init();
-  }, [router, editId]);
+  }, [projectIdParam, editId, isVersionMode, router]);
 
   // 에디터 내용 동기화 (수정 모드 로딩 후)
   useEffect(() => {
