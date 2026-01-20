@@ -44,6 +44,7 @@ interface ImageDialogProps {
       small: string;
       large: string;
     };
+    expertise?: { fields: string[] } | null;
   };
   likes: number;
   description: string | null;
@@ -220,7 +221,17 @@ export function ImageDialog({ props }: { props: ImageDialogProps }) {
                   alt="@PROFILE_IMAGE"
                   className="w-7 h-7 rounded-full"
                 />
-                <p className="text-sm">{props.user.username}</p>
+                <p className="text-sm flex items-center gap-1.5">
+                   {props.user.username}
+                   {props.user.expertise?.fields && props.user.expertise.fields.length > 0 && (
+                     <span 
+                       className="inline-flex items-center justify-center px-1.5 py-0.5 bg-blue-500 text-white text-[9px] font-bold rounded-full uppercase tracking-tighter"
+                       title={`분야: ${props.user.expertise.fields.join(', ')}`}
+                     >
+                        Expert
+                     </span>
+                   )}
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <div

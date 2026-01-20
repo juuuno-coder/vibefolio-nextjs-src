@@ -50,7 +50,10 @@ export function ProposalModal({
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        alert("로그인이 필요합니다.");
+        // [Guest Mode] Simple demo-style success or guest API call
+        alert("비회원으로 제안이 전송되었습니다! (Demo)");
+        setFormData({ title: "", content: "", contact: "" });
+        onOpenChange(false);
         return;
       }
 
@@ -61,9 +64,11 @@ export function ProposalModal({
           "Authorization": `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
-          project_id: parseInt(projectId),
+          project_id: Number(projectId),
           receiver_id: receiverId,
-          ...formData,
+          title: formData.title || `[비밀제안] ${projectTitle}에 대한 의견`,
+          content: formData.content,
+          contact: formData.contact,
         }),
       });
 
@@ -102,66 +107,86 @@ export function ProposalModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>제안하기</DialogTitle>
-          <p className="text-sm text-gray-500 mt-2">
-            {projectTitle}에 대한 협업/구매 제안을 보냅니다.
-          </p>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">제목</label>
-            <Input
-              placeholder="제안 제목을 입력하세요"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">내용</label>
-            <Textarea
-              placeholder="제안 내용을 입력하세요"
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              rows={6}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">연락처</label>
-            <Input
-              placeholder="이메일 또는 전화번호"
-              value={formData.contact}
-              onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <Button type="submit" className="flex-1" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  전송 중...
-                </>
-              ) : (
-                "제안 보내기"
-              )}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              취소
-            </Button>
-          </div>
-        </form>
+      <DialogContent className="max-w-md rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 h-2 w-full" />
+        
+        <div className="p-8">
+          <DialogHeader className="flex flex-col items-center text-center space-y-4 mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center shadow-inner border border-slate-100">
+               <div className="relative">
+                  <span className="text-4xl">📧</span>
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+                     <span className="text-[10px] text-white">❤️</span>
+                  </div>
+               </div>
+            </div>
+            <div>
+              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight flex items-center justify-center gap-2">
+                당신의 아이디어를 제안하세요
+                <div className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 font-bold">
+                  🔒 비밀제안
+                </div>
+              </DialogTitle>
+              <p className="text-sm text-slate-500 mt-2 font-medium">
+                공개 댓글로는 말하기 힘든 제휴 제안이나<br/>
+                <span className="text-indigo-600 font-bold">발전을 위한 솔직한 피드백</span>을 비공개로 전달할 수 있습니다.
+              </p>
+            </div>
+          </DialogHeader>
+  
+          <form onSubmit={(e) => {
+            // Set a default title if not provided
+            if (!formData.title) {
+              setFormData(prev => ({ ...prev, title: `[비밀제안] ${projectTitle}에 대한 의견` }));
+            }
+            handleSubmit(e);
+          }} className="space-y-6">
+            <div className="space-y-4">
+              <div className="relative">
+                <Textarea
+                  placeholder="내용을 입력하세요..."
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  className="min-h-[160px] rounded-2xl border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-slate-200 transition-all resize-none p-4 text-base"
+                  required
+                />
+              </div>
+    
+              <div className="relative">
+                <Input
+                  placeholder="연락처 (이메일 또는 전화번호)"
+                  value={formData.contact}
+                  onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                  className="rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-slate-200 h-12 px-4"
+                  required
+                />
+              </div>
+            </div>
+  
+            <div className="flex flex-col gap-3 pt-2">
+              <Button type="submit" className="h-14 rounded-2xl bg-slate-950 hover:bg-slate-800 text-white font-black text-base shadow-xl hover:shadow-slate-200 transition-all group" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    제안 전송 중...
+                  </>
+                ) : (
+                  <>
+                    비공개 제안 보내기 (Demo)
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                className="text-slate-400 font-bold hover:text-slate-600 lg:hidden"
+              >
+                닫기
+              </Button>
+            </div>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

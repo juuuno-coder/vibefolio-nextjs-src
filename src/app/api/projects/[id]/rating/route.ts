@@ -161,7 +161,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       }
 
       // [New] 3. Notification for Project Owner
-      // Fetch Project Owner ID
       const { data: projectData } = await supabaseAdmin
         .from('Project')
         .select('user_id, title')
@@ -169,7 +168,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         .single();
         
       if (projectData && projectData.user_id !== user.id) {
-          // Send Notification
           await supabaseAdmin
             .from('notifications')
             .insert({
@@ -179,9 +177,36 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
                 message: `${maskedName}님이 '${projectData.title}' 프로젝트를 평가했습니다. (평균 ${score}점)`,
                 link: `/projects/${projectId}`,
                 action_label: '분석 리포트 보기',
-                action_url: `/projects/${projectId}#rating-section`, // Anchor to section
+                action_url: `/projects/${projectId}#rating-section`,
                 sender_id: user.id
             });
+      }
+
+      // [Point System] Reward for Evaluating (100 Points)
+      try {
+          // Check if this is the first time rating this project (upsert check)
+          // Actually, we can check if a point log for this project rating exists.
+          const { count } = await supabaseAdmin
+            .from('point_logs')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('reason', `심사 평가 보상 (Project ${projectId})`);
+          
+          if ((count || 0) === 0) {
+              const REWARD = 100;
+              // 1. Add Points
+              const { data: profile } = await supabaseAdmin.from('profiles').select('points').eq('id', user.id).single();
+              await supabaseAdmin.from('profiles').update({ points: (profile?.points || 0) + REWARD }).eq('id', user.id);
+              // 2. Log
+              await supabaseAdmin.from('point_logs').insert({
+                  user_id: user.id,
+                  amount: REWARD,
+                  reason: `심사 평가 보상 (Project ${projectId})`
+              });
+              console.log(`[Point System] Awarded ${REWARD} points to user ${user.id} for rating.`);
+          }
+      } catch (e) {
+          console.error('[Point System] Failed to reward rating points:', e);
       }
 
       return NextResponse.json({ success: true });

@@ -35,6 +35,8 @@ export function OnboardingModal({
   const [nickname, setNickname] = useState("");
   const [genres, setGenres] = useState<string[]>([]);
   const [fields, setFields] = useState<string[]>([]);
+  const [expertFields, setExpertFields] = useState<string[]>([]);
+  const [isExpert, setIsExpert] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -55,6 +57,14 @@ export function OnboardingModal({
         : prev.length < 3
         ? [...prev, value]
         : prev
+    );
+  };
+
+  const handleExpertToggle = (value: string) => {
+    setExpertFields(prev =>
+      prev.includes(value)
+        ? prev.filter(f => f !== value)
+        : [...prev, value]
     );
   };
 
@@ -125,6 +135,7 @@ export function OnboardingModal({
           nickname: nickname,
           profile_image_url: '/globe.svg',
           interests: { genres, fields },
+          expertise: { fields: expertFields },
           onboarding_completed: true,
         },
       });
@@ -145,6 +156,7 @@ export function OnboardingModal({
           // email: userEmail, // DB에 컬럼이 없어 에러 발생으로 제거
           username: nickname, // 닉네임을 username으로 저장
           interests: { genres, fields }, // 관심사 정보 저장
+          expertise: { fields: expertFields }, // 전문 분야 정보 저장
           avatar_url: '/globe.svg', // 기본 아바타 설정 (없을 경우)
           updated_at: new Date().toISOString(),
         }, { onConflict: 'id' });
@@ -268,7 +280,7 @@ export function OnboardingModal({
                 title="이전 단계로 돌아가기 (닉네임 수정)"
               >
                 <span className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center text-xs">2</span>
-                / 2 
+                / 3
                 <span className="text-xs text-gray-400 ml-1 font-normal">← 이전</span>
               </button>
               <h2 className="text-xl font-bold text-gray-900">
@@ -359,11 +371,12 @@ export function OnboardingModal({
             </div>
 
             <Button
-              onClick={handleComplete}
+              onClick={handleNextStep}
               disabled={loading || genres.length === 0}
-              className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-full"
+              className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-full mt-4"
             >
-              {loading ? "저장 중..." : "완료"}
+              다음 단계로
+              <FontAwesomeIcon icon={faArrowRight} className="ml-2 w-4 h-4" />
             </Button>
             
             {/* 나중에 설정하기 버튼 */}
@@ -384,8 +397,97 @@ export function OnboardingModal({
           </div>
         )}
 
-        {/* 스텝 3: 완료 축하 */}
+        {/* 스텝 3: 전문 분야 선택 (자부심 뱃지) */}
         {step === 3 && (
+          <div className="p-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+            <div className="text-center mb-6">
+              <button 
+                onClick={() => setStep(2)}
+                className="inline-flex items-center gap-2 text-sm text-blue-600 font-medium mb-2 hover:bg-blue-50 px-3 py-1 rounded-full transition-colors"
+              >
+                <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs">3</span>
+                / 3
+                <span className="text-xs text-gray-400 ml-1 font-normal">← 이전</span>
+              </button>
+              <h2 className="text-xl font-bold text-gray-900">
+                전문 분야가 있으신가요? 🎖️
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                선택하신 분야는 프로필 뱃지로 표시됩니다
+              </p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-6">
+               <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                     <FontAwesomeIcon icon={faStar} className="text-blue-600 w-4 h-4" />
+                  </div>
+                  <span className="font-bold text-blue-900 text-sm">전문가 뱃지 신청</span>
+               </div>
+               <p className="text-xs text-blue-700 leading-relaxed">
+                  자신의 직업이나 전문 지식을 갖춘 분야를 선택해주세요. 
+                  평가 시 '전문가 의견'으로 강조되어 신뢰도를 높일 수 있습니다.
+               </p>
+            </div>
+
+            <div className="space-y-6">
+               <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-2xl">
+                  <span className="font-medium text-gray-700">전문 분야 등록하기</span>
+                  <input 
+                    type="checkbox" 
+                    className="w-5 h-5 accent-blue-600"
+                    checked={isExpert}
+                    onChange={(e) => setIsExpert(e.target.checked)}
+                  />
+               </div>
+
+               {isExpert && (
+                 <div className="animate-in fade-in slide-in-from-top-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      나의 전문 분야 (다중 선택 가능)
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {[...GENRE_CATEGORIES, ...FIELD_CATEGORIES].map((item) => {
+                        const isSelected = expertFields.includes(item.value);
+                        return (
+                          <button
+                            key={item.value}
+                            type="button"
+                            onClick={() => handleExpertToggle(item.value)}
+                            className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-all ${
+                              isSelected
+                                ? "bg-blue-600 border-blue-600 text-white shadow-md"
+                                : "bg-white border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-500"
+                            }`}
+                          >
+                            {item.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                 </div>
+               )}
+            </div>
+
+            <Button
+              onClick={handleComplete}
+              disabled={loading || (isExpert && expertFields.length === 0)}
+              className="w-full h-12 bg-gray-900 hover:bg-black text-white rounded-full mt-10 shadow-lg"
+            >
+              {loading ? "저장 중..." : "정말 완료!"}
+            </Button>
+            
+            <button
+               onClick={handleComplete}
+               className="w-full mt-3 text-xs text-gray-400 hover:text-gray-600 text-center"
+            >
+               나중에 설정하거나 건너뛰기
+            </button>
+          </div>
+        )}
+
+        {/* 스텝 4: 완료 축하 */}
+        {step === 4 && (
           <div className="p-8 text-center">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <FontAwesomeIcon icon={faCheck} className="w-10 h-10 text-green-500" />

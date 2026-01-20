@@ -37,7 +37,7 @@ export function AiAssistantChat({ onGenerate }: AiAssistantChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!input.trim()) return;
     
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input };
@@ -45,53 +45,68 @@ export function AiAssistantChat({ onGenerate }: AiAssistantChatProps) {
     setInput("");
     setIsLoading(true);
 
-    setTimeout(() => {
-        const responses = [
-            "좋습니다. 글의 어조(Tone & Manner)는 어떻게 가져갈까요? (예: 정중하게, 친근하게, 전문적으로)",
-            "포함되어야 할 핵심 키워드나 강조하고 싶은 내용이 있다면 말씀해주세요.",
-            "독자(수신자)는 누구인가요?",
-            "특별히 참고해야 할 레퍼런스나 스타일이 있나요?"
-        ];
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+    try {
+        const res = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: input,
+                category: 'assistant'
+            })
+        });
+
+        if (!res.ok) throw new Error("AI 응답을 가져오지 못했습니다.");
+        const data = await res.json();
         
         setMessages(prev => [...prev, { 
-            id: (Date.now()+1).toString(), 
+            id: Date.now().toString(), 
             role: 'assistant', 
-            content: messages.length < 3 ? randomResponse : "내용을 파악했습니다! 이제 '콘텐츠 생성' 버튼을 눌러주세요." 
+            content: data.answer || "죄송합니다. 오류가 발생했습니다."
         }]);
+    } catch (e) {
+        console.error(e);
+        toast.error("AI와 연결하는 중 오류가 발생했습니다.");
+    } finally {
         setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
+    if (messages.length < 2) {
+        toast.error("어떤 글을 작성할지 먼저 말씀해주세요.");
+        return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
-      // Mock Data based on topic
-      const topic = messages.find(m => m.role === 'user')?.content || "Documentation";
-      
-      const generatedContent = `
-# [초안] ${topic}
+    try {
+        const topic = messages
+            .filter(m => m.role === 'user')
+            .map(m => m.content)
+            .join(' ');
 
-## 1. 개요
-이 문서는 ${topic}에 대한 핵심 내용을 담고 있습니다. 
-우리의 목표는 명확한 정보 전달과 효과적인 커뮤니케이션입니다.
+        const res = await fetch('/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'assistant', // Note: Need to support this in API
+                topic: topic
+            })
+        });
 
-## 2. 주요 내용
-- 핵심 포인트 1: ...
-- 핵심 포인트 2: ...
-- 핵심 포인트 3: ...
-
-## 3. 결론 및 제안
-이러한 내용을 바탕으로 향후 ~~한 방향으로 나아가기를 제안합니다.
-추가적인 피드백이나 문의 사항은 언제든지 환영합니다.
-
-감사합니다.
-      `.trim();
-      
-      setIsLoading(false);
-      onGenerate({ type: 'text', content: generatedContent });
-      toast.success("콘텐츠가 생성되었습니다!");
-    }, 1500);
+        if (!res.ok) throw new Error("AI 생성에 실패했습니다.");
+        const data = await res.json();
+        
+        onGenerate({ 
+            type: 'text', 
+            content: data.content || data.result || JSON.stringify(data, null, 2) 
+        });
+        toast.success("AI가 초안을 작성했습니다!");
+    } catch (e: any) {
+        console.error(e);
+        toast.error(e.message || "오류가 발생했습니다.");
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (

@@ -12,7 +12,8 @@ import { StickyMenu } from "@/components/StickyMenu";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getCategoryName, getCategoryNameById, getCategoryValue } from "@/lib/categoryMap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faWandSparkles, faXmark, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faWandSparkles, faXmark, faCheck, faBullhorn } from "@fortawesome/free-solid-svg-icons";
+import { Megaphone } from "lucide-react";
 
 
 const ProjectDetailModalV2 = dynamic(() => 
@@ -127,15 +128,28 @@ function HomeContent() {
     }
   }, []);
 
-  // 프로젝트 로드 (API에서 User 정보 포함하여 반환)
   const loadProjects = useCallback(
     async (pageNum = 1, reset = false) => {
       if (loading && !reset) return;
-      if (reset) setLoading(true);
+      if (reset) {
+          setLoading(true);
+          setHasMore(true);
+      }
       try {
         const limit = 20;
         const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : "";
-        const res = await fetch(`/api/projects?page=${pageNum}&limit=${limit}${searchParam}`);
+        
+        let categoryParam = "";
+        let modeParam = "";
+        if (selectedCategory === 'growth') {
+            modeParam = "&mode=growth";
+        } else if (selectedCategory && selectedCategory !== 'all' && selectedCategory !== 'interests') {
+            categoryParam = `&category=${selectedCategory}`;
+        }
+
+        const fieldParam = selectedFields.length > 0 ? `&field=${selectedFields[0]}` : "";
+        
+        const res = await fetch(`/api/projects?page=${pageNum}&limit=${limit}${searchParam}${categoryParam}${fieldParam}${modeParam}`);
         const data = await res.json();
         
         // API 응답 키가 'data'일 수도 있고 'projects'일 수도 있음 (Dual Support)
@@ -238,13 +252,13 @@ function HomeContent() {
         setLoading(false);
       }
     },
-    [loading, searchQuery]
+    [loading, searchQuery, selectedCategory, selectedFields]
   );
 
-  // 검색어나 최초 로드 시 데이터 로드
+  // 검색어, 카테고리, 분야 변경 시 데이터 리셋 및 로드
   useEffect(() => {
     loadProjects(1, true);
-  }, [searchQuery]);
+  }, [searchQuery, selectedCategory, selectedFields, loadProjects]);
 
   // 카테고리 필터링
   const categoryNames = Array.isArray(selectedCategory) 
@@ -385,6 +399,38 @@ function HomeContent() {
         />
         
         <div className="max-w-[1800px] mx-auto px-4 md:px-8 pb-20 pt-8">
+            {/* [New] Growth Mode Highlighting */}
+            {!searchQuery && selectedCategory === 'all' && projects.some(p => p.is_feedback_requested) && (
+                 <div className="mb-16">
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="flex flex-col gap-1">
+                            <h2 className="text-2xl font-bold text-slate-950 flex items-center gap-3 tracking-tight">
+                                <span className="bg-orange-500 text-white p-2.5 rounded-[1.2rem] shadow-lg shadow-orange-200">
+                                   <Megaphone size={22} strokeWidth={2.5} />
+                                </span>
+                                심사 평가를 기다리고 있어요
+                            </h2>
+                            <p className="text-slate-500 text-sm font-medium">여러분의 냉철한 시선이 작품을 더욱 미슐랭스럽게 만듭니다.</p>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setSelectedCategory('growth')}
+                          className="rounded-full border-slate-200 font-bold hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-all text-xs"
+                        >
+                            전체 보기
+                        </Button>
+                    </div>
+                    <div className="flex gap-6 overflow-x-auto pb-6 no-scrollbar -mx-4 px-4">
+                        {projects.filter(p => p.is_feedback_requested).slice(0, 6).map(project => (
+                             <div key={project.id} className="min-w-[280px] md:min-w-[340px]">
+                                <ImageCard props={project} onClick={() => handleProjectClick(project)} className="transition-all hover:-translate-y-2" />
+                             </div>
+                        ))}
+                    </div>
+                    <div className="h-px bg-slate-100 w-full mt-8" />
+                 </div>
+            )}
+
             {/* 검색어 표시 */}
             {searchQuery && (
               <div className="pt-10 mb-10 flex items-center justify-between border-b border-gray-100 pb-6 transition-all animate-in fade-in slide-in-from-top-2">

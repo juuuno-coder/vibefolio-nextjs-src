@@ -42,6 +42,11 @@ export function ProfileManager({ user, onUpdate }: ProfileManagerProps) {
     fields: []
   });
 
+  // Expertise
+  const [expertise, setExpertise] = useState<{ fields: string[] }>({
+    fields: []
+  });
+
   // API Key State
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [loadingKeys, setLoadingKeys] = useState(false);
@@ -71,6 +76,18 @@ export function ProfileManager({ user, onUpdate }: ProfileManagerProps) {
                 fields: Array.isArray(savedInterests.fields) ? savedInterests.fields : [],
             });
           } catch (e) { console.error('Error parsing interests:', e); }
+      }
+
+      // Load expertise
+      if (user.expertise) {
+          try {
+            const savedExpertise = typeof user.expertise === 'string'
+                ? JSON.parse(user.expertise)
+                : user.expertise;
+            setExpertise({
+                fields: Array.isArray(savedExpertise.fields) ? savedExpertise.fields : [],
+            });
+          } catch (e) { console.error('Error parsing expertise:', e); }
       }
 
       setUsernameAvailable(null);
@@ -162,6 +179,7 @@ export function ProfileManager({ user, onUpdate }: ProfileManagerProps) {
           },
           is_public: isPublic,
           interests: interests,
+          expertise: expertise,
         })
         .eq('id', user.id);
 
@@ -186,6 +204,12 @@ export function ProfileManager({ user, onUpdate }: ProfileManagerProps) {
   };
   const toggleField = (id: string) => {
       setInterests(prev => ({
+          ...prev,
+          fields: prev.fields.includes(id) ? prev.fields.filter(f => f !== id) : [...prev.fields, id]
+      }));
+  };
+  const toggleExpertise = (id: string) => {
+      setExpertise(prev => ({
           ...prev,
           fields: prev.fields.includes(id) ? prev.fields.filter(f => f !== id) : [...prev.fields, id]
       }));
@@ -313,6 +337,35 @@ export function ProfileManager({ user, onUpdate }: ProfileManagerProps) {
                             </button>
                         ))}
                     </div>
+                </div>
+            </div>
+        </section>
+
+        {/* 2.5 전문 분야 (자부심 뱃지) */}
+        <section className="space-y-6">
+            <h2 className="text-xl font-bold border-b pb-4 flex items-center gap-2">
+                전문 분야 🎖️
+                <span className="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-tight">Expert Badge</span>
+            </h2>
+            <div className="bg-blue-50/50 border border-blue-100 p-5 rounded-2xl">
+                <p className="text-sm text-blue-700 mb-4 leading-relaxed font-medium">
+                    본인의 전문성을 나타낼 수 있는 분야를 선택하세요. 
+                    평가 서비스 제공 시 사용자 이름 옆에 <strong>인증 뱃지</strong>로 표시됩니다.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                    {[...GENRE_CATEGORIES_WITH_ICONS, ...FIELD_CATEGORIES_WITH_ICONS].map(item => (
+                        <button
+                            key={item.value}
+                            onClick={() => toggleExpertise(item.value)}
+                            className={`px-4 py-2 rounded-full text-sm font-bold transition-all border-2 shadow-sm ${
+                                expertise.fields.includes(item.value)
+                                ? 'bg-blue-600 border-blue-600 text-white transform scale-105'
+                                : 'bg-white border-gray-100 text-gray-500 hover:border-blue-200 hover:text-blue-600'
+                            }`}
+                        >
+                            {item.label}
+                        </button>
+                    ))}
                 </div>
             </div>
         </section>

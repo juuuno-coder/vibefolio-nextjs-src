@@ -21,12 +21,23 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     // Process Ratings
     let michelinAvg = 0;
+    let categoryAvgs = [0, 0, 0, 0, 0]; // 0: UX/UI, 1: Idea, 2: Biz, 3: Tech, 4: Design (Approx)
     let totalRatings = allRatings.length;
     let scoreDistribution = [0, 0, 0, 0, 0]; // 5, 4, 3, 2, 1 점대 개수
 
     if (totalRatings > 0) {
        const sum = allRatings.reduce((acc, curr) => acc + (Number(curr.score) || 0), 0);
        michelinAvg = Number((sum / totalRatings).toFixed(1));
+
+       // Category-wise averages
+       const sums = allRatings.reduce((acc, curr) => [
+          acc[0] + (Number(curr.score) || 0),
+          acc[1] + (Number(curr.score_1) || 0),
+          acc[2] + (Number(curr.score_2) || 0),
+          acc[3] + (Number(curr.score_3) || 0),
+          acc[4] + (Number(curr.score_4) || 0),
+       ], [0, 0, 0, 0, 0]);
+       categoryAvgs = sums.map(s => Number((s / totalRatings).toFixed(1)));
 
        // Calculate Distribution (Integral part of score)
        allRatings.forEach(r => {
@@ -78,6 +89,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         success: true,
         stats: {
             michelinAvg,
+            categoryAvgs,
             totalRatings,
             scoreDistribution, // [5점개수, 4점개수 ... 1점개수]
             topStickers,

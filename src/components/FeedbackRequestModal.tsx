@@ -9,6 +9,7 @@ import { Megaphone, MessageSquare, CheckCircle2, AlertTriangle, Trophy } from "l
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface FeedbackRequestModalProps {
   open: boolean;
@@ -22,9 +23,14 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
   const [loading, setLoading] = useState(false);
   const [userPoints, setUserPoints] = useState(0);
   const [options, setOptions] = useState({
-    detailedFeedback: true, // 상세 피드백 허용
-    publicFeedback: true,   // 공개 피드백
-    aiAnalysis: false       // AI 분석 요청 (Future)
+    detailedFeedback: true, 
+    publicFeedback: true,   
+    showMichelin: true,     // 미슐랭 평점 활성화
+    showStickers: true,     // 스티커 투표 활성화
+    showProposal: true,     // 시크릿 제안 활성화
+    isABMode: false,        // A/B 테스트 모드
+    url2: "",               // A/B 테스트용 보조 URL
+    aiAnalysis: false       
   });
 
   useEffect(() => {
@@ -146,43 +152,93 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
             {/* Step 2: Options */}
             {step === "options" && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-                     <h4 className="font-bold text-slate-900 flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs">2</span>
-                        옵션 설정 (어제 개발한 옵션 등)
-                    </h4>
-                    
-                    <div className="space-y-3">
-                        <label className="flex items-start gap-3 p-4 rounded-2xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors group">
-                            <Checkbox 
-                                checked={options.detailedFeedback} 
-                                onCheckedChange={(c) => setOptions({...options, detailedFeedback: !!c})} 
-                                className="mt-1"
-                            />
-                            <div>
-                                <p className="font-bold text-slate-900 group-hover:text-orange-600 transition-colors">상세 피드백 허용</p>
-                                <p className="text-sm text-slate-500">유저들이 장문의 리뷰와 전문적인 미슐랭 평가를 남길 수 있습니다.</p>
-                            </div>
-                        </label>
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <label className={cn(
+                                "flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer",
+                                options.showMichelin ? "border-amber-200 bg-amber-50/50" : "border-slate-200 bg-white"
+                            )}>
+                                <Checkbox 
+                                    checked={options.showMichelin} 
+                                    onCheckedChange={(c) => setOptions({...options, showMichelin: !!c})} 
+                                />
+                                <div>
+                                    <p className="font-bold text-slate-900 text-sm">미슐랭 평점</p>
+                                    <p className="text-[10px] text-slate-500">5가지 항목 정밀 진단</p>
+                                </div>
+                            </label>
 
-                        <label className="flex items-start gap-3 p-4 rounded-2xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors group">
-                            <Checkbox 
-                                checked={options.publicFeedback} 
-                                onCheckedChange={(c) => setOptions({...options, publicFeedback: !!c})} 
-                                className="mt-1"
-                            />
-                            <div>
-                                <p className="font-bold text-slate-900 group-hover:text-orange-600 transition-colors">피드백 공개</p>
-                                <p className="text-sm text-slate-500">다른 유저들이 남긴 피드백을 모두에게 공개합니다.</p>
+                            <label className={cn(
+                                "flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer",
+                                options.showStickers ? "border-blue-200 bg-blue-50/50" : "border-slate-200 bg-white"
+                            )}>
+                                <Checkbox 
+                                    checked={options.showStickers} 
+                                    onCheckedChange={(c) => setOptions({...options, showStickers: !!c})} 
+                                />
+                                <div>
+                                    <p className="font-bold text-slate-900 text-sm">스티커 투표</p>
+                                    <p className="text-[10px] text-slate-500">간편한 반응 수집</p>
+                                </div>
+                            </label>
+
+                            <label className={cn(
+                                "flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer",
+                                options.showProposal ? "border-indigo-200 bg-indigo-50/50" : "border-slate-200 bg-white"
+                            )}>
+                                <Checkbox 
+                                    checked={options.showProposal} 
+                                    onCheckedChange={(c) => setOptions({...options, showProposal: !!c})} 
+                                />
+                                <div>
+                                    <p className="font-bold text-slate-900 text-sm">시크릿 제안</p>
+                                    <p className="text-[10px] text-slate-500">1:1 비공개 피드백</p>
+                                </div>
+                            </label>
+
+                            <label className={cn(
+                                "flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer",
+                                options.isABMode ? "border-purple-200 bg-purple-50/50" : "border-slate-200 bg-white"
+                            )}>
+                                <Checkbox 
+                                    checked={options.isABMode} 
+                                    onCheckedChange={(c) => setOptions({...options, isABMode: !!c})} 
+                                />
+                                <div>
+                                    <p className="font-bold text-slate-900 text-sm">A/B 테스트</p>
+                                    <p className="text-[10px] text-slate-500">두 가지 시안 비교</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        {options.isABMode && (
+                            <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100 animate-in slide-in-from-top-2">
+                                <p className="text-xs font-bold text-purple-700 mb-2">대조군(B안) URL 입력</p>
+                                <input 
+                                    type="url"
+                                    placeholder="https://original-link.com/b-version"
+                                    className="w-full bg-white border border-purple-200 px-3 py-2 rounded-lg text-sm outline-none focus:ring-2 ring-purple-500/20"
+                                    value={options.url2}
+                                    onChange={(e) => setOptions({...options, url2: e.target.value})}
+                                />
                             </div>
-                        </label>
-                        
-                         <label className="flex items-start gap-3 p-4 rounded-2xl border border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed">
-                            <Checkbox disabled checked={false} className="mt-1" />
-                            <div>
-                                <p className="font-bold text-slate-400">AI 피드백 분석 (준비중)</p>
-                                <p className="text-sm text-slate-400">AI가 피드백을 분석하여 개선점을 요약해줍니다.</p>
-                            </div>
-                        </label>
+                        )}
+
+                        <hr className="border-slate-100" />
+
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-3 px-1 cursor-pointer group">
+                                <Checkbox 
+                                    checked={options.publicFeedback} 
+                                    onCheckedChange={(c) => setOptions({...options, publicFeedback: !!c})} 
+                                />
+                                <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">피드백 내용을 커뮤니티에 공개합니다.</span>
+                            </label>
+                             <label className="flex items-center gap-3 px-1 opacity-50 cursor-not-allowed">
+                                <Checkbox disabled checked={false} />
+                                <span className="text-sm font-medium text-slate-400">AI 심층 분석 리포트 생성 (준비중)</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
             )}
@@ -193,10 +249,9 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
              {step === "intro" ? (
                  <Button 
                     className="w-full h-12 text-lg font-bold bg-slate-900 hover:bg-slate-800 rounded-xl"
-                    disabled={!requirementMet}
                     onClick={() => setStep("options")}
                  >
-                    {requirementMet ? "다음 단계로" : "내공이 부족합니다"}
+                    다음 단계로
                  </Button>
              ) : (
                  <div className="flex gap-3 w-full">

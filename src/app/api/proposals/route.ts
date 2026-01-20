@@ -144,6 +144,28 @@ export async function POST(request: NextRequest) {
         console.warn("제안 댓글 생성 실패 (조용히 넘어감):", commentError);
     }
 
+    // [Point System] Reward for Proposal (100 Points)
+    try {
+        const { count } = await supabaseAdmin
+          .from('point_logs')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('reason', `협업 제안 보상 (Project ${project_id})`);
+        
+        if ((count || 0) === 0) {
+            const REWARD = 100;
+            const { data: profile } = await supabaseAdmin.from('profiles').select('points').eq('id', user.id).single();
+            await supabaseAdmin.from('profiles').update({ points: (profile?.points || 0) + REWARD }).eq('id', user.id);
+            await supabaseAdmin.from('point_logs').insert({
+                user_id: user.id,
+                amount: REWARD,
+                reason: `협업 제안 보상 (Project ${project_id})`
+            });
+        }
+    } catch (e) {
+        console.error('[Point System] Failed to reward proposal points:', e);
+    }
+
     return NextResponse.json({ proposal: data, message: '제안이 성공적으로 전송되었습니다.' });
   } catch (error: any) {
     console.error('서버 오류:', error);

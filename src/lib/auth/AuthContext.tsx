@@ -14,6 +14,9 @@ interface UserProfile {
     genres: string[];
     fields: string[];
   };
+  expertise?: {
+    fields: string[];
+  };
 }
 
 interface AuthContextType {
@@ -47,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       profile_image_url: metadata.avatar_url || metadata.picture || "/globe.svg",
       role: currentUser.app_metadata?.role || metadata.role || "user",
       interests: metadata.interests || undefined,
+      expertise: metadata.expertise || undefined,
     };
   }, []);
 
@@ -64,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // 3. DB 상세 프로필 조회
         const { data: db, error } = await supabase
           .from('profiles')
-          .select('username, avatar_url, profile_image_url, role, interests, points')
+          .select('username, avatar_url, profile_image_url, role, interests, expertise, points')
           .eq('id', u.id)
           .single();
 
@@ -79,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: (db as any).role || base.role,
             points: (db as any).points || 0,
             interests: (db as any).interests || base.interests,
+            expertise: (db as any).expertise || base.expertise,
           };
           setUserProfile(finalProfile);
         } else {

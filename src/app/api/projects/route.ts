@@ -147,6 +147,7 @@ export async function GET(request: NextRequest) {
             userMap.set(u.id, {
               username: u.username || u.nickname || u.name || u.display_name || u.email?.split('@')[0] || 'Unknown',
               avatar_url: u.avatar_url || u.profile_image_url || u.profileImage || u.image || '/globe.svg',
+              expertise: u.expertise || null,
             });
           });
         } else {

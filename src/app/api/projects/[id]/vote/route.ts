@@ -106,6 +106,29 @@ export async function POST(
             }, { onConflict: 'project_id, user_id' });
 
         if (error) throw error;
+
+        // [Point System] Reward for Voting (50 Points)
+        try {
+            const { count } = await supabaseAdmin
+              .from('point_logs')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', userId)
+              .eq('reason', `스티커 투표 보상 (Project ${projectId})`);
+            
+            if ((count || 0) === 0) {
+                const REWARD = 50;
+                const { data: profile } = await supabaseAdmin.from('profiles').select('points').eq('id', userId).single();
+                await supabaseAdmin.from('profiles').update({ points: (profile?.points || 0) + REWARD }).eq('id', userId);
+                await supabaseAdmin.from('point_logs').insert({
+                    user_id: userId,
+                    amount: REWARD,
+                    reason: `스티커 투표 보상 (Project ${projectId})`
+                });
+            }
+        } catch (e) {
+            console.error('[Point System] Failed to reward vote points:', e);
+        }
+
         return NextResponse.json({ success: true, action: 'upserted' });
     }
 

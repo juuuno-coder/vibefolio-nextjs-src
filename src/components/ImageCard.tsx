@@ -27,6 +27,7 @@ interface ImageCardProps {
     user?: {
       username?: string;
       profile_image?: { large?: string; small?: string };
+      expertise?: { fields: string[] } | null;
     };
     likes?: number;
     views?: number;
@@ -220,8 +221,16 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
                     className="object-cover"
                   />
                </div>
-               <span className="text-xs text-gray-500 truncate">
+               <span className="text-xs text-gray-500 truncate flex items-center gap-1">
                  {props.user?.username || 'Unknown'}
+                 {props.user?.expertise?.fields && props.user.expertise.fields.length > 0 && (
+                   <span 
+                     className="inline-flex items-center justify-center w-3.5 h-3.5 bg-blue-100 text-blue-600 rounded-full"
+                     title={`전문가: ${props.user.expertise.fields.join(', ')}`}
+                   >
+                      <Rocket className="w-2.5 h-2.5 fill-current" />
+                   </span>
+                 )}
                </span>
             </div>
             

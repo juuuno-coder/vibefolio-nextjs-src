@@ -33,7 +33,7 @@ export function AiPersonaChat({ onGenerate }: AiPersonaChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!input.trim()) return;
     
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input };
@@ -41,43 +41,79 @@ export function AiPersonaChat({ onGenerate }: AiPersonaChatProps) {
     setInput("");
     setIsLoading(true);
 
-    setTimeout(() => {
-        const responses = [
-            "그렇군요. 그 고객들이 현재 가장 불편해하는 점(Pain Point)은 무엇일까요?",
-            "그들의 주된 목표나 욕망은 무엇이라고 생각하시나요?",
-            "사용자의 연령대나 직업군은 어떻게 분포되어 있을까요?",
-            "그들이 주로 사용하는 SNS나 정보 습득 채널은 어디일까요?"
-        ];
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+    try {
+        const res = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: input,
+                category: 'persona'
+            })
+        });
+
+        if (!res.ok) throw new Error("AI 응답을 가져오지 못했습니다.");
+        const data = await res.json();
         
         setMessages(prev => [...prev, { 
-            id: (Date.now()+1).toString(), 
+            id: Date.now().toString(), 
             role: 'assistant', 
-            content: messages.length < 3 ? randomResponse : "충분한 정보가 모였습니다! 이제 '페르소나 생성' 버튼을 눌러 구체적인 고객 프로필을 확인해보세요." 
+            content: data.answer || "죄송합니다. 오류가 발생했습니다."
         }]);
+    } catch (e) {
+        console.error(e);
+        toast.error("AI와 연결하는 중 오류가 발생했습니다.");
+    } finally {
         setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
+    if (messages.length < 2) {
+        toast.error("서비스 기획을 먼저 말씀해주세요.");
+        return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
-      // Mock Data matching PersonaDefinitionModal structure
-      const data: PersonaData = {
-        demographics: "이름: 김서연\n나이: 28세\n직업: 프리랜서 디자이너\n거주지: 서울 마포구",
-        bio: "수도권에 거주하며 트렌드에 민감한 디지털 노마드. 효율적인 업무 도구와 자기계발에 관심이 많음.",
-        goals: "안정적인 클라이언트 확보, 퍼스널 브랜딩 강화, 워라밸 유지",
-        frustrations: "불규칙한 수입, 네트워킹의 어려움, 업무와 생활의 분리",
-        motivations: "성장, 인정, 자율성",
-        personality: "창의적, 독립적, 꼼꼼함",
-        techSavviness: "높음 (다양한 SaaS 도구 활용 능숙)",
-        preferredChannels: "Instagram, LinkedIn, 각종 커뮤니티(브런치 등)"
-      };
-      
-      setIsLoading(false);
-      onGenerate(data);
-      toast.success("고객 페르소나가 생성되었습니다!");
-    }, 1500);
+    try {
+        const topic = messages
+            .filter(m => m.role === 'user')
+            .map(m => m.content)
+            .join(' ');
+
+        const res = await fetch('/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'persona',
+                topic: topic
+            })
+        });
+
+        if (!res.ok) throw new Error("AI 생성에 실패했습니다.");
+        const data = await res.json();
+
+        // Convert array/list fields to strings if needed by PersonaData interface
+        const formatArray = (arr: any) => Array.isArray(arr) ? arr.join('\n') : String(arr || "");
+
+        const generatedData: PersonaData = {
+            demographics: `이름: ${data.name || "미지정"}\n나이: ${data.age || "미지정"}\n직업: ${data.job || "미지정"}\n거주지: ${data.location || "미지정"}`,
+            bio: data.bio || "",
+            goals: formatArray(data.goals),
+            frustrations: formatArray(data.frustrations),
+            motivations: data.quote || "", // Using quote for motivation as a placeholder if not present
+            personality: data.mbti || "", // Using MBTI for personality
+            techSavviness: "중급 (AI 추천)", // Default if not in AI JSON
+            preferredChannels: formatArray(data.brands), // Using brands as channels for now
+        };
+        
+        onGenerate(generatedData);
+        toast.success("AI가 고객 페르소나를 생성했습니다!");
+    } catch (e: any) {
+        console.error(e);
+        toast.error(e.message || "오류가 발생했습니다.");
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (

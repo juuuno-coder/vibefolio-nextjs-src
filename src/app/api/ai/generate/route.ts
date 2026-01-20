@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Gemini API
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || "";
+const genAI = new GoogleGenerativeAI(apiKey);
 
 export const runtime = 'edge'; // Optional: Use Edge Runtime if supported, helps with timeouts
 
@@ -67,6 +68,21 @@ Structure:
   "brands": ["Brand 1", "Brand 2", "Brand 3", "Brand 4"],
   "mbti": "MBTI Type",
   "imageKeyword": "A single English keyword to search for a stock photo of this person (e.g., 'young asian businessman', 'female student', etc.)"
+}
+Start JSON:
+`;
+    } else if (type === 'assistant') {
+        prompt = `
+You are a professional Content Writing Assistant.
+Based on the following request: "${topic}", please write a high-quality draft.
+
+Current Language: Korean (한국어) - **MUST OUTPUT IN KOREAN**
+
+Output Format: JSON only.
+Structure:
+{
+  "title": "Title of the content",
+  "content": "Full markdown-formatted content. Use headers, bullet points, and appropriate tone."
 }
 Start JSON:
 `;

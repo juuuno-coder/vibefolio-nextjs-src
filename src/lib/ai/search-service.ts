@@ -76,8 +76,15 @@ async function generateGeminiResponse(query: string, results: SearchResultItem[]
 
     const context = results.map(r => `- ${r.title}: ${r.snippet} (${r.source || r.company})`).join('\n');
     
+    let specializedInstruction = "";
+    if (category === 'lean-canvas') {
+        specializedInstruction = "You are a Lean Startup Coach. Help the user clarify their business idea (Problem, Customer, UVP) so that a Lean Canvas can be generated later. Ask one insightful question at a time.";
+    } else if (category === 'persona') {
+        specializedInstruction = "You are a UX Persona Expert. Ask questions to understand the demographic, psychological, and behavioral traits of the target user to build a detailed persona.";
+    }
+
     const prompt = `
-    Role: You are an engaging and helpful AI Assistant specializing in "${category}".
+    Role: You are an engaging and helpful AI Assistant specializing in "${category}". ${specializedInstruction}
     Task: Answer the user's query based on the following search results used as context. If the search results aren't sufficient, use your own general knowledge to be helpful, but prioritize the provided context.
     
     User Query: "${query}"

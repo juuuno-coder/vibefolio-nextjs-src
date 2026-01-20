@@ -46,7 +46,7 @@ export function AiLeanCanvasChat({ onGenerate }: AiLeanCanvasChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!input.trim()) return;
     
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input };
@@ -54,47 +54,81 @@ export function AiLeanCanvasChat({ onGenerate }: AiLeanCanvasChatProps) {
     setInput("");
     setIsLoading(true);
 
-    // Mock AI Response
-    setTimeout(() => {
-        const responses = [
-            "흥미로운 아이디어네요! 그렇다면 이 서비스가 해결하고자 하는 가장 큰 '문제'는 무엇이라고 생각하시나요?",
-            "좋습니다. 이 서비스를 가장 필요로 할 '핵심 고객군'은 누구일까요?",
-            "그렇군요. 경쟁사 대비 우리만의 '압도적인 경쟁 우위'는 어떤 것이 있을까요?",
-            "수익 모델은 어떻게 계획하고 계신가요? 구독? 판매? 광고?"
-        ];
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+    try {
+        const res = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: input,
+                category: 'lean-canvas'
+                // sessionId could be tracked if we want history
+            })
+        });
+
+        if (!res.ok) throw new Error("AI 응답을 가져오지 못했습니다.");
+        const data = await res.json();
         
         setMessages(prev => [...prev, { 
-            id: (Date.now()+1).toString(), 
+            id: Date.now().toString(), 
             role: 'assistant', 
-            content: messages.length < 3 ? randomResponse : "충분한 정보를 얻었습니다! 이제 '결과물 생성' 버튼을 눌러 린 캔버스를 확인해보세요." 
+            content: data.answer || "죄송합니다. 오류가 발생했습니다."
         }]);
+    } catch (e) {
+        console.error(e);
+        toast.error("AI와 연결하는 중 오류가 발생했습니다.");
+    } finally {
         setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleCreateCanvas = () => {
+  const handleCreateCanvas = async () => {
+    if (messages.length < 2) {
+        toast.error("아이디어를 충분히 설명한 후 생성해주세요.");
+        return;
+    }
+    
     setIsLoading(true);
-    // Mock Generation based on chat
-    setTimeout(() => {
-      const topic = messages.find(m => m.role === 'user')?.content || "My Project";
-      
-      const generatedData: LeanCanvasData = {
-        problem: `1. 기존 솔루션의 비효율성\n2. 사용자 경험 저하\n3. 높은 진입 장벽`,
-        customerSegments: `1. 20-30대 얼리어답터\n2. ${topic}에 관심있는 크리에이터\n3. 효율성을 중시하는 전문가`,
-        uniqueValueProposition: `"${topic}"을(를) 통해\n더 빠르고 직관적인 경험 제공.\n복잡한 과정을 원클릭으로 해결.`,
-        solution: `1. AI 기반 자동화 엔진\n2. 직관적인 UI/UX 대시보드\n3. 실시간 협업 기능`,
-        channels: `1. 소셜 미디어 (Instagram, LinkedIn)\n2. 콘텐츠 마케팅 (블로그)\n3. 베타 테스터 커뮤니티`,
-        revenueStreams: `1. 구독 모델 (SaaS)\n2. 프리미엄 기능 인앱 결제\n3. 엔터프라이즈 라이선스`,
-        costStructure: `1. 서버 및 API 비용\n2. 개발 및 유지보수 인건비\n3. 마케팅 집행비`,
-        keyMetrics: `1. 월간 활성 사용자(MAU)\n2. 유료 전환율\n3. 고객 유지율(Retention)`,
-        unfairAdvantage: `1. 독자적인 AI 알고리즘\n2. 강력한 초기 커뮤니티\n3. 특허 출원 기술`,
-      };
-      
-      setIsLoading(false);
-      toast.success("린 캔버스가 생성되었습니다! 결과물을 확인해보세요.");
-      onGenerate(generatedData);
-    }, 1500);
+    try {
+        // Collect user messages to define the topic better
+        const topic = messages
+            .filter(m => m.role === 'user')
+            .map(m => m.content)
+            .join(' ');
+
+        const res = await fetch('/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'lean-canvas',
+                topic: topic
+            })
+        });
+
+        if (!res.ok) throw new Error("AI 생성에 실패했습니다.");
+        
+        const data = await res.json();
+        
+        // Match the data structure expected by LeanCanvasModal
+        const generatedData: LeanCanvasData = {
+            problem: data.problem || "",
+            customerSegments: data.customerSegments || "",
+            uniqueValueProposition: data.uniqueValueProposition || "",
+            solution: data.solution || "",
+            channels: data.channels || "",
+            revenueStreams: data.revenueStreams || "",
+            costStructure: data.costStructure || "",
+            keyMetrics: data.keyMetrics || "",
+            unfairAdvantage: data.unfairAdvantage || "",
+        };
+        
+        onGenerate(generatedData);
+        toast.success("AI가 린 캔버스를 생성했습니다! 아래에서 확인해보세요.");
+    } catch (e: any) {
+        console.error(e);
+        toast.error(e.message || "오류가 발생했습니다.");
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (

@@ -106,13 +106,16 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
         return;
     }
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      toast.error("로그인이 필요한 서비스입니다.");
-      return;
-    }
-
+    
     setIsSubmitting(true);
     try {
+      if (!session) {
+          // [Guest Mode]
+          toast.success(`[비회원] 평가가 반영되었습니다! (평균 ${currentTotalAvg}점)`);
+          setIsEditing(false);
+          fetchAIAnalysis(scores);
+          return;
+      }
       const res = await fetch(`/api/projects/${projectId}/rating`, {
         method: 'POST',
         headers: { 
@@ -183,52 +186,94 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         {/* Radar Chart Visual */}
-        <div className="relative flex justify-center items-center py-8">
-           <svg width="240" height="240" viewBox="0 0 200 200" className="drop-shadow-2xl">
-              {[1, 0.8, 0.6, 0.4, 0.2].map((s) => (
-                <path key={s} d={getRadarPath({ score_1: 5, score_2: 5, score_3: 5, score_4: 5 }, s)} fill="none" stroke="#f1f5f9" strokeWidth="1" />
+        <div className="relative flex justify-center items-center py-12 bg-slate-50/50 rounded-[3rem] border border-slate-100 shadow-inner">
+           <svg width="280" height="280" viewBox="0 0 200 200" className="drop-shadow-2xl overflow-visible">
+              {/* Radial Guides */}
+              {[1, 0.8, 0.6, 0.4, 0.2].map((s, idx) => (
+                <path key={s} d={getRadarPath({ score_1: 5, score_2: 5, score_3: 5, score_4: 5 }, s)} fill={idx % 2 === 0 ? "rgba(0,0,0,0.02)" : "none"} stroke="#e2e8f0" strokeWidth="1" />
               ))}
-              <line x1="100" y1="20" x2="100" y2="180" stroke="#f1f5f9" strokeWidth="1" />
-              <line x1="20" y1="100" x2="180" y2="100" stroke="#f1f5f9" strokeWidth="1" />
+              
+              {/* Axes */}
+              <line x1="100" y1="10" x2="100" y2="190" stroke="#e2e8f0" strokeWidth="1" strokeDasharray="2 2" />
+              <line x1="10" y1="100" x2="190" y2="100" stroke="#e2e8f0" strokeWidth="1" strokeDasharray="2 2" />
+              
+              {/* Community Average (Dashed) */}
               {totalAvg > 0 && (
-                <path d={getRadarPath(averages)} fill="rgba(0, 0, 0, 0.03)" stroke="rgba(0, 0, 0, 0.1)" strokeWidth="1" strokeDasharray="4 4" />
+                <path d={getRadarPath(averages)} fill="rgba(0, 0, 0, 0.03)" stroke="rgba(0, 0, 0, 0.2)" strokeWidth="1.5" strokeDasharray="4 4" className="animate-in fade-in duration-1000" />
               )}
-              <path d={getRadarPath(scores)} fill="rgba(245, 158, 11, 0.15)" stroke="#f59e0b" strokeWidth="3" strokeLinejoin="round" className="transition-all duration-300 ease-out" />
-              <text x="100" y="12" textAnchor="middle" className="text-[10px] font-black fill-gray-400">기획력</text>
-              <text x="188" y="103" textAnchor="start" className="text-[10px] font-black fill-gray-400">완성도</text>
-              <text x="100" y="195" textAnchor="middle" className="text-[10px] font-black fill-gray-400">독창성</text>
-              <text x="12" y="103" textAnchor="end" className="text-[10px] font-black fill-gray-400">상업성</text>
+              
+              {/* My Score (Solid) */}
+              <path d={getRadarPath(scores)} fill="rgba(245, 158, 11, 0.15)" stroke="#f59e0b" strokeWidth="4" strokeLinejoin="round" className="transition-all duration-500 ease-out drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
+              
+              {/* Labels with Icons simulated in text or just bold text */}
+              <text x="100" y="-5" textAnchor="middle" className="text-[12px] font-black fill-slate-900 uppercase tracking-tighter">기획력</text>
+              <text x="205" y="103" textAnchor="start" className="text-[12px] font-black fill-slate-900 uppercase tracking-tighter">완성도</text>
+              <text x="100" y="210" textAnchor="middle" className="text-[12px] font-black fill-slate-900 uppercase tracking-tighter">독창성</text>
+              <text x="-5" y="103" textAnchor="end" className="text-[12px] font-black fill-slate-900 uppercase tracking-tighter">상업성</text>
            </svg>
-
-           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-4xl font-black text-gray-900 tabular-nums">{currentTotalAvg.toFixed(1)}</span>
-              <div className="flex gap-0.5">
-                {[1, 2, 3, 4, 5].map((i) => (
-                   <Star key={i} className={`w-3 h-3 ${currentTotalAvg >= i ? 'text-amber-400 fill-current' : 'text-gray-200'}`} />
-                ))}
+           
+           {/* Center Score Badge */}
+           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none scale-110">
+              <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl shadow-xl border border-white/50 flex flex-col items-center">
+                <span className="text-4xl font-black text-gray-900 tabular-nums leading-none mb-1">{currentTotalAvg.toFixed(1)}</span>
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                     <Star key={i} className={`w-3 h-3 ${currentTotalAvg >= i ? 'text-amber-400 fill-current' : 'text-gray-200'}`} />
+                  ))}
+                </div>
               </div>
            </div>
         </div>
 
-        <div className="space-y-6">
-          {CATEGORIES.map((cat) => (
-            <div key={cat.id} className="space-y-2">
-              <div className="flex justify-between items-center px-1">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-gray-50 text-gray-600"><cat.icon className="w-4 h-4" /></div>
-                  <div><span className="text-sm font-black text-gray-800">{cat.label}</span></div>
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 gap-8">
+            {CATEGORIES.map((cat) => (
+              <div key={cat.id} className="space-y-3 group/item">
+                <div className="flex justify-between items-end px-1">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-lg transition-transform group-hover/item:scale-110">
+                      <cat.icon className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{cat.label}</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase">{cat.desc}</p>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <span className="text-3xl font-black tabular-nums tracking-tighter" style={{ color: cat.color }}>{scores[cat.id].toFixed(1)}</span>
+                    <p className="text-[8px] font-black text-slate-300 uppercase">Points</p>
+                  </div>
                 </div>
-                <span className="text-lg font-black tabular-nums" style={{ color: cat.color }}>{scores[cat.id].toFixed(1)}</span>
+                
+                <div className="relative h-6 flex items-center">
+                   <input 
+                     type="range" 
+                     min="0" 
+                     max="5" 
+                     step="0.1" 
+                     value={scores[cat.id]} 
+                     onChange={(e) => { setScores(prev => ({ ...prev, [cat.id]: parseFloat(e.target.value) })); setIsEditing(true); }} 
+                     className="w-full h-2 bg-slate-100 rounded-full appearance-none cursor-pointer accent-amber-500 hover:accent-amber-600 transition-all z-10" 
+                   />
+                   <div className="absolute inset-0 flex justify-between px-1 pointer-events-none">
+                     {[0, 1, 2, 3, 4, 5].map(v => (
+                       <div key={v} className="w-0.5 h-1 bg-slate-200 mt-5" />
+                     ))}
+                   </div>
+                </div>
               </div>
-              <input type="range" min="0" max="5" step="0.1" value={scores[cat.id]} onChange={(e) => { setScores(prev => ({ ...prev, [cat.id]: parseFloat(e.target.value) })); setIsEditing(true); }} className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-gray-900 hover:accent-amber-500 transition-all" />
-            </div>
-          ))}
+            ))}
+          </div>
 
-          <div className="pt-6 flex justify-center">
-            <button disabled={isSubmitting || !isEditing} onClick={handleRatingSubmit} className={`w-full max-w-xs py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${isEditing ? 'bg-black text-white shadow-2xl hover:-translate-y-1' : 'bg-gray-100 text-gray-400 cursor-default'}`}>
-              {isSubmitting ? "Submitting..." : (scores.score_1 > 0 ? "Update Diagnostic" : "Confirm Multi-Diagnostic")}
+          <div className="pt-4">
+            <button 
+              disabled={isSubmitting || !isEditing} 
+              onClick={handleRatingSubmit} 
+              className={`w-full py-5 rounded-3xl font-black text-base uppercase tracking-widest transition-all shadow-xl active:scale-95 ${isEditing ? 'bg-gradient-to-r from-slate-900 to-black text-white hover:shadow-slate-200 hover:-translate-y-1' : 'bg-slate-100 text-slate-300 cursor-default shadow-none'}`}
+            >
+              {isSubmitting ? "Submitting Analysis..." : (scores.score_1 > 0 ? "Update Diagnostic" : "Confirm Multi-Diagnostic")}
             </button>
           </div>
         </div>

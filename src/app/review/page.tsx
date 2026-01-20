@@ -16,7 +16,8 @@ import {
   ChefHat,
   Trophy,
   SplitSquareHorizontal,
-  LayoutTemplate
+  LayoutTemplate,
+  Star
 } from 'lucide-react';
 
 // Import existing components for reuse
@@ -35,6 +36,15 @@ interface ProjectData {
   project_id: number;
   title: string;
   user_id: string; // Owner ID
+  custom_data?: {
+    showMichelin?: boolean;
+    showStickers?: boolean;
+    showProposal?: boolean;
+    isABMode?: boolean;
+    url1?: string;
+    url2?: string;
+    publicFeedback?: boolean;
+  } | null;
 }
 
 function ReviewContent() {
@@ -58,23 +68,21 @@ function ReviewContent() {
   // Modals
   const [proposalOpen, setProposalOpen] = useState(false);
 
-  // Computed
-  const isAB = modeParam === 'ab' || !!userUrl2;
-  const url1 = userUrl1 ? decodeURIComponent(userUrl1) : null;
-  const url2 = userUrl2 ? decodeURIComponent(userUrl2) : null;
+  // Computed from Project settings & URL params
+  const config = project?.custom_data || {};
+  const isAB = config.isABMode || modeParam === 'ab' || !!userUrl2;
+  const url1 = config.url1 || (userUrl1 ? decodeURIComponent(userUrl1) : null);
+  const url2 = config.url2 || (userUrl2 ? decodeURIComponent(userUrl2) : null);
 
   // 1. Auth & Data Fetch
   useEffect(() => {
     const init = async () => {
-      // Auth Check
+      // Auth Check (Optional for link-sharing convenience)
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("로그인이 필요한 서비스입니다.");
-        const currentPath = `/review?${params.toString()}`;
-        router.replace(`/login?next=${encodeURIComponent(currentPath)}`);
-        return;
-      }
-
+      
+      // Removed rigid redirect - allow guests to view and evaluate
+      // Logic inside components (MichelinRating, etc) will handle restricted actions or show demo mode for guests.
+      
       // Project Data Fetch
       if (!projectId) {
         toast.error("프로젝트 ID가 유효하지 않습니다.");
@@ -84,7 +92,7 @@ function ReviewContent() {
 
       const { data, error } = await supabase
         .from('Project')
-        .select('project_id, title, user_id')
+        .select('project_id, title, user_id, custom_data')
         .eq('project_id', Number(projectId))
         .single();
 
@@ -92,7 +100,7 @@ function ReviewContent() {
         console.error("Project fetch error:", error);
         toast.error("프로젝트 정보를 불러올 수 없습니다.");
       } else {
-        setProject(data);
+        setProject(data as any);
       }
       setLoading(false);
     };
@@ -109,19 +117,20 @@ function ReviewContent() {
         setViewMode('split');
       }
     };
-    // Init
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [viewMode]);
 
-  if (loading) return <div className="h-[100dvh] bg-slate-950 flex items-center justify-center text-white">Loading...</div>;
+  const [evaluationTab, setEvaluationTab] = useState<'rating' | 'voting' | 'proposal'>('rating');
+
+  if (loading) return <div className="h-[100dvh] bg-slate-950 flex items-center justify-center text-white font-black tracking-widest text-xl animate-pulse">LOADING...</div>;
   if (!url1) return <div className="h-[100dvh] bg-slate-950 flex items-center justify-center text-white">유효한 URL이 없습니다.</div>;
 
   return (
     <div className="relative w-full h-[100dvh] overflow-hidden bg-slate-950 text-slate-900 font-sans">
       
-      {/* --- Phase 2: Layered Viewer (The Tasting) --- */}
+      {/* Phase 2 Layered Viewer */}
       <div className={cn(
         "absolute inset-0 transition-opacity duration-1000",
         phase === 'viewer' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
@@ -138,20 +147,19 @@ function ReviewContent() {
               {isAB && <Badge variant="outline" className="text-amber-400 border-amber-400">A/B Test</Badge>}
            </div>
            
-           {/* Mobile A/B Toggle */}
            {isAB && (
              <div className="flex md:hidden bg-white/10 rounded-lg p-1">
                 <button 
                   onClick={() => setViewMode('a')}
                   className={cn("px-3 py-1 rounded text-xs font-bold transition-all", viewMode === 'a' ? "bg-amber-500 text-white" : "text-slate-400")}
                 >
-                  A안
+                  Option A
                 </button>
                 <button 
                   onClick={() => setViewMode('b')}
                   className={cn("px-3 py-1 rounded text-xs font-bold transition-all", viewMode === 'b' ? "bg-amber-500 text-white" : "text-slate-400")}
                 >
-                  B안
+                  Option B
                 </button>
              </div>
            )}
@@ -170,11 +178,11 @@ function ReviewContent() {
               "h-full transition-all duration-300 relative",
               isAB ? (viewMode === 'split' ? "w-1/2 border-r border-slate-300" : (viewMode === 'a' ? "w-full" : "w-0 overflow-hidden")) : "w-full"
             )}>
-               <div className="absolute top-2 left-2 z-10 bg-black/50 text-white text-xs px-2 py-1 rounded font-bold backdrop-blur">
+               <div className="absolute top-2 left-2 z-10 bg-black/50 text-white text-[10px] px-2 py-1 rounded font-black tracking-widest backdrop-blur uppercase">
                   {isAB ? "Option A" : "Preview"}
                </div>
                <iframe 
-                 src={url1} 
+                 src={url1 || undefined} 
                  className="w-full h-full border-none"
                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
                  title="Preview A" 
@@ -187,11 +195,11 @@ function ReviewContent() {
                 "h-full transition-all duration-300 relative",
                 viewMode === 'split' ? "w-1/2" : (viewMode === 'b' ? "w-full" : "w-0 overflow-hidden")
               )}>
-                 <div className="absolute top-2 left-2 z-10 bg-black/50 text-white text-xs px-2 py-1 rounded font-bold backdrop-blur">
+                 <div className="absolute top-2 left-2 z-10 bg-black/50 text-white text-[10px] px-2 py-1 rounded font-black tracking-widest backdrop-blur uppercase">
                     Option B
                  </div>
                  <iframe 
-                   src={url2} 
+                   src={url2 || undefined} 
                    className="w-full h-full border-none"
                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
                    title="Preview B" 
@@ -200,32 +208,32 @@ function ReviewContent() {
             )}
         </div>
 
-        {/* Floating Review Button (Bottom Left as requested) */}
-        <div className="absolute bottom-6 left-6 z-[9999]">
+        {/* Floating Review Button */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[40]">
            <motion.button
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsReviewOpen(true)}
-              className="flex items-center gap-3 pl-4 pr-6 py-3 bg-slate-900/90 backdrop-blur-xl border border-white/10 text-white rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-orange-500/20 hover:border-orange-500/50 transition-all group"
+              className="flex items-center gap-4 pl-5 pr-8 py-4 bg-slate-900/95 backdrop-blur-2xl border border-white/20 text-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.6)] hover:shadow-orange-500/40 hover:border-orange-500/50 transition-all group"
            >
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-inner">
-                 <ChefHat size={20} className="text-white" />
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 via-orange-500 to-red-600 flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
+                 <ChefHat size={24} className="text-white" />
               </div>
               <div className="text-left">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Michelin Review</p>
-                  <p className="text-sm font-bold group-hover:text-orange-400 transition-colors">평가서 작성하기</p>
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-0.5">Michelin Guide</p>
+                  <p className="text-lg font-black tracking-tight group-hover:text-orange-400 transition-colors">심사 평가서 작성</p>
               </div>
            </motion.button>
         </div>
       </div>
 
-      {/* --- Phase 1: Initial Overlay (The Cloche) --- */}
+      {/* phase cloche */}
       <AnimatePresence>
         {phase === 'cloche' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ y: "-100%", opacity: 0, transition: { duration: 0.8, ease: [0.33, 1, 0.68, 1] } }} // EaseInOutCubic
+            exit={{ y: "-100%", opacity: 0, transition: { duration: 0.8, ease: [0.33, 1, 0.68, 1] } }}
             className="absolute inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center p-8 text-center"
           >
              <motion.div 
@@ -233,32 +241,26 @@ function ReviewContent() {
                animate={{ y: 0, opacity: 1 }}
                transition={{ delay: 0.2 }}
              >
-                <h1 className="text-3xl md:text-5xl font-black text-white mb-2 tracking-tight">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">제평가는요?</span>
+                <h1 className="text-3xl md:text-6xl font-black text-white mb-3 tracking-tighter">
+                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-500 to-purple-600">제평가는요?</span>
                 </h1>
-                <p className="text-slate-400 text-sm md:text-base font-medium mb-12">
-                   공정한 심사를 위한 미슐랭 가이드 레이어
+                <p className="text-slate-400 text-sm md:text-lg font-medium mb-16 max-w-md mx-auto leading-relaxed">
+                   전문가와 유저의 시선으로<br/>
+                   당신의 작품을 미슐랭 급으로 진단합니다.
                 </p>
              </motion.div>
 
-             <div className="flex items-center justify-center gap-8 md:gap-16 mb-16 relative">
-                {/* Cloche A */}
+             <div className="flex items-center justify-center gap-8 md:gap-16 mb-20 relative">
                 <motion.div 
                   className="cursor-pointer group relative"
                   whileHover={{ scale: 1.05, y: -10 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setPhase('viewer')}
                 >
-                   <ClocheIcon className="w-40 h-40 md:w-64 md:h-64 drop-shadow-[0_20px_50px_rgba(249,115,22,0.3)] filter" />
-                   {isAB && <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-slate-500 font-bold text-xs uppercase tracking-widest">Option A</div>}
-                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                      <span className="px-4 py-2 bg-white/10 backdrop-blur rounded-full text-white text-sm font-bold border border-white/20">
-                         OPEN
-                      </span>
-                   </div>
+                   <ClocheIcon className="w-40 h-40 md:w-72 md:h-72 drop-shadow-[0_30px_60px_rgba(249,115,22,0.4)] filter" />
+                   {isAB && <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">Selection A</div>}
                 </motion.div>
 
-                {/* Cloche B (if A/B) */}
                 {isAB && (
                    <motion.div 
                     className="cursor-pointer group relative"
@@ -266,8 +268,8 @@ function ReviewContent() {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setPhase('viewer')}
                   >
-                    <ClocheIcon className="w-40 h-40 md:w-64 md:h-64 drop-shadow-[0_20px_50px_rgba(59,130,246,0.3)] filter" />
-                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-slate-500 font-bold text-xs uppercase tracking-widest">Option B</div>
+                    <ClocheIcon className="w-40 h-40 md:w-72 md:h-72 drop-shadow-[0_30px_60px_rgba(59,130,246,0.4)] filter" />
+                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">Selection B</div>
                   </motion.div>
                 )}
              </div>
@@ -276,130 +278,181 @@ function ReviewContent() {
                 onClick={() => setPhase('viewer')}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-8 py-4 bg-white text-slate-900 rounded-full font-black text-lg shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_rgba(255,255,255,0.5)] transition-all"
+                className="px-12 py-5 bg-white text-slate-900 rounded-full font-black text-xl shadow-[0_20px_50px_rgba(255,255,255,0.2)] hover:shadow-[0_30px_70px_rgba(255,255,255,0.4)] transition-all uppercase tracking-widest"
              >
-                평가 시작하기
+                Start Evaluation
              </motion.button>
           </motion.div>
         )}
       </AnimatePresence>
 
 
-      {/* --- Phase 3: Evaluation Sheet (The Final Review) --- */}
+      {/* --- Phase 3: Evaluation Sheet --- */}
       <AnimatePresence>
         {isReviewOpen && (
           <>
-            {/* Backdrop */}
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
               exit={{ opacity: 0 }}
               onClick={() => setIsReviewOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000]"
+              className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[10000]"
             />
-            {/* Sheet */}
             <motion.div 
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 left-0 right-0 z-[10001] bg-white rounded-t-[2.5rem] shadow-[0_-20px_60px_rgba(0,0,0,0.3)] max-h-[85dvh] overflow-hidden flex flex-col"
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-[10001] bg-white rounded-t-[3rem] shadow-[0_-20px_80px_rgba(0,0,0,0.5)] max-h-[92dvh] overflow-hidden flex flex-col"
             >
-               {/* Sheet Header */}
-               <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                       <ChefHat className="text-orange-500" />
-                       심사 평가서
-                    </h3>
-                    <p className="text-sm text-slate-500">{project?.title || "Project"}에 대한 평가를 남겨주세요.</p>
-                  </div>
-                  <Button variant="ghost" className="rounded-full" onClick={() => setIsReviewOpen(false)}>
-                     <X />
-                  </Button>
+               {/* Drag Handle */}
+               <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-4 mb-2 shrink-0" />
+
+               {/* Evaluation Tabs Header */}
+               <div className="px-6 flex border-b border-slate-100 bg-white">
+                  {[
+                    { id: 'rating', label: '미슐랭 평전', icon: Star, visible: config.showMichelin !== false },
+                    { id: 'voting', label: '스티커 투표', icon: LayoutTemplate, visible: config.showStickers !== false },
+                    { id: 'proposal', label: '시크릿 제안', icon: '🔒', visible: config.showProposal !== false }
+                  ].filter(t => t.visible).map((tab) => {
+                    const isActive = evaluationTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setEvaluationTab(tab.id as any)}
+                        className={cn(
+                          "flex-1 py-6 flex flex-col items-center justify-center gap-1.5 transition-all relative group",
+                          isActive ? "text-slate-900" : "text-slate-400 hover:text-slate-600"
+                        )}
+                      >
+                         <div className={cn(
+                           "w-10 h-10 rounded-2xl flex items-center justify-center transition-all",
+                           isActive ? "bg-slate-900 text-white shadow-lg" : "bg-slate-50 group-hover:bg-slate-100"
+                         )}>
+                            {tab.id === 'rating' && <Star size={20} className={cn(isActive ? "fill-white" : "fill-none")} />}
+                            {tab.id === 'voting' && <LayoutTemplate size={20} />}
+                            {tab.id === 'proposal' && <div className="text-xl">🔒</div>}
+                         </div>
+                         <span className={cn("text-xs font-black tracking-tighter", isActive ? "opacity-100" : "opacity-60")}>
+                           {tab.label}
+                         </span>
+                         {isActive && (
+                           <motion.div 
+                             layoutId="tabUnderline"
+                             className="absolute bottom-0 left-4 right-4 h-1 bg-slate-900 rounded-full"
+                           />
+                         )}
+                      </button>
+                    );
+                  })}
                </div>
 
-               {/* Sheet Content (Scrollable) */}
-               <div className="overflow-y-auto flex-1 p-6 space-y-8 bg-slate-50/50 pb-20">
+               {/* Sheet Content */}
+               <div className="overflow-y-auto flex-1 p-6 md:p-10 space-y-10 bg-white pb-32">
                   
-                  {/* A/B Choice Section */}
-                  {isAB && (
-                     <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                        <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                           <SplitSquareHorizontal size={20} className="text-blue-500"/>
-                           어느 쪽이 더 훌륭한가요?
-                        </h4>
-                        <div className="grid grid-cols-3 gap-3">
-                           <button 
-                             onClick={() => setVote('a')}
-                             className={cn("p-4 rounded-2xl border-2 transition-all font-bold text-sm", vote === 'a' ? "border-amber-500 bg-amber-50 text-amber-900" : "border-slate-100 hover:border-slate-300 text-slate-500")}
-                           >
-                              A안 승리
-                           </button>
-                           <button 
-                             onClick={() => setVote('similar')}
-                             className={cn("p-4 rounded-2xl border-2 transition-all font-bold text-sm", vote === 'similar' ? "border-slate-500 bg-slate-100 text-slate-900" : "border-slate-100 hover:border-slate-300 text-slate-500")}
-                           >
-                              비슷함
-                           </button>
-                           <button 
-                             onClick={() => setVote('b')}
-                             className={cn("p-4 rounded-2xl border-2 transition-all font-bold text-sm", vote === 'b' ? "border-amber-500 bg-amber-50 text-amber-900" : "border-slate-100 hover:border-slate-300 text-slate-500")}
-                           >
-                              B안 승리
-                           </button>
+                  {evaluationTab === 'rating' && (
+                    <motion.div 
+                      key="rating"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="space-y-8"
+                    >
+                      {isAB && (
+                        <div className="bg-slate-900 p-8 rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden relative group">
+                            <div className="absolute top-0 right-0 p-8 opacity-10">
+                               <SplitSquareHorizontal className="w-24 h-24 text-white" />
+                            </div>
+                            <div className="relative z-10">
+                              <h4 className="text-xl font-black text-white mb-6 flex items-center gap-2">
+                                <SplitSquareHorizontal size={24} className="text-blue-400"/>
+                                어느 프로젝트가 더 뛰어난가요?
+                              </h4>
+                              <div className="grid grid-cols-3 gap-4">
+                                {[
+                                  { id: 'a', label: 'A안 승리', color: 'bg-amber-500' },
+                                  { id: 'similar', label: '비등비등함', color: 'bg-slate-600' },
+                                  { id: 'b', label: 'B안 승리', color: 'bg-blue-50' }
+                                ].map(btn => (
+                                  <button 
+                                    key={btn.id}
+                                    onClick={() => setVote(btn.id as any)}
+                                    className={cn(
+                                      "p-5 rounded-2xl border-2 transition-all font-black text-sm relative overflow-hidden group/btn", 
+                                      vote === btn.id 
+                                        ? cn("border-transparent text-white", btn.color) 
+                                        : "border-white/10 bg-white/5 text-white/50 hover:border-white/20"
+                                    )}
+                                  >
+                                      {btn.label}
+                                      {vote === btn.id && (
+                                        <motion.div layoutId="voteGlow" className="absolute inset-0 bg-white/20 animate-pulse" />
+                                      )}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                         </div>
+                      )}
+                    {projectId && <MichelinRating projectId={projectId as string} isDemo={false} />}
+                  </motion.div>
+                )}
+
+                {evaluationTab === 'voting' && (
+                  <motion.div 
+                    key="voting"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                  >
+                    {projectId && <FeedbackPoll projectId={projectId as string} />}
+                  </motion.div>
+                )}
+
+                {evaluationTab === 'proposal' && (
+                  <motion.div 
+                    key="proposal"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col items-center justify-center py-10"
+                  >
+                     <div className="w-24 h-24 rounded-[2rem] bg-indigo-50 flex items-center justify-center mb-6 shadow-xl border border-indigo-100">
+                        <span className="text-5xl">📧</span>
                      </div>
-                  )}
-
-                  {/* 1. Michelin Rating */}
-                  <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                      <div className="p-4 bg-slate-900 text-white font-bold flex items-center gap-2">
-                         <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"/> 미슐랭 다이그노스틱
-                      </div>
-                      <div className="p-4">
-                        {/* Reuse existing component, ensuring it fits */}
-                        {projectId && <MichelinRating projectId={projectId} isDemo={false} />}
-                      </div>
-                  </div>
-
-                  {/* 2. Feedback Poll (Stickers) */}
-                  <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-6">
-                      <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                         <Trophy size={20} className="text-yellow-500"/>
-                         투표하기
-                      </h4>
-                      {projectId && <FeedbackPoll projectId={projectId} />}
-                  </div>
-
-                  {/* 3. Action Buttons */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <h4 className="text-2xl font-black text-slate-900 mb-2">시크릿 제안</h4>
+                     <p className="text-slate-500 text-center max-w-xs mb-10 leading-relaxed font-medium">
+                        협업 요청 부터 <span className="text-indigo-600 font-black">발전을 위한 솔직한 피드백</span>까지 비공개로 전달해보세요.
+                     </p>
                      <Button 
-                       variant="outline" 
-                       className="h-14 rounded-2xl border-slate-200 hover:bg-slate-50 font-bold text-slate-600"
                        onClick={() => setProposalOpen(true)}
+                       className="px-12 py-6 h-auto rounded-3xl bg-slate-900 border-b-4 border-black hover:bg-black text-white font-black text-lg transition-all shadow-2xl active:translate-y-1 active:border-b-0"
                      >
-                        💌 시크릿 제안 보내기
+                        제안서 작성하러 가기
                      </Button>
-                     <Button 
-                       className="h-14 rounded-2xl bg-slate-900 hover:bg-slate-800 font-bold text-white shadow-lg"
-                       onClick={() => {
-                         toast.success("평가가 완료되었습니다!");
-                         setIsReviewOpen(false);
-                         // Logic to save A/B vote to server logic would go here
-                       }}
-                     >
-                        평가 완료
-                     </Button>
-                  </div>
+                  </motion.div>
+                )}
 
+               </div>
+
+               {/* Bottom CTA Bar */}
+               <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-xl border-t border-slate-100 flex items-center justify-between gap-6">
+                  <div className="hidden md:block">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Status</p>
+                     <p className="text-sm font-bold text-slate-900 mt-1">심사 결과가 자동으로 저장됩니다.</p>
+                  </div>
+                  <Button 
+                    className="flex-1 md:flex-none md:px-16 h-14 rounded-2xl bg-slate-950 hover:bg-slate-800 font-black text-white shadow-2xl shadow-slate-200 transition-all uppercase tracking-widest text-base"
+                    onClick={() => {
+                      toast.success("평가가 완료되었습니다!");
+                      setIsReviewOpen(false);
+                    }}
+                  >
+                     Complete Audit
+                  </Button>
                </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
       
-      {/* Proposal Modal (Global Layout) */}
       {project && proposalOpen && (
         <ProposalModal 
           open={proposalOpen} 
@@ -414,7 +467,6 @@ function ReviewContent() {
   );
 }
 
-// Wrapper for Suspense
 export default function ReviewPage() {
     return (
         <Suspense fallback={<div className="h-screen bg-slate-950 flex items-center justify-center text-white">Loading...</div>}>
@@ -423,7 +475,6 @@ export default function ReviewPage() {
     );
 }
 
-// Custom Cloche Icon SVG
 function ClocheIcon({ className }: { className?: string }) {
    return (
       <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -437,9 +488,8 @@ function ClocheIcon({ className }: { className?: string }) {
             <radialGradient id="clocheShine" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(70 70) rotate(45) scale(80)">
                <stop offset="0" stopColor="white" stopOpacity="0.8"/>
                <stop offset="1" stopColor="white" stopOpacity="0"/>
-            </radialGradient>
+            </radialGradient> radialGradient
          </defs>
-         {/* Drop Shadow Filter */}
          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur in="SourceAlpha" stdDeviation="5" />
             <feOffset dx="0" dy="5" result="offsetblur" />
@@ -452,10 +502,7 @@ function ClocheIcon({ className }: { className?: string }) {
             </feMerge>
          </filter>
 
-         {/* Handle/Knob */}
          <circle cx="100" cy="30" r="15" fill="url(#clocheSilver)" filter="url(#shadow)" />
-         
-         {/* Dome */}
          <path 
            d="M 20 160 Q 20 50 100 50 Q 180 50 180 160" 
            fill="url(#clocheSilver)" 
@@ -463,8 +510,6 @@ function ClocheIcon({ className }: { className?: string }) {
            strokeWidth="2"
            filter="url(#shadow)"
          />
-         
-         {/* Shine */}
          <path 
            d="M 40 140 Q 50 60 100 60" 
            fill="none" 
@@ -473,8 +518,6 @@ function ClocheIcon({ className }: { className?: string }) {
            strokeLinecap="round" 
            opacity="0.6"
          />
-
-         {/* Bottom Rim */}
          <path 
            d="M 10 160 L 190 160 L 190 170 C 190 175 185 180 180 180 L 20 180 C 15 180 10 175 10 170 Z" 
            fill="#334155"
