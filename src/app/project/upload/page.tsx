@@ -175,13 +175,9 @@ export default function TiptapUploadPage() {
         try {
           const { data: projectData, error: fetchError } = await supabase
               .from('Project')
-              .select(`
-                *,
-                Category (
-                  category_id,
-                  name
-                )
-              `)
+              // Fix: Removed 'Category' join to avoid PGRST201 (Ambiguous embedding) error.
+              // We don't use Category name here, only category_id which is in Project table.
+              .select('*')
               .eq('project_id', targetId)
               .single();
 
