@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, EyeOff, Lock, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket, Sparkles, Wand2, Lightbulb, Zap, UserCircle2, Search, Clock } from "lucide-react";
+
+import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, EyeOff, Lock, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket, Sparkles, Wand2, Lightbulb, Zap, UserCircle2, Search, Clock, BarChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileManager } from "@/components/ProfileManager";
 import { ImageCard } from "@/components/ImageCard";
@@ -9,6 +10,7 @@ import { ProposalCard } from "@/components/ProposalCard";
 import { CommentCard } from "@/components/CommentCard";
 import { ProjectDetailModalV2 } from "@/components/ProjectDetailModalV2";
 import { ProposalDetailModal } from "@/components/ProposalDetailModal";
+import { FeedbackReportModal } from "@/components/FeedbackReportModal";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
@@ -23,6 +25,7 @@ import { Input } from "@/components/ui/input";
 
 type TabType = 'projects' | 'likes' | 'collections' | 'proposals' | 'comments' | 'ai_tools' | 'settings';
 type AiToolType = 'lean-canvas' | 'persona' | 'assistant' | 'job' | 'trend' | 'recipe' | 'tool' | 'api-settings';
+
 import { LeanCanvasModal, type LeanCanvasData } from "@/components/LeanCanvasModal";
 import { PersonaDefinitionModal } from "@/components/PersonaDefinitionModal";
 import { AiOpportunityExplorer } from "@/components/tools/AiOpportunityExplorer";
@@ -45,6 +48,10 @@ export default function MyPage() {
   const [activeAiTool, setActiveAiTool] = useState<AiToolType>('api-settings');
   const [isExplorationStarted, setIsExplorationStarted] = useState(false);
   
+  // [New] Feedback Report Modal State
+  const [feedbackReportOpen, setFeedbackReportOpen] = useState(false);
+  const [currentFeedbackProject, setCurrentFeedbackProject] = useState<{id: string, title: string} | null>(null);
+
   // AI 도구 데이터 지속성 상태
   const [savedLeanCanvas, setSavedLeanCanvas] = useState<LeanCanvasData | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -639,6 +646,13 @@ export default function MyPage() {
                           <Button size="sm" variant="secondary" className="bg-indigo-600 hover:bg-indigo-700 text-white border-0 h-9 px-3 text-xs" onClick={() => router.push(`/project/upload?mode=version&projectId=${project.id}`)}>
                             <Rocket className="w-3.5 h-3.5 mr-1" /> 새 에피소드
                           </Button>
+                          <Button size="sm" variant="secondary" className="bg-green-600 hover:bg-green-700 text-white border-0 h-9 px-3 text-xs" onClick={(e) => {
+                             e.stopPropagation();
+                             setCurrentFeedbackProject({ id: project.id, title: project.title });
+                             setFeedbackReportOpen(true);
+                          }}>
+                            <BarChart className="w-3.5 h-3.5 mr-1" /> 리포트
+                          </Button>
                           <Button size="sm" variant="destructive" className="h-9 px-3 text-xs" onClick={() => handleDeleteProject(project.id)}>
                             <Trash2 className="w-3.5 h-3.5 mr-1" /> 삭제
                           </Button>
@@ -949,6 +963,14 @@ export default function MyPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {currentFeedbackProject && (
+        <FeedbackReportModal 
+          open={feedbackReportOpen} 
+          onOpenChange={setFeedbackReportOpen}
+          projectId={currentFeedbackProject.id}
+          projectTitle={currentFeedbackProject.title}
+        />
+      )}
     </div>
   );
 }

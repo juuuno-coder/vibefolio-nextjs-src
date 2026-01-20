@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 interface MichelinRatingProps {
   projectId: string;
+  isDemo?: boolean; // [New] Demo Mode
 }
 
 const CATEGORIES = [
@@ -16,7 +17,7 @@ const CATEGORIES = [
   { id: 'score_4', label: '상업성', icon: TrendingUp, color: '#ef4444', desc: '시장 가치와 잠재력' },
 ];
 
-export function MichelinRating({ projectId }: MichelinRatingProps) {
+export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProps) {
   const [scores, setScores] = useState<Record<string, number>>({
     score_1: 0, score_2: 0, score_3: 0, score_4: 0
   });
@@ -37,6 +38,10 @@ export function MichelinRating({ projectId }: MichelinRatingProps) {
   }, [scores]);
 
   const fetchAIAnalysis = async (scoresToAnalyze: any) => {
+    if (isDemo) {
+        setAnalysis("이것은 데모 분석 결과입니다. 작가의 의도가 명확하며, 특히 독창성 부분에서 높은 점수를 기록했습니다. 상업적 가능성 또한 충분하여 발전 가능성이 기대되는 작품입니다.");
+        return;
+    }
     setIsAnalyzing(true);
     try {
       const res = await fetch('/api/ai/analyze', {
@@ -58,6 +63,7 @@ export function MichelinRating({ projectId }: MichelinRatingProps) {
   };
 
   const fetchRatingData = async () => {
+    if (isDemo) return; // Skip API in demo
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const headers: any = {};
@@ -93,6 +99,12 @@ export function MichelinRating({ projectId }: MichelinRatingProps) {
   }, [projectId]);
 
   const handleRatingSubmit = async () => {
+    if (isDemo) {
+        toast.success(`[데모] 평가가 반영되었습니다! (평균 ${currentTotalAvg}점)`);
+        setIsEditing(false);
+        fetchAIAnalysis(scores);
+        return;
+    }
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       toast.error("로그인이 필요한 서비스입니다.");

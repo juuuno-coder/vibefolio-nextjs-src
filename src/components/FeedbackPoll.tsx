@@ -14,16 +14,17 @@ interface FeedbackPollProps {
     more: number;
   };
   userVote?: 'launch' | 'research' | 'more' | null;
+  isDemo?: boolean; // [New] Demo Mode
 }
 
-export function FeedbackPoll({ projectId, initialCounts, userVote }: FeedbackPollProps) {
+export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = false }: FeedbackPollProps) {
   const [selected, setSelected] = useState<string | null>(userVote || null);
   const [counts, setCounts] = useState(initialCounts || { launch: 0, research: 0, more: 0 });
   const [isVoting, setIsVoting] = useState(false);
 
   // Fetch Poll Data on Mount
   React.useEffect(() => {
-    if (!projectId) return;
+    if (!projectId || isDemo) return; // Skip in demo
     const fetchPoll = async () => {
         try {
             const { data: { session } } = await supabase.auth.getSession();
@@ -43,12 +44,12 @@ export function FeedbackPoll({ projectId, initialCounts, userVote }: FeedbackPol
         }
     };
     fetchPoll();
-  }, [projectId]);
+  }, [projectId, isDemo]);
 
   const handleVote = async (type: 'launch' | 'research' | 'more') => {
     if (isVoting) return;
     
-    // Optimistic UI Update
+    // Optimistic UI / Demo Logic Base is same
     const prevSelected = selected;
     const prevCounts = { ...counts };
     let newVoteType: string | null = type;
@@ -75,6 +76,11 @@ export function FeedbackPoll({ projectId, initialCounts, userVote }: FeedbackPol
         }
         return newCounts;
       });
+    }
+
+    if (isDemo) {
+        toast.success(newVoteType ? "[데모] 소중한 의견 감사합니다! 🎉" : "[데모] 투표를 취소했습니다.");
+        return;
     }
 
     setIsVoting(true);

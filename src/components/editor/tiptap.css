@@ -64,8 +64,12 @@
   border-left: 4px solid #10b981;
   padding-left: 1.5rem;
   margin: 1.5rem 0;
-  font-style: italic;
+  font-style: normal;
   color: #6b7280;
+  background: #f9fafb; /* 선택적: 배경색 추가하여 구획 명확히 */
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-radius: 0 0.5rem 0.5rem 0;
 }
 
 .ProseMirror code {

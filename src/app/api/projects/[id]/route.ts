@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase as supabaseAnon } from '@/lib/supabase/client';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
+import { GENRE_TO_CATEGORY_ID } from '@/lib/constants';
 
 export async function GET(
   request: NextRequest,
@@ -168,12 +169,12 @@ export async function PUT(
     let finalContent = content_text || content || bodyContent || text; 
 
     // Assets & Custom Data Handling (Smart Merge)
-    let finalCustomData = undefined; // undefined면 업데이트 쿼리에서 제외됨
+    let finalCustomData: any = undefined; // Keep as Object for JSONB
     
     // 뭔가 변경사항(custom_data, assets)이 있을 때만 계산
     if (custom_data !== undefined || assets !== undefined) {
         try {
-            // 1) 기존 데이터 파싱
+            // 1) 기존 데이터 파싱 (객체화)
             let baseData = {};
             if (existingProject.custom_data) {
                 baseData = typeof existingProject.custom_data === 'string' 
@@ -193,13 +194,12 @@ export async function PUT(
                 (baseData as any).assets = assets;
             }
 
-            finalCustomData = JSON.stringify(baseData);
+            finalCustomData = baseData; // 객체 그대로 저장
         } catch (e) {
             console.error('[API] Custom Data Merge Error:', e);
-            // 파싱 에러 시 안전하게: 기존 거 무시하고 새 거만 적용 시도하거나, 에러 리턴?
-            // 여기선 assets가 있으면 그것만이라도 살리는 방향
-            if (assets) finalCustomData = JSON.stringify({ assets });
-            else if (custom_data) finalCustomData = typeof custom_data === 'string' ? custom_data : JSON.stringify(custom_data);
+            // 에러 시 복구 시도
+            if (assets) finalCustomData = { assets };
+            else if (custom_data) finalCustomData = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
         }
     }
 
@@ -248,11 +248,9 @@ export async function PUT(
     // [New] Fields 매핑 동기화
     // custom_data가 변경되었을 때만 수행 (finalCustomData가 있으면)
     if (finalCustomData) { 
-        // ... (existing field sync logic with finalCustomData)
         try {
-             // Use finalCustomData strictly
-             const parsedCustom = JSON.parse(finalCustomData);
-             const fieldSlugs = parsedCustom.fields; 
+             // finalCustomData is already an Object
+             const fieldSlugs = finalCustomData.fields; 
 
             // 기존 매핑 삭제
             await (supabaseAdmin as any).from('project_fields').delete().eq('project_id', id);
@@ -275,15 +273,13 @@ export async function PUT(
     }
     
     // [New] Category 매핑 동기화
-    if (finalCustomData) { // Use finalCustomData here too
+    if (finalCustomData) { 
         try {
-            const parsedCustom = JSON.parse(finalCustomData); // Use finalCustomData
-            const genres = parsedCustom.genres || [];
+            const genres = finalCustomData.genres || [];
             
             await (supabaseAdmin as any).from('project_categories').delete().eq('project_id', id);
 
             if (Array.isArray(genres) && genres.length > 0) {
-                const { GENRE_TO_CATEGORY_ID } = await import('@/lib/constants');
                 const categoryMappings = genres.map((genreSlug: string) => {
                         const catId = GENRE_TO_CATEGORY_ID[genreSlug];
                         return catId ? { project_id: parseInt(id), category_id: catId, category_type: 'genre' } : null;

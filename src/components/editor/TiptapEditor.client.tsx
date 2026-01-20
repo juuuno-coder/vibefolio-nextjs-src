@@ -156,22 +156,37 @@ export default function TiptapEditor({
         class: 'prose prose-lg max-w-none focus:outline-none min-h-[500px] px-8 py-6 editor-blocks',
       },
       handleDrop: (view, event, slice, moved) => {
-        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
-          const file = event.dataTransfer.files[0];
-          if (file.type.startsWith('image/')) {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+          const files = Array.from(event.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+          
+          if (files.length > 0) {
             event.preventDefault();
             const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
+            const pos = coordinates ? coordinates.pos : view.state.selection.from;
             
             setUploading(true);
-            uploadImage(file, 'projects')
-              .then((url) => {
-                 if (coordinates) {
-                   view.dispatch(view.state.tr.insert(coordinates.pos, view.state.schema.nodes.image.create({ src: url })));
+            
+            // Upload all images in parallel
+            Promise.all(files.map(file => uploadImage(file, 'projects')))
+              .then((urls) => {
+                 if (urls.length > 0) {
+                   const nodes = urls.map(url => view.state.schema.nodes.image.create({ src: url }));
+                   // Insert images at the drop position
+                   const tr = view.state.tr;
+                   // Insert one by one or as a fragment? Fragment is better but let's do safe logic
+                   // We insert in reverse order if we insert at same pos, but inserting at pos + offset is hard.
+                   // Let's insert all at 'pos' position, they will push each other.
+                   // To keep order [1,2,3], insert 3, then 2, then 1? No, Tiptap inserts at pos.
+                   
+                   // Best approach: Insert structured fragment
+                   // view.dispatch(tr.insert(pos, nodes));
+                   // Note: 'insert' accepts a node or array of nodes (fragment)
+                   view.dispatch(tr.insert(pos, nodes));
                  }
               })
               .catch((error) => {
                 console.error('Drop upload failed:', error);
-                toast.error('이미지 업로드에 실패했습니다.');
+                toast.error(`${files.length}개 이미지 업로드 중 오류가 발생했습니다.`);
               })
               .finally(() => {
                 setUploading(false);
@@ -225,12 +240,20 @@ export default function TiptapEditor({
   }, [editor]);
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && editor) {
+    const files = e.target.files;
+    if (files && files.length > 0 && editor) {
       setUploading(true);
+      const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+
       try {
-        const url = await uploadImage(file);
-        editor.chain().focus().setImage({ src: url }).run();
+        const urls = await Promise.all(imageFiles.map(file => uploadImage(file)));
+        if (urls.length > 0) {
+            editor.chain().focus().setImage({ src: urls[0] }).run(); // First one normally
+            // Insert others
+            urls.slice(1).forEach(url => {
+                editor.chain().setImage({ src: url }).run();
+            });
+        }
       } catch (error) {
         console.error('Image upload failed:', error);
         toast.error('이미지 업로드에 실패했습니다.');
@@ -471,6 +494,7 @@ export default function TiptapEditor({
         ref={fileInputRef}
         onChange={handleFileUpload}
         accept="image/*"
+        multiple
         className="hidden"
       />
     </div>

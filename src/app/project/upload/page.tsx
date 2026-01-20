@@ -524,9 +524,16 @@ export default function TiptapUploadPage() {
       const url = editId ? `/api/projects/${editId}` : '/api/projects';
       const method = editId ? 'PUT' : 'POST';
 
+      // Get session token for secure API call
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           user_id: userId,
           category_id,
@@ -608,11 +615,18 @@ export default function TiptapUploadPage() {
   };
 
   const handleSidebarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && editor) {
+    const files = e.target.files;
+    if (files && files.length > 0 && editor) {
       try {
-        const url = await uploadImage(file);
-        editor.chain().focus().setImage({ src: url }).run();
+        const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+        const urls = await Promise.all(imageFiles.map(file => uploadImage(file)));
+        
+        if (urls.length > 0) {
+           editor.chain().focus().run();
+           urls.forEach(url => {
+               editor.chain().setImage({ src: url }).run();
+           });
+        }
       } catch (error) {
         console.error('Image upload failed:', error);
         toast.error('이미지 업로드에 실패했습니다.');
@@ -1455,7 +1469,7 @@ export default function TiptapUploadPage() {
 
         {/* Right Sidebar (Sticky) */}
         <div className="hidden xl:block w-[320px] flex-shrink-0">
-           <div className="sticky top-28">
+           <div className="sticky top-32 max-h-[calc(100vh-160px)] overflow-y-auto custom-scrollbar pr-2">
              <EditorSidebar 
                onAddText={handleAddText}
                onAddImage={handleSidebarImageClick}
@@ -1472,12 +1486,13 @@ export default function TiptapUploadPage() {
              />
            </div>
            
-           {/* Hidden File Input for Sidebar (Single Image) */}
+           {/* Hidden File Input for Sidebar (Multi Image) */}
            <input 
              type="file"
              ref={sidebarFileInputRef}
              className="hidden"
              accept="image/*"
+             multiple
              onChange={handleSidebarFileChange}
            />
         </div>

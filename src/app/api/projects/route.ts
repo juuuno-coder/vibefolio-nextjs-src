@@ -424,12 +424,47 @@ export async function POST(request: NextRequest) {
         }
     }
 
-    // [New] 컬렉션(시리즈)에 추가 (새 에피소드 연결)
-    const { collaborator_emails, collection_id } = body;
+    // [New] 시리즈(에피소드) 연재 기능
+    // 'collection'은 북마크 용도, 'series'는 연재 용도로 구분합니다.
+    const { collaborator_emails, series_id, collection_id } = body;
     
-    if (data && data.project_id && collection_id) {
+    // 1. 시리즈(에피소드)로 추가하는 경우 (우선순위 높음)
+    if (data && data.project_id && series_id) {
+         try {
+             // 소유권 확인
+             const { data: collection } = await (supabaseAdmin as any)
+                .from('Collection')
+                .select('user_id, type')
+                .eq('collection_id', series_id)
+                .single();
+             
+             if (collection && collection.user_id === user_id) {
+                 // 타입이 'series'가 아니라면 업데이트 (명시적 구분)
+                 if (collection.type !== 'series') {
+                     await (supabaseAdmin as any)
+                        .from('Collection')
+                        .update({ type: 'series' })
+                        .eq('collection_id', series_id);
+                 }
+
+                 // 에피소드 추가
+                 await (supabaseAdmin as any)
+                    .from('CollectionItem')
+                    .insert({ 
+                        collection_id: series_id, 
+                        project_id: data.project_id 
+                    });
+                 console.log(`[API] Added project ${data.project_id} to SERIES ${series_id}`);
+             } else {
+                 console.warn(`[API] Series ${series_id} not found or permission denied`);
+             }
+         } catch (e) {
+             console.error('[API] Failed to add to series:', e);
+         }
+    }
+    // 2. 일반 컬렉션(북마크)에 추가하는 경우 (하위 호환성)
+    else if (data && data.project_id && collection_id) {
         try {
-             // 1. 컬렉션 소유권 확인
              const { data: collection } = await (supabaseAdmin as any)
                 .from('Collection')
                 .select('user_id')
@@ -437,16 +472,13 @@ export async function POST(request: NextRequest) {
                 .single();
              
              if (collection && collection.user_id === user_id) {
-                 // 2. 컬렉션에 추가
                  await (supabaseAdmin as any)
                     .from('CollectionItem')
                     .insert({ 
                         collection_id: collection_id, 
                         project_id: data.project_id 
                     });
-                 console.log(`[API] Added project ${data.project_id} to collection ${collection_id}`);
-             } else {
-                 console.warn(`[API] Collection ${collection_id} not found or not owned by user ${user_id}`);
+                 console.log(`[API] Added project ${data.project_id} to Collection ${collection_id}`);
              }
         } catch (e) {
             console.error('[API] Failed to add to collection:', e);
