@@ -19,15 +19,32 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 2. Ownership Check
+  // 2. Ownership Check & Current Data Fetch
   const { data: project } = await supabaseAdmin
     .from("Project")
-    .select("user_id")
+    .select("user_id, content_text, description") // Fetch content for backup
     .eq("project_id", projectId)
     .single();
 
   if (!project || project.user_id !== user.id) {
     return NextResponse.json({ error: "Forbidden: You don't own this project" }, { status: 403 });
+  }
+
+  // [New] Backup Current State (Auto-Archiving)
+  // Check if content exists to backup
+  if (project.content_text) {
+      try {
+        await (supabaseAdmin as any).from("ProjectVersion").insert({
+            project_id: Number(projectId),
+            version_name: `Backup (${new Date().toLocaleString('ko-KR')})`,
+            content_text: project.content_text,
+            content_html: project.content_text, // Assuming same content
+            changelog: "Automatic backup before new version update",
+            created_at: new Date().toISOString()
+        });
+      } catch (backupError) {
+          console.warn("Backup failed (non-critical):", backupError);
+      }
   }
 
   // 3. Parse Body
