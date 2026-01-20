@@ -21,13 +21,24 @@ export async function POST(
   }
 
   // 2. Call RPC to deduct points and promote project
+  // 1.5 Parse Body (Get options)
+  let options = {};
+  try {
+    const body = await req.json();
+    if (body.options) options = body.options;
+  } catch (e) {
+    // Ignore parsing error, use default options
+  }
+
+  // 2. Call RPC to deduct points and promote project
   // Cost default: 5 points
   const COST = 5;
 
   const { data, error } = await supabaseAdmin.rpc('request_project_feedback', {
       p_project_id: Number(projectId),
       p_user_id: user.id,
-      p_cost: COST
+      p_cost: COST,
+      p_options: options
   });
 
   if (error) {
