@@ -1008,8 +1008,8 @@ export default function TiptapUploadPage() {
                   },
                   {
                     value: 'unlisted' as const,
-                    title: '링크만 공개',
-                    desc: '링크를 아는 사람만 볼 수 있습니다',
+                    title: '링크만 공개 (피드백 전용)',
+                    desc: '메인에 노출되지 않으며, 링크 공유로 피드백을 받을 수 있습니다',
                     icon: '🔗',
                   },
                   {
