@@ -5,11 +5,17 @@ DROP POLICY IF EXISTS "Users can delete own project" ON "Project";
 DROP POLICY IF EXISTS "Users can insert own project" ON "Project";
 DROP POLICY IF EXISTS "Enable read access for all users" ON "Project";
 
+-- 기존 정책이 있다면 삭제하여 충돌 방지 (Idempotent)
+DROP POLICY IF EXISTS "Enable read access for public and owners" ON "Project";
+DROP POLICY IF EXISTS "Enable update for owners" ON "Project";
+DROP POLICY IF EXISTS "Enable delete for owners" ON "Project";
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON "Project";
+
 -- 1. 조회 (SELECT): 공개(public) 프로젝트이거나, 자신이 작성자인(user_id) 경우 허용
 CREATE POLICY "Enable read access for public and owners"
 ON "Project" FOR SELECT
 USING (
-  visibility = 'public' 
+  visibility = 'public'
   OR auth.uid() = user_id
 );
 
