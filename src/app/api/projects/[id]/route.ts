@@ -13,7 +13,8 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const { data, error } = await (supabaseAnon as any)
+    const supabase = createClient();
+    const { data, error } = await supabase
       .from('Project')
       .select(`
         *,
@@ -51,7 +52,7 @@ export async function GET(
     }
 
     // 조회수 증가
-    await (supabaseAnon as any)
+    await supabaseAdmin
       .from('Project')
       .update({ views: (data.views || 0) + 1 })
       .eq('project_id', id);

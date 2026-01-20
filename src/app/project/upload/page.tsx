@@ -158,13 +158,16 @@ export default function TiptapUploadPage() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      
       if (!user) {
         toast.error("프로젝트를 등록하려면 먼저 로그인해주세요.");
         router.push("/login");
         return;
       }
       setUserId(user.id);
+      const token = session.access_token;
 
       // 수정 모드 또는 버전 모드일 경우 데이터 로드 (권한 체크 및 컨텍스트용)
       if (editId || isVersionMode) {
@@ -172,7 +175,11 @@ export default function TiptapUploadPage() {
         const targetId = editId || projectIdParam;
         
         try {
-          const res = await fetch(`/api/projects/${targetId}`);
+          const res = await fetch(`/api/projects/${targetId}`, {
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          });
           if (!res.ok) throw new Error("프로젝트를 불러올 수 없습니다.");
           const { project } = await res.json();
           
