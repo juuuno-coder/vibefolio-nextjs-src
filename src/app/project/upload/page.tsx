@@ -454,7 +454,7 @@ export default function TiptapUploadPage() {
                 body: JSON.stringify({
                     version_name: finalTitle,
                     content_html: content,
-                    content_text: plainText, 
+                    content_text: content, // Send HTML to update main Project table correctly
                     images: images,
                     changelog: finalSummary
                 })
