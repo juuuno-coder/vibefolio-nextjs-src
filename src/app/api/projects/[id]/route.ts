@@ -102,6 +102,12 @@ export async function PUT(
                      email: userData.user?.email 
                  };
              }
+        } else {
+             // [Fix] Support JWT Token for Client-side requests
+             const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+             if (user) {
+                 authenticatedUser = { id: user.id, email: user.email };
+             }
         }
     } 
     
@@ -316,15 +322,23 @@ export async function DELETE(
              if (keyRecord) {
                  const { data: userData } = await supabaseAdmin.auth.admin.getUserById(keyRecord.user_id);
                  authenticatedUser = { id: keyRecord.user_id, email: userData.user?.email };
+                 // isApiContext = true; // Mark as API Context - Not needed for DELETE
+             }
+        } else {
+             // [Fix] Support JWT Token for Client-side requests
+             const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+             if (user) {
+                 authenticatedUser = { id: user.id, email: user.email };
              }
         }
     } 
     
-    if (!authenticatedUser) {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) authenticatedUser = { id: user.id, email: user.email };
-    }
+    // The following block is removed as the JWT handling is now part of the 'if (authHeader)' block
+    // if (!authenticatedUser) {
+    //     const supabase = createClient();
+    //     const { data: { user } } = await supabase.auth.getUser();
+    //     if (user) authenticatedUser = { id: user.id, email: user.email };
+    // }
 
     if (!authenticatedUser) {
         return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });

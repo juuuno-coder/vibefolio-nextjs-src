@@ -208,8 +208,13 @@ export async function POST(request: NextRequest) {
                  return NextResponse.json({ error: 'Invalid API Key', code: 'INVALID_KEY' }, { status: 401 });
              }
         } else {
-             // vf_가 아니면 토큰 형식이 잘못됨 (JWT 인증은 이 경로로 처리하지 않음)
-             return NextResponse.json({ error: 'Invalid Authorization Header Format', code: 'INVALID_AUTH_FORMAT' }, { status: 401 });
+             // [Fix] Support JWT Token for Client-side requests
+             const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+             if (user) {
+                 authenticatedUserId = user.id;
+             } else {
+                 return NextResponse.json({ error: 'Invalid Token', code: 'INVALID_TOKEN' }, { status: 401 });
+             }
         }
     } 
     // [2] Session Authentication (Cookie) - Only if no Auth Header
