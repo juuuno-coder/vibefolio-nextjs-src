@@ -152,16 +152,21 @@ export default function AdminPage() {
           const d = new Date();
           d.setDate(d.getDate() - i);
           
-          // [Fix] UTC(`toISOString`)가 아닌 KST(로컬) 기준으로 날짜 생성
-          // 새벽 시간에 UTC 변환 시 전날로 잡히는 문제 해결
+          // [Fix] 날짜 범위 생성 수정 (로컬 시간 기준 -> UTC ISO 변환)
+          // 브라우저가 KST라고 가정할 때 안전하게 UTC 범위를 생성합니다.
+          const startDate = new Date(d);
+          startDate.setHours(0, 0, 0, 0);
+          
+          const endDate = new Date(d);
+          endDate.setHours(23, 59, 59, 999);
+
           const year = d.getFullYear();
           const month = String(d.getMonth() + 1).padStart(2, '0');
           const day = String(d.getDate()).padStart(2, '0');
           const dateStr = `${year}-${month}-${day}`;
 
-          // DB 쿼리 시 KST(+09:00) 타임존 명시 (한국 시간 기준 00:00~23:59)
-          const queryDateStart = `${dateStr}T00:00:00+09:00`;
-          const queryDateEnd = `${dateStr}T23:59:59+09:00`;
+          const queryDateStart = startDate.toISOString();
+          const queryDateEnd = endDate.toISOString();
 
           // 4가지 지표 병렬 조회
           const [visitRes, userRes, projectRes, recruitRes] = await Promise.all([

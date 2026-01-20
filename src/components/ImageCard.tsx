@@ -184,19 +184,7 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
               )}
           </div>
 
-          {/* 카테고리 & 분야 뱃지 (우측 상단) */}
-          <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-1.5 pointer-events-none">
-            {categoryName && (
-              <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-medium px-2 py-1 rounded-md border border-white/10 shadow-sm">
-                {categoryName}
-              </span>
-            )}
-            {fieldLabel && (
-              <span className="bg-white/90 backdrop-blur-md text-slate-700 text-[10px] font-bold px-2 py-1 rounded-md shadow-sm border border-slate-100">
-                {fieldLabel}
-              </span>
-            )}
-          </div>
+          {/* [Removed] 카테고리 & 분야 뱃지 제거됨 */}
           
             {imgError ? (
             <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
