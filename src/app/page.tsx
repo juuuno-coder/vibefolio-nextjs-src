@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useCallback } from "react";
+import React, { Suspense, useState, useEffect, useCallback } from "react";
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,9 @@ function HomeContent() {
   const [userInterests, setUserInterests] = useState<{ genres: string[]; fields: string[] } | null>(null);
   const [usePersonalized, setUsePersonalized] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  
+  // Ref for checking loading status without triggering re-memoization of loadProjects
+  const isFetchingRef = React.useRef(false);
 
   // 온보딩 트리거 체크
   useEffect(() => {
@@ -130,10 +133,12 @@ function HomeContent() {
 
   const loadProjects = useCallback(
     async (pageNum = 1, reset = false) => {
-      if (loading && !reset) return;
+      if (isFetchingRef.current && !reset) return;
+      
       if (reset) {
           setLoading(true);
           setHasMore(true);
+          isFetchingRef.current = true;
       }
       try {
         const limit = 20;
@@ -250,9 +255,10 @@ function HomeContent() {
         console.error("프로젝트 로딩 실패:", e);
       } finally {
         setLoading(false);
+        isFetchingRef.current = false;
       }
     },
-    [loading, searchQuery, selectedCategory, selectedFields]
+    [searchQuery, selectedCategory, selectedFields]
   );
 
   // 검색어, 카테고리, 분야 변경 시 데이터 리셋 및 로드

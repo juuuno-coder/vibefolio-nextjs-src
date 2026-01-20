@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import React, { Suspense, useState, useEffect, useCallback } from "react";
 import Image from 'next/image';
 import { ImageOff } from 'lucide-react';
 
@@ -27,6 +27,12 @@ export function OptimizedImage({
 }: OptimizedImageProps) {
   const [imgSrc, setImgSrc] = useState(src);
   const [error, setError] = useState(false);
+
+  // Sync state with src prop (fix for infinite scroll/stale images)
+  useEffect(() => {
+    setImgSrc(src);
+    setError(false);
+  }, [src]);
 
   const handleError = () => {
     if (imgSrc !== fallbackSrc) {
