@@ -100,7 +100,18 @@ function ReviewContent() {
   }, [project]);
 
   const isAB = config.isABMode || modeParam === 'ab' || !!userUrl2;
-  const url1 = config.url1 || (userUrl1 ? decodeURIComponent(userUrl1) : null);
+  
+  // URL Logic: custom_data.url1 -> Query Param -> Project Main Image/URL
+  const url1 = React.useMemo(() => {
+    if (config.url1) return config.url1;
+    if (userUrl1) return decodeURIComponent(userUrl1);
+    
+    // Fallback to project image/url columns
+    const p = project as any;
+    if (!p) return null;
+    return p.url || p.image_url || p.thumbnail_url || null;
+  }, [config.url1, userUrl1, project]);
+
   const url2 = config.url2 || (userUrl2 ? decodeURIComponent(userUrl2) : null);
 
   // 1. Auth & Data Fetch
@@ -122,7 +133,7 @@ function ReviewContent() {
       console.log("[Review] Fetching project data for ID:", projectId);
       const { data, error } = await supabase
         .from('Project')
-        .select('project_id, title, user_id, custom_data')
+        .select('project_id, title, user_id, custom_data, thumbnail_url, image_url, url')
         .eq('project_id', Number(projectId))
         .single();
 
