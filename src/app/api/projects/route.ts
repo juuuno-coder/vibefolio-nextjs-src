@@ -564,7 +564,8 @@ export async function POST(request: NextRequest) {
                     reason: '프로젝트 업로드 보상'
                 });
             
-             // 4. Send Notification
+             // 4. Send Notification (Duplicate Issue Fix: Disabled temporarily)
+             /*
              await (supabaseAdmin as any)
                 .from('notifications')
                 .insert({
@@ -575,6 +576,7 @@ export async function POST(request: NextRequest) {
                     link: '/mypage',
                     read: false
                 });
+             */
              
              console.log(`[Point System] Awarded ${REWARD} points to user ${user_id} for upload.`);
              } // Close else

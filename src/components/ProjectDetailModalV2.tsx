@@ -1247,7 +1247,8 @@ export function ProjectDetailModalV2({
                    
                    {/* Feedback Integration Section */}
                    {/* Feedback Integration Section */}
-             {(project as any).is_feedback_requested && ((project as any).allow_michelin_rating || (project as any).allow_stickers) && (
+                   {/* Feedback Integration Section */}
+             {isFeedbackRequested && ((project as any).allow_michelin_rating || (project as any).allow_stickers) && (
                <div id="feedback-section" className="w-full mt-24 border-t-2 border-dashed border-gray-100 pt-16 pb-8 space-y-12">
                  <div className="text-center mb-8 animate-in fade-in slide-in-from-bottom-2 duration-700">
                     <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-full border border-gray-200 text-gray-600 shadow-sm">

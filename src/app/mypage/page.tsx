@@ -309,7 +309,7 @@ export default function MyPage() {
       
       if (!response.ok) throw new Error('삭제 실패');
       
-      setProjects(prev => prev.filter(p => p.id !== projectId));
+      setProjects(prev => prev.filter(p => String(p.id) !== String(projectId)));
       setStats(prev => ({ ...prev, projects: prev.projects - 1 }));
       alert("프로젝트가 삭제되었습니다.");
     } catch (err) {
