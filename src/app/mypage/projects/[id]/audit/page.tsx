@@ -44,7 +44,7 @@ export default function AuditReportPage() {
         const { data: projectData, error: pError } = await supabase
           .from('Project')
           .select('*')
-          .eq('project_id', projectId)
+          .eq('project_id', Number(projectId))
           .single();
         
         if (pError) throw pError;
@@ -56,18 +56,18 @@ export default function AuditReportPage() {
         setProject({ ...projectData, custom_data: customData });
 
         // 2. Fetch All Ratings
-        const { data: ratingData } = await supabase
-          .from('ProjectRating')
+        const { data: ratingData } = await (supabase
+          .from('ProjectRating') as any)
           .select('*')
-          .eq('project_id', projectId);
+          .eq('project_id', Number(projectId));
         
         setRatings(ratingData || []);
 
         // 3. Fetch All Polls
-        const { data: pollData } = await supabase
-          .from('ProjectPoll')
+        const { data: pollData } = await (supabase
+          .from('ProjectPoll') as any)
           .select('*')
-          .eq('project_id', projectId);
+          .eq('project_id', Number(projectId));
         
         setPolls(pollData || []);
 
@@ -301,36 +301,64 @@ export default function AuditReportPage() {
             </div>
             <div className="divide-y divide-white/5">
                {ratings.length > 0 ? (
-                 ratings.map((r, i) => (
+                ratings.map((r, i) => (
                     <div key={i} className="p-8 hover:bg-white/[0.02] transition-colors group">
-                       <div className="flex items-center justify-between mb-4">
+                       <div className="flex items-center justify-between mb-6">
                           <div className="flex items-center gap-3">
-                             <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-xs">
-                                USER
+                             <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-xs border border-white/10 text-slate-400">
+                                {i + 1}
                              </div>
                              <div>
-                                <h4 className="text-sm font-black">익명의 전문가</h4>
-                                <p className="text-[10px] text-slate-500">{dayjs(r.created_at).format('YYYY.MM.DD HH:mm')}</p>
+                                <h4 className="text-sm font-black">익명의 전문가 {i + 1}</h4>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{dayjs(r.created_at).format('YYYY.MM.DD HH:mm')}</p>
                              </div>
                           </div>
-                          <div className="flex items-center gap-1 px-3 py-1 bg-white/5 rounded-full">
-                             <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                             <span className="text-xs font-black">{r.score?.toFixed(1) || '0.0'}</span>
+                          <div className="flex items-center gap-1 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-2xl">
+                             <Star className="w-3 h-3 text-green-400 fill-green-400" />
+                             <span className="text-sm font-black text-green-400">{r.score?.toFixed(1) || '0.0'}</span>
                           </div>
                        </div>
-                       <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                          {project.custom_data?.allow_secret_comments ? (
-                             r.comment || "별도의 텍스트 피드백이 없습니다."
-                          ) : (
-                             <span className="italic opacity-50">비밀 댓글 설정으로 인해 창작자에게만 공개됩니다.</span>
-                          )}
-                       </p>
+
+                       {/* Custom Answers Analysis */}
+                       {project.custom_data?.audit_questions?.length > 0 && r.custom_answers && (
+                          <div className="mb-8 space-y-4">
+                             {project.custom_data.audit_questions.map((q: string, qIdx: number) => (
+                                <div key={qIdx} className="bg-white/[0.03] rounded-2xl p-5 border border-white/5 group-hover:bg-white/[0.05] transition-colors">
+                                   <div className="flex items-start gap-3 mb-2">
+                                      <span className="text-[10px] font-black text-slate-500 pt-0.5">Q{qIdx + 1}</span>
+                                      <p className="text-xs font-bold text-slate-300 leading-relaxed">{q}</p>
+                                   </div>
+                                   <p className="text-sm font-medium text-white pl-7 border-l border-white/10 ml-1.5 py-1">
+                                      {r.custom_answers[q] || <span className="text-slate-600 italic">답변이 없습니다.</span>}
+                                   </p>
+                                </div>
+                             ))}
+                          </div>
+                       )}
+                       
+                       <div className="space-y-3 mb-6">
+                          <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                             <MessageSquare className="w-3 h-3" /> 종합 개선 제안
+                          </h5>
+                          <div className="text-slate-300 text-sm leading-relaxed bg-white/5 p-6 rounded-3xl border border-white/5 italic">
+                             "{r.proposal || r.comment || "별도의 총평 제안이 없습니다."}"
+                          </div>
+                       </div>
+
                        <div className="flex flex-wrap gap-2">
-                          {reportStats?.radarData.map((d: any, idx: number) => (
-                            <span key={idx} className="px-2 py-0.5 bg-white/5 rounded-md text-[9px] font-bold text-slate-500 border border-white/5">
-                               {d.subject}: {r[`score_${idx+1}`] || 0}
-                            </span>
-                          ))}
+                          {project.custom_data?.custom_categories ? (
+                             project.custom_data.custom_categories.map((cat: any, idx: number) => (
+                                <span key={idx} className="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold text-slate-500 border border-white/5">
+                                   {cat.label}: {r[cat.id] || 0}
+                                </span>
+                             ))
+                          ) : (
+                             reportStats?.radarData.map((d: any, idx: number) => (
+                                <span key={idx} className="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold text-slate-500 border border-white/5">
+                                   {d.subject}: {r[`score_${idx+1}`] || 0}
+                                </span>
+                             ))
+                          )}
                        </div>
                     </div>
                  ))

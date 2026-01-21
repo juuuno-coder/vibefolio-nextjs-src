@@ -114,7 +114,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       
       const body = await req.json();
-      const { score, ...scores } = body;
+      const { score, proposal, custom_answers, ...scores } = body;
 
       // 1. Upsert Rating
       const { error: ratingError } = await supabaseAdmin
@@ -129,6 +129,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
           score_4: scores.score_4 || 0,
           score_5: scores.score_5 || 0,
           score_6: scores.score_6 || 0,
+          proposal: proposal,
+          custom_answers: custom_answers,
           updated_at: new Date().toISOString()
         }, { onConflict: 'project_id, user_id' });
 

@@ -43,6 +43,7 @@ function ViewerContent() {
   const [currentStep, setCurrentStep] = useState(0); 
   const [steps, setSteps] = useState(['rating', 'voting', 'proposal']);
   const [proposalContent, setProposalContent] = useState("");
+  const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
@@ -79,7 +80,24 @@ function ViewerContent() {
        setUser(user);
     };
 
-    Promise.all([fetchProject(), checkUser()]).finally(() => setLoading(false));
+    const fetchMyRating = async () => {
+       const { data: { user } } = await supabase.auth.getUser();
+       if (!user) return;
+       
+       const { data } = await (supabase as any)
+         .from('ProjectRating')
+         .select('proposal, custom_answers')
+         .eq('project_id', Number(projectId))
+         .eq('user_id', user.id)
+         .single();
+       
+       if (data) {
+          if (data.proposal) setProposalContent(data.proposal);
+          if (data.custom_answers) setCustomAnswers(data.custom_answers);
+       }
+    };
+
+    Promise.all([fetchProject(), checkUser(), fetchMyRating()]).finally(() => setLoading(false));
   }, [projectId, router]);
 
   // Resizing Logic
@@ -120,7 +138,40 @@ function ViewerContent() {
       return;
     }
     if (currentStep < steps.length - 1) setCurrentStep(prev => prev + 1);
-    else setIsSubmitted(true);
+    else handleFinalSubmit();
+  };
+
+  const handleFinalSubmit = async () => {
+    if (!user) {
+      toast.error("진단 완료를 위해 로그인이 필요합니다.");
+      router.push(`/login?returnUrl=${encodeURIComponent(window.location.href)}`);
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch(`/api/projects/${projectId}/rating`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          proposal: proposalContent,
+          custom_answers: customAnswers
+        })
+      });
+
+      if (!res.ok) throw new Error("Failed to save evaluation");
+      
+      setIsSubmitted(true);
+      toast.success("진단이 최종 완료되었습니다! 🎉");
+    } catch (e) {
+      console.error(e);
+      toast.error("진단 저장 중 오류가 발생했습니다.");
+    }
   };
 
   const handlePrevStep = () => {
@@ -146,20 +197,54 @@ function ViewerContent() {
     switch (stepType) {
       case 'rating': return <MichelinRating projectId={projectId || ""} ratingId={ratingId || undefined} />;
       case 'voting': return <FeedbackPoll projectId={projectId || ""} />;
-      case 'proposal': return (
-        <div className="space-y-6">
-           <div className="bg-slate-900 rounded-3xl p-8 text-white shadow-xl">
-              <h4 className="text-xl font-black mb-2 tracking-tight">최종 전문가 코멘트</h4>
-              <p className="text-slate-400 text-sm leading-relaxed">작업물의 완성도를 높이기 위한 구체적인 제안을 남겨주세요.</p>
-           </div>
-           <textarea 
-             value={proposalContent}
-             onChange={(e) => setProposalContent(e.target.value)}
-             placeholder="기획, 디자인, 기술적 관점에서 개선할 수 있는 점들을 자유롭게 적어주세요..."
-             className="w-full h-64 bg-slate-50 border-2 border-slate-100 rounded-3xl p-6 text-slate-800 focus:border-slate-900 focus:bg-white transition-all outline-none resize-none font-medium text-lg shadow-inner"
-           />
-        </div>
-      );
+      case 'proposal': 
+        const customQuestions = project?.custom_data?.audit_questions || [];
+        return (
+          <div className="space-y-8 pb-10">
+             <div className="bg-slate-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                   <Monitor size={80} />
+                </div>
+                <h4 className="text-xl font-black mb-2 tracking-tight flex items-center gap-2">
+                   <ChevronRight className="text-green-500" /> 핵심 역량 및 개선 제안
+                </h4>
+                <p className="text-slate-400 text-sm leading-relaxed">작업물의 가치를 높이기 위한 구체적인 제안을 남겨주세요.</p>
+             </div>
+
+             {/* Custom Questions Section */}
+             {customQuestions.length > 0 && (
+               <div className="space-y-8">
+                  {customQuestions.map((q: string, idx: number) => (
+                    <div key={idx} className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
+                       <div className="flex items-start gap-3">
+                          <span className="shrink-0 w-8 h-8 rounded-xl bg-green-500/10 text-green-600 flex items-center justify-center text-xs font-black border border-green-500/20">Q{idx+1}</span>
+                          <h5 className="text-lg font-black text-slate-900 leading-snug pt-1">{q}</h5>
+                       </div>
+                       <textarea 
+                         value={customAnswers[q] || ""}
+                         onChange={(e) => setCustomAnswers(prev => ({ ...prev, [q]: e.target.value }))}
+                         placeholder="이 질문에 대한 당신의 안목을 공유해 주세요..."
+                         className="w-full h-40 bg-white border-2 border-slate-100 rounded-[2.5rem] p-8 text-slate-800 focus:border-green-500 focus:ring-4 focus:ring-green-500/5 transition-all outline-none resize-none font-medium text-lg shadow-sm"
+                       />
+                    </div>
+                  ))}
+               </div>
+             )}
+
+             <div className="space-y-4 pt-4 border-t border-slate-100">
+                <div className="flex items-center gap-3">
+                   <span className="shrink-0 w-8 h-8 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center text-xs font-black">C</span>
+                   <h5 className="text-sm font-black text-slate-400 uppercase tracking-widest leading-snug">종합 총평 및 제안</h5>
+                </div>
+                <textarea 
+                  value={proposalContent}
+                  onChange={(e) => setProposalContent(e.target.value)}
+                  placeholder="기획, 디자인, 기술적 관점에서 전체적인 소감을 자유롭게 적어주세요..."
+                  className="w-full h-64 bg-slate-50 border-2 border-slate-100 rounded-[2.5rem] p-8 text-slate-800 focus:border-slate-900 focus:bg-white transition-all outline-none resize-none font-medium text-lg shadow-inner"
+                />
+             </div>
+          </div>
+        );
       default: return null;
     }
   };

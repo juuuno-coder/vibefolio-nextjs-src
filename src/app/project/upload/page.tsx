@@ -48,7 +48,8 @@ import {
   faUser,
   faImage,
   faPlus,
-  faTrash
+  faTrash,
+  faLightbulb
 } from "@fortawesome/free-solid-svg-icons";
 
 
@@ -159,6 +160,7 @@ export default function TiptapUploadPage() {
     { id: 'opt_3', label: "불합격드리겠습니다.", icon: 'XCircle', desc: '기획부터 다시 검토가 필요합니다.' }
   ]);
   const [pollDesc, setPollDesc] = useState<string>("");
+  const [auditQuestions, setAuditQuestions] = useState<string[]>([]);
 
   const handleLightroomImport = (images: string[]) => {
     if (!editor || images.length === 0) return;
@@ -260,6 +262,7 @@ export default function TiptapUploadPage() {
                     if (project.is_growth_requested !== undefined) setIsGrowthRequested(project.is_growth_requested);
                     if (custom.custom_categories) setCustomCategories(custom.custom_categories);
                     if (custom.poll_options) setPollOptions(custom.poll_options);
+                    if (custom.audit_questions) setAuditQuestions(custom.audit_questions);
                   } catch (e) {
                     console.error("Custom data parse error", e);
                   }
@@ -621,6 +624,7 @@ export default function TiptapUploadPage() {
             custom_categories: customCategories,
             poll_options: pollOptions,
             poll_desc: pollDesc,
+            audit_questions: auditQuestions,
           }),
           audit_deadline: auditDeadline ? new Date(auditDeadline).toISOString() : null,
           is_growth_requested: isGrowthRequested,
@@ -1475,6 +1479,66 @@ export default function TiptapUploadPage() {
                                 </div>
                              </div>
                            ))}
+                        </div>
+                     </div>
+
+                     {/* 2.6. Comprehensive Evaluation Custom Questions (New) */}
+                     <div className="space-y-6 pt-6 border-t border-white/10">
+                        <div className="flex justify-between items-center">
+                           <div className="space-y-1">
+                              <label className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                 <FontAwesomeIcon icon={faLightbulb} className="text-yellow-400" />
+                                 종합 평가 커스텀 질문
+                              </label>
+                              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">리뷰어에게 구체적으로 묻고 싶은 질문을 추가하세요 (1~3개)</p>
+                           </div>
+                           <Button 
+                             variant="ghost" 
+                             size="sm" 
+                             className="text-blue-500 font-bold hover:bg-white/10" 
+                             onClick={() => {
+                               if (auditQuestions.length < 3) {
+                                 setAuditQuestions([...auditQuestions, ""]);
+                               } else {
+                                 toast.error("질문은 최대 3개까지만 가능합니다.");
+                               }
+                             }}
+                           >
+                              <FontAwesomeIcon icon={faPlus} className="mr-2" /> 질문 추가
+                           </Button>
+                        </div>
+
+                        <div className="space-y-4">
+                           {auditQuestions.map((q, idx) => (
+                             <div key={idx} className="flex gap-4 items-center">
+                                <div className="flex-1 relative">
+                                   <Input 
+                                     value={q}
+                                     onChange={(e) => {
+                                       const newQs = [...auditQuestions];
+                                       newQs[idx] = e.target.value;
+                                       setAuditQuestions(newQs);
+                                     }}
+                                     placeholder={`질문 ${idx + 1}: 예) 이 앱의 유료 결제 모델에 대해 어떻게 생각하시나요?`}
+                                     className="bg-white/5 border-white/10 text-white text-xs h-12 rounded-2xl pl-12"
+                                   />
+                                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black text-[10px]">Q{idx + 1}</div>
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="text-slate-600 hover:text-red-500"
+                                  onClick={() => setAuditQuestions(auditQuestions.filter((_, i) => i !== idx))}
+                                >
+                                  <FontAwesomeIcon icon={faTrash} />
+                                </Button>
+                             </div>
+                           ))}
+                           {auditQuestions.length === 0 && (
+                             <div className="p-8 border-2 border-dashed border-white/5 rounded-3xl text-center">
+                                <p className="text-xs font-bold text-slate-600">추가된 커스텀 질문이 없습니다.</p>
+                             </div>
+                           )}
                         </div>
                      </div>
 
