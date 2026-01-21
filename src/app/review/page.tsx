@@ -441,7 +441,7 @@ function ReviewContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ y: "-100%", opacity: 0, transition: { duration: 0.8, ease: [0.33, 1, 0.68, 1] } }}
-            className="absolute inset-0 z-50 bg-black/10 flex flex-col items-center justify-center p-8 text-center"
+            className="absolute inset-0 z-50 bg-black/50 flex flex-col items-center justify-center p-8 text-center"
           >
              <motion.div 
                initial={{ y: 20, opacity: 0 }}
@@ -457,7 +457,7 @@ function ReviewContent() {
                      animate={{ opacity: 1, y: 0 }}
                      exit={{ opacity: 0, y: -10 }}
                      transition={{ duration: 0.5, ease: "easeInOut" }}
-                     className="text-white text-sm md:text-base font-bold tracking-widest uppercase"
+                     className="text-white text-lg md:text-xl font-bold tracking-widest uppercase"
                      style={{ fontFamily: 'Taenada' }}
                     >
                      {cycleTexts[cycleIndex]}
@@ -466,10 +466,10 @@ function ReviewContent() {
                 </div>
 
                 <div className="relative mb-6">
-                   <img src="/review/review.png" alt="Reviews" className="w-64 md:w-80 h-auto invert brightness-0" />
+                   <img src="/review/review.png" alt="Reviews" className="w-72 md:w-80 h-auto invert brightness-0" />
                 </div>
                 
-                <p className="text-slate-400 text-sm md:text-lg font-medium mb-16 max-w-md mx-auto leading-relaxed">
+                <p className="text-slate-400 text-base md:text-lg font-medium mb-16 max-w-md mx-auto leading-relaxed">
                    전문 평가위원이 되어<br/>
                    이 작품의 가치를 객관적으로 평가해 주세요.
                 </p>
@@ -482,7 +482,7 @@ function ReviewContent() {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setPhase('viewer')}
                 >
-                   <div className="relative w-48 h-48 md:w-80 md:h-80 overflow-hidden rounded-full p-2">
+                   <div className="relative w-72 h-72 md:w-96 md:h-96 overflow-hidden rounded-full p-2">
                       <img 
                         src="/review/cloche-cover.png" 
                         alt="Evaluation Cover" 
@@ -512,7 +512,7 @@ function ReviewContent() {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setPhase('viewer')}
                   >
-                   <div className="relative w-48 h-48 md:w-80 md:h-80 overflow-hidden rounded-full p-2">
+                   <div className="relative w-72 h-72 md:w-96 md:h-96 overflow-hidden rounded-full p-2">
                       <img 
                         src="/review/cloche-cover.png" 
                         alt="Evaluation Cover" 
@@ -531,7 +531,7 @@ function ReviewContent() {
                 onClick={() => setPhase('viewer')}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="relative px-16 py-6 bg-black text-white font-black text-xl shadow-2xl hover:shadow-[0_20px_50px_rgba(255,255,255,0.3)] transition-all uppercase tracking-widest border border-slate-800"
+                className="relative px-20 py-8 bg-black/80 text-white font-black text-2xl shadow-2xl hover:shadow-[0_20px_50px_rgba(255,255,255,0.3)] transition-all uppercase tracking-widest border border-slate-800 backdrop-blur-sm"
                 style={{
                   // Adjust percentages to change cut size. Closer to 0/100 = smaller cut.
                   // Current: 5% horizontal cut, 15% vertical cut
