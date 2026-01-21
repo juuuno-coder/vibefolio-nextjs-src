@@ -441,7 +441,7 @@ function ReviewContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ y: "-100%", opacity: 0, transition: { duration: 0.8, ease: [0.33, 1, 0.68, 1] } }}
-            className="absolute inset-0 z-50 bg-transparent flex flex-col items-center justify-center p-8 text-center"
+            className="absolute inset-0 z-50 bg-black/10 flex flex-col items-center justify-center p-8 text-center"
           >
              <motion.div 
                initial={{ y: 20, opacity: 0 }}
@@ -494,12 +494,12 @@ function ReviewContent() {
                          Mobile: Pulse continuously
                       */}
                       <div className="absolute inset-0 z-20 pointer-events-none mix-blend-soft-light transition-opacity duration-500 opacity-0 group-hover:opacity-100 md:group-hover:opacity-100">
-                         <div className="w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.6)_0%,_transparent_60%)]" />
+                         <div className="w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.6)_0%,_transparent_30%)]" />
                       </div>
                       
                       {/* Mobile Always Pulse */}
                       <div className="md:hidden absolute inset-0 z-20 pointer-events-none mix-blend-soft-light animate-pulse">
-                         <div className="w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4)_0%,_transparent_60%)]" />
+                         <div className="w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4)_0%,_transparent_30%)]" />
                       </div>
                    </div>
                    {isAB && <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">Selection A</div>}
@@ -519,7 +519,7 @@ function ReviewContent() {
                         className="w-full h-full object-contain drop-shadow-2xl grayscale brightness-110 group-hover:grayscale-0 transition-all duration-500 relative z-10" 
                       />
                       <div className="absolute inset-0 z-20 pointer-events-none mix-blend-soft-light transition-opacity duration-500 opacity-0 group-hover:opacity-100">
-                         <div className="w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.6)_0%,_transparent_60%)]" />
+                         <div className="w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.6)_0%,_transparent_30%)]" />
                       </div>
                    </div>
                     <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">Selection B</div>
