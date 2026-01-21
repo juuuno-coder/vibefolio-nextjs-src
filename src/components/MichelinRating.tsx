@@ -10,20 +10,22 @@ interface MichelinRatingProps {
   isDemo?: boolean; // [New] Demo Mode
 }
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   { id: 'score_1', label: '기획력', icon: Lightbulb, color: '#f59e0b', desc: '논리적 구조와 의도' },
   { id: 'score_2', label: '완성도', icon: Zap, color: '#3b82f6', desc: '디테일과 마감 수준' },
   { id: 'score_3', label: '독창성', icon: Target, color: '#10b981', desc: '작가 고유의 스타일' },
   { id: 'score_4', label: '상업성', icon: TrendingUp, color: '#ef4444', desc: '시장 가치와 잠재력' },
 ];
 
+const ICON_MAP: Record<string, any> = {
+  Lightbulb, Zap, Target, TrendingUp, Star, Info, Sparkles, MessageSquareQuote
+};
+
 export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProps) {
-  const [scores, setScores] = useState<Record<string, number>>({
-    score_1: 0, score_2: 0, score_3: 0, score_4: 0
-  });
-  const [averages, setAverages] = useState<Record<string, number>>({
-    score_1: 0, score_2: 0, score_3: 0, score_4: 0
-  });
+  const [projectData, setProjectData] = useState<any>(null);
+  const [categories, setCategories] = useState<any[]>(DEFAULT_CATEGORIES);
+  const [scores, setScores] = useState<Record<string, number>>({});
+  const [averages, setAverages] = useState<Record<string, number>>({});
   const [totalAvg, setTotalAvg] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,8 +35,10 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
 
   // 현재 내 점수들의 평균 계산 (실시간)
   const currentTotalAvg = useMemo(() => {
-    const sum = Object.values(scores).reduce((a, b) => a + b, 0);
-    return Number((sum / 4).toFixed(1));
+    const activeScores = Object.values(scores);
+    if (activeScores.length === 0) return 0;
+    const sum = activeScores.reduce((a, b) => a + b, 0);
+    return Number((sum / activeScores.length).toFixed(1));
   }, [scores]);
 
   const fetchAIAnalysis = async (scoresToAnalyze: any) => {
@@ -49,8 +53,8 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           scores: scoresToAnalyze,
-          projectTitle: "현재 프로젝트",
-          category: "포트폴리오"
+          projectTitle: projectData?.title || "현재 프로젝트",
+          category: projectData?.category || "포트폴리오"
         })
       });
       const data = await res.json();
@@ -63,7 +67,7 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
   };
 
   const fetchRatingData = async () => {
-    if (isDemo) return; // Skip API in demo
+    if (isDemo) return;
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const headers: any = {};
@@ -73,20 +77,44 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
       const data = await res.json();
 
       if (data.success) {
-        setAverages(data.averages);
-        setTotalAvg(data.totalAvg);
-        setTotalCount(data.totalCount);
-
-        if (data.myRating) {
-          setScores({
-            score_1: Number(data.myRating.score_1 || 0),
-            score_2: Number(data.myRating.score_2 || 0),
-            score_3: Number(data.myRating.score_3 || 0),
-            score_4: Number(data.myRating.score_4 || 0),
-          });
+        setProjectData(data.project);
+        
+        // 커스텀 카테고리 설정 확인
+        if (data.project?.custom_data?.custom_categories) {
+          const custom = data.project.custom_data.custom_categories.map((c: any) => ({
+            ...c,
+            icon: ICON_MAP[c.icon] || Target
+          }));
+          setCategories(custom);
+          
+          // 초기 점수 셋팅
+          const initialScores: Record<string, number> = {};
+          custom.forEach((c: any) => initialScores[c.id] = 0);
+          
+          if (data.myRating) {
+            custom.forEach((c: any) => {
+              initialScores[c.id] = Number(data.myRating[c.id] || 0);
+            });
+          }
+          setScores(initialScores);
+          setAverages(data.averages || {});
+        } else {
+          // 기본 카테고리 사용 시
+          if (data.myRating) {
+            setScores({
+              score_1: Number(data.myRating.score_1 || 0),
+              score_2: Number(data.myRating.score_2 || 0),
+              score_3: Number(data.myRating.score_3 || 0),
+              score_4: Number(data.myRating.score_4 || 0),
+            });
+          } else {
+            setScores({ score_1: 0, score_2: 0, score_3: 0, score_4: 0 });
+          }
+          setAverages(data.averages || {});
         }
         
-        // 데이터 로드 시 AI 분석 실행
+        setTotalAvg(data.totalAvg);
+        setTotalCount(data.totalCount);
         fetchAIAnalysis(data.averages);
       }
     } catch (e) {
@@ -96,17 +124,21 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
 
   useEffect(() => {
     if (projectId) fetchRatingData();
+    else if (isDemo) {
+        // 데모 모드 초기화
+        const initial: Record<string, number> = {};
+        DEFAULT_CATEGORIES.forEach(c => initial[c.id] = 0);
+        setScores(initial);
+    }
   }, [projectId]);
 
-  // [New] Auto-save debounced
   useEffect(() => {
-    // Don't auto-save if all scores are 0 (initial state)
     const hasValues = Object.values(scores).some(v => v > 0);
     if (!hasValues) return;
 
     const timer = setTimeout(() => {
       handleRatingSubmit();
-    }, 1500); // 1.5s debounce
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, [scores]);
@@ -162,13 +194,21 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
     const center = 100;
     const max = 5;
     const radius = 80 * scale;
-    const points = [
-      [center, center - (data.score_1 / max) * radius],
-      [center + (data.score_2 / max) * radius, center],
-      [center, center + (data.score_3 / max) * radius],
-      [center - (data.score_4 / max) * radius, center],
-    ];
-    return `M ${points[0][0]} ${points[0][1]} L ${points[1][0]} ${points[1][1]} L ${points[2][0]} ${points[2][1]} L ${points[3][0]} ${points[3][1]} Z`;
+    const numPoints = categories.length;
+    
+    if (numPoints < 3) return ""; // Radar needs at least 3 points
+    
+    const points = categories.map((cat, i) => {
+      const angle = (Math.PI * 2 * i) / numPoints - Math.PI / 2;
+      const score = data[cat.id] || 0;
+      const r = (score / max) * radius;
+      return [
+        center + r * Math.cos(angle),
+        center + r * Math.sin(angle)
+      ];
+    });
+
+    return `M ${points.map(p => `${p[0]} ${p[1]}`).join(' L ')} Z`;
   };
 
   return (
@@ -197,30 +237,54 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         {/* Radar Chart Visual */}
-        <div className="relative flex justify-center items-center py-12 bg-slate-50/50 rounded-[3rem] border border-slate-100 shadow-inner">
-            <svg width="100%" height="100%" viewBox="-30 -30 260 260" className="drop-shadow-2xl overflow-visible max-w-[280px]">
+            <svg width="100%" height="100%" viewBox="-40 -40 280 280" className="drop-shadow-2xl overflow-visible max-w-[300px]">
               {/* Radial Guides */}
               {[1, 0.8, 0.6, 0.4, 0.2].map((s, idx) => (
-                <path key={s} d={getRadarPath({ score_1: 5, score_2: 5, score_3: 5, score_4: 5 }, s)} fill={idx % 2 === 0 ? "rgba(0,0,0,0.02)" : "none"} stroke="#e2e8f0" strokeWidth="1" />
+                <path key={s} d={getRadarPath({ score_1: 5, score_2: 5, score_3: 5, score_4: 5, score_5: 5, score_6: 5 }, s)} fill={idx % 2 === 0 ? "rgba(0,0,0,0.02)" : "none"} stroke="#e2e8f0" strokeWidth="1" />
               ))}
               
-              {/* Axes */}
-              <line x1="100" y1="10" x2="100" y2="190" stroke="#e2e8f0" strokeWidth="1" strokeDasharray="2 2" />
-              <line x1="10" y1="100" x2="190" y2="100" stroke="#e2e8f0" strokeWidth="1" strokeDasharray="2 2" />
+              {/* Dynamic Axes */}
+              {categories.map((_, i) => {
+                const angle = (Math.PI * 2 * i) / categories.length - Math.PI / 2;
+                return (
+                  <line 
+                    key={i}
+                    x1="100" y1="100" 
+                    x2={100 + 90 * Math.cos(angle)} 
+                    y2={100 + 90 * Math.sin(angle)} 
+                    stroke="#e2e8f0" strokeWidth="1" strokeDasharray="2 2" 
+                  />
+                );
+              })}
               
               {/* Community Average (Dashed) */}
-              {totalAvg > 0 && (
+              {totalAvg > 0 && Object.keys(averages).length > 0 && (
                 <path d={getRadarPath(averages)} fill="rgba(0, 0, 0, 0.03)" stroke="rgba(0, 0, 0, 0.2)" strokeWidth="1.5" strokeDasharray="4 4" className="animate-in fade-in duration-1000" />
               )}
               
               {/* My Score (Solid) */}
-              <path d={getRadarPath(scores)} fill="rgba(245, 158, 11, 0.15)" stroke="#f59e0b" strokeWidth="4" strokeLinejoin="round" className="transition-all duration-500 ease-out drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
+              {Object.keys(scores).length > 0 && (
+                <path d={getRadarPath(scores)} fill="rgba(245, 158, 11, 0.15)" stroke="#f59e0b" strokeWidth="4" strokeLinejoin="round" className="transition-all duration-500 ease-out drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
+              )}
               
-              {/* Labels with better positioning to avoid clipping */}
-              <text x="100" y="-15" textAnchor="middle" className="text-[14px] font-black fill-slate-900 uppercase tracking-tighter">기획력</text>
-              <text x="215" y="105" textAnchor="start" className="text-[14px] font-black fill-slate-900 uppercase tracking-tighter">완성도</text>
-              <text x="100" y="225" textAnchor="middle" className="text-[14px] font-black fill-slate-900 uppercase tracking-tighter">독창성</text>
-              <text x="-15" y="105" textAnchor="end" className="text-[14px] font-black fill-slate-900 uppercase tracking-tighter">상업성</text>
+              {/* Dynamic Labels */}
+              {categories.map((cat, i) => {
+                const angle = (Math.PI * 2 * i) / categories.length - Math.PI / 2;
+                const r = 115;
+                const x = 100 + r * Math.cos(angle);
+                const y = 100 + r * Math.sin(angle);
+                return (
+                  <text 
+                    key={cat.id}
+                    x={x} y={y} 
+                    textAnchor="middle" 
+                    dominantBaseline="middle"
+                    className="text-[14px] font-black fill-slate-900 uppercase tracking-tighter"
+                  >
+                    {cat.label}
+                  </text>
+                );
+              })}
             </svg>
            
            {/* Center Score Badge */}
@@ -238,12 +302,12 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
 
         <div className="space-y-8">
           <div className="grid grid-cols-1 gap-8">
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <div key={cat.id} className="space-y-3 group/item">
                 <div className="flex justify-between items-end px-1">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-lg transition-transform group-hover/item:scale-110">
-                      <cat.icon className="w-6 h-6" />
+                      {React.createElement(cat.icon || Target, { className: "w-6 h-6" })}
                     </div>
                     <div>
                       <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{cat.label}</p>
@@ -251,7 +315,9 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
                     </div>
                   </div>
                   <div className="text-center">
-                    <span className="text-3xl font-black tabular-nums tracking-tighter" style={{ color: cat.color }}>{scores[cat.id].toFixed(1)}</span>
+                    <span className="text-3xl font-black tabular-nums tracking-tighter" style={{ color: cat.color || '#f59e0b' }}>
+                      {(scores[cat.id] || 0) > 0 ? (scores[cat.id] || 0).toFixed(1) : "0.0"}
+                    </span>
                     <p className="text-[8px] font-black text-slate-300 uppercase">Score</p>
                   </div>
                 </div>
@@ -262,8 +328,11 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
                      min="0" 
                      max="5" 
                      step="0.1" 
-                     value={scores[cat.id]} 
-                     onChange={(e) => { setScores(prev => ({ ...prev, [cat.id]: parseFloat(e.target.value) })); setIsEditing(true); }} 
+                     value={scores[cat.id] || 0} 
+                     onChange={(e) => { 
+                       setScores(prev => ({ ...prev, [cat.id]: parseFloat(e.target.value) })); 
+                       setIsEditing(true); 
+                     }} 
                      className="w-full h-2 bg-slate-100 rounded-full appearance-none cursor-pointer accent-amber-500 hover:accent-amber-600 transition-all z-10" 
                    />
                    <div className="absolute inset-0 flex justify-between px-1 pointer-events-none">
