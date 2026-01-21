@@ -2,6 +2,13 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 
 
+@font-face {
+    font-family: 'Taenada';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2210-2@1.0/Tenada.woff2') format('woff2');
+    font-weight: normal;
+    font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @tailwind base;

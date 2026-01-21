@@ -23,7 +23,8 @@ import {
   ClipboardCheck,
   PartyPopper,
   Compass,
-  History
+  History,
+  Play
 } from 'lucide-react';
 
 // Import existing components for reuse
@@ -142,6 +143,21 @@ function ReviewContent() {
   // Map evaluationStep to current index
   const currentStepIndex = Math.max(0, Math.min(evaluationStep - 1, availableSteps.length - 1));
   const currentStep = availableSteps[currentStepIndex];
+
+  // Cycling Text State
+  const [cycleIndex, setCycleIndex] = useState(0);
+  const cycleTexts = [
+     "합격? 보류? 불합격?",
+     "생존? 탈락?",
+     "기획력? 창의성? 완성도? 상업성?"
+  ];
+
+  useEffect(() => {
+     const interval = setInterval(() => {
+       setCycleIndex((prev) => (prev + 1) % cycleTexts.length);
+     }, 2000);
+     return () => clearInterval(interval);
+  }, []);
 
   // --- Persistence Logic ---
   // Load saved data when projectId changes
@@ -412,14 +428,26 @@ function ReviewContent() {
                initial={{ y: 20, opacity: 0 }}
                animate={{ y: 0, opacity: 1 }}
                transition={{ delay: 0.2 }}
+               className="flex flex-col items-center"
              >
-                <h1 className="text-3xl md:text-6xl font-black text-white mb-3 tracking-tighter">
-                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-500 to-purple-600">제 평가는요?</span>
-                </h1>
-                <p className="text-slate-400 text-sm md:text-lg font-medium mb-16 max-w-md mx-auto leading-relaxed">
-                   바이브폴리오 평가단이 되어<br/>
-                   이 작품의 가치를 객관적으로 평가해 주세요.
-                </p>
+                <div className="h-6 overflow-hidden mb-4">
+                  <AnimatePresence mode="wait">
+                    <motion.p 
+                     key={cycleIndex}
+                     initial={{ y: 20, opacity: 0 }}
+                     animate={{ y: 0, opacity: 1 }}
+                     exit={{ y: -20, opacity: 0 }}
+                     className="text-slate-500 text-sm md:text-base font-bold tracking-widest uppercase"
+                     style={{ fontFamily: 'Taenada' }}
+                    >
+                     {cycleTexts[cycleIndex]}
+                    </motion.p>
+                  </AnimatePresence>
+                </div>
+
+                <div className="relative mb-6">
+                   <img src="/review/review.png" alt="Reviews" className="w-64 md:w-80 h-auto invert brightness-0" />
+                </div>
              </motion.div>
 
              <div className="flex items-center justify-center gap-8 md:gap-16 mb-20 relative">
@@ -429,7 +457,7 @@ function ReviewContent() {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setPhase('viewer')}
                 >
-                   <ClocheIcon className="w-40 h-40 md:w-72 md:h-72 drop-shadow-[0_30px_60px_rgba(249,115,22,0.4)] filter" />
+                   <ClocheIcon className="w-40 h-40 md:w-72 md:h-72 drop-shadow-2xl grayscale brightness-125 hover:grayscale-0 transition-all duration-500" />
                    {isAB && <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">Selection A</div>}
                 </motion.div>
 
@@ -440,7 +468,7 @@ function ReviewContent() {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setPhase('viewer')}
                   >
-                    <ClocheIcon className="w-40 h-40 md:w-72 md:h-72 drop-shadow-[0_30px_60px_rgba(59,130,246,0.4)] filter" />
+                    <ClocheIcon className="w-40 h-40 md:w-72 md:h-72 drop-shadow-2xl grayscale brightness-125 hover:grayscale-0 transition-all duration-500" />
                     <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">Selection B</div>
                   </motion.div>
                 )}
@@ -450,7 +478,7 @@ function ReviewContent() {
                 onClick={() => setPhase('viewer')}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-12 py-5 bg-white text-slate-900 rounded-full font-black text-xl shadow-[0_20px_50px_rgba(255,255,255,0.2)] hover:shadow-[0_30px_70px_rgba(255,255,255,0.4)] transition-all uppercase tracking-widest"
+                className="px-12 py-5 bg-slate-900 text-white rounded-full font-black text-xl shadow-2xl hover:shadow-[0_20px_50px_rgba(255,255,255,0.3)] transition-all uppercase tracking-widest border border-slate-800"
              >
                 평가 시작하기
              </motion.button>
