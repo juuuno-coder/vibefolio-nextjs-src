@@ -198,6 +198,14 @@ function ReviewContent() {
     }
   }, [projectId]);
 
+  // Auto-open review modal on desktop when entering viewer phase
+  useEffect(() => {
+    if (phase === 'viewer' && viewerMode === 'desktop') {
+      setIsReviewOpen(true);
+    }
+  }, [phase, viewerMode]);
+
+
   const isAB = config.isABMode || modeParam === 'ab' || !!userUrl2;
   
   // URL Logic: custom_data.url1 -> Query Param -> Project Main Image/URL
@@ -557,14 +565,27 @@ function ReviewContent() {
               className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[10000]"
             />
             <motion.div 
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
+              initial={{ 
+                y: viewerMode === 'desktop' ? 0 : "100%",
+                x: viewerMode === 'desktop' ? "100%" : 0
+              }}
+              animate={{ y: 0, x: 0 }}
+              exit={{ 
+                y: viewerMode === 'desktop' ? 0 : "100%",
+                x: viewerMode === 'desktop' ? "100%" : 0
+              }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-[10001] bg-white rounded-t-[3rem] shadow-[0_-20px_80px_rgba(0,0,0,0.5)] max-h-[92dvh] overflow-hidden flex flex-col"
+              className={cn(
+                "z-[10001] bg-white shadow-[0_-20px_80px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col",
+                viewerMode === 'desktop'
+                  ? "fixed top-0 right-0 bottom-0 w-[450px] rounded-l-[3rem]"
+                  : "fixed bottom-0 left-0 right-0 rounded-t-[3rem] max-h-[92dvh]"
+              )}
             >
-               {/* Drag Handle */}
-               <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-4 mb-2 shrink-0" />
+               {/* Drag Handle (Mobile Only) */}
+               {viewerMode === 'mobile' && (
+                 <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-4 mb-2 shrink-0" />
+               )}
 
                {/* Sequential Step Indicator */}
                <div className="px-6 py-4 border-b border-slate-100 bg-white">
