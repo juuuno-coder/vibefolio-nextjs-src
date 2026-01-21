@@ -168,8 +168,8 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
                 <Star className="w-5 h-5 text-amber-400 fill-current" />
              </div>
              <div>
-               <h4 className="text-2xl font-black text-gray-900 tracking-tight">Vibefolio Michelin Diagnostic</h4>
-               <p className="text-sm font-bold text-amber-600 uppercase tracking-widest">Expert Multi-Dimension Analysis</p>
+               <h4 className="text-2xl font-black text-gray-900 tracking-tight">Vibefolio Selection Audit</h4>
+               <p className="text-sm font-bold text-amber-600 uppercase tracking-widest">바이브폴리오 심사단 정밀 진단</p>
              </div>
           </div>
         </div>

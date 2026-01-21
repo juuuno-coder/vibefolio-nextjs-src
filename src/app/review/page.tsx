@@ -278,11 +278,11 @@ function ReviewContent() {
                transition={{ delay: 0.2 }}
              >
                 <h1 className="text-3xl md:text-6xl font-black text-white mb-3 tracking-tighter">
-                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-500 to-purple-600">제평가는요?</span>
+                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-500 to-purple-600">제 평가는요?</span>
                 </h1>
                 <p className="text-slate-400 text-sm md:text-lg font-medium mb-16 max-w-md mx-auto leading-relaxed">
-                   전문가와 유저의 시선으로<br/>
-                   당신의 작품을 미슐랭 급으로 진단합니다.
+                   바이브폴리오 심사단이 되어<br/>
+                   이 작품의 가치를 객관적으로 평가해 주세요.
                 </p>
              </motion.div>
 
@@ -316,7 +316,7 @@ function ReviewContent() {
                 whileTap={{ scale: 0.95 }}
                 className="px-12 py-5 bg-white text-slate-900 rounded-full font-black text-xl shadow-[0_20px_50px_rgba(255,255,255,0.2)] hover:shadow-[0_30px_70px_rgba(255,255,255,0.4)] transition-all uppercase tracking-widest"
              >
-                Start Evaluation
+                심사 시작하기
              </motion.button>
           </motion.div>
         )}
