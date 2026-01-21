@@ -6,7 +6,13 @@ import { FontAwesomeIcon } from "./FaIcon";
 import { faInstagram, faFacebook, faThreads, faYoutube } from "@fortawesome/free-brands-svg-icons";
 import { SOCIAL_LINKS } from "@/lib/constants";
 
+import { usePathname } from "next/navigation";
+
 export function Footer({ className }: { className?: string }) {
+  const pathname = usePathname();
+  const isReviewUrl = typeof window !== 'undefined' && (window.location.host.includes('review') || window.location.pathname.includes('review'));
+  
+  if (isReviewUrl) return null;
   return (
     <footer className={clsx("w-full pt-8 pb-24 md:pb-8 border-t border-gray-100 bg-white mt-auto", className)}>
       <div className="max-w-[1800px] mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center justify-between gap-6">

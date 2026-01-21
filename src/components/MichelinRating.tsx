@@ -243,7 +243,7 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
                   </div>
                   <div className="text-center">
                     <span className="text-3xl font-black tabular-nums tracking-tighter" style={{ color: cat.color }}>{scores[cat.id].toFixed(1)}</span>
-                    <p className="text-[8px] font-black text-slate-300 uppercase">Points</p>
+                    <p className="text-[8px] font-black text-slate-300 uppercase">Score</p>
                   </div>
                 </div>
                 

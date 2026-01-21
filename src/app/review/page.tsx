@@ -30,9 +30,13 @@ import {
 import { MichelinRating } from '@/components/MichelinRating';
 import { FeedbackPoll } from '@/components/FeedbackPoll';
 import { ProposalModal } from '@/components/ProposalModal';
+import { ReviewReportModal } from '@/components/ReviewReportModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Loader2 } from 'lucide-react';
 
 // Types
 type ReviewPhase = 'cloche' | 'viewer';
@@ -93,6 +97,15 @@ function ReviewContent() {
   // Modals
   const [proposalOpen, setProposalOpen] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  // Embedded Proposal State
+  const [proposalData, setProposalData] = useState({
+    title: "",
+    content: "",
+    contact: ""
+  });
+  const [isSubmittingProposal, setIsSubmittingProposal] = useState(false);
 
   // Computed from Project settings & URL params
   const config = React.useMemo(() => {
@@ -127,6 +140,45 @@ function ReviewContent() {
   // Map evaluationStep to current index
   const currentStepIndex = Math.max(0, Math.min(evaluationStep - 1, availableSteps.length - 1));
   const currentStep = availableSteps[currentStepIndex];
+
+  // --- Persistence Logic ---
+  // Load saved data when projectId changes
+  useEffect(() => {
+    if (!projectId) return;
+    const saved = localStorage.getItem(`review_draft_${projectId}`);
+    if (saved) {
+      try {
+        const { proposalData: savedData, step, timestamp } = JSON.parse(saved);
+        // Only load if it's less than 24 hours old
+        if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+          if (savedData) setProposalData(savedData);
+          if (step) setEvaluationStep(step);
+          console.log("[Review] Restored draft from persistence.");
+        }
+      } catch (e) {
+        console.error("Failed to restore review draft", e);
+      }
+    }
+  }, [projectId]);
+
+  // Save draft whenever it changes
+  useEffect(() => {
+    if (!projectId) return;
+    // Don't save empty/initial state unnecessarily, but save most changes
+    const draft = {
+      proposalData,
+      step: evaluationStep,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(`review_draft_${projectId}`, JSON.stringify(draft));
+  }, [projectId, proposalData, evaluationStep]);
+
+  // Clear draft helper
+  const clearDraft = React.useCallback(() => {
+    if (projectId) {
+      localStorage.removeItem(`review_draft_${projectId}`);
+    }
+  }, [projectId]);
 
   const isAB = config.isABMode || modeParam === 'ab' || !!userUrl2;
   
@@ -187,7 +239,7 @@ function ReviewContent() {
 
 
   if (loading) return <div className="h-[100dvh] bg-slate-950 flex items-center justify-center text-white font-black tracking-widest text-xl animate-pulse">LOADING...</div>;
-  if (!url1) return <div className="h-[100dvh] bg-slate-950 flex items-center justify-center text-white">유효한 URL이 없습니다.</div>;
+  if (!projectId || !url1) return <ReviewLanding />;
 
   return (
     <div className="relative w-full h-[100dvh] overflow-hidden bg-slate-950 text-slate-900 font-sans">
@@ -460,40 +512,78 @@ function ReviewContent() {
                 {currentStep?.id === 'proposal' && (
                   <motion.div 
                     key="proposal"
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col items-center justify-center py-10"
+                    className="space-y-10 max-w-4xl mx-auto"
                   >
-                     <div className="flex items-center gap-3 mb-10 w-full">
-                      <Badge className="bg-indigo-600">3차 의견</Badge>
-                      <h4 className="text-xl font-black text-slate-900">종합 심사평 및 솔루션 제안</h4>
-                    </div>
-                     <div className="w-24 h-24 rounded-[2rem] bg-indigo-50 flex items-center justify-center mb-6 shadow-xl border border-indigo-100">
-                        <span className="text-5xl">📧</span>
+                     <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                           <Badge className="bg-indigo-600 px-3 py-1 text-xs">3차 의견</Badge>
+                           <h4 className="text-2xl font-black text-slate-900 tracking-tight">종합 심사평 및 솔루션</h4>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-rose-50 rounded-full border border-rose-100">
+                           <div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
+                           <span className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Required</span>
+                        </div>
                      </div>
-                     <h4 className="text-2xl font-black text-slate-900 mb-2">시크릿 심사평</h4>
-                     <p className="text-slate-500 text-center max-w-sm mb-10 leading-relaxed font-bold">
-                        작성하신 심사평은 <span className="text-indigo-600 font-black">개발자에게만 비공개로</span> 전달됩니다.<br/>
-                        발전을 위한 솔직한 조언을 남겨주세요.
-                     </p>
-                     <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 mb-8 max-w-sm">
-                        <p className="text-[10px] text-amber-700 font-bold leading-tight">
-                           ⚠️ 악성 댓글, 비하 발언, 욕설 등은 인공지능에 의해 자동으로 필터링 및 삭제될 수 있으며, 제재 대상이 될 수 있습니다.
-                        </p>
+
+                     <div className="bg-white rounded-[3rem] border border-slate-100 p-10 md:p-14 shadow-[0_40px_100px_rgba(0,0,0,0.08)] relative overflow-hidden">
+                        {/* Decorative Background Elements */}
+                        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-indigo-50/50 rounded-full blur-3xl -z-10" />
+                        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-64 h-64 bg-blue-50/50 rounded-full blur-3xl -z-10" />
+
+                        <div className="flex flex-col md:flex-row items-start gap-8 mb-12">
+                           <div className="w-16 h-16 rounded-3xl bg-indigo-600 flex items-center justify-center shrink-0 shadow-xl shadow-indigo-100 rotate-3">
+                              <MessageSquareText className="text-white w-8 h-8" />
+                           </div>
+                           <div>
+                              <h4 className="text-2xl font-black text-slate-900 mb-2">프라이빗 피드백 레터</h4>
+                              <p className="text-base text-slate-500 font-bold leading-relaxed max-w-md">
+                                 작성하신 내용은 공개되지 않으며 오직 <span className="text-indigo-600 font-black">창작자에게만</span> 소중한 솔루션으로 전달됩니다.
+                              </p>
+                           </div>
+                        </div>
+
+                        <div className="space-y-8">
+                           <div className="relative group">
+                              <div className="absolute -top-3 left-6 px-3 py-1 bg-white border border-slate-100 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest z-10 shadow-sm group-focus-within:border-indigo-500 group-focus-within:text-indigo-500 transition-colors">Your Review</div>
+                              <Textarea 
+                                 placeholder="프로젝트의 핵심 가치, 아쉬운 점, 그리고 구체적인 개선 방향을 동료의 마음으로 남겨주세요."
+                                 value={proposalData.content}
+                                 onChange={(e) => setProposalData(prev => ({ ...prev, content: e.target.value }))}
+                                 className="min-h-[320px] rounded-[2rem] border-2 border-slate-100 bg-slate-50/30 focus:bg-white focus:border-indigo-500/30 focus:ring-0 transition-all p-8 text-lg leading-relaxed resize-none font-medium placeholder:text-slate-300"
+                                 required
+                              />
+                           </div>
+
+                           <div className="flex flex-col md:flex-row gap-6">
+                              <div className="flex-1 space-y-3">
+                                 <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-2">연락처 공유 (선택)</p>
+                                 <Input 
+                                    placeholder="협업을 위한 이메일이나 SNS 계정을 남겨주세요."
+                                    value={proposalData.contact}
+                                    onChange={(e) => setProposalData(prev => ({ ...prev, contact: e.target.value }))}
+                                    className="h-16 rounded-2xl border-2 border-slate-100 bg-slate-50/30 focus:bg-white focus:border-indigo-500/30 px-6 font-bold text-slate-900 transition-all"
+                                 />
+                              </div>
+                              <div className="md:w-80 p-6 bg-amber-50 rounded-3xl border border-amber-100 flex items-start gap-4">
+                                 <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+                                    <span className="text-lg">📢</span>
+                                 </div>
+                                 <p className="text-[11px] text-amber-700 font-bold leading-tight">
+                                    익명성이 보장되지만 타인에 대한 비방이나 모욕적인 표현은 제재의 대상이 될 수 있습니다.
+                                 </p>
+                              </div>
+                           </div>
+                        </div>
                      </div>
-                     <Button 
-                       onClick={() => setProposalOpen(true)}
-                       className="px-12 py-6 h-auto rounded-3xl bg-slate-900 border-b-4 border-black hover:bg-black text-white font-black text-lg transition-all shadow-2xl active:translate-y-1 active:border-b-0"
-                     >
-                        심사평 작성하기
-                     </Button>
                   </motion.div>
                 )}
 
                </div>
 
                 {/* Bottom CTA Bar */}
-               <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-xl border-t border-slate-100 flex items-center justify-between gap-6">
+               <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/95 backdrop-blur-2xl border-t border-slate-100 flex items-center justify-between gap-6 z-[200] shadow-[0_-15px_50px_rgba(0,0,0,0.1)]">
                   <div className="hidden md:block">
                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Step {evaluationStep} of {availableSteps.length}</p>
                      <p className="text-sm font-bold text-slate-900 mt-1">심사 결과는 단계별로 즉시 반영됩니다.</p>
@@ -503,26 +593,74 @@ function ReviewContent() {
                     {evaluationStep > 1 && (
                       <Button 
                         variant="outline"
-                        className="h-14 px-6 rounded-2xl border-slate-200 font-bold"
+                        className="h-15 px-8 rounded-2xl border-slate-200 font-bold hover:bg-slate-50 transition-colors"
                         onClick={() => setEvaluationStep(prev => (prev - 1) as any)}
+                        disabled={isSubmittingProposal}
                       >
                         이전
                       </Button>
                     )}
                     <Button 
                       className={cn(
-                        "flex-1 md:px-16 h-14 rounded-2xl font-black text-white shadow-2xl transition-all uppercase tracking-widest text-base",
-                        evaluationStep === availableSteps.length ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200" : "bg-slate-950 hover:bg-slate-800 shadow-slate-200"
+                        "flex-1 md:px-20 h-15 rounded-2xl font-black text-white shadow-2xl transition-all uppercase tracking-widest text-base",
+                        evaluationStep === availableSteps.length ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 hover:scale-[1.02] active:scale-95" : "bg-slate-950 hover:bg-slate-800 shadow-slate-300 hover:scale-[1.02] active:scale-95"
                       )}
-                      onClick={() => {
+                      disabled={isSubmittingProposal}
+                      onClick={async () => {
                         if (evaluationStep < availableSteps.length) {
                           setEvaluationStep(prev => (prev + 1) as any);
                         } else {
-                          setShowResultModal(true);
+                          // Final Step: Submit Proposal if exists
+                          if (currentStep?.id === 'proposal') {
+                             if (!proposalData.content.trim()) {
+                                toast.error("심사평 내용을 입력해 주세요.");
+                                return;
+                             }
+                             
+                             setIsSubmittingProposal(true);
+                             try {
+                                const { data: { session } } = await supabase.auth.getSession();
+                                const res = await fetch("/api/proposals", {
+                                  method: "POST",
+                                  headers: { 
+                                    "Content-Type": "application/json",
+                                    ...(session ? { "Authorization": `Bearer ${session.access_token}` } : {})
+                                  },
+                                  body: JSON.stringify({
+                                    project_id: Number(projectId),
+                                    receiver_id: project?.user_id,
+                                    title: proposalData.title || `[심사평] ${project?.title}에 대한 전문 의견`,
+                                    content: proposalData.content,
+                                    contact: proposalData.contact,
+                                  }),
+                                });
+                                
+                                if (!res.ok) {
+                                  const err = await res.json();
+                                  throw new Error(err.message || "심사평 전송 실패");
+                                }
+                                
+                                toast.success("소중한 심사평이 기록되었습니다.");
+                                clearDraft(); // Draft cleared after successful submission
+                                setShowResultModal(true);
+                             } catch (err: any) {
+                                toast.error(err.message);
+                             } finally {
+                                setIsSubmittingProposal(false);
+                             }
+                          } else {
+                            setShowResultModal(true);
+                          }
                         }
                       }}
                     >
-                      {evaluationStep < availableSteps.length ? "다음 단계로" : "평가 완료"}
+                      {isSubmittingProposal ? (
+                        <Loader2 className="animate-spin" />
+                      ) : (
+                        evaluationStep < availableSteps.length 
+                          ? "다음 단계로" 
+                          : currentStep?.id === 'proposal' ? "심사평 전송 및 완료" : "평가 완료"
+                      )}
                     </Button>
                   </div>
                </div>
@@ -547,8 +685,16 @@ function ReviewContent() {
           onOpenChange={setShowResultModal}
           projectTitle={project?.title || ""}
           onClose={() => setIsReviewOpen(false)}
+          onShowReport={() => setShowReportModal(true)}
         />
       )}
+
+      <ReviewReportModal 
+         open={showReportModal}
+         onOpenChange={setShowReportModal}
+         projectId={projectId || ""}
+         projectTitle={project?.title || "프로젝트"}
+      />
 
     </div>
   );
@@ -613,8 +759,13 @@ function ClocheIcon({ className }: { className?: string }) {
    )
 }
 
-function FinalReviewModal({ open, onOpenChange, projectTitle, onClose }: { open: boolean, onOpenChange: (o: boolean) => void, projectTitle: string, onClose: () => void }) {
+function FinalReviewModal({ open, onOpenChange, projectTitle, onClose, onShowReport }: { open: boolean, onOpenChange: (o: boolean) => void, projectTitle: string, onClose: () => void, onShowReport: () => void }) {
   const router = useRouter();
+  const [session, setSession] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -631,6 +782,22 @@ function FinalReviewModal({ open, onOpenChange, projectTitle, onClose }: { open:
         </div>
 
         <div className="p-8 space-y-4">
+           {!session && (
+              <div className="p-6 bg-indigo-50 rounded-3xl border border-indigo-100 mb-2 animate-bounce-subtle">
+                 <p className="text-xs font-black text-indigo-500 uppercase tracking-widest mb-2 font-poppins">Wait! You're a Guest</p>
+                 <p className="text-sm font-bold text-slate-800 leading-tight mb-3">
+                    지금 회원가입하고 <span className="text-indigo-600">1,000 내공</span>을 받으세요!<br/>
+                    내가 남긴 심사평과 결과를 마이페이지에서 관리할 수 있습니다.
+                 </p>
+                 <Button 
+                    className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200"
+                    onClick={() => router.push('/signup')}
+                 >
+                    내공 1,000점 받고 가입하기
+                 </Button>
+              </div>
+           )}
+
            <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 mb-4">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">AUDIT SUMMARY</p>
               <p className="text-sm font-bold text-slate-700 leading-relaxed">
@@ -655,8 +822,7 @@ function FinalReviewModal({ open, onOpenChange, projectTitle, onClose }: { open:
                 className="h-14 rounded-2xl border-slate-200 font-bold text-slate-600 hover:bg-slate-50 gap-2"
                 onClick={() => {
                    onOpenChange(false);
-                   // Navigate to a results page/tab if available
-                   toast.info("집계 데이터 서비스 준비중입니다.");
+                   onShowReport();
                 }}
               >
                 <History size={18} /> 집계 보기
@@ -672,5 +838,146 @@ function FinalReviewModal({ open, onOpenChange, projectTitle, onClose }: { open:
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * review.vibefolio.net (projectId 없는 경우)에 노출될 랜딩 페이지
+ */
+function ReviewLanding() {
+  const router = useRouter();
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white selection:bg-indigo-500/30">
+      {/* Background Decor */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full" />
+        <div className="absolute top-[20%] -right-[5%] w-[30%] h-[30%] bg-purple-600/10 blur-[100px] rounded-full" />
+        <div className="absolute -bottom-[5%] left-[20%] w-[25%] h-[25%] bg-blue-600/10 blur-[80px] rounded-full" />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-32 font-sans">
+        {/* Navigation / Header Area */}
+        <nav className="flex items-center justify-between mb-24 transition-all">
+           <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-2xl">
+                 <ChefHat size={22} className="text-slate-900" />
+              </div>
+              <span className="text-xl font-black tracking-tighter uppercase font-poppins">V-Audit</span>
+           </div>
+           <Button 
+             variant="ghost" 
+             className="text-slate-400 hover:text-white hover:bg-white/5 font-bold"
+             onClick={() => router.push('/')}
+           >
+             메인 서비스로 돌아가기
+           </Button>
+        </nav>
+
+        {/* Hero Section */}
+        <section className="max-w-4xl mb-32">
+           <motion.div
+             initial={{ opacity: 0, y: 30 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ duration: 0.8 }}
+           >
+              <Badge className="bg-indigo-500/20 text-indigo-400 border-indigo-500/30 px-4 py-1.5 mb-8 rounded-full text-sm font-black">Professional Review System</Badge>
+              <h1 className="text-5xl md:text-8xl font-black leading-[1.05] tracking-tight mb-8">
+                창작물의 한계를<br/>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-rose-400">데이터로 진단합니다.</span>
+              </h1>
+              <p className="text-xl md:text-2xl text-slate-400 font-medium leading-relaxed max-w-2xl mb-12">
+                 단순한 좋아요가 아닌, 실무진과 동료들의 전문적인 시각으로 당신의 프로젝트를 완성하세요. 
+                 V-Audit은 더 나은 결과물을 위한 가장 객관적인 여정입니다.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                 <Button 
+                   className="h-16 px-10 rounded-2xl bg-white text-slate-900 font-black text-lg hover:bg-slate-100 transition-all shadow-xl shadow-white/5"
+                   onClick={() => router.push('/')}
+                 >
+                   심사 대기중인 프로젝트 찾기
+                 </Button>
+                 <Button 
+                   variant="outline"
+                   className="h-16 px-10 rounded-2xl border-slate-800 bg-slate-900/50 text-white font-black text-lg hover:bg-slate-800"
+                   onClick={() => router.push('/growth')}
+                 >
+                   내 프로젝트 진단 신청하기
+                 </Button>
+              </div>
+           </motion.div>
+        </section>
+
+        {/* Audit Steps Grid */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-40">
+           {[
+             { 
+               icon: Star, 
+               title: "Michelin Rating", 
+               desc: "전문가용 5개 지표를 통해 디자인과 기획의 완성도를 분석합니다.",
+               color: "text-amber-400"
+             },
+             { 
+               icon: CheckCircle, 
+               title: "Final Verdict", 
+               desc: "익명 투표와 합격/불합격 판정을 통해 시장 가치를 빠르게 검증합니다.",
+               color: "text-emerald-400"
+             },
+             { 
+               icon: MessageSquareText, 
+               title: "Private Solution", 
+               desc: "심사평을 통해 창작자에게만 전달되는 구체적인 솔루션을 제안합니다.",
+               color: "text-indigo-400"
+             }
+           ].map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 * idx }}
+                  className="bg-slate-900/50 border border-slate-800 p-10 rounded-[3rem] backdrop-blur-xl group hover:border-indigo-500/50 transition-all"
+                >
+                   <div className={cn("w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-8", item.color)}>
+                      <Icon size={30} />
+                   </div>
+                   <h3 className="text-2xl font-black mb-4">{item.title}</h3>
+                   <p className="text-slate-400 leading-relaxed font-medium">{item.desc}</p>
+                </motion.div>
+              )
+           })}
+        </section>
+
+        {/* CTA Banner */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-indigo-900 to-slate-900 rounded-[4rem] p-12 md:p-24 text-center">
+           <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+              <div className="grid grid-cols-12 h-full opacity-30">
+                 {Array.from({ length: 48 }).map((_, i) => (
+                    <div key={i} className="border-[0.5px] border-white/20" />
+                 ))}
+              </div>
+           </div>
+           
+           <h2 className="text-3xl md:text-5xl font-black mb-8 relative z-10 leading-tight">
+              당신의 성장을 위한<br className="md:hidden font-sans"/> 바이브폴리오의 심사 전문 시스템
+           </h2>
+           <p className="text-slate-300 text-lg mb-12 max-w-xl mx-auto font-medium">
+              지금 바로 동료들의 피드백을 통해 프로젝트의 완성도를 한 단계 업그레이드 하세요.
+           </p>
+           <Button 
+             className="h-14 px-12 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white font-black text-lg transition-all shadow-2xl shadow-indigo-500/20"
+             onClick={() => router.push('/signup')}
+           >
+             심사단 커뮤니티 합류하기
+           </Button>
+        </section>
+      </div>
+      
+      {/* Footer Area */}
+      <footer className="py-20 border-t border-slate-900 text-center">
+         <p className="text-slate-500 text-sm font-bold uppercase tracking-widest">© 2025 Vibefolio V-Audit System. All rights reserved.</p>
+      </footer>
+    </div>
   );
 }

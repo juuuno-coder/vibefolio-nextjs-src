@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Megaphone, MessageSquare, CheckCircle2, AlertTriangle, Trophy, Link, Copy, Target } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -19,19 +19,19 @@ interface FeedbackRequestModalProps {
 }
 
 export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTitle }: FeedbackRequestModalProps) {
-  const [step, setStep] = useState<"intro" | "options" | "confirm">("intro");
+  const [step, setStep] = useState<"intro" | "options">("intro");
   const [loading, setLoading] = useState(false);
   const [userPoints, setUserPoints] = useState(0);
   const [options, setOptions] = useState({
     detailedFeedback: true, 
     publicFeedback: true,   
-    showMichelin: true,     // 미슐랭 평점 활성화
-    showStickers: true,     // 스티커 투표 활성화
-    showProposal: true,     // 시크릿 심사평 활성화
-    isABMode: false,        // A/B 테스트 모드
-    url2: "",               // A/B 테스트용 보조 URL
+    showMichelin: true,     
+    showStickers: true,     
+    showProposal: true,     
+    isABMode: false,        
+    url2: "",               
     aiAnalysis: false,
-    targetExpertise: [] as string[] // 희망 전문가 분야
+    targetExpertise: [] as string[]
   });
 
   useEffect(() => {
@@ -43,14 +43,23 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
   const fetchUserPoints = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      // Fetch points from profile or separate table
-      // For this task, I'll mock 550 to pass the "500 needed" check visually.
-      // In a real scenario, this would select specific point column
-      setUserPoints(550); 
+      const { data: profile } = await supabase.from('profiles').select('points').eq('id', user.id).single();
+      setUserPoints(profile?.points || 0); 
     }
   };
 
+  const calculatedCost = useMemo(() => {
+    // [Viral Phase] Points disabled for now
+    return 0;
+  }, []);
+
+  const requirementMet = true;
+
   const handlePromote = async () => {
+    if (!requirementMet) {
+        toast.error("내공이 부족합니다.");
+        return;
+    }
     setLoading(true);
     try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -73,7 +82,6 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
         
         toast.success("피드백 요청이 등록되었습니다!");
         onOpenChange(false);
-        // Refresh or Callback could be added here
     } catch(err: any) {
         toast.error(err.message);
     } finally {
@@ -81,16 +89,12 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
     }
   };
 
-  const requirementMet = userPoints >= 500;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className="max-w-2xl bg-white rounded-3xl p-0 overflow-hidden" 
-        onClick={(e) => e.stopPropagation()} // Prevent bubbling to underlying cards
+        onClick={(e) => e.stopPropagation()}
       >
-        
-        {/* Header / Banner Area */}
         <div className="bg-gradient-to-r from-orange-500 to-red-500 p-8 text-white text-center">
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm shadow-inner">
                 <Megaphone size={32} className="text-white fill-white/20" />
@@ -102,32 +106,24 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
         </div>
 
         <div className="p-8 space-y-8">
-            
-            {/* Step 1: Intro / Requirement Check */}
             {step === "intro" && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
                     <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                          <div className="flex items-center gap-3">
-                             <Trophy className={requirementMet ? "text-yellow-500" : "text-slate-400"} size={24} />
+                             <Trophy className={userPoints >= 500 ? "text-yellow-500" : "text-slate-400"} size={24} />
                              <div className="text-left">
-                                 <p className="text-sm font-bold text-slate-500">자격 요건</p>
-                                 <p className="text-lg font-bold text-slate-900">내공 500점 이상</p>
+                                 <p className="text-sm font-bold text-slate-500">나의 내공</p>
+                                 <p className={`text-xl font-black ${userPoints >= 500 ? "text-green-600" : "text-red-500"}`}>
+                                     {userPoints}점
+                                 </p>
                              </div>
                          </div>
                          <div className="text-right">
-                             <p className="text-sm font-bold text-slate-500">나의 내공</p>
-                             <p className={`text-xl font-black ${requirementMet ? "text-green-600" : "text-red-500"}`}>
-                                 {userPoints}점
-                             </p>
+                             <Badge variant="outline" className="border-green-200 text-green-600 bg-green-50 animate-pulse">
+                               🔥 출시 기념 무료 프로모션 중
+                             </Badge>
                          </div>
                     </div>
-
-                    {!requirementMet && (
-                        <div className="flex items-center gap-3 p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium">
-                             <AlertTriangle size={18} />
-                             아직 내공이 부족하여 피드백 요청 기능을 사용할 수 없습니다.
-                        </div>
-                    )}
 
                     <div className="space-y-4">
                         <h4 className="font-bold text-slate-900 flex items-center gap-2">
@@ -148,7 +144,6 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
                         </div>
                     </div>
 
-                    {/* Shareable Link Section */}
                     <div className="p-5 bg-indigo-50 rounded-2xl border border-indigo-100 space-y-3">
                         <div className="flex items-center justify-between">
                             <h4 className="font-bold text-indigo-900 flex items-center gap-2 text-sm">
@@ -179,7 +174,6 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
                 </div>
             )}
 
-            {/* Step 2: Options */}
             {step === "options" && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
                     <div className="space-y-4">
@@ -254,9 +248,6 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
                                         onChange={(e) => setOptions({...options, url2: e.target.value})}
                                     />
                                 </div>
-                                <p className="text-[9px] text-purple-400 leading-tight">
-                                    * 심사 위원에게 두 가지 시안을 동시에 보여주고 선호도를 조사합니다.
-                                </p>
                             </div>
                         )}
 
@@ -299,15 +290,33 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
                                 />
                                 <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">피드백 내용을 커뮤니티에 공개합니다.</span>
                             </label>
-                             <label className="flex items-center gap-3 px-1 opacity-50 cursor-not-allowed">
-                                <Checkbox disabled checked={false} />
-                                <span className="text-sm font-medium text-slate-400">AI 심층 분석 리포트 생성 (준비중)</span>
-                            </label>
                         </div>
+
+                        <div className="pt-4 p-5 bg-slate-950 rounded-[2rem] text-white">
+                            <div className="flex justify-between items-center mb-3">
+                                <p className="text-xs font-bold text-slate-400">최종 소요 내공</p>
+                                <div className="text-right">
+                                    <p className="text-2xl font-black text-green-400">FREE</p>
+                                    <p className="text-[10px] text-slate-500 line-through">총 {options.isABMode ? 700 + (options.targetExpertise.length * 50) : 500 + (options.targetExpertise.length * 50)}점</p>
+                                </div>
+                            </div>
+                            <div className="space-y-1.5 border-t border-white/10 pt-3 opacity-80">
+                                <div className="flex justify-between text-[10px] font-medium text-green-400">
+                                    <span>출시 기념 이벤트</span>
+                                    <span>-100% 할인</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {!requirementMet && (
+                            <div className="flex items-center gap-3 p-4 bg-red-50 text-red-600 rounded-xl text-xs font-bold animate-pulse">
+                                <AlertTriangle size={16} />
+                                내공이 부족하여 요청할 수 없습니다. (부족: {calculatedCost - userPoints}점)
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
-
         </div>
 
         <DialogFooter className="p-6 bg-slate-50 border-t border-slate-100">
@@ -322,16 +331,15 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
                  <div className="flex gap-3 w-full">
                      <Button variant="ghost" className="h-12 flex-1 rounded-xl" onClick={() => setStep("intro")}>이전</Button>
                      <Button 
-                        className="h-12 flex-[2] text-lg font-bold bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl shadow-lg shadow-orange-200"
+                        className="h-12 flex-[2] text-lg font-bold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-xl shadow-lg shadow-green-100"
                         onClick={handlePromote}
-                        disabled={loading}
+                        disabled={loading || !requirementMet}
                      >
-                        {loading ? "처리중..." : "피드백 요청하기"}
+                        {loading ? "처리중..." : "무료로 피드백 요청하기"}
                      </Button>
                  </div>
              )}
         </DialogFooter>
-
       </DialogContent>
     </Dialog>
   );

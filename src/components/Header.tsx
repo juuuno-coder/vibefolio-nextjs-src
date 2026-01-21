@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { 
   Search, 
   Menu, 
@@ -33,7 +33,12 @@ export function Header({
 }: { 
   onSetCategory?: (value: string) => void;
 }) {
+  const pathname = usePathname();
+  const isReviewUrl = typeof window !== 'undefined' && (window.location.host.includes('review') || window.location.pathname.includes('review'));
+  
   const { user, userProfile, isAdmin, signOut, isAuthenticated, loading } = useAuth();
+  
+  if (isReviewUrl) return null;
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
