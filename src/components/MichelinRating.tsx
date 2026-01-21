@@ -172,7 +172,7 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
   };
 
   return (
-    <div className="bg-white rounded-[2.5rem] p-8 md:p-12 border border-gray-100 shadow-2xl mb-12 relative overflow-hidden group">
+    <div className="w-full relative overflow-hidden group">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12 relative z-10">
         <div className="space-y-2">

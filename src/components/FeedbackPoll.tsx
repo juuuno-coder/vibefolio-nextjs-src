@@ -161,7 +161,7 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
   ] as const;
 
   return (
-    <div className="w-full bg-white rounded-[2.5rem] border border-gray-100 p-8 md:p-12 shadow-2xl relative overflow-hidden group">
+    <div className="w-full relative overflow-hidden group">
       <div className="absolute top-0 right-0 p-8 opacity-5">
          <Rocket className="w-32 h-32 text-gray-900" />
       </div>
