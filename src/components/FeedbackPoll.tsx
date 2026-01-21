@@ -128,7 +128,7 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
     {
       id: 'launch',
       icon: CheckCircle2,
-      label: "합격 (Pass)",
+      label: "합격입니다. 당장 쓸게요.",
       color: "text-green-500",
       bgFrom: "from-green-500/10",
       bgTo: "to-green-600/20",
@@ -139,7 +139,7 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
     {
       id: 'more',
       icon: Clock,
-      label: "보류 (Hold)",
+      label: "보류하겠습니다.",
       color: "text-amber-500",
       bgFrom: "from-amber-500/10",
       bgTo: "to-amber-600/20",
@@ -150,7 +150,7 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
     {
       id: 'research',
       icon: XCircle,
-      label: "불합격 (Reject)",
+      label: "불합격드리겠습니다. 더 연구해 주세요.",
       color: "text-red-500",
       bgFrom: "from-red-500/10",
       bgTo: "to-red-600/20",
@@ -257,8 +257,8 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
                 <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">AI Recommendation</p>
                 <p className="text-sm font-bold text-slate-700">
                   {Object.entries(counts).sort((a,b) => b[1] - a[1])[0][0] === 'launch' 
-                    ? "\"당장 쓸게요!\" 반응이 압도적입니다. 빠른 출시(Launch)를 위한 마케팅 전략 수립을 권장합니다." 
-                    : "\"더 개발해주세요\" 의견이 많습니다. MVP 피드백을 수집하여 단계별 고도화를 진행해보세요."}
+                    ? "\"합격\" 반응이 압도적입니다! 유저들이 이 기능의 즉각적인 가치를 느끼고 있으며, 시장에 바로 출시해도 좋을 만큼의 매력을 갖추고 있다는 신호입니다." 
+                    : "\"보류/불합격\" 의견이 있습니다. 현재의 컨셉을 조금 더 다듬거나, 유저가 느끼는 진입장벽이 무엇인지 파악하여 고도화하는 과정을 추천드립니다."}
                 </p>
               </div>
            </div>

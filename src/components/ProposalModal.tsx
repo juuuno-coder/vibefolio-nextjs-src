@@ -66,7 +66,7 @@ export function ProposalModal({
         body: JSON.stringify({
           project_id: Number(projectId),
           receiver_id: receiverId,
-          title: formData.title || `[비밀제안] ${projectTitle}에 대한 의견`,
+          title: formData.title || `[심사평] ${projectTitle}에 대한 전문 의견`,
           content: formData.content,
           contact: formData.contact,
         }),
@@ -122,22 +122,30 @@ export function ProposalModal({
             </div>
             <div>
               <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight flex items-center justify-center gap-2">
-                당신의 아이디어를 제안하세요
+                시크릿 심사평 보내기
                 <div className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 font-bold">
-                  🔒 비밀제안
+                  🔒 개발자 전용
                 </div>
               </DialogTitle>
-              <p className="text-sm text-slate-500 mt-2 font-medium">
-                공개 댓글로는 말하기 힘든 제휴 제안이나<br/>
-                <span className="text-indigo-600 font-bold">발전을 위한 솔직한 피드백</span>을 비공개로 전달할 수 있습니다.
+              <p className="text-sm text-slate-500 mt-2 font-medium leading-relaxed">
+                작성하신 내용은 <span className="text-indigo-600 font-bold">작성자(개발자)에게만 비공개로</span> 전달됩니다.<br/>
+                작품의 발전을 위한 따뜻한 응원과 솔직한 의견을 남겨주세요.
               </p>
             </div>
           </DialogHeader>
+          
+          <div className="px-8 pb-4">
+             <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 mb-2">
+                <p className="text-[10px] text-amber-700 font-bold leading-tight">
+                  ⚠️ 악성 댓글, 욕설, 타인 비하 발언 등은 AI 필터링에 의해 자동 삭제될 수 있으며, 운영 정책에 따라 이용이 제한될 수 있습니다.
+                </p>
+             </div>
+          </div>
   
           <form onSubmit={(e) => {
             // Set a default title if not provided
             if (!formData.title) {
-              setFormData(prev => ({ ...prev, title: `[비밀제안] ${projectTitle}에 대한 의견` }));
+              setFormData(prev => ({ ...prev, title: `[심사평] ${projectTitle}에 대한 전문 의견` }));
             }
             handleSubmit(e);
           }} className="space-y-6">
@@ -168,11 +176,11 @@ export function ProposalModal({
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    제안 전송 중...
+                    심사평 전송 중...
                   </>
                 ) : (
                   <>
-                    비공개 제안 보내기 (Demo)
+                    비공개 심사평 보내기
                   </>
                 )}
               </Button>

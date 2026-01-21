@@ -488,8 +488,14 @@ function ReviewContent() {
                      </div>
                      <h4 className="text-2xl font-black text-slate-900 mb-2">시크릿 심사평</h4>
                      <p className="text-slate-500 text-center max-w-sm mb-10 leading-relaxed font-bold">
-                        협업 요청부터 <span className="text-indigo-600 font-black">발전을 위한 1:1 비밀 코멘트</span>까지 익명으로 전달해보세요.
+                        작성하신 심사평은 <span className="text-indigo-600 font-black">개발자에게만 비공개로</span> 전달됩니다.<br/>
+                        발전을 위한 솔직한 조언을 남겨주세요.
                      </p>
+                     <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 mb-8 max-w-sm">
+                        <p className="text-[10px] text-amber-700 font-bold leading-tight">
+                           ⚠️ 악성 댓글, 비하 발언, 욕설 등은 인공지능에 의해 자동으로 필터링 및 삭제될 수 있으며, 제재 대상이 될 수 있습니다.
+                        </p>
+                     </div>
                      <Button 
                        onClick={() => setProposalOpen(true)}
                        className="px-12 py-6 h-auto rounded-3xl bg-slate-900 border-b-4 border-black hover:bg-black text-white font-black text-lg transition-all shadow-2xl active:translate-y-1 active:border-b-0"
@@ -531,9 +537,9 @@ function ReviewContent() {
                         }
                       }}
                     >
-                      {evaluationStep === 1 && "다음: 2차 판정으로"}
-                      {evaluationStep === 2 && "다음: 3차 의견으로"}
-                      {evaluationStep === 3 && "심사 완료하기"}
+                      {evaluationStep === 1 && "다음 단계로"}
+                      {evaluationStep === 2 && "다음 단계로"}
+                      {evaluationStep === 3 && "평가 완료"}
                     </Button>
                   </div>
                </div>

@@ -8,16 +8,18 @@ import { Suspense } from "react";
 export function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdminPage = pathname?.startsWith('/admin');
+  const isReviewPage = pathname?.startsWith('/review');
+  const hideLayout = isAdminPage || isReviewPage;
 
   return (
     <div className="flex min-h-screen flex-col relative w-full overflow-x-hidden">
-      {!isAdminPage && <Header />}
-      <main className={`flex-1 w-full max-w-[1920px] mx-auto ${isAdminPage ? "" : "pt-[60px]"} pb-20 fade-in`}>
+      {!hideLayout && <Header />}
+      <main className={`flex-1 w-full max-w-[1920px] mx-auto ${hideLayout ? "" : "pt-[60px]"} pb-20 fade-in`}>
         <Suspense fallback={null}>
           {children}
         </Suspense>
       </main>
-      {!isAdminPage && <Footer />}
+      {!hideLayout && <Footer />}
     </div>
   );
 }
