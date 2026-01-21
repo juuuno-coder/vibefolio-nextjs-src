@@ -63,7 +63,8 @@ function ReviewContent() {
     if (paramProjectId) return paramProjectId;
     
     // Try to extract ID from pathname (e.g., "/60")
-    const parts = pathname.split('/').filter(Boolean);
+    const cleanPath = pathname.replace(/\/$/, ""); // Remove trailing slash
+    const parts = cleanPath.split('/').filter(Boolean);
     if (parts.length === 1 && !isNaN(Number(parts[0]))) {
       return parts[0];
     }
@@ -139,7 +140,12 @@ function ReviewContent() {
 
       if (error || !data) {
         console.error("[Review] Project fetch error:", error);
-        toast.error(`프로젝트(${projectId}) 정보를 불러올 수 없습니다.`);
+        toast.error(`프로젝트 정보를 불러올 수 없습니다. (ID: ${projectId})`);
+        
+        // Show more details if it's a permission error
+        if (error?.code === 'PGRST116') {
+           console.log("No rows found - likely RLS or deleted project.");
+        }
       } else {
         console.log("[Review] Project data loaded:", data);
         setProject(data as any);
