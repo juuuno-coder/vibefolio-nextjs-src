@@ -90,7 +90,6 @@ function ReviewContent() {
   // State
   const [phase, setPhase] = useState<ReviewPhase>('cloche');
   const [viewerMode, setViewerMode] = useState<'desktop' | 'mobile'>('desktop');
-  const [isExternalView, setIsExternalView] = useState(false); // New: Track if reviewing in external tab
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [evaluationStep, setEvaluationStep] = useState<number>(1);
@@ -198,7 +197,7 @@ function ReviewContent() {
     }
   }, [projectId]);
 
-  // Auto-open review modal on desktop when entering viewer phase
+  // Auto-open review panel on desktop when entering viewer phase
   useEffect(() => {
     if (phase === 'viewer' && viewerMode === 'desktop') {
       setIsReviewOpen(true);
@@ -289,38 +288,48 @@ function ReviewContent() {
          }} 
       />
       
-      {/* Top Utility Bar (Toggle for PC/Mobile) */}
-      <div className="absolute top-6 left-6 z-[60] flex items-center gap-2">
-         <div className="bg-white/80 backdrop-blur-md p-1 rounded-2xl border border-slate-200 shadow-xl flex">
-            <Button 
-               variant={viewerMode === 'desktop' ? 'default' : 'ghost'} 
-               size="sm" 
-               className={cn("rounded-xl h-10 px-4 font-bold", viewerMode === 'desktop' ? "bg-slate-900 text-white" : "text-slate-500")}
-               onClick={() => setViewerMode('desktop')}
-            >
-               <Monitor size={16} className="mr-2" /> PC
-            </Button>
-            <Button 
-               variant={viewerMode === 'mobile' ? 'default' : 'ghost'} 
-               size="sm" 
-               className={cn("rounded-xl h-10 px-4 font-bold", viewerMode === 'mobile' ? "bg-slate-900 text-white" : "text-slate-500")}
-               onClick={() => setViewerMode('mobile')}
-            >
-               <Smartphone size={16} className="mr-2" /> Mobile
-            </Button>
-            <Button 
-               variant="ghost" 
-               size="sm" 
-               className="rounded-xl h-10 px-4 font-bold text-slate-500 hover:text-slate-900"
-               onClick={() => {
+      {/* Top Utility Bar (Toggle for PC/Mobile) - Only in Viewer Phase */}
+      <AnimatePresence>
+        {phase === 'viewer' && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="absolute top-6 left-6 z-[60] flex items-center gap-2"
+          >
+            <div className="bg-white/80 backdrop-blur-md p-1 rounded-2xl border border-slate-200 shadow-xl flex">
+              <Button 
+                variant={viewerMode === 'desktop' ? 'default' : 'ghost'} 
+                size="sm" 
+                className={cn("rounded-xl h-10 px-4 font-bold", viewerMode === 'desktop' ? "bg-slate-900 text-white" : "text-slate-500")}
+                onClick={() => setViewerMode('desktop')}
+              >
+                <Monitor size={16} className="mr-2" /> PC
+              </Button>
+              <Button 
+                variant={viewerMode === 'mobile' ? 'default' : 'ghost'} 
+                size="sm" 
+                className={cn("rounded-xl h-10 px-4 font-bold", viewerMode === 'mobile' ? "bg-slate-900 text-white" : "text-slate-500")}
+                onClick={() => setViewerMode('mobile')}
+              >
+                <Smartphone size={16} className="mr-2" /> Mobile
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="rounded-xl h-10 px-4 font-bold text-slate-500 hover:text-slate-900"
+                onClick={() => {
                   window.open(url1 || '', '_blank');
-                  setIsExternalView(true); // Switch to companion mode
-               }}
-            >
-               <Maximize2 size={16} className="mr-2" /> 새 창 열기
-            </Button>
-         </div>
-      </div>
+                }}
+              >
+                <Maximize2 size={16} className="mr-2" /> 새 창 열기
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
 
       {/* Phase 2 Layered Viewer */}
       <div className={cn(
@@ -331,7 +340,9 @@ function ReviewContent() {
         <div className="w-full h-full bg-slate-100 flex items-center justify-center overflow-hidden">
             <div className={cn(
                 "flex transition-all duration-500 ease-in-out h-full",
-                viewerMode === 'mobile' ? "w-[375px] h-[812px] bg-white rounded-[3rem] border-[8px] border-slate-900 shadow-2xl my-auto scale-90 md:scale-100" : "w-full h-full"
+                viewerMode === 'mobile' 
+                  ? "w-[375px] h-[812px] bg-white rounded-[3rem] border-[8px] border-slate-900 shadow-2xl my-auto scale-90 md:scale-100" 
+                  : cn("w-full h-full", isReviewOpen && "md:pr-[450px]")
             )}>
                 {/* View A */}
                 <div className={cn(
@@ -370,63 +381,24 @@ function ReviewContent() {
                   </div>
                 )}
             </div>
-            
-            {/* Companion Mode Overlay (When External Tab is Open) */}
-            <AnimatePresence>
-               {isExternalView && (
-                  <motion.div 
-                     initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
-                     animate={{ opacity: 1, backdropFilter: "blur(12px)" }}
-                     exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
-                     className="absolute inset-0 bg-slate-900/60 z-20 flex flex-col items-center justify-center text-white"
-                  >
-                     <div className="bg-white/10 p-8 rounded-[2.5rem] backdrop-blur-md border border-white/20 text-center max-w-md shadow-2xl">
-                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 text-slate-900 shadow-lg">
-                           <Monitor size={32} />
-                        </div>
-                        <h3 className="text-2xl font-black mb-2">외부 창에서 평가 중...</h3>
-                        <p className="text-slate-300 font-medium mb-8 leading-relaxed">
-                           새 탭에서 콘텐츠를 충분히 경험하고<br/>
-                           이곳에서 당신의 소중한 평가를 남겨주세요.
-                        </p>
-                        <div className="space-y-3">
-                           <Button 
-                              onClick={() => {
-                                 setPhase('viewer');
-                                 setIsReviewOpen(true);
-                                 // Optionally open review form directly?
-                              }}
-                              className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-indigo-500/30"
-                           >
-                              <MessageSquareText size={20} className="mr-2" /> 평가 의견 작성하기
-                           </Button>
-                           <Button 
-                              variant="ghost"
-                              onClick={() => setIsExternalView(false)}
-                              className="w-full h-12 text-slate-300 hover:text-white hover:bg-white/10 rounded-xl"
-                           >
-                              다시 내부 뷰어로 보기
-                           </Button>
-                        </div>
-                     </div>
-                  </motion.div>
-               )}
-            </AnimatePresence>
+
         </div>
 
 
-        {/* Single Floating Evaluation Button */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[40]">
-           <motion.button
-              whileHover={{ scale: 1.05, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsReviewOpen(true)}
-              className="flex items-center gap-3 px-8 py-5 bg-slate-900 text-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.4)] hover:shadow-orange-500/40 transition-all group"
-           >
-              <ChefHat size={20} className="text-orange-400" />
-              <span className="text-lg font-black tracking-tight">평가하기</span>
-           </motion.button>
-        </div>
+        {/* Single Floating Evaluation Button (Mobile only or when closed) */}
+        {(!isReviewOpen || viewerMode === 'mobile') && (
+           <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[40]">
+              <motion.button
+                 whileHover={{ scale: 1.05, y: -5 }}
+                 whileTap={{ scale: 0.95 }}
+                 onClick={() => setIsReviewOpen(true)}
+                 className="flex items-center gap-3 px-8 py-5 bg-slate-900 text-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.4)] hover:shadow-orange-500/40 transition-all group"
+              >
+                 <ChefHat size={20} className="text-orange-400" />
+                 <span className="text-lg font-black tracking-tight">평가하기</span>
+              </motion.button>
+           </div>
+        )}
 
         {/* Small Exit Button */}
         <div className="absolute top-6 right-6 z-[40]">
@@ -557,13 +529,15 @@ function ReviewContent() {
       <AnimatePresence>
         {isReviewOpen && (
           <>
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }}
-              onClick={() => setIsReviewOpen(false)}
-              className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[10000]"
-            />
+            {viewerMode === 'mobile' && (
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                onClick={() => setIsReviewOpen(false)}
+                className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[10000]"
+              />
+            )}
             <motion.div 
               initial={{ 
                 y: viewerMode === 'desktop' ? 0 : "100%",
@@ -588,7 +562,15 @@ function ReviewContent() {
                )}
 
                {/* Sequential Step Indicator */}
-               <div className="px-6 py-4 border-b border-slate-100 bg-white">
+               <div className="px-6 py-4 border-b border-slate-100 bg-white relative">
+                  {viewerMode === 'desktop' && (
+                    <button 
+                      onClick={() => setIsReviewOpen(false)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 z-20 text-slate-400 hover:text-slate-900 p-2 hover:bg-slate-100 rounded-full transition-colors"
+                    >
+                      <X size={20} />
+                    </button>
+                  )}
                   <div className="flex items-center justify-between max-w-md mx-auto relative">
                       {/* Progress Line */}
                       <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-100 -translate-y-1/2 z-0" />
