@@ -147,7 +147,7 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
                     <div className="p-5 bg-indigo-50 rounded-2xl border border-indigo-100 space-y-3">
                         <div className="flex items-center justify-between">
                             <h4 className="font-bold text-indigo-900 flex items-center gap-2 text-sm">
-                                <Link size={16} /> 전용 심사 페이지 주소
+                                <Link size={16} /> 전용 평가 페이지 주소
                             </h4>
                             <Badge variant="outline" className="text-[10px] border-indigo-200 text-indigo-500 bg-white">
                                 ID: {projectId}
@@ -169,7 +169,7 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
                                 <Copy size={14} /> 복사
                             </Button>
                         </div>
-                        <p className="text-[10px] text-indigo-400 font-medium">이 주소를 통해 로그인 없이도 누구나 심사에 참여할 수 있습니다.</p>
+                        <p className="text-[10px] text-indigo-400 font-medium">이 주소를 통해 로그인 없이도 누구나 평가에 참여할 수 있습니다.</p>
                     </div>
                 </div>
             )}
@@ -215,7 +215,7 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
                                     onCheckedChange={(c) => setOptions({...options, showProposal: !!c})} 
                                 />
                                 <div>
-                                    <p className="font-bold text-slate-900 text-sm">시크릿 심사평</p>
+                                    <p className="font-bold text-slate-900 text-sm">시크릿 평가평</p>
                                     <p className="text-[10px] text-slate-500">1:1 비공개 피드백</p>
                                 </div>
                             </label>
@@ -253,7 +253,7 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
 
                         <div className="pt-2">
                             <h4 className="text-xs font-black text-slate-900 mb-3 flex items-center gap-2">
-                                <Target size={14} className="text-red-500" /> 희망 심사 위원 (전문 분야)
+                                <Target size={14} className="text-red-500" /> 희망 평가 위원 (전문 분야)
                             </h4>
                             <div className="flex flex-wrap gap-2">
                                 {['UI/UX 디자인', '기획/전략', '프론트엔드', '백엔드', '비즈니스', '데이터/AI'].map((field) => (

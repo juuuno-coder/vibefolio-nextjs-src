@@ -446,7 +446,7 @@ export default function MyPage() {
     { id: 'projects' as TabType, label: '내 프로젝트', icon: Grid, color: 'text-green-600', bgColor: 'bg-green-600' },
     { id: 'likes' as TabType, label: '좋아요', icon: Heart, color: 'text-red-500', bgColor: 'bg-red-500' },
     { id: 'collections' as TabType, label: '컬렉션', icon: Folder, color: 'text-blue-500', bgColor: 'bg-blue-500' },
-    { id: 'proposals' as TabType, label: '받은 제안', icon: Send, color: 'text-green-500', bgColor: 'bg-green-500' },
+    { id: 'proposals' as TabType, label: '제안 및 평가 의견', icon: Send, color: 'text-green-500', bgColor: 'bg-green-500' },
     { id: 'comments' as TabType, label: '내 댓글', icon: MessageCircle, color: 'text-orange-500', bgColor: 'bg-orange-500' },
     { id: 'ai_tools' as TabType, label: 'AI 도구', icon: Sparkles, color: 'text-purple-600', bgColor: 'bg-purple-600', isNew: true },
     { id: 'settings' as TabType, label: '설정', icon: Settings, color: 'text-gray-700', bgColor: 'bg-gray-700' },
@@ -722,7 +722,7 @@ export default function MyPage() {
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-200 border-dashed">
                   <Send className="w-16 h-16 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900">받은 제안이 없습니다</h3>
+                  <h3 className="text-lg font-medium text-gray-900">받은 제안이나 평가 의견이 없습니다</h3>
                 </div>
               )
             )}
@@ -913,7 +913,7 @@ export default function MyPage() {
                 <li>• 업로드한 모든 프로젝트</li>
                 <li>• 좋아요, 댓글, 팔로우 기록</li>
                 <li>• 컬렉션 및 저장된 항목</li>
-                <li>• 받은 제안 및 메시지</li>
+                <li>• 받은 제안 및 평가 의견</li>
                 <li>• 프로필 정보</li>
               </ul>
             </div>

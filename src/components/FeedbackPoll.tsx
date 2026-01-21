@@ -216,7 +216,7 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
                   isSelected ? "text-gray-900" : "text-gray-700"
                 )}>{opt.label}</span>
                 
-                <div className="flex items-baseline gap-1 mt-auto">
+                <div className="flex items-baseline gap-1 mt-auto invisible">
                    <span className={cn(
                       "text-3xl font-black font-mono transition-transform", 
                       opt.color,

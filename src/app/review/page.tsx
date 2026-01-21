@@ -88,6 +88,7 @@ function ReviewContent() {
 
   // State
   const [phase, setPhase] = useState<ReviewPhase>('cloche');
+  const [viewerMode, setViewerMode] = useState<'desktop' | 'mobile'>('desktop');
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [evaluationStep, setEvaluationStep] = useState<number>(1);
@@ -244,6 +245,36 @@ function ReviewContent() {
   return (
     <div className="relative w-full h-[100dvh] overflow-hidden bg-slate-950 text-slate-900 font-sans">
       
+      {/* Top Utility Bar (Toggle for PC/Mobile) */}
+      <div className="absolute top-6 left-6 z-[60] flex items-center gap-2">
+         <div className="bg-white/80 backdrop-blur-md p-1 rounded-2xl border border-slate-200 shadow-xl flex">
+            <Button 
+               variant={viewerMode === 'desktop' ? 'default' : 'ghost'} 
+               size="sm" 
+               className={cn("rounded-xl h-10 px-4 font-bold", viewerMode === 'desktop' ? "bg-slate-900 text-white" : "text-slate-500")}
+               onClick={() => setViewerMode('desktop')}
+            >
+               <Monitor size={16} className="mr-2" /> PC
+            </Button>
+            <Button 
+               variant={viewerMode === 'mobile' ? 'default' : 'ghost'} 
+               size="sm" 
+               className={cn("rounded-xl h-10 px-4 font-bold", viewerMode === 'mobile' ? "bg-slate-900 text-white" : "text-slate-500")}
+               onClick={() => setViewerMode('mobile')}
+            >
+               <Smartphone size={16} className="mr-2" /> Mobile
+            </Button>
+            <Button 
+               variant="ghost" 
+               size="sm" 
+               className="rounded-xl h-10 px-4 font-bold text-slate-500 hover:text-slate-900"
+               onClick={() => window.open(url1 || '', '_blank')}
+            >
+               <Maximize2 size={16} className="mr-2" /> 새 창 열기
+            </Button>
+         </div>
+      </div>
+
       {/* Phase 2 Layered Viewer */}
       <div className={cn(
         "absolute inset-0 transition-opacity duration-1000",
@@ -251,16 +282,20 @@ function ReviewContent() {
       )}>
         {/* Viewer Content - Full Screen Iframe */}
         <div className="w-full h-full bg-slate-100 flex items-center justify-center overflow-hidden">
-            <div className="flex w-full h-full">
+            <div className={cn(
+                "flex transition-all duration-500 ease-in-out h-full",
+                viewerMode === 'mobile' ? "w-[375px] h-[812px] bg-white rounded-[3rem] border-[8px] border-slate-900 shadow-2xl my-auto scale-90 md:scale-100" : "w-full h-full"
+            )}>
                 {/* View A */}
                 <div className={cn(
-                  "h-full relative",
-                  isAB ? "w-1/2 border-r border-slate-200" : "w-full"
+                  "h-full relative overflow-hidden",
+                  isAB ? "w-1/2 border-r border-slate-200" : "w-full",
+                  viewerMode === 'mobile' && "rounded-[1.8rem]"
                 )}>
                   <iframe 
                     src={url1 || undefined} 
                     className="w-full h-full border-none"
-                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                     title="Preview A" 
                   />
                   {isAB && (
@@ -272,11 +307,14 @@ function ReviewContent() {
 
                 {/* View B */}
                 {isAB && url2 && (
-                  <div className="h-full w-1/2 relative">
+                  <div className={cn(
+                      "h-full w-1/2 relative overflow-hidden",
+                      viewerMode === 'mobile' && "rounded-[1.8rem]"
+                  )}>
                     <iframe 
                       src={url2 || undefined} 
                       className="w-full h-full border-none"
-                      sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                       title="Preview B" 
                     />
                     <div className="absolute top-4 left-4 bg-amber-500/80 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest z-10 border border-white/20">
@@ -333,7 +371,7 @@ function ReviewContent() {
                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-500 to-purple-600">제 평가는요?</span>
                 </h1>
                 <p className="text-slate-400 text-sm md:text-lg font-medium mb-16 max-w-md mx-auto leading-relaxed">
-                   바이브폴리오 심사단이 되어<br/>
+                   바이브폴리오 평가단이 되어<br/>
                    이 작품의 가치를 객관적으로 평가해 주세요.
                 </p>
              </motion.div>
@@ -368,7 +406,7 @@ function ReviewContent() {
                 whileTap={{ scale: 0.95 }}
                 className="px-12 py-5 bg-white text-slate-900 rounded-full font-black text-xl shadow-[0_20px_50px_rgba(255,255,255,0.2)] hover:shadow-[0_30px_70px_rgba(255,255,255,0.4)] transition-all uppercase tracking-widest"
              >
-                심사 시작하기
+                평가 시작하기
              </motion.button>
           </motion.div>
         )}
@@ -519,7 +557,7 @@ function ReviewContent() {
                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                            <Badge className="bg-indigo-600 px-3 py-1 text-xs">3차 의견</Badge>
-                           <h4 className="text-2xl font-black text-slate-900 tracking-tight">종합 심사평 및 솔루션</h4>
+                           <h4 className="text-2xl font-black text-slate-900 tracking-tight">종합 평가 의견 및 솔루션</h4>
                         </div>
                         <div className="flex items-center gap-1.5 px-3 py-1 bg-rose-50 rounded-full border border-rose-100">
                            <div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
@@ -537,9 +575,9 @@ function ReviewContent() {
                               <MessageSquareText className="text-white w-8 h-8" />
                            </div>
                            <div>
-                              <h4 className="text-2xl font-black text-slate-900 mb-2">프라이빗 피드백 레터</h4>
+                              <h4 className="text-2xl font-black text-slate-900 mb-2">시크릿 평가 의견</h4>
                               <p className="text-base text-slate-500 font-bold leading-relaxed max-w-md">
-                                 작성하신 내용은 공개되지 않으며 오직 <span className="text-indigo-600 font-black">창작자에게만</span> 소중한 솔루션으로 전달됩니다.
+                                 작성하신 내용은 공개되지 않으며 오직 <span className="text-indigo-600 font-black">창작자에게만</span> 전달됩니다.
                               </p>
                            </div>
                         </div>
@@ -547,33 +585,23 @@ function ReviewContent() {
                         <div className="space-y-8">
                            <div className="relative group">
                               <div className="absolute -top-3 left-6 px-3 py-1 bg-white border border-slate-100 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest z-10 shadow-sm group-focus-within:border-indigo-500 group-focus-within:text-indigo-500 transition-colors">Your Review</div>
-                              <Textarea 
-                                 placeholder="프로젝트의 핵심 가치, 아쉬운 점, 그리고 구체적인 개선 방향을 동료의 마음으로 남겨주세요."
-                                 value={proposalData.content}
-                                 onChange={(e) => setProposalData(prev => ({ ...prev, content: e.target.value }))}
-                                 className="min-h-[320px] rounded-[2rem] border-2 border-slate-100 bg-slate-50/30 focus:bg-white focus:border-indigo-500/30 focus:ring-0 transition-all p-8 text-lg leading-relaxed resize-none font-medium placeholder:text-slate-300"
-                                 required
-                              />
+                               <Textarea 
+                                  placeholder={`프로젝트의 핵심 가치, 아쉬운 점, 그리고 구체적인 개선 방향을 동료의 마음으로 남겨주세요.\n\n※ 익명성이 보장되지만 타인에 대한 비방이나 모욕적인 표현은 제재의 대상이 될 수 있습니다.`}
+                                  value={proposalData.content}
+                                  onChange={(e) => setProposalData(prev => ({ ...prev, content: e.target.value }))}
+                                  className="min-h-[320px] rounded-[2rem] border-2 border-slate-100 bg-slate-50/30 focus:bg-white focus:border-indigo-500/30 focus:ring-0 transition-all p-8 text-lg leading-relaxed resize-none font-medium placeholder:text-slate-300"
+                                  required
+                               />
                            </div>
 
-                           <div className="flex flex-col md:flex-row gap-6">
-                              <div className="flex-1 space-y-3">
-                                 <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-2">연락처 공유 (선택)</p>
-                                 <Input 
-                                    placeholder="협업을 위한 이메일이나 SNS 계정을 남겨주세요."
-                                    value={proposalData.contact}
-                                    onChange={(e) => setProposalData(prev => ({ ...prev, contact: e.target.value }))}
-                                    className="h-16 rounded-2xl border-2 border-slate-100 bg-slate-50/30 focus:bg-white focus:border-indigo-500/30 px-6 font-bold text-slate-900 transition-all"
-                                 />
-                              </div>
-                              <div className="md:w-80 p-6 bg-amber-50 rounded-3xl border border-amber-100 flex items-start gap-4">
-                                 <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm">
-                                    <span className="text-lg">📢</span>
-                                 </div>
-                                 <p className="text-[11px] text-amber-700 font-bold leading-tight">
-                                    익명성이 보장되지만 타인에 대한 비방이나 모욕적인 표현은 제재의 대상이 될 수 있습니다.
-                                 </p>
-                              </div>
+                           <div className="w-full space-y-3">
+                              <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-2">향후 업데이트 소식 받기 (이메일)</p>
+                              <Input 
+                                 placeholder="개선된 결과물에 대한 업데이트 소식을 이메일로 받아보실 수 있습니다."
+                                 value={proposalData.contact}
+                                 onChange={(e) => setProposalData(prev => ({ ...prev, contact: e.target.value }))}
+                                 className="h-16 rounded-2xl border-2 border-slate-100 bg-slate-50/30 focus:bg-white focus:border-indigo-500/30 px-6 font-bold text-slate-900 transition-all"
+                              />
                            </div>
                         </div>
                      </div>
@@ -583,10 +611,10 @@ function ReviewContent() {
                </div>
 
                 {/* Bottom CTA Bar */}
-               <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/95 backdrop-blur-2xl border-t border-slate-100 flex items-center justify-between gap-6 z-[200] shadow-[0_-15px_50px_rgba(0,0,0,0.1)]">
+               <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/95 backdrop-blur-2xl border-t border-slate-100 flex items-center justify-between gap-6 z-[999] shadow-[0_-15px_50px_rgba(0,0,0,0.1)]">
                   <div className="hidden md:block">
                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Step {evaluationStep} of {availableSteps.length}</p>
-                     <p className="text-sm font-bold text-slate-900 mt-1">심사 결과는 단계별로 즉시 반영됩니다.</p>
+                     <p className="text-sm font-bold text-slate-900 mt-1">평가 결과는 단계별로 즉시 반영됩니다.</p>
                   </div>
                   
                   <div className="flex gap-3 flex-1 md:flex-none">
@@ -613,7 +641,7 @@ function ReviewContent() {
                           // Final Step: Submit Proposal if exists
                           if (currentStep?.id === 'proposal') {
                              if (!proposalData.content.trim()) {
-                                toast.error("심사평 내용을 입력해 주세요.");
+                                toast.error("평가 의견 내용을 입력해 주세요.");
                                 return;
                              }
                              
@@ -629,7 +657,7 @@ function ReviewContent() {
                                   body: JSON.stringify({
                                     project_id: Number(projectId),
                                     receiver_id: project?.user_id,
-                                    title: proposalData.title || `[심사평] ${project?.title}에 대한 전문 의견`,
+                                    title: proposalData.title || `[평가 의견] ${project?.title}에 대한 전문 의견`,
                                     content: proposalData.content,
                                     contact: proposalData.contact,
                                   }),
@@ -637,10 +665,10 @@ function ReviewContent() {
                                 
                                 if (!res.ok) {
                                   const err = await res.json();
-                                  throw new Error(err.message || "심사평 전송 실패");
+                                  throw new Error(err.message || "평가 의견 전송 실패");
                                 }
                                 
-                                toast.success("소중한 심사평이 기록되었습니다.");
+                                toast.success("소중한 평가 의견이 기록되었습니다.");
                                 clearDraft(); // Draft cleared after successful submission
                                 setShowResultModal(true);
                              } catch (err: any) {
@@ -659,7 +687,7 @@ function ReviewContent() {
                       ) : (
                         evaluationStep < availableSteps.length 
                           ? "다음 단계로" 
-                          : currentStep?.id === 'proposal' ? "심사평 전송 및 완료" : "평가 완료"
+                          : currentStep?.id === 'proposal' ? "평가평 전송 및 완료" : "평가 완료"
                       )}
                     </Button>
                   </div>
@@ -777,7 +805,7 @@ function FinalReviewModal({ open, onOpenChange, projectTitle, onClose, onShowRep
            <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md border border-white/20">
               <ClipboardCheck size={40} className="text-amber-400" />
            </div>
-           <h2 className="text-3xl font-black mb-2 tracking-tight">심사 완료!</h2>
+           <h2 className="text-3xl font-black mb-2 tracking-tight">평가 완료!</h2>
            <p className="text-slate-400 font-medium">소중한 전문 의견을 정성껏 전달했습니다.</p>
         </div>
 
@@ -787,7 +815,7 @@ function FinalReviewModal({ open, onOpenChange, projectTitle, onClose, onShowRep
                  <p className="text-xs font-black text-indigo-500 uppercase tracking-widest mb-2 font-poppins">Wait! You're a Guest</p>
                  <p className="text-sm font-bold text-slate-800 leading-tight mb-3">
                     지금 회원가입하고 <span className="text-indigo-600">1,000 내공</span>을 받으세요!<br/>
-                    내가 남긴 심사평과 결과를 마이페이지에서 관리할 수 있습니다.
+                    내가 남긴 평가 의견과 결과를 마이페이지에서 관리할 수 있습니다.
                  </p>
                  <Button 
                     className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200"
@@ -813,7 +841,7 @@ function FinalReviewModal({ open, onOpenChange, projectTitle, onClose, onShowRep
                 router.push('/'); // Or specifically to growth section
               }}
             >
-              <Compass size={20} /> 다른 우수 프로젝트 심사하기
+              <Compass size={20} /> 다른 우수 프로젝트 평가하기
            </Button>
 
            <div className="grid grid-cols-2 gap-3">
@@ -881,7 +909,7 @@ function ReviewLanding() {
              animate={{ opacity: 1, y: 0 }}
              transition={{ duration: 0.8 }}
            >
-              <Badge className="bg-indigo-500/20 text-indigo-400 border-indigo-500/30 px-4 py-1.5 mb-8 rounded-full text-sm font-black">Professional Review System</Badge>
+              <Badge className="bg-indigo-500/20 text-indigo-400 border-indigo-500/30 px-4 py-1.5 mb-8 rounded-full text-sm font-black">Professional Evaluation System</Badge>
               <h1 className="text-5xl md:text-8xl font-black leading-[1.05] tracking-tight mb-8">
                 창작물의 한계를<br/>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-rose-400">데이터로 진단합니다.</span>
@@ -895,7 +923,7 @@ function ReviewLanding() {
                    className="h-16 px-10 rounded-2xl bg-white text-slate-900 font-black text-lg hover:bg-slate-100 transition-all shadow-xl shadow-white/5"
                    onClick={() => router.push('/')}
                  >
-                   심사 대기중인 프로젝트 찾기
+                   평가 대기중인 프로젝트 찾기
                  </Button>
                  <Button 
                    variant="outline"
@@ -926,7 +954,7 @@ function ReviewLanding() {
              { 
                icon: MessageSquareText, 
                title: "Private Solution", 
-               desc: "심사평을 통해 창작자에게만 전달되는 구체적인 솔루션을 제안합니다.",
+               desc: "평가평을 통해 창작자에게만 전달되는 구체적인 솔루션을 제안합니다.",
                color: "text-indigo-400"
              }
            ].map((item, idx) => {
@@ -960,7 +988,7 @@ function ReviewLanding() {
            </div>
            
            <h2 className="text-3xl md:text-5xl font-black mb-8 relative z-10 leading-tight">
-              당신의 성장을 위한<br className="md:hidden font-sans"/> 바이브폴리오의 심사 전문 시스템
+              당신의 성장을 위한<br className="md:hidden font-sans"/> 바이브폴리오의 평가 전문 시스템
            </h2>
            <p className="text-slate-300 text-lg mb-12 max-w-xl mx-auto font-medium">
               지금 바로 동료들의 피드백을 통해 프로젝트의 완성도를 한 단계 업그레이드 하세요.
@@ -969,7 +997,7 @@ function ReviewLanding() {
              className="h-14 px-12 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white font-black text-lg transition-all shadow-2xl shadow-indigo-500/20"
              onClick={() => router.push('/signup')}
            >
-             심사단 커뮤니티 합류하기
+             평가단 커뮤니티 합류하기
            </Button>
         </section>
       </div>

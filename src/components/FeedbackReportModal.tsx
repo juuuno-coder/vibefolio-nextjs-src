@@ -107,7 +107,7 @@ export function FeedbackReportModal({ open, onOpenChange, projectTitle, projectI
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                    <div>
                       <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full text-[10px] font-black tracking-widest mb-3 border border-white/10 uppercase">
-                         <FontAwesomeIcon icon={faChartPie} /> Feedback Infographic
+                         <FontAwesomeIcon icon={faChartPie} /> Evaluation Dashboard
                       </div>
                       <h2 className="text-3xl md:text-5xl font-black mb-2 tracking-tighter">{projectTitle}</h2>
                       <p className="text-indigo-200/60 text-sm md:text-base font-medium">데이터 중심의 프로젝트 성장 지표 분석</p>
@@ -139,7 +139,7 @@ export function FeedbackReportModal({ open, onOpenChange, projectTitle, projectI
                {/* 1. Michelin Radar Chart */}
                <div className="space-y-6 md:col-span-2">
                   <h3 className="font-black text-slate-900 flex items-center gap-2 text-2xl tracking-tighter">
-                     <FontAwesomeIcon icon={faStar} className="text-amber-500" /> 미슐랭 정밀 진단 리포트
+                     <FontAwesomeIcon icon={faStar} className="text-amber-500" /> 평가단 정밀 분석 리포트
                   </h3>
                   <div className="bg-slate-50 p-8 rounded-[3rem] grid grid-cols-1 lg:grid-cols-2 gap-12 items-center border border-slate-100 shadow-inner">
                      <div className="h-80 w-full bg-white rounded-[2.5rem] p-4 shadow-sm border border-slate-100">
@@ -239,7 +239,7 @@ export function FeedbackReportModal({ open, onOpenChange, projectTitle, projectI
                               <FontAwesomeIcon icon={faLock} className="text-8xl" />
                            </div>
                            <div className="relative z-10">
-                              <p className="font-black text-slate-500 text-[10px] uppercase tracking-widest mb-2">Secret Proposals</p>
+                              <p className="font-black text-slate-500 text-[10px] uppercase tracking-widest mb-2">Secret Evaluation Opinions</p>
                               <div className="flex items-end gap-3">
                                  <span className="text-6xl font-black leading-none tracking-tighter">{stats.secretProposals}</span>
                                  <div className="bg-green-500/20 text-green-400 text-[10px] px-2 py-0.5 rounded-full font-black mb-1">NEW</div>

@@ -98,6 +98,19 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
     if (projectId) fetchRatingData();
   }, [projectId]);
 
+  // [New] Auto-save debounced
+  useEffect(() => {
+    // Don't auto-save if all scores are 0 (initial state)
+    const hasValues = Object.values(scores).some(v => v > 0);
+    if (!hasValues) return;
+
+    const timer = setTimeout(() => {
+      handleRatingSubmit();
+    }, 1500); // 1.5s debounce
+
+    return () => clearTimeout(timer);
+  }, [scores]);
+
   const handleRatingSubmit = async () => {
     if (isDemo) {
         toast.success(`[데모] 평가가 반영되었습니다! (평균 ${currentTotalAvg}점)`);
@@ -169,7 +182,7 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
              </div>
              <div>
                <h4 className="text-2xl font-black text-gray-900 tracking-tight">Vibefolio Selection Audit</h4>
-               <p className="text-sm font-bold text-amber-600 uppercase tracking-widest">바이브폴리오 심사단 정밀 진단</p>
+               <p className="text-sm font-bold text-amber-600 uppercase tracking-widest">바이브폴리오 평가단 정밀 진단</p>
              </div>
           </div>
         </div>
@@ -266,46 +279,49 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
               </div>
             ))}
           </div>
-
-          <div className="pt-4">
-            <button 
-              disabled={isSubmitting || !isEditing} 
-              onClick={handleRatingSubmit} 
-              className={`w-full py-5 rounded-3xl font-black text-base uppercase tracking-widest transition-all shadow-xl active:scale-95 ${isEditing ? 'bg-gradient-to-r from-slate-900 to-black text-white hover:shadow-slate-200 hover:-translate-y-1' : 'bg-slate-100 text-slate-300 cursor-default shadow-none'}`}
-            >
-              {isSubmitting ? "Submitting Analysis..." : (scores.score_1 > 0 ? "Update Diagnostic" : "Confirm Multi-Diagnostic")}
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* AI Inspector Section */}
-      <div className="mt-12 bg-gray-900 rounded-[2rem] p-8 border border-gray-800 relative overflow-hidden group">
-         <div className="absolute top-0 right-0 p-8 opacity-10">
-            <Sparkles className="w-24 h-24 text-white" />
-         </div>
-         <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="px-2 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded uppercase tracking-tighter">AI Inspector</div>
-              <h5 className="text-white font-bold flex items-center gap-2 italic">
-                <MessageSquareQuote className="w-4 h-4 text-gray-400" />
-                "인스펙터의 한마디"
-              </h5>
-            </div>
-            
-            {isAnalyzing ? (
-               <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                  <p className="text-gray-400 text-sm animate-pulse">평점을 바탕으로 전문가의 조언을 생성 중입니다...</p>
-               </div>
-            ) : analysis ? (
-               <p className="text-lg text-white font-medium leading-relaxed font-serif italic">
-                 {analysis}
-               </p>
-            ) : (
-               <p className="text-gray-500 text-sm">평가를 완료하면 AI 인스펙터의 전문적인 분석 리포트를 받아보실 수 있습니다.</p>
-            )}
-         </div>
+      {/* Submission button & AI Inspector hidden as per request */}
+      <div className="hidden">
+        <div className="pt-4">
+          <button 
+            disabled={isSubmitting || !isEditing} 
+            onClick={handleRatingSubmit} 
+            className={`w-full py-5 rounded-3xl font-black text-base uppercase tracking-widest transition-all shadow-xl active:scale-95 ${isEditing ? 'bg-gradient-to-r from-slate-900 to-black text-white hover:shadow-slate-200 hover:-translate-y-1' : 'bg-slate-100 text-slate-300 cursor-default shadow-none'}`}
+          >
+            {isSubmitting ? "Submitting Analysis..." : (scores.score_1 > 0 ? "Update Diagnostic" : "Confirm Multi-Diagnostic")}
+          </button>
+        </div>
+
+        {/* AI Inspector Section */}
+        <div className="mt-12 bg-gray-900 rounded-[2rem] p-8 border border-gray-800 relative overflow-hidden group">
+           <div className="absolute top-0 right-0 p-8 opacity-10">
+              <Sparkles className="w-24 h-24 text-white" />
+           </div>
+           <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="px-2 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded uppercase tracking-tighter">AI Inspector</div>
+                <h5 className="text-white font-bold flex items-center gap-2 italic">
+                  <MessageSquareQuote className="w-4 h-4 text-gray-400" />
+                  "인스펙터의 한마디"
+                </h5>
+              </div>
+              
+              {isAnalyzing ? (
+                 <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <p className="text-gray-400 text-sm animate-pulse">평점을 바탕으로 전문가의 조언을 생성 중입니다...</p>
+                 </div>
+              ) : analysis ? (
+                 <p className="text-lg text-white font-medium leading-relaxed font-serif italic">
+                   {analysis}
+                 </p>
+              ) : (
+                 <p className="text-gray-500 text-sm">평가를 완료하면 AI 인스펙터의 전문적인 분석 리포트를 받아보실 수 있습니다.</p>
+              )}
+           </div>
+        </div>
       </div>
 
       <div className="mt-8 flex items-center justify-center gap-2 text-xs text-gray-400 font-medium italic">

@@ -102,7 +102,7 @@ export function ReviewReportModal({ open, onOpenChange, projectId, projectTitle 
                   <BarChart3 size={24} />
                </div>
                <div>
-                  <h2 className="text-xl font-black text-slate-900 leading-tight">심사 결과 상세 분석 리포트</h2>
+                  <h2 className="text-xl font-black text-slate-900 leading-tight">평가 결과 상세 분석 리포트</h2>
                   <p className="text-sm font-bold text-slate-400 mt-1">Project: <span className="text-slate-600">{projectTitle}</span></p>
                </div>
             </div>
@@ -222,7 +222,7 @@ export function ReviewReportModal({ open, onOpenChange, projectId, projectTitle 
                 <div className="space-y-4">
                     <div className="flex items-center justify-between px-2">
                         <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                            <MessageSquare size={16} className="text-pink-500" /> 시크릿 심사평 전체보기
+                            <MessageSquare size={16} className="text-pink-500" /> 시크릿 평가 의견 전체보기
                         </h4>
                         <Badge variant="outline" className="rounded-lg text-slate-400">{data.secretReviews.length}건</Badge>
                     </div>
@@ -262,7 +262,7 @@ export function ReviewReportModal({ open, onOpenChange, projectId, projectTitle 
                         {data.secretReviews.length === 0 && (
                             <div className="col-span-full py-20 bg-white rounded-3xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-slate-300">
                                 <MessageSquare size={40} className="mb-4 opacity-50" />
-                                <p className="font-bold">아직 접수된 시크릿 심사평이 없습니다.</p>
+                                <p className="font-bold">아직 접수된 시크릿 평가 의견이 없습니다.</p>
                             </div>
                         )}
                     </div>
@@ -279,7 +279,7 @@ export function ReviewReportModal({ open, onOpenChange, projectId, projectTitle 
                         <p className="text-slate-400 text-sm leading-relaxed font-medium">
                             본 데이터는 프로젝트의 완성도와 시장성을 다각도로 분석한 결과입니다. 
                             특히 '{Object.entries(data.michelin.averages).sort((a,b) => b[1]-a[1])[0][0] === 'score_1' ? '기획력' : '완성도'}' 부분에서 높은 평가를 받았으며, 
-                            전달된 시크릿 심사평의 디테일한 조언을 반영하여 다음 단계로 발전시켜보세요.
+                            전달된 시크릿 평가 의견의 디테일한 조언을 반영하여 다음 단계로 발전시켜보세요.
                         </p>
                     </div>
                 </div>
