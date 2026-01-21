@@ -234,31 +234,10 @@ export function MichelinRating({ projectId, ratingId, isDemo = false }: Michelin
   return (
     <div className="w-full relative overflow-hidden group">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12 relative z-10">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
-                <Star className="w-5 h-5 text-amber-400 fill-current" />
-             </div>
-             <div>
-               <h4 className="text-2xl font-black text-gray-900 tracking-tight">바이브폴리오 선정 위원회 진단</h4>
-               <p className="text-sm font-bold text-amber-600 uppercase tracking-widest">전문 평가단 정밀 리포트</p>
-             </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 bg-slate-900 px-6 py-4 rounded-3xl shadow-xl">
-           <div className="text-center">
-              <div className="text-3xl font-black text-white leading-none tabular-nums">{currentTotalAvg.toFixed(1)}</div>
-              <p className="text-[10px] font-black text-amber-500 mt-2 uppercase tracking-widest">내 진단 점수</p>
-           </div>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      <div className="flex flex-col gap-12 items-center">
         {/* Radar Chart Visual */}
-        <div className="relative flex justify-center items-center">
-            <svg width="100%" height="100%" viewBox="-40 -40 280 280" className="drop-shadow-2xl overflow-visible max-w-[300px]">
+        <div className="relative flex justify-center items-center py-8">
+            <svg width="100%" height="100%" viewBox="-40 -40 280 280" className="drop-shadow-2xl overflow-visible max-w-[280px]">
               {/* Radial Guides */}
               {[1, 0.8, 0.6, 0.4, 0.2].map((s, idx) => (
                 <path key={s} d={getRadarPath({ score_1: 5, score_2: 5, score_3: 5, score_4: 5, score_5: 5, score_6: 5 }, s)} fill={idx % 2 === 0 ? "rgba(0,0,0,0.02)" : "none"} stroke="#e2e8f0" strokeWidth="1" />
@@ -321,7 +300,7 @@ export function MichelinRating({ projectId, ratingId, isDemo = false }: Michelin
            </div>
         </div>
 
-        <div className="space-y-8">
+        <div className="w-full space-y-8 max-w-lg">
           <div className="grid grid-cols-1 gap-8">
             {categories.map((cat) => (
               <div key={cat.id} className="space-y-3 group/item">

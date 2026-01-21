@@ -269,27 +269,6 @@ function ViewerContent() {
                         </Button>
                       )}
                       <Button 
-                      variant="outline" 
-                      size="lg" 
-                      className="h-16 md:h-20 rounded-3xl border-2 border-slate-200 font-bold text-lg md:text-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-3"
-                      onClick={() => {
-                        const url = window.location.href;
-                        if (navigator.share) {
-                          navigator.share({
-                            title: project?.title || 'Vibefolio Project', // Use 'project' instead of 'projectData'
-                            text: '이 프로젝트에 대한 제 피드백을 확인해보세요!',
-                            url: url,
-                          }).catch(console.error);
-                        } else {
-                          navigator.clipboard.writeText(url);
-                          toast.success("링크가 클립보드에 복사되었습니다!");
-                        }
-                      }}
-                    >
-                       <Share2 className="w-6 h-6" />
-                       결과 공유
-                    </Button>
-                      <Button 
                         size="lg" 
                         onClick={handleNextStep} 
                         className="flex-1 h-14 rounded-2xl bg-slate-900 text-white font-black text-lg shadow-xl hover:bg-green-600 transition-all w-full flex items-center justify-center gap-2 uppercase tracking-tighter"
