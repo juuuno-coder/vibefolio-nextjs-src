@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Megaphone, MessageSquare, CheckCircle2, AlertTriangle, Trophy } from "lucide-react";
+import { Megaphone, MessageSquare, CheckCircle2, AlertTriangle, Trophy, Link, Copy } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -145,6 +145,35 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
                                 <p className="text-sm text-slate-600">피드백을 원하는 유저들에게<br/>우선적으로 추천됩니다.</p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Shareable Link Section */}
+                    <div className="p-5 bg-indigo-50 rounded-2xl border border-indigo-100 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <h4 className="font-bold text-indigo-900 flex items-center gap-2 text-sm">
+                                <Link size={16} /> 전용 심사 페이지 주소
+                            </h4>
+                            <Badge variant="outline" className="text-[10px] border-indigo-200 text-indigo-500 bg-white">
+                                ID: {projectId}
+                            </Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="flex-1 bg-white border border-indigo-200 px-3 py-2 rounded-xl text-xs font-mono text-indigo-600 truncate">
+                                review.vibefolio.net/{projectId}
+                            </div>
+                            <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="shrink-0 rounded-xl bg-white hover:bg-indigo-50 border-indigo-200 text-indigo-600 gap-1.5"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(`review.vibefolio.net/${projectId}`);
+                                    toast.success("링크가 복사되었습니다!");
+                                }}
+                            >
+                                <Copy size={14} /> 복사
+                            </Button>
+                        </div>
+                        <p className="text-[10px] text-indigo-400 font-medium">이 주소를 통해 로그인 없이도 누구나 심사에 참여할 수 있습니다.</p>
                     </div>
                 </div>
             )}
