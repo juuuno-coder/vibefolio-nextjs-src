@@ -201,17 +201,26 @@ function ReviewContent() {
   const isAB = config.isABMode || modeParam === 'ab' || !!userUrl2;
   
   // URL Logic: custom_data.url1 -> Query Param -> Project Main Image/URL
+  const ensureProtocol = (url: string | null | undefined) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `https://${url}`;
+  };
+
   const url1 = React.useMemo(() => {
-    if (config.url1) return config.url1;
-    if (userUrl1) return decodeURIComponent(userUrl1);
+    let rawUrl = config.url1;
+    if (!rawUrl && userUrl1) rawUrl = decodeURIComponent(userUrl1);
     
     // Fallback to project image/url columns
-    const p = project as any;
-    if (!p) return null;
-    return p.url || p.image_url || p.thumbnail_url || null;
+    if (!rawUrl && project) {
+       const p = project as any;
+       rawUrl = p.url || p.image_url || p.thumbnail_url;
+    }
+    
+    return ensureProtocol(rawUrl);
   }, [config.url1, userUrl1, project]);
 
-  const url2 = config.url2 || (userUrl2 ? decodeURIComponent(userUrl2) : null);
+  const url2 = ensureProtocol(config.url2 || (userUrl2 ? decodeURIComponent(userUrl2) : null));
 
   // 1. Auth & Data Fetch
   useEffect(() => {
@@ -261,6 +270,16 @@ function ReviewContent() {
 
   return (
     <div className="relative w-full h-[100dvh] overflow-hidden bg-slate-950 text-slate-900 font-sans">
+      {/* Background Image */}
+      <div 
+         className="absolute inset-0 z-0 transition-all duration-1000" 
+         style={{ 
+            backgroundImage: 'url(/review/review-bg.jpeg)', 
+            backgroundSize: 'cover', 
+            backgroundPosition: 'center',
+            filter: 'grayscale(100%) brightness(0.4) contrast(1.2)' // Optimized for B/W theme
+         }} 
+      />
       
       {/* Top Utility Bar (Toggle for PC/Mobile) */}
       <div className="absolute top-6 left-6 z-[60] flex items-center gap-2">
@@ -438,7 +457,7 @@ function ReviewContent() {
                      animate={{ y: 0, opacity: 1 }}
                      exit={{ y: -20, opacity: 0 }}
                      className="text-slate-500 text-sm md:text-base font-bold tracking-widest uppercase"
-                     style={{ fontFamily: 'Taenada' }}
+                     style={{ fontFamily: 'Macho' }}
                     >
                      {cycleTexts[cycleIndex]}
                     </motion.p>
