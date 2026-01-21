@@ -210,13 +210,14 @@ function ReviewContent() {
         )}
       </AnimatePresence>
 
-      {/* 2. Main Split View Layout */}
-      <div className="relative w-full h-full flex p-4 md:p-6 gap-6">
-        {/* Left: Project Viewer Container (Browser Style - Image 2 Ref) */}
-        <div className={cn(
-          "flex-1 relative transition-all duration-500 ease-in-out flex flex-col min-w-0 h-full",
-          viewerMode === 'desktop' && isReviewOpen ? "md:mr-[450px]" : ""
-        )}>
+      {/* 2. Main Split View Layout - Only Render in Viewer Phase to prevent overlap */}
+      {phase === 'viewer' && (
+        <div className="relative w-full h-full flex p-4 md:p-6 gap-6">
+          {/* Left: Project Viewer Container (Browser Style - Image 2 Ref) */}
+          <div className={cn(
+            "flex-1 relative transition-all duration-500 ease-in-out flex flex-col min-w-0 h-full",
+            viewerMode === 'desktop' && isReviewOpen ? "md:mr-[450px]" : ""
+          )}>
           {phase === 'viewer' && (
             <div className="w-full h-full flex flex-col bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
               {/* Browser Header Section */}
