@@ -14,7 +14,7 @@ export function RootLayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col relative w-full overflow-x-hidden">
       {!hideLayout && <Header />}
-      <main className={`flex-1 w-full max-w-[1920px] mx-auto ${hideLayout ? "" : "pt-[60px]"} pb-20 fade-in`}>
+      <main className={`flex-1 w-full max-w-[1920px] mx-auto ${hideLayout ? "" : "pt-[60px] pb-20"} fade-in`}>
         <Suspense fallback={null}>
           {children}
         </Suspense>

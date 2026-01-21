@@ -87,8 +87,6 @@ function ReviewContent() {
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [evaluationStep, setEvaluationStep] = useState<1 | 2 | 3>(1);
-  const [viewMode, setViewMode] = useState<ViewMode>('split'); // For A/B mobile toggle
-  const [deviceFrame, setDeviceFrame] = useState<'mobile' | 'full'>('mobile');
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [vote, setVote] = useState<VoteChoice>(null);
   
@@ -166,19 +164,6 @@ function ReviewContent() {
     init();
   }, [projectId]); // Simplified dependency array to avoid unnecessary re-runs
 
-  // Handle Resize for A/B view
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        if (viewMode === 'split') setViewMode('a');
-      } else {
-        setViewMode('split');
-      }
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [viewMode]);
 
   const [evaluationTab, setEvaluationTab] = useState<'rating' | 'voting' | 'proposal'>('rating');
 
@@ -193,71 +178,13 @@ function ReviewContent() {
         "absolute inset-0 transition-opacity duration-1000",
         phase === 'viewer' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
       )}>
-        {/* Top Header */}
-        <div className="absolute top-0 left-0 right-0 h-14 bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-4 z-40 border-b border-white/10">
-           <div className="flex items-center gap-3 text-white">
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={() => router.back()}>
-                 <ArrowLeft size={20} />
-              </Button>
-              <span className="font-bold text-sm md:text-base truncate max-w-[120px] md:max-w-[200px]">
-                {project?.title || "심사 중"}
-              </span>
-              {isAB && <Badge variant="outline" className="hidden md:flex text-amber-400 border-amber-400">A/B Test</Badge>}
-           </div>
-           
-           <div className="flex items-center gap-2">
-            {isAB && (
-              <div className="flex bg-white/10 rounded-lg p-1">
-                 <button 
-                   onClick={() => setViewMode('a')}
-                   className={cn("px-2 md:px-3 py-1 rounded text-[10px] font-bold transition-all", viewMode === 'a' ? "bg-amber-500 text-white" : "text-slate-400 hover:text-white")}
-                 >
-                   A
-                 </button>
-                 <button 
-                   onClick={() => setViewMode('b')}
-                   className={cn("px-2 md:px-3 py-1 rounded text-[10px] font-bold transition-all", viewMode === 'b' ? "bg-amber-500 text-white" : "text-slate-400 hover:text-white")}
-                 >
-                   B
-                 </button>
-              </div>
-            )}
-
-            <div className="flex items-center gap-1 bg-white/10 p-1 rounded-xl">
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className={cn("h-8 px-2 md:px-3 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all", deviceFrame === 'mobile' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-white")}
-                  onClick={() => setDeviceFrame('mobile')}
-                >
-                  <Smartphone size={14} className="md:mr-1" /> <span className="hidden md:inline">Mobile</span>
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className={cn("h-8 px-2 md:px-3 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all", deviceFrame === 'full' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-white")}
-                  onClick={() => setDeviceFrame('full')}
-                >
-                  <Monitor size={14} className="md:mr-1" /> <span className="hidden md:inline">Full</span>
-                </Button>
-            </div>
-
-            <Button size="sm" variant="ghost" className="text-slate-400 hover:text-white ml-2" onClick={() => setPhase('cloche')}>
-                <X size={20} />
-            </Button>
-           </div>
-        </div>
-
-        {/* Viewer Content */}
-        <div className="w-full h-full pt-14 bg-slate-100 flex items-center justify-center overflow-hidden">
-            <div className={cn(
-              "flex w-full h-full transition-all duration-500",
-              deviceFrame === 'mobile' ? "max-w-[400px] h-[85%] rounded-[3rem] border-[8px] border-slate-900 shadow-2xl relative overflow-hidden" : "max-w-none h-full"
-            )}>
+        {/* Viewer Content - Full Screen Iframe */}
+        <div className="w-full h-full bg-slate-100 flex items-center justify-center overflow-hidden">
+            <div className="flex w-full h-full">
                 {/* View A */}
                 <div className={cn(
-                  "h-full transition-all duration-300 relative",
-                  isAB ? (viewMode === 'split' ? "w-1/2 border-r border-slate-300" : (viewMode === 'a' ? "w-full" : "w-0 overflow-hidden")) : "w-full"
+                  "h-full relative",
+                  isAB ? "w-1/2 border-r border-slate-200" : "w-full"
                 )}>
                   <iframe 
                     src={url1 || undefined} 
@@ -265,42 +192,56 @@ function ReviewContent() {
                     sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
                     title="Preview A" 
                   />
+                  {isAB && (
+                    <div className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest z-10 border border-white/20">
+                      Option A
+                    </div>
+                  )}
                 </div>
 
                 {/* View B */}
                 {isAB && url2 && (
-                  <div className={cn(
-                    "h-full transition-all duration-300 relative",
-                    viewMode === 'split' ? "w-1/2" : (viewMode === 'b' ? "w-full" : "w-0 overflow-hidden")
-                  )}>
+                  <div className="h-full w-1/2 relative">
                     <iframe 
                       src={url2 || undefined} 
                       className="w-full h-full border-none"
                       sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
                       title="Preview B" 
                     />
+                    <div className="absolute top-4 left-4 bg-amber-500/80 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest z-10 border border-white/20">
+                      Option B
+                    </div>
                   </div>
                 )}
             </div>
         </div>
 
-        {/* Floating Review Button */}
+
+        {/* Single Floating Evaluation Button */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[40]">
            <motion.button
               whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsReviewOpen(true)}
-              className="flex items-center gap-4 pl-5 pr-8 py-4 bg-slate-900/95 backdrop-blur-2xl border border-white/20 text-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.6)] hover:shadow-orange-500/40 hover:border-orange-500/50 transition-all group"
+              className="flex items-center gap-3 px-8 py-5 bg-slate-900 text-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.4)] hover:shadow-orange-500/40 transition-all group"
            >
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 via-orange-500 to-red-600 flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
-                 <ChefHat size={24} className="text-white" />
-              </div>
-              <div className="text-left">
-                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-0.5">Michelin Guide</p>
-                  <p className="text-lg font-black tracking-tight group-hover:text-orange-400 transition-colors">심사 평가서 작성</p>
-              </div>
+              <ChefHat size={20} className="text-orange-400" />
+              <span className="text-lg font-black tracking-tight">평가하기</span>
            </motion.button>
         </div>
+
+        {/* Small Exit Button */}
+        <div className="absolute top-6 right-6 z-[40]">
+           <Button 
+             variant="secondary" 
+             size="icon" 
+             className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-md shadow-lg border border-slate-200 text-slate-900 hover:bg-white"
+             onClick={() => setPhase('cloche')}
+           >
+              <X size={20} />
+           </Button>
+        </div>
+
       </div>
 
       {/* phase cloche */}
