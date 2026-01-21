@@ -453,11 +453,12 @@ function ReviewContent() {
                   <AnimatePresence mode="wait">
                     <motion.p 
                      key={cycleIndex}
-                     initial={{ y: 20, opacity: 0 }}
-                     animate={{ y: 0, opacity: 1 }}
-                     exit={{ y: -20, opacity: 0 }}
-                     className="text-slate-500 text-sm md:text-base font-bold tracking-widest uppercase"
-                     style={{ fontFamily: 'Macho' }}
+                     initial={{ opacity: 0, filter: "blur(10px)", scale: 0.9 }}
+                     animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                     exit={{ opacity: 0, filter: "blur(10px)", scale: 1.1 }}
+                     transition={{ duration: 0.5 }}
+                     className="text-white text-sm md:text-base font-bold tracking-widest uppercase"
+                     style={{ fontFamily: 'Taenada' }}
                     >
                      {cycleTexts[cycleIndex]}
                     </motion.p>
@@ -467,6 +468,11 @@ function ReviewContent() {
                 <div className="relative mb-6">
                    <img src="/review/review.png" alt="Reviews" className="w-64 md:w-80 h-auto invert brightness-0" />
                 </div>
+                
+                <p className="text-slate-400 text-sm md:text-lg font-medium mb-16 max-w-md mx-auto leading-relaxed">
+                   전문 평가위원이 되어<br/>
+                   이 작품의 가치를 객관적으로 평가해 주세요.
+                </p>
              </motion.div>
 
              <div className="flex items-center justify-center gap-8 md:gap-16 mb-20 relative">
@@ -476,7 +482,18 @@ function ReviewContent() {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setPhase('viewer')}
                 >
-                   <ClocheIcon className="w-40 h-40 md:w-72 md:h-72 drop-shadow-2xl grayscale brightness-125 hover:grayscale-0 transition-all duration-500" />
+                   <div className="relative w-40 h-40 md:w-72 md:h-72">
+                      <img 
+                        src="/review/cloche-cover.png" 
+                        alt="Evaluation Cover" 
+                        className="w-full h-full object-contain drop-shadow-2xl grayscale brightness-110 group-hover:grayscale-0 transition-all duration-500" 
+                      />
+                      {/* Sparkle Effect */}
+                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none mix-blend-overlay animate-shine" />
+                      
+                      {/* Mobile Always Sparkle */}
+                      <div className="md:hidden absolute inset-0 bg-white/10 rounded-full blur-xl animate-pulse-slow pointer-events-none" />
+                   </div>
                    {isAB && <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">Selection A</div>}
                 </motion.div>
 
@@ -487,7 +504,14 @@ function ReviewContent() {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setPhase('viewer')}
                   >
-                    <ClocheIcon className="w-40 h-40 md:w-72 md:h-72 drop-shadow-2xl grayscale brightness-125 hover:grayscale-0 transition-all duration-500" />
+                   <div className="relative w-40 h-40 md:w-72 md:h-72">
+                      <img 
+                        src="/review/cloche-cover.png" 
+                        alt="Evaluation Cover" 
+                        className="w-full h-full object-contain drop-shadow-2xl grayscale brightness-110 group-hover:grayscale-0 transition-all duration-500" 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none mix-blend-overlay animate-shine" />
+                   </div>
                     <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">Selection B</div>
                   </motion.div>
                 )}
@@ -497,7 +521,10 @@ function ReviewContent() {
                 onClick={() => setPhase('viewer')}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-12 py-5 bg-slate-900 text-white rounded-full font-black text-xl shadow-2xl hover:shadow-[0_20px_50px_rgba(255,255,255,0.3)] transition-all uppercase tracking-widest border border-slate-800"
+                className="relative px-16 py-6 bg-slate-900 text-white font-black text-xl shadow-2xl hover:shadow-[0_20px_50px_rgba(255,255,255,0.3)] transition-all uppercase tracking-widest border border-slate-800"
+                style={{
+                  clipPath: 'polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%)' // Angled corners shape
+                }}
              >
                 평가 시작하기
              </motion.button>
