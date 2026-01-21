@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Rocket, FlaskConical, HelpCircle } from 'lucide-react';
+import { Rocket, FlaskConical, HelpCircle, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase/client';
@@ -127,35 +127,35 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
   const options = [
     {
       id: 'launch',
-      icon: Rocket,
-      label: "당장 쓸게요!",
-      color: "text-blue-500",
-      bgFrom: "from-blue-500/10",
-      bgTo: "to-blue-600/20",
-      border: "border-blue-200",
-      activeBorder: "border-blue-500",
-      count: counts.launch
-    },
-    {
-      id: 'more',
-      icon: FlaskConical,
-      label: "더 개발해주세요",
+      icon: CheckCircle2,
+      label: "합격 (Pass)",
       color: "text-green-500",
       bgFrom: "from-green-500/10",
       bgTo: "to-green-600/20",
       border: "border-green-200",
       activeBorder: "border-green-500",
+      count: counts.launch
+    },
+    {
+      id: 'more',
+      icon: Clock,
+      label: "보류 (Hold)",
+      color: "text-amber-500",
+      bgFrom: "from-amber-500/10",
+      bgTo: "to-amber-600/20",
+      border: "border-amber-200",
+      activeBorder: "border-amber-500",
       count: counts.more
     },
     {
       id: 'research',
-      icon: HelpCircle,
-      label: "연구가 필요해요",
-      color: "text-orange-500",
-      bgFrom: "from-orange-500/10",
-      bgTo: "to-orange-600/20",
-      border: "border-orange-200",
-      activeBorder: "border-orange-500",
+      icon: XCircle,
+      label: "불합격 (Reject)",
+      color: "text-red-500",
+      bgFrom: "from-red-500/10",
+      bgTo: "to-red-600/20",
+      border: "border-red-200",
+      activeBorder: "border-red-500",
       count: counts.research
     }
   ] as const;
