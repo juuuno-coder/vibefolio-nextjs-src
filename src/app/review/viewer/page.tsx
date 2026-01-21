@@ -222,17 +222,15 @@ function ViewerContent() {
                     <button onClick={() => setIsReviewOpen(false)} className="p-4 hover:bg-slate-100 rounded-[2rem] text-slate-400 transition-all active:scale-95"><X size={24} /></button>
                   </div>
 
-                  {/* Mobile Viewport Styled Container */}
-                  <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8">
+                  {/* Main Evaluation Area - Optimized for direct content flow */}
+                  <div className="flex-1 overflow-y-auto custom-scrollbar">
                     <motion.div 
                       key={currentStep}
-                      initial={{ opacity: 0, scale: 0.98, y: 10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      className="mx-auto max-w-[440px] bg-white rounded-[3rem] border border-slate-200 shadow-2xl overflow-hidden min-h-[600px] flex flex-col"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-6 md:p-10"
                     >
-                      <div className="flex-1 p-8 md:p-10">
-                         {renderReviewStep()}
-                      </div>
+                       {renderReviewStep()}
                     </motion.div>
                   </div>
 
