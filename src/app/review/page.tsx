@@ -89,6 +89,7 @@ function ReviewContent() {
   // State
   const [phase, setPhase] = useState<ReviewPhase>('cloche');
   const [viewerMode, setViewerMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [isExternalView, setIsExternalView] = useState(false); // New: Track if reviewing in external tab
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [evaluationStep, setEvaluationStep] = useState<number>(1);
@@ -268,7 +269,10 @@ function ReviewContent() {
                variant="ghost" 
                size="sm" 
                className="rounded-xl h-10 px-4 font-bold text-slate-500 hover:text-slate-900"
-               onClick={() => window.open(url1 || '', '_blank')}
+               onClick={() => {
+                  window.open(url1 || '', '_blank');
+                  setIsExternalView(true); // Switch to companion mode
+               }}
             >
                <Maximize2 size={16} className="mr-2" /> 새 창 열기
             </Button>
@@ -323,6 +327,48 @@ function ReviewContent() {
                   </div>
                 )}
             </div>
+            
+            {/* Companion Mode Overlay (When External Tab is Open) */}
+            <AnimatePresence>
+               {isExternalView && (
+                  <motion.div 
+                     initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+                     animate={{ opacity: 1, backdropFilter: "blur(12px)" }}
+                     exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+                     className="absolute inset-0 bg-slate-900/60 z-20 flex flex-col items-center justify-center text-white"
+                  >
+                     <div className="bg-white/10 p-8 rounded-[2.5rem] backdrop-blur-md border border-white/20 text-center max-w-md shadow-2xl">
+                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 text-slate-900 shadow-lg">
+                           <Monitor size={32} />
+                        </div>
+                        <h3 className="text-2xl font-black mb-2">외부 창에서 평가 중...</h3>
+                        <p className="text-slate-300 font-medium mb-8 leading-relaxed">
+                           새 탭에서 콘텐츠를 충분히 경험하고<br/>
+                           이곳에서 당신의 소중한 평가를 남겨주세요.
+                        </p>
+                        <div className="space-y-3">
+                           <Button 
+                              onClick={() => {
+                                 setPhase('viewer');
+                                 setIsReviewOpen(true);
+                                 // Optionally open review form directly?
+                              }}
+                              className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-indigo-500/30"
+                           >
+                              <MessageSquareText size={20} className="mr-2" /> 평가 의견 작성하기
+                           </Button>
+                           <Button 
+                              variant="ghost"
+                              onClick={() => setIsExternalView(false)}
+                              className="w-full h-12 text-slate-300 hover:text-white hover:bg-white/10 rounded-xl"
+                           >
+                              다시 내부 뷰어로 보기
+                           </Button>
+                        </div>
+                     </div>
+                  </motion.div>
+               )}
+            </AnimatePresence>
         </div>
 
 
