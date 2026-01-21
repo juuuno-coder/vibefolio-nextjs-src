@@ -6,12 +6,12 @@ import { ChefHat, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 function IntroContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const projectId = searchParams.get('projectId');
-  const [project, setProject] = useState<any>(null);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() => {
@@ -22,14 +22,13 @@ function IntroContent() {
 
     const fetchProject = async () => {
       try {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('Project')
-          .select('*')
+          .select('project_id')
           .eq('project_id', Number(projectId))
           .single();
 
         if (error) throw error;
-        setProject(data);
         setIsDataLoaded(true);
       } catch (e) {
         console.error("Failed to load project", e);
@@ -51,6 +50,7 @@ function IntroContent() {
     <main className="relative w-full h-screen overflow-hidden bg-white font-pretendard text-slate-900">
       <AnimatePresence mode="wait">
         <motion.div
+          key="intro-cloche"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ y: "-100%", opacity: 0, transition: { duration: 0.8, ease: [0.33, 1, 0.68, 1] } }}
@@ -83,7 +83,7 @@ function IntroContent() {
                  className="text-6xl font-black text-slate-900 tracking-tighter mb-4 leading-tight"
                >
                   Preparing <span className="text-orange-500">Expert Audit</span>
-               </h2>
+               </motion.h2>
                <motion.p 
                  initial={{ opacity: 0 }}
                  animate={{ opacity: 1 }}
@@ -117,7 +117,7 @@ function IntroContent() {
                  transition={{ delay: 0.5 }}
                  className="grid grid-cols-3 gap-6"
                >
-                  {['Planning', 'Quality', 'Orginality'].map((item, idx) => (
+                  {['Planning', 'Quality', 'Orginality'].map((item) => (
                      <div key={item} className="flex flex-col items-center gap-3">
                         <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center shadow-sm">
                            <div className={cn("w-2 h-2 rounded-full", isDataLoaded ? "bg-green-500 animate-pulse" : "bg-slate-200")} />
@@ -141,11 +141,6 @@ function IntroContent() {
       </AnimatePresence>
     </main>
   );
-}
-
-// Utility to handle class merging
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
 }
 
 export default function IntroPage() {
