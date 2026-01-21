@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Megaphone, MessageSquare, CheckCircle2, AlertTriangle, Trophy, Link, Copy } from "lucide-react";
+import { Megaphone, MessageSquare, CheckCircle2, AlertTriangle, Trophy, Link, Copy, Target } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -27,10 +27,11 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
     publicFeedback: true,   
     showMichelin: true,     // 미슐랭 평점 활성화
     showStickers: true,     // 스티커 투표 활성화
-    showProposal: true,     // 시크릿 제안 활성화
+    showProposal: true,     // 시크릿 심사평 활성화
     isABMode: false,        // A/B 테스트 모드
     url2: "",               // A/B 테스트용 보조 URL
-    aiAnalysis: false       
+    aiAnalysis: false,
+    targetExpertise: [] as string[] // 희망 전문가 분야
   });
 
   useEffect(() => {
@@ -220,7 +221,7 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
                                     onCheckedChange={(c) => setOptions({...options, showProposal: !!c})} 
                                 />
                                 <div>
-                                    <p className="font-bold text-slate-900 text-sm">시크릿 제안</p>
+                                    <p className="font-bold text-slate-900 text-sm">시크릿 심사평</p>
                                     <p className="text-[10px] text-slate-500">1:1 비공개 피드백</p>
                                 </div>
                             </label>
@@ -241,17 +242,52 @@ export function FeedbackRequestModal({ open, onOpenChange, projectId, projectTit
                         </div>
 
                         {options.isABMode && (
-                            <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100 animate-in slide-in-from-top-2">
-                                <p className="text-xs font-bold text-purple-700 mb-2">대조군(B안) URL 입력</p>
-                                <input 
-                                    type="url"
-                                    placeholder="https://original-link.com/b-version"
-                                    className="w-full bg-white border border-purple-200 px-3 py-2 rounded-lg text-sm outline-none focus:ring-2 ring-purple-500/20"
-                                    value={options.url2}
-                                    onChange={(e) => setOptions({...options, url2: e.target.value})}
-                                />
+                            <div className="p-5 bg-purple-50 rounded-2xl border border-purple-100 animate-in slide-in-from-top-2 space-y-3">
+                                <p className="text-xs font-bold text-purple-700 underline decoration-purple-200 underline-offset-4">A/B 테스트 상세 설정</p>
+                                <div className="space-y-2">
+                                    <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">대조군(B안) URL</p>
+                                    <input 
+                                        type="url"
+                                        placeholder="https://example.com/version-b"
+                                        className="w-full bg-white border border-purple-200 px-3 py-2.5 rounded-xl text-sm outline-none focus:ring-2 ring-purple-500/20 font-medium"
+                                        value={options.url2}
+                                        onChange={(e) => setOptions({...options, url2: e.target.value})}
+                                    />
+                                </div>
+                                <p className="text-[9px] text-purple-400 leading-tight">
+                                    * 심사 위원에게 두 가지 시안을 동시에 보여주고 선호도를 조사합니다.
+                                </p>
                             </div>
                         )}
+
+                        <div className="pt-2">
+                            <h4 className="text-xs font-black text-slate-900 mb-3 flex items-center gap-2">
+                                <Target size={14} className="text-red-500" /> 희망 심사 위원 (전문 분야)
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                                {['UI/UX 디자인', '기획/전략', '프론트엔드', '백엔드', '비즈니스', '데이터/AI'].map((field) => (
+                                    <button
+                                        key={field}
+                                        type="button"
+                                        onClick={() => {
+                                            const current = options.targetExpertise;
+                                            const next = current.includes(field) 
+                                                ? current.filter(f => f !== field)
+                                                : [...current, field];
+                                            setOptions({...options, targetExpertise: next});
+                                        }}
+                                        className={cn(
+                                            "px-3 py-1.5 rounded-full text-[11px] font-bold transition-all border",
+                                            options.targetExpertise.includes(field)
+                                                ? "bg-slate-900 text-white border-slate-900"
+                                                : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+                                        )}
+                                    >
+                                        {field}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
                         <hr className="border-slate-100" />
 

@@ -86,7 +86,7 @@ function ReviewContent() {
   const [phase, setPhase] = useState<ReviewPhase>('cloche');
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [evaluationStep, setEvaluationStep] = useState<1 | 2 | 3>(1);
+  const [evaluationStep, setEvaluationStep] = useState<number>(1);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [vote, setVote] = useState<VoteChoice>(null);
   
@@ -107,6 +107,26 @@ function ReviewContent() {
     }
     return project.custom_data;
   }, [project]);
+
+  // Dynamic Step Generation
+  const availableSteps = React.useMemo(() => {
+    const s = [];
+    if (config.showMichelin !== false) s.push({ id: 'rating', label: '1차: 분석', icon: Star });
+    if (config.showStickers !== false) s.push({ id: 'voting', label: '2차: 판정', icon: LayoutTemplate });
+    if (config.showProposal !== false) s.push({ id: 'proposal', label: '3차: 의견', icon: MessageSquareText });
+    return s;
+  }, [config]);
+
+  // Clamp evaluationStep if steps change
+  useEffect(() => {
+    if (evaluationStep > availableSteps.length && availableSteps.length > 0) {
+      setEvaluationStep(availableSteps.length);
+    }
+  }, [availableSteps.length, evaluationStep]);
+
+  // Map evaluationStep to current index
+  const currentStepIndex = Math.max(0, Math.min(evaluationStep - 1, availableSteps.length - 1));
+  const currentStep = availableSteps[currentStepIndex];
 
   const isAB = config.isABMode || modeParam === 'ab' || !!userUrl2;
   
@@ -165,7 +185,6 @@ function ReviewContent() {
   }, [projectId]); // Simplified dependency array to avoid unnecessary re-runs
 
 
-  const [evaluationTab, setEvaluationTab] = useState<'rating' | 'voting' | 'proposal'>('rating');
 
   if (loading) return <div className="h-[100dvh] bg-slate-950 flex items-center justify-center text-white font-black tracking-widest text-xl animate-pulse">LOADING...</div>;
   if (!url1) return <div className="h-[100dvh] bg-slate-950 flex items-center justify-center text-white">유효한 URL이 없습니다.</div>;
@@ -332,21 +351,22 @@ function ReviewContent() {
                       <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-100 -translate-y-1/2 z-0" />
                       <div 
                         className="absolute top-1/2 left-0 h-0.5 bg-slate-900 -translate-y-1/2 z-0 transition-all duration-500" 
-                        style={{ width: `${((evaluationStep - 1) / 2) * 100}%` }}
+                        style={{ 
+                          width: availableSteps.length > 1 
+                            ? `${((evaluationStep - 1) / (availableSteps.length - 1)) * 100}%` 
+                            : '100%' 
+                        }}
                       />
 
-                      {[
-                        { step: 1, label: '1차: 분석', icon: Star },
-                        { step: 2, label: '2차: 판정', icon: LayoutTemplate },
-                        { step: 3, label: '3차: 의견', icon: MessageSquareText }
-                      ].map((item) => {
-                        const isPast = evaluationStep > item.step;
-                        const isCurrent = evaluationStep === item.step;
+                      {availableSteps.map((item, index) => {
+                        const stepNum = index + 1;
+                        const isPast = evaluationStep > stepNum;
+                        const isCurrent = evaluationStep === stepNum;
                         
                         return (
                           <button
-                            key={item.step}
-                            onClick={() => setEvaluationStep(item.step as any)}
+                            key={item.id}
+                            onClick={() => setEvaluationStep(stepNum as any)}
                             className="relative z-10 flex flex-col items-center gap-1.5 group"
                           >
                              <div className={cn(
@@ -371,7 +391,7 @@ function ReviewContent() {
                 {/* Sheet Content */}
                <div className="overflow-y-auto flex-1 p-6 md:p-10 space-y-10 bg-white pb-32">
                   
-                  {evaluationStep === 1 && (
+                  {currentStep?.id === 'rating' && (
                     <motion.div 
                       key="rating"
                       initial={{ opacity: 0, x: -20 }}
@@ -384,13 +404,37 @@ function ReviewContent() {
                       </div>
                       {isAB && (
                         <div className="bg-slate-900 p-8 rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden relative group">
-                            {/* ... AB content existing ... */}
                             <div className="relative z-10">
                               <h4 className="text-xl font-black text-white mb-6 flex items-center gap-2">
                                 <SplitSquareHorizontal size={24} className="text-blue-400"/>
                                 어느 프로젝트가 더 뛰어난가요?
                               </h4>
-                              {/* ... buttons ... */}
+                                <div className="grid grid-cols-3 gap-4">
+                                    <Button 
+                                        variant={vote === 'a' ? 'default' : 'outline'}
+                                        className={cn("h-20 rounded-2xl flex flex-col gap-1 border-white/20", vote === 'a' ? "bg-blue-600 text-white border-blue-600" : "bg-white/5 text-white hover:bg-white/10")}
+                                        onClick={() => setVote('a')}
+                                    >
+                                        <span className="text-lg font-black">Option A</span>
+                                        <span className="text-[10px] opacity-60">기존 기획안</span>
+                                    </Button>
+                                    <Button 
+                                        variant={vote === 'similar' ? 'default' : 'outline'}
+                                        className={cn("h-20 rounded-2xl flex flex-col gap-1 border-white/20", vote === 'similar' ? "bg-slate-700 text-white border-slate-700" : "bg-white/5 text-white hover:bg-white/10")}
+                                        onClick={() => setVote('similar')}
+                                    >
+                                        <span className="text-lg font-black">비슷함</span>
+                                        <span className="text-[10px] opacity-60">우열 가리기 힘듦</span>
+                                    </Button>
+                                    <Button 
+                                        variant={vote === 'b' ? 'default' : 'outline'}
+                                        className={cn("h-20 rounded-2xl flex flex-col gap-1 border-white/20", vote === 'b' ? "bg-amber-600 text-white border-amber-600" : "bg-white/5 text-white hover:bg-white/10")}
+                                        onClick={() => setVote('b')}
+                                    >
+                                        <span className="text-lg font-black">Option B</span>
+                                        <span className="text-[10px] opacity-60">신규 제안안</span>
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                       )}
@@ -398,7 +442,7 @@ function ReviewContent() {
                   </motion.div>
                 )}
 
-                {evaluationStep === 2 && (
+                {currentStep?.id === 'voting' && (
                   <motion.div 
                     key="voting"
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -413,7 +457,7 @@ function ReviewContent() {
                   </motion.div>
                 )}
 
-                {evaluationStep === 3 && (
+                {currentStep?.id === 'proposal' && (
                   <motion.div 
                     key="proposal"
                     initial={{ opacity: 0, y: 20 }}
@@ -451,7 +495,7 @@ function ReviewContent() {
                 {/* Bottom CTA Bar */}
                <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-xl border-t border-slate-100 flex items-center justify-between gap-6">
                   <div className="hidden md:block">
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Step {evaluationStep} of 3</p>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Step {evaluationStep} of {availableSteps.length}</p>
                      <p className="text-sm font-bold text-slate-900 mt-1">심사 결과는 단계별로 즉시 반영됩니다.</p>
                   </div>
                   
@@ -468,19 +512,17 @@ function ReviewContent() {
                     <Button 
                       className={cn(
                         "flex-1 md:px-16 h-14 rounded-2xl font-black text-white shadow-2xl transition-all uppercase tracking-widest text-base",
-                        evaluationStep === 3 ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200" : "bg-slate-950 hover:bg-slate-800 shadow-slate-200"
+                        evaluationStep === availableSteps.length ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200" : "bg-slate-950 hover:bg-slate-800 shadow-slate-200"
                       )}
                       onClick={() => {
-                        if (evaluationStep < 3) {
+                        if (evaluationStep < availableSteps.length) {
                           setEvaluationStep(prev => (prev + 1) as any);
                         } else {
                           setShowResultModal(true);
                         }
                       }}
                     >
-                      {evaluationStep === 1 && "다음 단계로"}
-                      {evaluationStep === 2 && "다음 단계로"}
-                      {evaluationStep === 3 && "평가 완료"}
+                      {evaluationStep < availableSteps.length ? "다음 단계로" : "평가 완료"}
                     </Button>
                   </div>
                </div>
