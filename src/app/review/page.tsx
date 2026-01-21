@@ -277,7 +277,7 @@ function ReviewContent() {
             backgroundImage: 'url(/review/review-bg.jpeg)', 
             backgroundSize: 'cover', 
             backgroundPosition: 'center',
-            filter: 'grayscale(100%) brightness(0.4) contrast(1.2)' // Optimized for B/W theme
+            filter: 'grayscale(100%) brightness(0.6) contrast(1.1)' // Slightly brighter
          }} 
       />
       
@@ -441,7 +441,7 @@ function ReviewContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ y: "-100%", opacity: 0, transition: { duration: 0.8, ease: [0.33, 1, 0.68, 1] } }}
-            className="absolute inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center p-8 text-center"
+            className="absolute inset-0 z-50 bg-black/40 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center"
           >
              <motion.div 
                initial={{ y: 20, opacity: 0 }}
@@ -482,17 +482,19 @@ function ReviewContent() {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setPhase('viewer')}
                 >
-                   <div className="relative w-40 h-40 md:w-72 md:h-72">
+                   <div className="relative w-40 h-40 md:w-72 md:h-72 overflow-hidden rounded-full p-4">
                       <img 
                         src="/review/cloche-cover.png" 
                         alt="Evaluation Cover" 
-                        className="w-full h-full object-contain drop-shadow-2xl grayscale brightness-110 group-hover:grayscale-0 transition-all duration-500" 
+                        className="w-full h-full object-contain drop-shadow-2xl grayscale brightness-110 group-hover:grayscale-0 transition-all duration-500 relative z-10" 
                       />
-                      {/* Sparkle Effect */}
-                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none mix-blend-overlay animate-shine" />
+                      {/* Refined Sparkle Effect - Diagonal Beam */}
+                      <div className="absolute top-0 left-0 w-full h-full z-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                         <div className="absolute top-0 -left-[100%] w-[50%] h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-25deg] animate-[shine_1.5s_infinite]" />
+                      </div>
                       
-                      {/* Mobile Always Sparkle */}
-                      <div className="md:hidden absolute inset-0 bg-white/10 rounded-full blur-xl animate-pulse-slow pointer-events-none" />
+                      {/* Mobile Always Beaming */}
+                      <div className="md:hidden absolute top-0 -left-[100%] w-[50%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-25deg] animate-[shine_3s_infinite] z-20 pointer-events-none" />
                    </div>
                    {isAB && <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">Selection A</div>}
                 </motion.div>
@@ -504,13 +506,15 @@ function ReviewContent() {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setPhase('viewer')}
                   >
-                   <div className="relative w-40 h-40 md:w-72 md:h-72">
+                   <div className="relative w-40 h-40 md:w-72 md:h-72 overflow-hidden rounded-full p-4">
                       <img 
                         src="/review/cloche-cover.png" 
                         alt="Evaluation Cover" 
-                        className="w-full h-full object-contain drop-shadow-2xl grayscale brightness-110 group-hover:grayscale-0 transition-all duration-500" 
+                        className="w-full h-full object-contain drop-shadow-2xl grayscale brightness-110 group-hover:grayscale-0 transition-all duration-500 relative z-10" 
                       />
-                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none mix-blend-overlay animate-shine" />
+                      <div className="absolute top-0 left-0 w-full h-full z-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                         <div className="absolute top-0 -left-[100%] w-[50%] h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-25deg] animate-[shine_1.5s_infinite]" />
+                      </div>
                    </div>
                     <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">Selection B</div>
                   </motion.div>
@@ -523,7 +527,7 @@ function ReviewContent() {
                 whileTap={{ scale: 0.95 }}
                 className="relative px-16 py-6 bg-slate-900 text-white font-black text-xl shadow-2xl hover:shadow-[0_20px_50px_rgba(255,255,255,0.3)] transition-all uppercase tracking-widest border border-slate-800"
                 style={{
-                  clipPath: 'polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%)' // Angled corners shape
+                  clipPath: 'polygon(10% 0, 90% 0, 100% 30%, 100% 70%, 90% 100%, 10% 100%, 0 70%, 0 30%)' // Octagon-ish shape (all 4 corners angled)
                 }}
              >
                 평가 시작하기
