@@ -45,7 +45,10 @@ import {
   faStar,
   faRocket,
   faClock,
-  faUser, // Add faUser
+  faUser,
+  faImage,
+  faPlus,
+  faTrash
 } from "@fortawesome/free-solid-svg-icons";
 
 
@@ -151,10 +154,11 @@ export default function TiptapUploadPage() {
     { id: 'score_4', label: '상업성', icon: 'TrendingUp', color: '#ef4444', desc: '시장 가치와 잠재력' }
   ]);
   const [pollOptions, setPollOptions] = useState<any[]>([
-    { id: 'launch', label: "합격입니다. 당장 쓸게요.", icon: 'CheckCircle2' },
-    { id: 'more', label: "보류하겠습니다.", icon: 'Clock' },
-    { id: 'research', label: "불합격드리겠습니다.", icon: 'XCircle' }
+    { id: 'opt_1', label: "합격입니다. 당장 쓸게요.", icon: 'CheckCircle2', desc: '이 작업은 즉시 배포 가능한 수준입니다.' },
+    { id: 'opt_2', label: "보류하겠습니다.", icon: 'Clock', desc: '조금 더 보완이 필요해 보입니다.' },
+    { id: 'opt_3', label: "불합격드리겠습니다.", icon: 'XCircle', desc: '기획부터 다시 검토가 필요합니다.' }
   ]);
+  const [pollDesc, setPollDesc] = useState<string>("");
 
   const handleLightroomImport = (images: string[]) => {
     if (!editor || images.length === 0) return;
@@ -245,6 +249,7 @@ export default function TiptapUploadPage() {
                     if (custom.genres) setSelectedGenres(custom.genres);
                     if (custom.fields) setSelectedFields(custom.fields);
                     if (custom.is_feedback_requested !== undefined) setIsFeedbackRequested(custom.is_feedback_requested);
+                    if (custom.poll_desc) setPollDesc(custom.poll_desc);
                     
                     // V-Audit Data Load
                     if (custom.audit_type) setAuditType(custom.audit_type);
@@ -615,6 +620,7 @@ export default function TiptapUploadPage() {
             is_ab: isAB,
             custom_categories: customCategories,
             poll_options: pollOptions,
+            poll_desc: pollDesc,
           }),
           audit_deadline: auditDeadline ? new Date(auditDeadline).toISOString() : null,
           is_growth_requested: isGrowthRequested,
@@ -1362,7 +1368,117 @@ export default function TiptapUploadPage() {
                        </div>
                     </div>
 
-                    {/* 3. Audit Deadline & Growth Option */}
+                                         {/* 2.5. Sticker Poll Configuration (New) */}
+                     <div className="space-y-6 pt-6 border-t border-white/10">
+                        <div className="flex justify-between items-center">
+                           <div className="space-y-1">
+                              <label className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                 <FontAwesomeIcon icon={faStar} className="text-amber-400" />
+                                 스티커 투표(Sticker Poll) 설정
+                              </label>
+                              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">의뢰 항목에 맞는 스티커와 디자인을 커스텀하세요 (2~6개)</p>
+                           </div>
+                           <Button variant="ghost" size="sm" className="text-blue-500 font-bold hover:bg-white/10" onClick={() => {
+                              if (pollOptions.length < 6) {
+                                setPollOptions([...pollOptions, { id: `opt_${Date.now()}`, label: '새 스티커', desc: '스티커 클릭 시 표시될 설명', icon: 'CheckCircle2' }]);
+                              } else {
+                                toast.error("스티커는 최대 6개까지만 설정 가능합니다.");
+                              }
+                           }}>
+                              <FontAwesomeIcon icon={faPlus} className="mr-2" /> 항목 추가
+                           </Button>
+                        </div>
+
+                        {/* Poll Guideline Description */}
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-500 uppercase">전체 투표 안내 문구</label>
+                           <Input 
+                             value={pollDesc}
+                             onChange={(e) => setPollDesc(e.target.value)}
+                             placeholder="예: 이 서비스의 초기 모델을 보고 어떤 생각이 드시나요?"
+                             className="bg-white/5 border-white/10 text-white text-xs h-10 rounded-xl"
+                           />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                           {pollOptions.map((opt, idx) => (
+                             <div key={opt.id} className="bg-white/5 rounded-3xl border border-white/10 p-6 space-y-4 group/poll relative overflow-hidden">
+                                {/* Delete Button */}
+                                {pollOptions.length > 2 && (
+                                  <button 
+                                    type="button"
+                                    onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}
+                                    className="absolute top-4 right-4 text-slate-600 hover:text-red-500 opacity-0 group-hover/poll:opacity-100 transition-opacity"
+                                  >
+                                    <FontAwesomeIcon icon={faTrash} className="w-3 h-3" />
+                                  </button>
+                                )}
+
+                                {/* Image Upload / Icon Placeholder */}
+                                <div className="flex justify-center">
+                                   <div className="relative w-24 h-24 rounded-2xl bg-white/10 flex items-center justify-center overflow-hidden border border-white/10 group/img">
+                                      {opt.image_url ? (
+                                        <img src={opt.image_url} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <div className="flex flex-col items-center gap-2">
+                                           <FontAwesomeIcon icon={faImage} className="text-slate-500 text-2xl" />
+                                           <span className="text-[8px] font-black text-slate-600 uppercase">Custom Image</span>
+                                        </div>
+                                      )}
+                                      <label className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                                         <FontAwesomeIcon icon={faUpload} className="text-white w-5 h-5" />
+                                         <input 
+                                           type="file" 
+                                           className="hidden" 
+                                           onChange={async (e) => {
+                                             const file = e.target.files?.[0];
+                                             if (file) {
+                                               const url = await uploadImage(file);
+                                               const newOpts = [...pollOptions];
+                                               newOpts[idx].image_url = url;
+                                               setPollOptions(newOpts);
+                                             }
+                                           }}
+                                         />
+                                      </label>
+                                   </div>
+                                </div>
+
+                                {/* Label & Desc Inputs */}
+                                <div className="space-y-3">
+                                   <div className="space-y-1">
+                                      <label className="text-[10px] font-black text-slate-600 uppercase">스티커 이름</label>
+                                      <input 
+                                        value={opt.label}
+                                        onChange={(e) => {
+                                          const newOpts = [...pollOptions];
+                                          newOpts[idx].label = e.target.value;
+                                          setPollOptions(newOpts);
+                                        }}
+                                        className="bg-transparent text-sm font-black text-white w-full border-b border-white/5 focus:border-green-500 outline-none pb-1"
+                                        placeholder="이름 입력"
+                                      />
+                                   </div>
+                                   <div className="space-y-1">
+                                      <label className="text-[10px] font-black text-slate-600 uppercase">선택 시 상세 설명</label>
+                                      <textarea 
+                                        value={opt.desc}
+                                        onChange={(e) => {
+                                          const newOpts = [...pollOptions];
+                                          newOpts[idx].desc = e.target.value;
+                                          setPollOptions(newOpts);
+                                        }}
+                                        className="bg-transparent text-[11px] font-bold text-slate-400 w-full h-12 outline-none resize-none leading-relaxed"
+                                        placeholder="이 스티커를 선택했을 때 하단에 표시될 상세 설명을 입력하세요."
+                                      />
+                                   </div>
+                                </div>
+                             </div>
+                           ))}
+                        </div>
+                     </div>
+
+                     {/* 3. Audit Deadline & Growth Option */}
                     <div className="pt-8 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-8">
                        <div className="space-y-3">
                           <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">

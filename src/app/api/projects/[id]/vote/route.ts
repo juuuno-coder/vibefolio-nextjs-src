@@ -22,23 +22,23 @@ export async function GET(
     const { data: countsData, error: countsError } = await supabaseAdmin
       .from('ProjectPoll')
       .select('vote_type')
-      .eq('project_id', parseInt(projectId)); // Ensure Integer
+      .eq('project_id', parseInt(projectId));
 
     if (countsError) throw countsError;
 
-    const counts = {
-      launch: 0,
-      more: 0,
-      research: 0
-    };
-
+    const counts: Record<string, number> = {};
     countsData?.forEach((item: any) => {
-        if (item.vote_type === 'launch') counts.launch++;
-        else if (item.vote_type === 'more') counts.more++;
-        else if (item.vote_type === 'research') counts.research++;
+        counts[item.vote_type] = (counts[item.vote_type] || 0) + 1;
     });
 
-    // 2. Get My Vote (if logged in)
+    // 2. Get Project Data (for custom poll configuration)
+    const { data: project } = await supabaseAdmin
+      .from('Project')
+      .select('custom_data')
+      .eq('project_id', parseInt(projectId))
+      .single();
+
+    // 3. Get My Vote (if logged in)
     let myVote = null;
     
     if (currentUserId) {
@@ -54,7 +54,7 @@ export async function GET(
         }
     }
 
-    return NextResponse.json({ counts, myVote });
+    return NextResponse.json({ counts, myVote, project });
 
   } catch (error) {
     console.error("Poll Error:", error);
