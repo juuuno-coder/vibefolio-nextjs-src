@@ -134,7 +134,7 @@ function ReviewContent() {
       console.log("[Review] Fetching project data for ID:", projectId);
       const { data, error } = await supabase
         .from('Project')
-        .select('project_id, title, user_id, custom_data, thumbnail_url, image_url, url')
+        .select('project_id, title, user_id, custom_data, thumbnail_url, url')
         .eq('project_id', Number(projectId))
         .single();
 
