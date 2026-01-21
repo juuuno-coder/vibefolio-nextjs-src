@@ -56,7 +56,7 @@ function ViewerContent() {
 
         if (error) throw error;
         setProject(data);
-        if (data.custom_data?.review_steps) setSteps(data.custom_data.review_steps);
+        if ((data as any).custom_data?.review_steps) setSteps((data as any).custom_data.review_steps);
       } catch (e) {
         console.error("Failed to load project", e);
         toast.error("프로젝트를 불러오지 못했습니다.");
@@ -118,8 +118,8 @@ function ViewerContent() {
   const renderReviewStep = () => {
     const stepType = steps[currentStep];
     switch (stepType) {
-      case 'rating': return <MichelinRating projectId={projectId} />;
-      case 'voting': return <FeedbackPoll projectId={projectId} />;
+      case 'rating': return <MichelinRating projectId={projectId || ""} />;
+      case 'voting': return <FeedbackPoll projectId={projectId || ""} />;
       case 'proposal': return (
         <div className="space-y-6">
            <div className="bg-slate-900 rounded-3xl p-8 text-white shadow-xl">
@@ -234,26 +234,26 @@ function ViewerContent() {
                     </motion.div>
                   </div>
 
-                  {/* Navigation Footer */}
-                  <div className="p-8 md:p-10 border-t border-slate-100 bg-white shrink-0">
-                    <div className="flex gap-4 max-w-[440px] mx-auto w-full">
+                  {/* Navigation Footer - Optimized Size */}
+                  <div className="p-6 md:p-8 border-t border-slate-100 bg-white shrink-0">
+                    <div className="flex gap-3 max-w-[440px] mx-auto w-full">
                       {currentStep > 0 && (
                         <Button 
                           variant="outline" 
                           size="lg" 
                           onClick={handlePrevStep} 
-                          className="w-20 h-20 rounded-[2rem] border-2 border-slate-100 font-bold text-slate-400 hover:text-slate-900 hover:border-slate-900 transition-all flex items-center justify-center shrink-0"
+                          className="w-14 h-14 rounded-2xl border-2 border-slate-100 font-bold text-slate-400 hover:text-slate-900 hover:border-slate-900 transition-all flex items-center justify-center shrink-0"
                         >
-                          <ChevronLeft size={28} />
+                          <ChevronLeft size={24} />
                         </Button>
                       )}
                       <Button 
                         size="lg" 
                         onClick={handleNextStep} 
-                        className="flex-1 h-20 rounded-[2rem] bg-slate-900 text-white font-black text-xl shadow-2xl hover:bg-green-600 transition-all w-full flex items-center justify-center gap-3 uppercase tracking-tighter"
+                        className="flex-1 h-14 rounded-2xl bg-slate-900 text-white font-black text-lg shadow-xl hover:bg-green-600 transition-all w-full flex items-center justify-center gap-2 uppercase tracking-tighter"
                       >
                         {currentStep < steps.length - 1 ? (
-                          <>Next Audit <ChevronRight size={24} /></>
+                          <>Next Audit <ChevronRight size={20} /></>
                         ) : (
                           <>Finish Diagnostic</>
                         )}

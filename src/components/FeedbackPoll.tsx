@@ -167,25 +167,7 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
       </div>
       
       <div className="relative z-10">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
-          <div>
-            <h3 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-              🗳️ 이 프로젝트 어때요? 
-              <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase tracking-widest">익명 투표</span>
-            </h3>
-            <p className="text-gray-500 text-sm mt-1 font-medium italic">당신의 솔직한 한 표가 창작자에게 큰 힘이 됩니다.</p>
-          </div>
-          <div className="flex -space-x-2">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center overflow-hidden">
-                <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300" />
-              </div>
-            ))}
-            <div className="w-8 h-8 rounded-full border-2 border-white bg-black flex items-center justify-center text-[10px] text-white font-black">
-              +{Math.floor(Object.values(counts).reduce((a, b) => a + b, 0) / 10)}
-            </div>
-          </div>
-        </div>
+
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {options.map((opt) => {

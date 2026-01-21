@@ -173,36 +173,10 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
 
   return (
     <div className="w-full relative overflow-hidden group">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12 relative z-10">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
-                <Star className="w-5 h-5 text-amber-400 fill-current" />
-             </div>
-             <div>
-               <h4 className="text-2xl font-black text-gray-900 tracking-tight">Vibefolio Selection Audit</h4>
-               <p className="text-sm font-bold text-amber-600 uppercase tracking-widest">바이브폴리오 평가단 정밀 진단</p>
-             </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-inner">
-           <div className="text-center px-4 border-r border-gray-200">
-              <div className="text-3xl font-black text-gray-900 leading-none">{totalAvg > 0 ? totalAvg.toFixed(1) : "?.?"}</div>
-              <p className="text-[10px] font-black text-gray-400 mt-2 uppercase">Total Avg Score</p>
-           </div>
-           <div className="text-[10px] font-bold text-gray-500 uppercase leading-tight">
-              Reviewers<br/>
-              <span className="text-gray-900 text-lg">{totalCount}</span>
-           </div>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         {/* Radar Chart Visual */}
         <div className="relative flex justify-center items-center py-12 bg-slate-50/50 rounded-[3rem] border border-slate-100 shadow-inner">
-           <svg width="280" height="280" viewBox="0 0 200 200" className="drop-shadow-2xl overflow-visible">
+            <svg width="100%" height="100%" viewBox="-30 -30 260 260" className="drop-shadow-2xl overflow-visible max-w-[280px]">
               {/* Radial Guides */}
               {[1, 0.8, 0.6, 0.4, 0.2].map((s, idx) => (
                 <path key={s} d={getRadarPath({ score_1: 5, score_2: 5, score_3: 5, score_4: 5 }, s)} fill={idx % 2 === 0 ? "rgba(0,0,0,0.02)" : "none"} stroke="#e2e8f0" strokeWidth="1" />
@@ -220,12 +194,12 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
               {/* My Score (Solid) */}
               <path d={getRadarPath(scores)} fill="rgba(245, 158, 11, 0.15)" stroke="#f59e0b" strokeWidth="4" strokeLinejoin="round" className="transition-all duration-500 ease-out drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
               
-              {/* Labels with Icons simulated in text or just bold text */}
-              <text x="100" y="-5" textAnchor="middle" className="text-[12px] font-black fill-slate-900 uppercase tracking-tighter">기획력</text>
-              <text x="205" y="103" textAnchor="start" className="text-[12px] font-black fill-slate-900 uppercase tracking-tighter">완성도</text>
-              <text x="100" y="210" textAnchor="middle" className="text-[12px] font-black fill-slate-900 uppercase tracking-tighter">독창성</text>
-              <text x="-5" y="103" textAnchor="end" className="text-[12px] font-black fill-slate-900 uppercase tracking-tighter">상업성</text>
-           </svg>
+              {/* Labels with better positioning to avoid clipping */}
+              <text x="100" y="-15" textAnchor="middle" className="text-[14px] font-black fill-slate-900 uppercase tracking-tighter">기획력</text>
+              <text x="215" y="105" textAnchor="start" className="text-[14px] font-black fill-slate-900 uppercase tracking-tighter">완성도</text>
+              <text x="100" y="225" textAnchor="middle" className="text-[14px] font-black fill-slate-900 uppercase tracking-tighter">독창성</text>
+              <text x="-15" y="105" textAnchor="end" className="text-[14px] font-black fill-slate-900 uppercase tracking-tighter">상업성</text>
+            </svg>
            
            {/* Center Score Badge */}
            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none scale-110">
