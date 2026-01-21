@@ -180,48 +180,29 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
                 onClick={() => handleVote(opt.id)}
                 disabled={isVoting}
                 className={cn(
-                  "relative group flex flex-col items-center justify-center p-10 rounded-[2rem] border-2 transition-all duration-500 overflow-hidden min-h-[240px]",
+                  "relative group flex flex-col items-center justify-center p-8 rounded-[2rem] border-2 transition-all duration-500 overflow-hidden min-h-[220px]",
                   isSelected 
-                    ? cn(opt.activeBorder, "bg-gradient-to-br", opt.bgFrom, opt.bgTo, "shadow-2xl scale-[1.03] -translate-y-2") 
+                    ? cn(opt.activeBorder, "bg-gradient-to-br", opt.bgFrom, opt.bgTo, "shadow-2xl scale-[1.03] -translate-y-1") 
                     : cn("bg-gray-50/50 hover:bg-white hover:shadow-xl hover:-translate-y-1 border-gray-100")
                 )}
               >
                 <div className={cn(
-                  "w-20 h-20 rounded-3xl flex items-center justify-center mb-6 shadow-sm transition-all duration-500 group-hover:rotate-12",
+                  "w-16 h-16 rounded-2xl flex items-center justify-center mb-5 shadow-sm transition-all duration-500 group-hover:rotate-12",
                   isSelected ? "bg-white scale-110 shadow-lg rotate-0" : "bg-white"
                 )}>
-                  <Icon className={cn("w-10 h-10", opt.color)} />
+                  <Icon className={cn("w-8 h-8", opt.color)} />
                 </div>
                 
                 <span className={cn(
-                  "font-black text-lg mb-2 transition-colors",
+                  "font-black text-[15px] leading-snug text-center break-keep transition-colors px-2",
                   isSelected ? "text-gray-900" : "text-gray-700"
                 )}>{opt.label}</span>
                 
-                <div className="flex items-baseline gap-1 mt-auto invisible">
-                   <span className={cn(
-                      "text-3xl font-black font-mono transition-transform", 
-                      opt.color,
-                      isSelected ? "scale-110" : ""
-                   )}>
-                      {opt.count}
-                   </span>
-                   <span className="text-gray-400 text-xs font-bold uppercase">Votes</span>
-                </div>
-  
                 {isSelected && (
                   <div className="absolute top-4 right-4 animate-in zoom-in duration-300">
-                    <div className={cn("px-3 py-1 rounded-full text-[10px] font-black tracking-widest text-white shadow-sm", opt.id === 'launch' ? 'bg-blue-500' : opt.id === 'more' ? 'bg-green-500' : 'bg-orange-500')}>
-                      CLICKED
+                    <div className={cn("px-2 py-0.5 rounded-full text-[9px] font-black tracking-widest text-white shadow-sm", opt.id === 'launch' ? 'bg-blue-500' : opt.id === 'more' ? 'bg-green-500' : 'bg-orange-500')}>
+                      선택됨
                     </div>
-                  </div>
-                )}
-  
-                {/* Floating particles effect if selected */}
-                {isSelected && (
-                  <div className="absolute inset-0 pointer-events-none opacity-20">
-                    <Icon className={cn("absolute -top-4 -left-4 w-12 h-12", opt.color)} />
-                    <Icon className={cn("absolute -bottom-4 -right-4 w-16 h-16", opt.color)} />
                   </div>
                 )}
               </button>
@@ -229,19 +210,19 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
           })}
         </div>
         
-        {/* Recommendation Guide */}
+        {/* Recommendation Guide - Optimized to explain choosing criteria */}
         <div className="mt-10 p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
                  <Rocket className="w-5 h-5 text-indigo-500" />
               </div>
-              <div>
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">AI Recommendation</p>
-                <p className="text-sm font-bold text-slate-700">
-                  {Object.entries(counts).sort((a,b) => b[1] - a[1])[0][0] === 'launch' 
-                    ? "\"합격\" 반응이 압도적입니다! 유저들이 이 기능의 즉각적인 가치를 느끼고 있으며, 시장에 바로 출시해도 좋을 만큼의 매력을 갖추고 있다는 신호입니다." 
-                    : "\"보류/불합격\" 의견이 있습니다. 현재의 컨셉을 조금 더 다듬거나, 유저가 느끼는 진입장벽이 무엇인지 파악하여 고도화하는 과정을 추천드립니다."}
-                </p>
+              <div className="space-y-1">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">진단 가이드라인</p>
+                <div className="text-[13px] font-medium text-slate-600 leading-relaxed grid gap-1">
+                   <p><span className="font-black text-green-600">합격:</span> 시장에 바로 출시 가능하며 즉시 사용 가치가 검증된 프로젝트</p>
+                   <p><span className="font-black text-amber-500">보류:</span> 기획은 좋으나 디테일이나 UI/UX 측면의 보완이 필요한 경우</p>
+                   <p><span className="font-black text-red-500">불합격:</span> 컨셉의 전면적인 재검토나 핵심 기능의 재정의가 필요한 상태</p>
+                </div>
               </div>
            </div>
         </div>

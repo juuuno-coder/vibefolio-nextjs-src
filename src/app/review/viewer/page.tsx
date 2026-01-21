@@ -123,7 +123,7 @@ function ViewerContent() {
       case 'proposal': return (
         <div className="space-y-6">
            <div className="bg-slate-900 rounded-3xl p-8 text-white shadow-xl">
-              <h4 className="text-xl font-black mb-2 tracking-tight">Expert Feedback</h4>
+              <h4 className="text-xl font-black mb-2 tracking-tight">최종 전문가 코멘트</h4>
               <p className="text-slate-400 text-sm leading-relaxed">작업물의 완성도를 높이기 위한 구체적인 제안을 남겨주세요.</p>
            </div>
            <textarea 
@@ -214,12 +214,14 @@ function ViewerContent() {
               >
                 <div className="flex flex-col h-full bg-slate-50/80">
                   {/* Panel Header */}
-                  <div className="p-6 md:p-10 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+                  <div className="p-6 md:p-8 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
                     <div>
-                      <h3 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">Expert Audit</h3>
-                      <p className="text-[11px] font-black text-green-600 uppercase tracking-[0.2em] mt-3 bg-green-50 inline-block px-3 py-1 rounded-full">Step {currentStep + 1} of {steps.length}</p>
+                      <h3 className="text-2xl font-black text-slate-900 tracking-tighter leading-none">
+                        {currentStep === 0 ? "항목별 상세 진단" : currentStep === 1 ? "최종 합불 판정" : "상세 개선 제안"}
+                      </h3>
+                      <p className="text-[11px] font-black text-green-600 uppercase tracking-[0.2em] mt-3 bg-green-50 inline-block px-3 py-1 rounded-full">{currentStep + 1} / {steps.length} 단계</p>
                     </div>
-                    <button onClick={() => setIsReviewOpen(false)} className="p-4 hover:bg-slate-100 rounded-[2rem] text-slate-400 transition-all active:scale-95"><X size={24} /></button>
+                    <button onClick={() => setIsReviewOpen(false)} className="p-3 hover:bg-slate-100 rounded-2xl text-slate-400 transition-all active:scale-95"><X size={20} /></button>
                   </div>
 
                   {/* Main Evaluation Area - Optimized for direct content flow */}
@@ -253,9 +255,9 @@ function ViewerContent() {
                         className="flex-1 h-14 rounded-2xl bg-slate-900 text-white font-black text-lg shadow-xl hover:bg-green-600 transition-all w-full flex items-center justify-center gap-2 uppercase tracking-tighter"
                       >
                         {currentStep < steps.length - 1 ? (
-                          <>Next Audit <ChevronRight size={20} /></>
+                          <>다음 단계로 <ChevronRight size={20} /></>
                         ) : (
-                          <>Finish Diagnostic</>
+                          <>진단 최종 완료</>
                         )}
                       </Button>
                     </div>
