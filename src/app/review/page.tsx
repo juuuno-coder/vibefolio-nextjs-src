@@ -197,10 +197,13 @@ function ReviewContent() {
     }
   }, [projectId]);
 
-  // Auto-open review panel on desktop when entering viewer phase
+  // Auto-open review panel on desktop when entering viewer phase (with a slight delay for better UX)
   useEffect(() => {
     if (phase === 'viewer' && viewerMode === 'desktop') {
-      setIsReviewOpen(true);
+      const timer = setTimeout(() => {
+        setIsReviewOpen(true);
+      }, 800); // 0.8s 딜레이: 작품을 먼저 보고 분석 패널이 스르륵 열리는 느낌
+      return () => clearTimeout(timer);
     }
   }, [phase, viewerMode]);
 
@@ -385,10 +388,12 @@ function ReviewContent() {
         </div>
 
 
-        {/* Single Floating Evaluation Button (Mobile only or when closed) */}
-        {(!isReviewOpen || viewerMode === 'mobile') && (
+        {/* Single Floating Evaluation Button (Mobile only or when closed) - Only shown in viewer phase */}
+        {phase === 'viewer' && (!isReviewOpen || viewerMode === 'mobile') && (
            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[40]">
               <motion.button
+                 initial={{ opacity: 0, y: 20 }}
+                 animate={{ opacity: 1, y: 0 }}
                  whileHover={{ scale: 1.05, y: -5 }}
                  whileTap={{ scale: 0.95 }}
                  onClick={() => setIsReviewOpen(true)}

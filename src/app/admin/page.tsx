@@ -170,7 +170,7 @@ export default function AdminPage() {
 
           // 4가지 지표 병렬 조회
           const [visitRes, userRes, projectRes, recruitRes] = await Promise.all([
-            (supabase as any).from('site_stats').select('visits').eq('date', dateStr).single(),
+            (supabase as any).from('site_stats').select('visits').eq('date', dateStr).maybeSingle(),
             supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
             supabase.from('Project').select('project_id', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
             supabase.from('recruit_items').select('id', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
@@ -215,7 +215,7 @@ export default function AdminPage() {
             .from('site_stats')
             .select('visits')
             .eq('date', `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`)
-            .single();
+            .maybeSingle();
           todayVisits = visitData?.visits || 0;
         } catch (e) { console.warn('site_stats error', e); }
 
