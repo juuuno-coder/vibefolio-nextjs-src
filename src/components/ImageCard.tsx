@@ -43,6 +43,7 @@ interface ImageCardProps {
     field?: string;
     userId?: string;
     is_feedback_requested?: boolean;
+    is_growth_requested?: boolean;
   } | null;
   className?: string;
   onClick?: () => void;
@@ -120,16 +121,16 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
                     </button>
                 )}
                 
-                {/* [Report Button] Only for Growth Mode */}
-                {props.is_feedback_requested && (
+                {/* [Report Button] V-Audit or Growth Mode */}
+                {(props.is_growth_requested || props.is_feedback_requested) && (
                     <button 
                       onClick={(e) => { 
                           e.stopPropagation(); 
-                          setShowReportModal(true);
+                          router.push(`/mypage/projects/${props.id}/audit`);
                       }}
                       className="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-indigo-700 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center mb-2"
                     >
-                      <BarChart3 className="w-4 h-4" /> 피드백 리포트
+                      <BarChart3 className="w-4 h-4" /> 진단 리포트
                     </button>
                 )}
 
@@ -178,9 +179,10 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
                    <span>✨</span> <span>NEW RELEASE</span>
                 </div>
               )}
-              {props.is_feedback_requested && (
-                <div className="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1 animate-pulse">
-                   <span>📢</span> <span>FEEDBACK</span>
+              {(props.is_growth_requested || props.is_feedback_requested) && (
+                <div className="bg-slate-900 border border-white/20 text-white text-[9px] font-black px-2.5 py-1.5 rounded-full shadow-2xl flex items-center gap-1.5">
+                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping" />
+                   <span className="tracking-widest">V-AUDIT ACTIVE</span>
                 </div>
               )}
           </div>

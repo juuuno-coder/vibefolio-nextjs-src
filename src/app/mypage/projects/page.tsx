@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, ArrowLeft, Trash2, Eye, Heart } from "lucide-react";
+import { Upload, ArrowLeft, Trash2, Eye, Heart, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import dayjs from "dayjs";
@@ -17,6 +17,7 @@ interface Project {
   likes_count: number;
   views_count: number;
   created_at: string;
+  custom_data?: any;
 }
 
 export default function MyProjectsPage() {
@@ -38,10 +39,9 @@ export default function MyProjectsPage() {
           return;
         }
 
-        // 간단한 쿼리로 변경 (조인 제거)
         const { data, error: queryError } = await supabase
           .from('Project')
-          .select('project_id, title, thumbnail_url, likes_count, views_count, created_at')
+          .select('project_id, title, thumbnail_url, likes_count, views_count, created_at, custom_data')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
@@ -58,6 +58,7 @@ export default function MyProjectsPage() {
           likes_count: p.likes_count || 0,
           views_count: p.views_count || 0,
           created_at: p.created_at,
+          custom_data: typeof p.custom_data === 'string' ? JSON.parse(p.custom_data) : p.custom_data
         }));
 
         setProjects(mapped);
@@ -164,61 +165,89 @@ export default function MyProjectsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <div 
-                key={project.id}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow group"
-              >
-                {/* 썸네일 */}
-                <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
-                  <img 
-                    src={project.thumbnail_url}
-                    alt={project.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.jpg'; }}
-                  />
-                  {/* 호버 오버레이 */}
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                    <Link href={`/project/${project.id}`}>
-                      <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white">
-                        <Eye className="w-4 h-4 mr-1" /> 보기
+            {projects.map((project) => {
+              const isAuditActive = project.custom_data?.is_feedback_requested;
+              
+              return (
+                <div 
+                  key={project.id}
+                  className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow group"
+                >
+                  {/* 썸네일 */}
+                  <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
+                    <img 
+                      src={project.thumbnail_url}
+                      alt={project.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.jpg'; }}
+                    />
+                    
+                    {isAuditActive && (
+                      <div className="absolute top-3 left-3 px-3 py-1 bg-green-500 text-white text-[10px] font-black rounded-full shadow-lg flex items-center gap-1 animate-pulse">
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                        V-AUDIT ACTIVE
+                      </div>
+                    )}
+
+                    {/* 호버 오버레이 */}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                      <Link href={`/project/${project.id}`}>
+                        <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white text-xs font-bold">
+                          <Eye className="w-3 h-3 mr-1" /> 작품 보기
+                        </Button>
+                      </Link>
+                      <Button 
+                        size="sm" 
+                        variant="destructive"
+                        className="text-xs font-bold"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDelete(project.id);
+                        }}
+                      >
+                        <Trash2 className="w-3 h-3 mr-1" /> 삭제
                       </Button>
-                    </Link>
-                    <Button 
-                      size="sm" 
-                      variant="destructive"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleDelete(project.id);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4 mr-1" /> 삭제
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* 정보 */}
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 truncate mb-2">
-                    {project.title}
-                  </h3>
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div className="flex items-center gap-4">
-                      <span className="flex items-center gap-1">
-                        <Heart className="w-4 h-4 text-red-400" />
-                        {project.likes_count}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-4 h-4 text-blue-400" />
-                        {project.views_count}
-                      </span>
                     </div>
-                    <span>{dayjs(project.created_at).format('YYYY.MM.DD')}</span>
+                  </div>
+                  
+                  {/* 정보 */}
+                  <div className="p-5 flex flex-col h-full">
+                    <h3 className="font-bold text-gray-900 truncate mb-1 text-lg">
+                      {project.title}
+                    </h3>
+                    
+                    <div className="flex items-center justify-between text-[11px] text-gray-400 mb-4">
+                        <span>{dayjs(project.created_at).format('YYYY.MM.DD')}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center gap-1">
+                            <Heart className="w-3 h-3" /> {project.likes_count}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3 h-3" /> {project.views_count}
+                          </span>
+                        </div>
+                    </div>
+
+                    {isAuditActive ? (
+                      <Link href={`/mypage/projects/${project.id}/audit`} className="mt-auto">
+                        <Button className="w-full bg-slate-900 hover:bg-green-600 text-white rounded-xl py-6 font-black text-sm shadow-xl transition-all group/btn overflow-hidden relative">
+                           <span className="relative z-10 flex items-center justify-center gap-2">
+                             진단 인사이트 리포트
+                             <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                           </span>
+                           <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-600 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button variant="outline" disabled className="mt-auto w-full border-gray-100 text-gray-300 rounded-xl py-6 font-bold text-sm">
+                        일반 배포 모드
+                      </Button>
+                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

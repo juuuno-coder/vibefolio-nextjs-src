@@ -51,6 +51,8 @@ interface ImageDialogProps {
   allow_secret_comments?: boolean;
   custom_data?: any;
   is_feedback_requested?: boolean;
+  is_growth_requested?: boolean;
+  audit_deadline?: string;
 }
 
 function HomeContent() {
@@ -239,6 +241,8 @@ function HomeContent() {
               allow_secret_comments: proj.allow_secret_comments,
               custom_data: proj.custom_data,
               is_feedback_requested: typeof proj.custom_data === 'string' ? JSON.parse(proj.custom_data)?.is_feedback_requested : proj.custom_data?.is_feedback_requested,
+              is_growth_requested: proj.is_growth_requested,
+              audit_deadline: proj.audit_deadline,
             } as ImageDialogProps;
           });
           
@@ -276,7 +280,7 @@ function HomeContent() {
   const filtered = projects.filter(p => {
     // 0. [New] 성장하기(Growth) 탭 로직
     if (selectedCategory === "growth") {
-        return p.is_feedback_requested === true;
+        return p.is_growth_requested === true || p.is_feedback_requested === true;
     }
 
     // 1. 관심사 탭 ("interests") 선택 시 로직 (OR 조건: 하나라도 맞으면 노출)
@@ -406,7 +410,7 @@ function HomeContent() {
         
         <div className="max-w-[1800px] mx-auto px-4 md:px-8 pb-20 pt-8">
             {/* [New] Growth Mode Highlighting */}
-            {!searchQuery && selectedCategory === 'all' && projects.some(p => p.is_feedback_requested) && (
+            {!searchQuery && selectedCategory === 'all' && projects.some(p => p.is_growth_requested || p.is_feedback_requested) && (
                  <div className="mb-16">
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex flex-col gap-1">
@@ -427,7 +431,7 @@ function HomeContent() {
                         </Button>
                     </div>
                     <div className="flex gap-6 overflow-x-auto pb-6 no-scrollbar -mx-4 px-4">
-                        {projects.filter(p => p.is_feedback_requested).slice(0, 6).map(project => (
+                        {projects.filter(p => p.is_growth_requested || p.is_feedback_requested).slice(0, 6).map(project => (
                              <div key={project.id} className="min-w-[280px] md:min-w-[340px]">
                                 <ImageCard props={project} onClick={() => handleProjectClick(project)} className="transition-all hover:-translate-y-2" />
                              </div>

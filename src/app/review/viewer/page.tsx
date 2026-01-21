@@ -10,6 +10,7 @@ import {
   ChevronLeft, 
   CheckCircle2, 
   ChefHat,
+  Share2,
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,6 +20,7 @@ import { MichelinRating } from '@/components/MichelinRating';
 import { FeedbackPoll } from '@/components/FeedbackPoll';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase/client';
+import { MediaPreview } from '@/components/Review/MediaPreview';
 
 type ViewerMode = 'desktop' | 'mobile';
 
@@ -26,13 +28,16 @@ function ViewerContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const projectId = searchParams.get('projectId');
+  const ratingId = searchParams.get('ratingId');
   
   const [viewerMode, setViewerMode] = useState<ViewerMode>('desktop');
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [panelWidth, setPanelWidth] = useState(450);
   const [isResizing, setIsResizing] = useState(false);
   const [project, setProject] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuditExpired, setIsAuditExpired] = useState(false);
 
   // Review State
   const [currentStep, setCurrentStep] = useState(0); 
@@ -57,16 +62,24 @@ function ViewerContent() {
         if (error) throw error;
         setProject(data);
         if ((data as any).custom_data?.review_steps) setSteps((data as any).custom_data.review_steps);
+
+        // Check deadline
+        if ((data as any).audit_deadline && new Date((data as any).audit_deadline) < new Date()) {
+          setIsAuditExpired(true);
+        }
       } catch (e) {
         console.error("Failed to load project", e);
         toast.error("프로젝트를 불러오지 못했습니다.");
         router.push('/review');
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchProject();
+    const checkUser = async () => {
+       const { data: { user } } = await supabase.auth.getUser();
+       setUser(user);
+    };
+
+    Promise.all([fetchProject(), checkUser()]).finally(() => setLoading(false));
   }, [projectId, router]);
 
   // Resizing Logic
@@ -97,6 +110,15 @@ function ViewerContent() {
   }, []);
 
   const handleNextStep = () => {
+    if (!user) {
+      toast.error("진단 완료를 위해 로그인이 필요합니다.");
+      router.push(`/login?returnUrl=${encodeURIComponent(window.location.href)}`);
+      return;
+    }
+    if (isAuditExpired) {
+      toast.error("진단 기한이 만료되었습니다.");
+      return;
+    }
     if (currentStep < steps.length - 1) setCurrentStep(prev => prev + 1);
     else setIsSubmitted(true);
   };
@@ -115,10 +137,14 @@ function ViewerContent() {
   const isAB = project?.custom_data?.is_ab_test;
   const url2 = project?.custom_data?.alternate_url;
 
+  const auditType = project?.custom_data?.audit_type || 'link';
+  const mediaData = project?.custom_data?.media_data || project?.primary_url || project?.preview_url || project?.url;
+  const mediaDataB = project?.custom_data?.media_data_b || project?.custom_data?.alternate_url;
+
   const renderReviewStep = () => {
     const stepType = steps[currentStep];
     switch (stepType) {
-      case 'rating': return <MichelinRating projectId={projectId || ""} />;
+      case 'rating': return <MichelinRating projectId={projectId || ""} ratingId={ratingId || undefined} />;
       case 'voting': return <FeedbackPoll projectId={projectId || ""} />;
       case 'proposal': return (
         <div className="space-y-6">
@@ -167,25 +193,18 @@ function ViewerContent() {
                 <Button variant="ghost" size="sm" className="h-10 px-4 text-slate-400 hover:text-slate-900 font-bold text-xs gap-2 rounded-xl" onClick={() => window.open(url1 || '', '_blank')}><Maximize2 size={14} /> 새 창</Button>
               </div>
             </div>
-
             {/* Preview Area */}
             <div className="flex-1 bg-slate-50 flex items-center justify-center p-4 md:p-10 overflow-auto custom-scrollbar">
               <div className={cn(
-                "transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-[0_40px_100px_rgba(0,0,0,0.15)] overflow-hidden bg-white",
+                "transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-[0_40px_100px_rgba(0,0,0,0.15)] overflow-hidden bg-white relative",
                 viewerMode === 'mobile' ? "w-[375px] h-[812px] flex-shrink-0 rounded-[3.5rem] border-[12px] border-slate-900" : "w-full h-full rounded-3xl"
               )}>
-                <div className="w-full h-full flex flex-col md:flex-row">
-                   <div className={cn("h-full relative", isAB ? "w-full md:w-1/2 md:border-r border-slate-100" : "w-full")}>
-                      {url1 ? <iframe src={url1} className="w-full h-full border-none" title="Preview A" /> : <div className="h-full flex items-center justify-center text-slate-300 font-bold">URL A Missing</div>}
-                      {isAB && <div className="absolute top-4 left-4 bg-slate-900/90 text-white text-[10px] font-black px-3 py-1 rounded-full z-10 backdrop-blur-md border border-white/10 uppercase tracking-widest">Option A</div>}
-                   </div>
-                   {isAB && url2 && (
-                     <div className="w-full md:w-1/2 h-full relative">
-                        <iframe src={url2} className="w-full h-full border-none" title="Preview B" />
-                        <div className="absolute top-4 left-4 bg-orange-500/90 text-white text-[10px] font-black px-3 py-1 rounded-full z-10 backdrop-blur-md border border-white/10 uppercase tracking-widest">Option B</div>
-                     </div>
-                   )}
-                </div>
+                <MediaPreview 
+                  type={auditType as any} 
+                  data={mediaData} 
+                  isAB={isAB} 
+                  dataB={mediaDataB} 
+                />
               </div>
             </div>
           </div>
@@ -250,6 +269,27 @@ function ViewerContent() {
                         </Button>
                       )}
                       <Button 
+                      variant="outline" 
+                      size="lg" 
+                      className="h-16 md:h-20 rounded-3xl border-2 border-slate-200 font-bold text-lg md:text-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-3"
+                      onClick={() => {
+                        const url = window.location.href;
+                        if (navigator.share) {
+                          navigator.share({
+                            title: project?.title || 'Vibefolio Project', // Use 'project' instead of 'projectData'
+                            text: '이 프로젝트에 대한 제 피드백을 확인해보세요!',
+                            url: url,
+                          }).catch(console.error);
+                        } else {
+                          navigator.clipboard.writeText(url);
+                          toast.success("링크가 클립보드에 복사되었습니다!");
+                        }
+                      }}
+                    >
+                       <Share2 className="w-6 h-6" />
+                       결과 공유
+                    </Button>
+                      <Button 
                         size="lg" 
                         onClick={handleNextStep} 
                         className="flex-1 h-14 rounded-2xl bg-slate-900 text-white font-black text-lg shadow-xl hover:bg-green-600 transition-all w-full flex items-center justify-center gap-2 uppercase tracking-tighter"
@@ -279,16 +319,60 @@ function ViewerContent() {
         </div>
       )}
 
-      {/* Completion Modal */}
+      {/* Completion Modal - Upgraded for V-Audit Experience */}
       {isSubmitted && (
-         <div className="fixed inset-0 z-[201] bg-slate-900/60 backdrop-blur-2xl flex items-center justify-center p-8">
-            <motion.div initial={{ scale: 0.9, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="bg-white rounded-[4rem] p-16 max-w-xl w-full text-center shadow-2xl relative overflow-hidden">
-               <div className="w-24 h-24 bg-green-500 text-white rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-green-500/30"><CheckCircle2 size={48} /></div>
-               <h3 className="text-4xl font-black text-slate-900 mb-6 tracking-tighter">진단이 완료되었습니다!</h3>
-               <p className="text-slate-500 text-lg font-medium leading-relaxed mb-12">당신의 전문적인 안목이 바이브폴리오의 퀄리티를 높입니다.<br/>분석된 데이터는 즉시 작가에게 전달됩니다.</p>
-               <div className="flex flex-col gap-4">
-                  <Button size="lg" className="h-20 rounded-3xl bg-slate-900 text-white font-black text-xl shadow-xl" onClick={() => window.location.href = '/'}>메인으로 돌아가기</Button>
-                  <Button variant="ghost" className="h-14 font-bold text-slate-300 hover:text-slate-900" onClick={() => setIsSubmitted(false)}>결과 다시보기</Button>
+         <div className="fixed inset-0 z-[201] bg-slate-900/80 backdrop-blur-3xl flex items-center justify-center p-4 md:p-8">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 50 }} 
+              animate={{ scale: 1, opacity: 1, y: 0 }} 
+              className="bg-white rounded-[3rem] md:rounded-[4rem] p-8 md:p-16 max-w-2xl w-full text-center shadow-[0_50px_100px_rgba(0,0,0,0.5)] relative overflow-hidden"
+            >
+               {/* Decorative Background Elements */}
+               <div className="absolute -top-24 -left-24 w-64 h-64 bg-green-500/10 rounded-full blur-3xl animate-pulse" />
+               <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+
+               <div className="relative z-10">
+                 <motion.div 
+                   initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring' }}
+                   className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-green-400 to-green-600 text-white rounded-[2rem] md:rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-green-500/40"
+                 >
+                   <CheckCircle2 size={48} className="md:w-12 md:h-12" />
+                 </motion.div>
+
+                 <h3 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 tracking-tighter leading-tight">진단이 성공적으로<br/>기록되었습니다!</h3>
+                 <p className="text-slate-500 text-base md:text-xl font-medium leading-relaxed mb-10 max-w-md mx-auto">
+                   당신의 안목이 담긴 데이터가 작가에게 전달되었습니다.<br/>
+                   <span className="text-green-600 font-bold">V-Audit</span>의 통계 시스템으로 가치를 증명하세요.
+                 </p>
+
+                 {/* Actions */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md mx-auto">
+                    <Button 
+                      size="lg" 
+                      className="h-16 md:h-20 rounded-3xl bg-slate-900 text-white font-black text-lg md:text-xl shadow-xl hover:bg-green-600 transition-all hover:-translate-y-1" 
+                      onClick={() => window.location.href = '/'}
+                    >
+                      홈으로 이동
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="lg" 
+                      className="h-16 md:h-20 rounded-3xl border-2 border-slate-100 bg-white font-black text-lg md:text-xl shadow-lg hover:border-slate-900 transition-all hover:-translate-y-1 gap-2" 
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        toast.success("링크가 복사되었습니다! 친구들에게 공유하세요.");
+                      }}
+                    >
+                      진단 링크 공유
+                    </Button>
+                 </div>
+                 
+                 <button 
+                   className="mt-8 text-slate-400 hover:text-slate-900 font-bold text-sm transition-colors border-b border-transparent hover:border-slate-900"
+                   onClick={() => setIsSubmitted(false)}
+                 >
+                   내 진단 결과 다시보기
+                 </button>
                </div>
             </motion.div>
          </div>

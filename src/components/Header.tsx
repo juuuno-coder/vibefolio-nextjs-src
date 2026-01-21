@@ -14,7 +14,8 @@ import {
   ChevronDown,
   Zap,
   Plus,
-  Upload
+  Upload,
+  BarChart3
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -271,6 +272,9 @@ export function Header({
                            <button onClick={() => router.push('/mypage')} className="w-full text-left px-2 py-2 rounded-lg cursor-pointer text-black hover:bg-gray-100 text-sm font-medium flex items-center">
                              <UserIcon className="mr-2 h-4 w-4" /> 마이페이지
                            </button>
+                           <button onClick={() => router.push('/mypage/evaluations')} className="w-full text-left px-2 py-2 rounded-lg cursor-pointer text-black hover:bg-gray-100 text-sm font-medium flex items-center">
+                             <BarChart3 className="mr-2 h-4 w-4" /> 내 평가 발자취
+                           </button>
                            {isAdmin && (
                              <button onClick={() => router.push('/admin')} className="w-full text-left px-2 py-2 mt-1 rounded-lg cursor-pointer text-indigo-600 bg-indigo-50 hover:bg-indigo-100 text-sm font-bold flex items-center">
                                 <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자 센터
@@ -343,7 +347,8 @@ export function Header({
                      <Link href="/project/upload" onClick={() => setIsMobileMenuOpen(false)} className="text-green-600 font-bold bg-green-50 px-3 py-2 rounded-lg inline-flex items-center w-fit">
                        <Plus className="mr-2 h-4 w-4" /> 프로젝트 등록
                      </Link>
-                     <Link href="/mypage" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-700 font-medium py-1">마이페이지</Link>
+                      <Link href="/mypage" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-700 font-medium py-1">마이페이지</Link>
+                      <Link href="/mypage/evaluations" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-700 font-medium py-1">내 평가 발자취</Link>
                      {isAdmin && (
                        <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-indigo-600 font-bold bg-indigo-50 px-3 py-2 rounded-lg inline-flex items-center w-fit">
                          <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자 센터

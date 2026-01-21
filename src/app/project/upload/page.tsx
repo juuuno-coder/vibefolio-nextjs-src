@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import TiptapEditor from "@/components/editor/TiptapEditor"; // Already dynamic internally
@@ -136,6 +137,25 @@ export default function TiptapUploadPage() {
   const [showOriginal, setShowOriginal] = useState(false); // [New] Toggle for Reference Viewer
   const [collaboratorEmails, setCollaboratorEmails] = useState<string[]>([]); // [New] For new projects
 
+  // V-Audit States
+  const [auditType, setAuditType] = useState<'link' | 'image' | 'video'>('link');
+  const [mediaData, setMediaData] = useState<any>(null);
+  const [mediaDataB, setMediaDataB] = useState<any>(null);
+  const [isAB, setIsAB] = useState(false);
+  const [auditDeadline, setAuditDeadline] = useState<string>("");
+  const [isGrowthRequested, setIsGrowthRequested] = useState(false);
+  const [customCategories, setCustomCategories] = useState<any[]>([
+    { id: 'score_1', label: '기획력', icon: 'Lightbulb', color: '#f59e0b', desc: '논리적 구조와 의도' },
+    { id: 'score_2', label: '완성도', icon: 'Zap', color: '#3b82f6', desc: '디테일과 마감 수준' },
+    { id: 'score_3', label: '독창성', icon: 'Target', color: '#10b981', desc: '작가 고유의 스타일' },
+    { id: 'score_4', label: '상업성', icon: 'TrendingUp', color: '#ef4444', desc: '시장 가치와 잠재력' }
+  ]);
+  const [pollOptions, setPollOptions] = useState<any[]>([
+    { id: 'launch', label: "합격입니다. 당장 쓸게요.", icon: 'CheckCircle2' },
+    { id: 'more', label: "보류하겠습니다.", icon: 'Clock' },
+    { id: 'research', label: "불합격드리겠습니다.", icon: 'XCircle' }
+  ]);
+
   const handleLightroomImport = (images: string[]) => {
     if (!editor || images.length === 0) return;
     images.forEach(url => {
@@ -225,6 +245,16 @@ export default function TiptapUploadPage() {
                     if (custom.genres) setSelectedGenres(custom.genres);
                     if (custom.fields) setSelectedFields(custom.fields);
                     if (custom.is_feedback_requested !== undefined) setIsFeedbackRequested(custom.is_feedback_requested);
+                    
+                    // V-Audit Data Load
+                    if (custom.audit_type) setAuditType(custom.audit_type);
+                    if (custom.media_data) setMediaData(custom.media_data);
+                    if (custom.media_data_b) setMediaDataB(custom.media_data_b);
+                    if (custom.is_ab !== undefined) setIsAB(custom.is_ab);
+                    if (project.audit_deadline) setAuditDeadline(new Date(project.audit_deadline).toISOString().slice(0, 16));
+                    if (project.is_growth_requested !== undefined) setIsGrowthRequested(project.is_growth_requested);
+                    if (custom.custom_categories) setCustomCategories(custom.custom_categories);
+                    if (custom.poll_options) setPollOptions(custom.poll_options);
                   } catch (e) {
                     console.error("Custom data parse error", e);
                   }
@@ -578,7 +608,16 @@ export default function TiptapUploadPage() {
             fields: finalFields,
             tags: finalTags, 
             is_feedback_requested: isFeedbackRequested,
+            // V-Audit Data Store
+            audit_type: auditType,
+            media_data: mediaData,
+            media_data_b: mediaDataB,
+            is_ab: isAB,
+            custom_categories: customCategories,
+            poll_options: pollOptions,
           }),
+          audit_deadline: auditDeadline ? new Date(auditDeadline).toISOString() : null,
+          is_growth_requested: isGrowthRequested,
           assets: assets,
         }),
       });
@@ -1094,86 +1133,283 @@ export default function TiptapUploadPage() {
               </div>
             </div>
 
-            {/* 피드백 설정 섹션 (Growth Mode Toggle) */}
-            <div className={`mb-12 transition-all duration-300 ${isFeedbackRequested ? 'p-8 bg-green-50/30 border-2 border-green-500/30' : 'p-6 bg-gray-50 border border-gray-200'} rounded-3xl`}>
-               <div className="flex items-center justify-between mb-6">
-                 <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
-                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isFeedbackRequested ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-400'}`}>
-                          <FontAwesomeIcon icon={faRocket} className="w-4 h-4" />
-                       </div>
-                       성장하기 (피드백 요청)
-                    </h3>
-                    <p className="text-sm text-gray-500">다른 크리에이터들에게 작품을 공개하고 피드백을 받아보세요.</p>
+            {/* 피드백 설정 섹션 (V-Audit Configuration) */}
+            <div className={`mb-12 transition-all duration-300 ${isFeedbackRequested ? 'p-8 bg-slate-900 text-white shadow-2xl' : 'p-6 bg-gray-50 border border-gray-200'} rounded-[2.5rem]`}>
+               <div className="flex items-center justify-between mb-8">
+                 <div className="flex items-center gap-4">
+                    <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-lg", isFeedbackRequested ? "bg-green-500 text-white" : "bg-white text-gray-400")}>
+                      🚀
+                    </div>
+                    <div>
+                      <h3 className={cn("text-2xl font-black tracking-tight", isFeedbackRequested ? "text-white" : "text-gray-900")}>V-Audit 활성화</h3>
+                      <p className={cn("text-sm font-medium", isFeedbackRequested ? "text-slate-400" : "text-gray-500")}>전문가 및 타겟 그룹으로부터 정밀 피드백을 수집합니다</p>
+                    </div>
                  </div>
-                 
-                 {/* Master Toggle */}
-                 <button
+                 <button 
                    type="button"
                    onClick={() => setIsFeedbackRequested(!isFeedbackRequested)}
-                   className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                     isFeedbackRequested ? 'bg-green-600' : 'bg-gray-300'
-                   }`}
+                   className={cn(
+                     "w-16 h-8 rounded-full transition-all relative flex items-center px-1 shadow-inner",
+                     isFeedbackRequested ? "bg-green-500" : "bg-gray-200"
+                   )}
                  >
-                   <span
-                     className={`${
-                       isFeedbackRequested ? 'translate-x-7' : 'translate-x-1'
-                     } inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-sm`}
-                   />
+                    <div className={cn("w-6 h-6 bg-white rounded-full shadow-md transition-transform", isFeedbackRequested ? "translate-x-8" : "translate-x-0")} />
                  </button>
                </div>
-               
+
                {isFeedbackRequested && (
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2">
-                   {[
-                     { 
-                       id: 'michelin', 
-                       title: '미슐랭 평점', 
-                       desc: '별점을 통해 객관적인 평가를 받습니다.', 
-                       icon: '⭐', 
-                       status: allowMichelinRating, 
-                       setter: setAllowMichelinRating 
-                     },
-                     { 
-                       id: 'stickers', 
-                       title: '스티커 투표', 
-                       desc: '간단한 이모지로 반응을 수집합니다.', 
-                       icon: '🗳️', 
-                       status: allowStickers, 
-                       setter: setAllowStickers 
-                     },
-                     { 
-                       id: 'secret', 
-                       title: '비밀 제안/댓글', 
-                       desc: '프라이빗한 피드백과 제안을 허용합니다.', 
-                       icon: '🔒', 
-                       status: allowSecretComments, 
-                       setter: setAllowSecretComments 
-                     }
-                   ].map((opt) => (
-                     <div 
-                       key={opt.id}
-                       onClick={() => opt.setter(!opt.status)}
-                       className={`cursor-pointer p-4 rounded-2xl border-2 transition-all duration-200 select-none ${
-                         opt.status 
-                           ? 'border-green-500 bg-white shadow-md shadow-green-100' 
-                           : 'border-transparent bg-white/50 hover:bg-white text-gray-400'
-                       }`}
-                     >
-                       <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${opt.status ? 'bg-green-100' : 'bg-gray-100 grayscale'}`}>
-                             {opt.icon}
-                          </div>
-                          <div className="flex-1">
-                             <h4 className={`font-bold text-sm ${opt.status ? 'text-gray-900' : 'text-gray-500'}`}>{opt.title}</h4>
-                             <p className="text-[10px] text-gray-400 leading-tight mt-0.5">{opt.desc}</p>
-                          </div>
-                          <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${opt.status ? 'border-green-500 bg-green-500 text-white' : 'border-gray-300'}`}>
-                             {opt.status && <FontAwesomeIcon icon={faCheck} className="w-3 h-3" />}
-                          </div>
+                 <div className="space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
+                    {/* 1. Media Type & A/B Toggle */}
+                    <div className="space-y-4">
+                       <div className="flex justify-between items-end">
+                          <label className="text-sm font-black text-slate-400 uppercase tracking-widest">진단 미디어 설정</label>
+                          <button 
+                            type="button"
+                            onClick={() => setIsAB(!isAB)}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase transition-all",
+                              isAB ? "bg-amber-500 text-white shadow-lg" : "bg-white/10 text-slate-500 border border-white/10"
+                            )}
+                          >
+                             <FontAwesomeIcon icon={faStar} className="w-3 h-3" />
+                             {isAB ? "A/B Testing Active" : "Enable A/B Test"}
+                          </button>
                        </div>
-                     </div>
-                   ))}
+                       
+                       <div className="grid grid-cols-3 gap-3">
+                          {[
+                            { id: 'link', label: '웹 라이스트 (URL)', icon: faCamera },
+                            { id: 'image', label: '이미지 갤러리', icon: faCamera },
+                            { id: 'video', label: '영상 (Youtube)', icon: faVideo },
+                          ].map(t => (
+                            <button 
+                              key={t.id}
+                              type="button"
+                              onClick={() => setAuditType(t.id as any)}
+                              className={cn(
+                                "py-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all font-bold",
+                                auditType === t.id ? "bg-white text-black border-green-500 shadow-xl" : "bg-white/10 border-white/10 text-slate-400 hover:bg-white/20"
+                              )}
+                            >
+                               <FontAwesomeIcon icon={t.icon} />
+                               <span className="text-xs">{t.label}</span>
+                            </button>
+                          ))}
+                       </div>
+                       
+                       {/* Media Inputs for Version A */}
+                       <div className={cn("p-6 rounded-3xl space-y-4", isAB ? "bg-white/5 border border-white/10" : "")}>
+                          {isAB && <span className="text-[10px] font-black text-blue-500 uppercase">Version A</span>}
+                          {auditType === 'link' && (
+                            <Input 
+                              placeholder="버전 A의 URL을 입력하세요"
+                              className="bg-white/20 border-white/20 text-white placeholder:text-slate-500 h-12 rounded-xl focus:bg-white/30"
+                              defaultValue={typeof mediaData === 'string' ? mediaData : ''}
+                              onBlur={(e) => setMediaData(e.target.value)}
+                            />
+                          )}
+                          
+                          {auditType === 'video' && (
+                            <Input 
+                              placeholder="버전 A의 유튜브 URL을 입력하세요"
+                              className="bg-white/20 border-white/20 text-white placeholder:text-slate-500 h-12 rounded-xl focus:bg-white/30"
+                              defaultValue={typeof mediaData === 'string' ? mediaData : ''}
+                              onBlur={(e) => setMediaData(e.target.value)}
+                            />
+                          )}
+
+                          {auditType === 'image' && (
+                            <div className="space-y-3">
+                               <div className="flex flex-wrap gap-2">
+                                  {Array.isArray(mediaData) && mediaData.map((url, idx) => (
+                                    <div key={idx} className="relative w-24 h-24 rounded-xl overflow-hidden group">
+                                       <img src={url} className="w-full h-full object-cover" />
+                                       <button 
+                                         onClick={() => setMediaData(mediaData.filter((_, i) => i !== idx))}
+                                         className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                       >
+                                         <span className="text-white font-bold">×</span>
+                                       </button>
+                                    </div>
+                                  ))}
+                                  <label className="w-24 h-24 rounded-xl border-2 border-dashed border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/5">
+                                     <FontAwesomeIcon icon={faUpload} className="text-slate-500" />
+                                     <input 
+                                       type="file" 
+                                       multiple 
+                                       className="hidden" 
+                                       onChange={async (e) => {
+                                         const files = e.target.files;
+                                         if (!files) return;
+                                         const urls = await Promise.all(Array.from(files).map(f => uploadImage(f)));
+                                         setMediaData([...(Array.isArray(mediaData) ? mediaData : []), ...urls]);
+                                       }}
+                                     />
+                                  </label>
+                               </div>
+                            </div>
+                          )}
+                       </div>
+
+                       {/* Media Inputs for Version B (Conditional) */}
+                       {isAB && (
+                         <div className="p-6 rounded-3xl space-y-4 bg-amber-500/5 border border-amber-500/20">
+                            <span className="text-[10px] font-black text-amber-500 uppercase">Version B</span>
+                            {auditType === 'link' && (
+                              <Input 
+                                placeholder="버전 B의 URL을 입력하세요"
+                                className="bg-white/20 border-white/20 text-white placeholder:text-slate-500 h-12 rounded-xl focus:bg-white/30"
+                                defaultValue={typeof mediaDataB === 'string' ? mediaDataB : ''}
+                                onBlur={(e) => setMediaDataB(e.target.value)}
+                              />
+                            )}
+                            
+                            {auditType === 'video' && (
+                              <Input 
+                                placeholder="버전 B의 유튜브 URL을 입력하세요"
+                                className="bg-white/20 border-white/20 text-white placeholder:text-slate-500 h-12 rounded-xl focus:bg-white/30"
+                                defaultValue={typeof mediaDataB === 'string' ? mediaDataB : ''}
+                                onBlur={(e) => setMediaDataB(e.target.value)}
+                              />
+                            )}
+
+                            {auditType === 'image' && (
+                              <div className="space-y-3">
+                                <div className="flex flex-wrap gap-2">
+                                    {Array.isArray(mediaDataB) && mediaDataB.map((url, idx) => (
+                                      <div key={idx} className="relative w-24 h-24 rounded-xl overflow-hidden group">
+                                        <img src={url} className="w-full h-full object-cover" />
+                                        <button 
+                                          onClick={() => setMediaDataB(mediaDataB.filter((_, i) => i !== idx))}
+                                          className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                          <span className="text-white font-bold">×</span>
+                                        </button>
+                                      </div>
+                                    ))}
+                                    <label className="w-24 h-24 rounded-xl border-2 border-dashed border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/5">
+                                      <FontAwesomeIcon icon={faUpload} className="text-slate-500" />
+                                      <input 
+                                        type="file" 
+                                        multiple 
+                                        className="hidden" 
+                                        onChange={async (e) => {
+                                          const files = e.target.files;
+                                          if (!files) return;
+                                          const urls = await Promise.all(Array.from(files).map(f => uploadImage(f)));
+                                          setMediaDataB([...(Array.isArray(mediaDataB) ? mediaDataB : []), ...urls]);
+                                        }}
+                                      />
+                                    </label>
+                                </div>
+                              </div>
+                            )}
+                         </div>
+                       )}
+                    </div>
+
+                    {/* 2. Custom Categories */}
+                    <div className="space-y-4">
+                       <div className="flex justify-between items-center">
+                          <label className="text-sm font-black text-slate-400 uppercase tracking-widest">커스텀 진단 카테고리 (Radar Chart)</label>
+                          <Button variant="ghost" size="sm" className="text-green-500 font-bold hover:bg-white/10" onClick={() => {
+                             if (customCategories.length < 6) {
+                               setCustomCategories([...customCategories, { id: `score_${customCategories.length + 1}`, label: '새 항목', icon: 'Target', color: '#888888', desc: '항목 설명' }]);
+                             } else {
+                               toast.error("카테고리는 최대 6개까지만 설정 가능합니다.");
+                             }
+                          }}>+ 항목 추가</Button>
+                       </div>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {customCategories.map((cat, idx) => (
+                            <div key={cat.id} className="flex items-center gap-3 bg-white/5 p-4 rounded-2xl border border-white/10 group/cat overflow-hidden relative">
+                               <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                                  <FontAwesomeIcon icon={faStar} className="text-slate-400 w-4 h-4" />
+                               </div>
+                               <div className="flex-1">
+                                  <input 
+                                    value={cat.label}
+                                    onChange={(e) => {
+                                      const newCats = [...customCategories];
+                                      newCats[idx].label = e.target.value;
+                                      setCustomCategories(newCats);
+                                    }}
+                                    className="bg-transparent text-sm font-black text-white outline-none w-full border-b border-white/5 focus:border-green-500"
+                                    placeholder="항목 제목"
+                                  />
+                                  <input 
+                                    value={cat.desc}
+                                    onChange={(e) => {
+                                      const newCats = [...customCategories];
+                                      newCats[idx].desc = e.target.value;
+                                      setCustomCategories(newCats);
+                                    }}
+                                    className="bg-transparent text-[10px] font-bold text-slate-500 outline-none w-full"
+                                    placeholder="상세 설명"
+                                  />
+                               </div>
+                               {customCategories.length > 3 && (
+                                 <button 
+                                   type="button" 
+                                   onClick={() => setCustomCategories(customCategories.filter((_, i) => i !== idx))} 
+                                   className="text-slate-600 hover:text-red-500 px-2 transition-colors"
+                                 >
+                                   ×
+                                 </button>
+                               )}
+                            </div>
+                          ))}
+                       </div>
+                    </div>
+
+                    {/* 3. Audit Deadline & Growth Option */}
+                    <div className="pt-8 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-8">
+                       <div className="space-y-3">
+                          <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                             <FontAwesomeIcon icon={faClock} className="text-amber-500" />
+                             진단 종료 기한
+                          </label>
+                          <Input 
+                            type="datetime-local"
+                            value={auditDeadline}
+                            onChange={(e) => setAuditDeadline(e.target.value)}
+                            className="bg-white/10 border-white/10 text-white h-12 rounded-2xl focus:ring-green-500"
+                          />
+                          <p className="text-[10px] text-slate-600">설정된 기한 이후로는 피드백을 받을 수 없습니다.</p>
+                       </div>
+
+                       <div className="space-y-3">
+                          <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                             <FontAwesomeIcon icon={faRocket} className="text-blue-500" />
+                             성장하기(공개 진단) 등록
+                          </label>
+                          <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                             <span className="text-xs font-bold text-slate-400">커뮤니티에 공개하여 피드백 받기</span>
+                             <button 
+                               type="button"
+                               onClick={() => setIsGrowthRequested(!isGrowthRequested)}
+                               className={cn(
+                                 "w-12 h-6 rounded-full transition-all relative flex items-center px-1 shadow-inner",
+                                 isGrowthRequested ? "bg-blue-600" : "bg-white/10"
+                               )}
+                             >
+                                <div className={cn("w-4 h-4 bg-white rounded-full shadow-md transition-transform", isGrowthRequested ? "translate-x-6" : "translate-x-0")} />
+                             </button>
+                          </div>
+                          <p className="text-[10px] text-slate-600">기본값은 '아니오'입니다. 활성 시 메인 페이지 '성장하기' 탭에 노출됩니다.</p>
+                       </div>
+                    </div>
+
+                    {/* 4. Success Message UI */}
+                    <div className="pt-8 border-t border-white/10 flex items-center gap-4">
+                       <div className="w-12 h-12 rounded-full bg-green-500/20 text-green-500 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+                          <FontAwesomeIcon icon={faRocket} />
+                       </div>
+                       <p className="text-xs font-medium text-slate-400 leading-relaxed max-w-lg">
+                         V-Audit 모드가 활성화되면 일반적인 포트폴리오 스타일이 아닌, <span className="text-white font-bold">정밀 진단 센터</span> 인터페이스로 발행됩니다. 
+                         수집된 데이터는 'My Archive'에서 실시간으로 분석되어 시각화됩니다.
+                       </p>
+                    </div>
                  </div>
                )}
             </div>

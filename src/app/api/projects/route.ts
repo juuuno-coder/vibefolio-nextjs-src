@@ -73,9 +73,9 @@ export async function GET(request: NextRequest) {
     const field = searchParams.get('field');
     const mode = searchParams.get('mode');
 
-    // [Growth Mode] Filter: 정석적인 JSONB Contains 연산자 사용
+    // [Growth Mode] Filter: 정석적인 컬럼 필터 + 하위 호환을 위한 JSONB Contains
     if (mode === 'growth') {
-       query = query.contains('custom_data', { is_feedback_requested: true });
+       query = query.or(`is_growth_requested.eq.true,custom_data->>is_feedback_requested.eq.true`);
     }
 
     if (field && field !== 'all') {
@@ -246,7 +246,8 @@ export async function POST(request: NextRequest) {
       content_text, content, body: bodyContent, text, // Allow various content field names
       description, alt_description, thumbnail_url, rendering_type, custom_data,
       allow_michelin_rating, allow_stickers, allow_secret_comments, scheduled_at, visibility,
-      assets // [New] Assets from editor
+      assets, // [New] Assets from editor
+      audit_deadline, is_growth_requested // [New] V-Audit advanced fields
     } = body;
 
     // [Robustness] Normalize Content
@@ -336,6 +337,8 @@ export async function POST(request: NextRequest) {
         allow_secret_comments: allow_secret_comments ?? true,
         scheduled_at: scheduled_at ? new Date(scheduled_at).toISOString() : null,
         visibility: visibility || 'public',
+        audit_deadline: audit_deadline ? new Date(audit_deadline).toISOString() : null,
+        is_growth_requested: is_growth_requested ?? false,
         likes_count: 0, views_count: 0 
       }] as any)
       .select()

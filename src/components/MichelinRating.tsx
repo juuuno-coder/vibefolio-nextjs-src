@@ -7,7 +7,8 @@ import { toast } from 'sonner';
 
 interface MichelinRatingProps {
   projectId: string;
-  isDemo?: boolean; // [New] Demo Mode
+  ratingId?: string; // [New] 기존 평가 수정을 위한 ID
+  isDemo?: boolean; 
 }
 
 const DEFAULT_CATEGORIES = [
@@ -21,7 +22,7 @@ const ICON_MAP: Record<string, any> = {
   Lightbulb, Zap, Target, TrendingUp, Star, Info, Sparkles, MessageSquareQuote
 };
 
-export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProps) {
+export function MichelinRating({ projectId, ratingId, isDemo = false }: MichelinRatingProps) {
   const [projectData, setProjectData] = useState<any>(null);
   const [categories, setCategories] = useState<any[]>(DEFAULT_CATEGORIES);
   const [scores, setScores] = useState<Record<string, number>>({});
@@ -115,6 +116,24 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
         
         setTotalAvg(data.totalAvg);
         setTotalCount(data.totalCount);
+
+        // ratingId가 전달된 경우 해당 특정 평가 데이터를 강제로 덮어씀
+        if (ratingId) {
+          const { data: specificRating, error: sError } = await supabase
+            .from('ProjectRating')
+            .select('*')
+            .eq('rating_id', Number(ratingId))
+            .single();
+          
+          if (!sError && specificRating) {
+            const updatedScores: Record<string, number> = { ...scores };
+            categories.forEach((c: any) => {
+              updatedScores[c.id] = Number(specificRating[c.id] || 0);
+            });
+            setScores(updatedScores);
+          }
+        }
+
         fetchAIAnalysis(data.averages);
       }
     } catch (e) {
@@ -169,14 +188,15 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
         },
         body: JSON.stringify({
           ...scores,
-          score: currentTotalAvg
+          score: currentTotalAvg,
+          rating_id: ratingId ? Number(ratingId) : undefined // 수정 시 ID 포함
         })
       });
 
       if (!res.ok) throw new Error('Failed to submit rating');
       
       setIsEditing(false);
-      toast.success(`전문 평가가 등록되었습니다! (평균 ${currentTotalAvg}점)`);
+      toast.success(ratingId ? "평가가 수정되었습니다!" : "전문 평가가 등록되었습니다!");
       fetchRatingData();
       
       // 내 점수 기반으로 분석 갱신
@@ -237,6 +257,7 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         {/* Radar Chart Visual */}
+        <div className="relative flex justify-center items-center">
             <svg width="100%" height="100%" viewBox="-40 -40 280 280" className="drop-shadow-2xl overflow-visible max-w-[300px]">
               {/* Radial Guides */}
               {[1, 0.8, 0.6, 0.4, 0.2].map((s, idx) => (
@@ -344,48 +365,6 @@ export function MichelinRating({ projectId, isDemo = false }: MichelinRatingProp
               </div>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* Submission button & AI Inspector hidden as per request */}
-      <div className="hidden">
-        <div className="pt-4">
-          <button 
-            disabled={isSubmitting || !isEditing} 
-            onClick={handleRatingSubmit} 
-            className={`w-full py-5 rounded-3xl font-black text-base uppercase tracking-widest transition-all shadow-xl active:scale-95 ${isEditing ? 'bg-gradient-to-r from-slate-900 to-black text-white hover:shadow-slate-200 hover:-translate-y-1' : 'bg-slate-100 text-slate-300 cursor-default shadow-none'}`}
-          >
-            {isSubmitting ? "Submitting Analysis..." : (scores.score_1 > 0 ? "Update Diagnostic" : "Confirm Multi-Diagnostic")}
-          </button>
-        </div>
-
-        {/* AI Inspector Section */}
-        <div className="mt-12 bg-gray-900 rounded-[2rem] p-8 border border-gray-800 relative overflow-hidden group">
-           <div className="absolute top-0 right-0 p-8 opacity-10">
-              <Sparkles className="w-24 h-24 text-white" />
-           </div>
-           <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="px-2 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded uppercase tracking-tighter">AI Inspector</div>
-                <h5 className="text-white font-bold flex items-center gap-2 italic">
-                  <MessageSquareQuote className="w-4 h-4 text-gray-400" />
-                  "인스펙터의 한마디"
-                </h5>
-              </div>
-              
-              {isAnalyzing ? (
-                 <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    <p className="text-gray-400 text-sm animate-pulse">평점을 바탕으로 전문가의 조언을 생성 중입니다...</p>
-                 </div>
-              ) : analysis ? (
-                 <p className="text-lg text-white font-medium leading-relaxed font-serif italic">
-                   {analysis}
-                 </p>
-              ) : (
-                 <p className="text-gray-500 text-sm">평가를 완료하면 AI 인스펙터의 전문적인 분석 리포트를 받아보실 수 있습니다.</p>
-              )}
-           </div>
         </div>
       </div>
 

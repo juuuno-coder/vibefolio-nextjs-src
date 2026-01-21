@@ -19,25 +19,26 @@ interface FeedbackPollProps {
 
 export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = false }: FeedbackPollProps) {
   const [selected, setSelected] = useState<string | null>(userVote || null);
-  const [counts, setCounts] = useState(initialCounts || { launch: 0, research: 0, more: 0 });
+  const [counts, setCounts] = useState<Record<string, number>>(initialCounts || { launch: 0, research: 0, more: 0 });
   const [isVoting, setIsVoting] = useState(false);
+
+  const [projectData, setProjectData] = useState<any>(null);
 
   // Fetch Poll Data on Mount
   React.useEffect(() => {
-    if (!projectId || isDemo) return; // Skip in demo
+    if (!projectId || isDemo) return;
     const fetchPoll = async () => {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const headers: Record<string, string> = {};
-            if (session) {
-                headers['Authorization'] = `Bearer ${session.access_token}`;
-            }
+            if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
 
             const res = await fetch(`/api/projects/${projectId}/vote`, { headers });
             if (res.ok) {
                 const data = await res.json();
                 if (data.counts) setCounts(data.counts);
                 if (data.myVote !== undefined) setSelected(data.myVote);
+                if (data.project) setProjectData(data.project);
             }
         } catch (e) {
             console.error("Failed to load poll", e);
@@ -46,7 +47,7 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
     fetchPoll();
   }, [projectId, isDemo]);
 
-  const handleVote = async (type: 'launch' | 'research' | 'more') => {
+  const handleVote = async (type: string) => {
     if (isVoting) return;
     
     // Optimistic UI / Demo Logic Base is same
@@ -56,23 +57,20 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
 
     // Toggle logic
     if (selected === type) {
-      // Cancel vote
       setSelected(null);
       newVoteType = null;
       setCounts(prev => {
           const newC = { ...prev };
-          newC[type] = Math.max(0, newC[type] - 1);
+          newC[type] = Math.max(0, (newC[type] || 0) - 1);
           return newC;
       });
     } else {
-      // New vote or switch
       setSelected(type);
       setCounts(prev => {
         const newCounts = { ...prev };
-        newCounts[type] = newCounts[type] + 1;
+        newCounts[type] = (newCounts[type] || 0) + 1;
         if (prevSelected) {
-            const key = prevSelected as keyof typeof newCounts;
-            newCounts[key] = Math.max(0, newCounts[key] - 1);
+            newCounts[prevSelected] = Math.max(0, (newCounts[prevSelected] || 0) - 1);
         }
         return newCounts;
       });
@@ -84,12 +82,10 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
     }
 
     setIsVoting(true);
-
     try {
        const { data: { session } } = await supabase.auth.getSession();
        if (!session) {
-           // [Guest Mode]
-           toast.success(newVoteType ? "[비회원] 소중한 의견 감사합니다! 🎉" : "[비회원] 투표를 취소했습니다.");
+           toast.success(newVoteType ? "[비회원] 의견 감사합니다! 🎉" : "투표를 취소했습니다.");
            setIsVoting(false);
            return;
        }
@@ -102,21 +98,14 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
            },
            body: JSON.stringify({ voteType: newVoteType })
        });
+       if (!res.ok) throw new Error('Vote Failed');
        
-       if (!res.ok) {
-           throw new Error('Vote Failed');
-       }
-       
-       if (!newVoteType) {
-           toast.info("투표를 취소했습니다.");
-       } else {
-           toast.success("소중한 의견 감사합니다! 🎉");
-       }
+       if (!newVoteType) toast.info("투표를 취소했습니다.");
+       else toast.success("참여해주셔서 감사합니다! 🎉");
 
     } catch (error) {
       console.error(error);
       toast.error("투표에 실패했습니다.");
-      // Rollback
       setSelected(prevSelected);
       setCounts(prevCounts);
     } finally {
@@ -124,41 +113,30 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
     }
   };
 
-  const options = [
-    {
-      id: 'launch',
-      icon: CheckCircle2,
-      label: "합격입니다. 당장 쓸게요.",
-      color: "text-green-500",
-      bgFrom: "from-green-500/10",
-      bgTo: "to-green-600/20",
-      border: "border-green-200",
-      activeBorder: "border-green-500",
-      count: counts.launch
-    },
-    {
-      id: 'more',
-      icon: Clock,
-      label: "보류하겠습니다.",
-      color: "text-amber-500",
-      bgFrom: "from-amber-500/10",
-      bgTo: "to-amber-600/20",
-      border: "border-amber-200",
-      activeBorder: "border-amber-500",
-      count: counts.more
-    },
-    {
-      id: 'research',
-      icon: XCircle,
-      label: "불합격드리겠습니다. 더 연구해 주세요.",
-      color: "text-red-500",
-      bgFrom: "from-red-500/10",
-      bgTo: "to-red-600/20",
-      border: "border-red-200",
-      activeBorder: "border-red-500",
-      count: counts.research
+  // Dynamic Options Base
+  const DEFAULT_OPTIONS = [
+    { id: 'launch', icon: CheckCircle2, label: "합격입니다. 당장 쓸게요.", color: "text-green-500", bgFrom: "from-green-500/10", bgTo: "to-green-600/20", border: "border-green-200", activeBorder: "border-green-500" },
+    { id: 'more', icon: Clock, label: "보류하겠습니다.", color: "text-amber-500", bgFrom: "from-amber-500/10", bgTo: "to-amber-600/20", border: "border-amber-200", activeBorder: "border-amber-500" },
+    { id: 'research', icon: XCircle, label: "불합격드리겠습니다. 더 연구해 주세요.", color: "text-red-500", bgFrom: "from-red-500/10", bgTo: "to-red-600/20", border: "border-red-200", activeBorder: "border-red-500" }
+  ];
+
+  const options = React.useMemo(() => {
+    const custom = projectData?.custom_data?.poll_options;
+    if (custom && Array.isArray(custom)) {
+      return custom.map((opt: any, idx: number) => ({
+        id: opt.id || `opt_${idx}`,
+        icon: opt.icon === 'flask' ? FlaskConical : opt.icon === 'help' ? HelpCircle : opt.id === 'launch' ? CheckCircle2 : CheckCircle2,
+        label: opt.label,
+        color: opt.color || "text-blue-500",
+        bgFrom: opt.bgFrom || "from-blue-500/10",
+        bgTo: opt.bgTo || "to-blue-600/20",
+        border: opt.border || "border-blue-200",
+        activeBorder: opt.activeBorder || "border-blue-500",
+        count: counts[opt.id] || 0
+      }));
     }
-  ] as const;
+    return DEFAULT_OPTIONS.map(opt => ({ ...opt, count: counts[opt.id as keyof typeof counts] || 0 }));
+  }, [projectData, counts]);
 
   return (
     <div className="w-full relative overflow-hidden group">
@@ -217,11 +195,17 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
                  <Rocket className="w-5 h-5 text-indigo-500" />
               </div>
               <div className="space-y-1">
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">진단 가이드라인</p>
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">피드백 가이드라인</p>
                 <div className="text-[13px] font-medium text-slate-600 leading-relaxed grid gap-1">
-                   <p><span className="font-black text-green-600">합격:</span> 시장에 바로 출시 가능하며 즉시 사용 가치가 검증된 프로젝트</p>
-                   <p><span className="font-black text-amber-500">보류:</span> 기획은 좋으나 디테일이나 UI/UX 측면의 보완이 필요한 경우</p>
-                   <p><span className="font-black text-red-500">불합격:</span> 컨셉의 전면적인 재검토나 핵심 기능의 재정의가 필요한 상태</p>
+                   {projectData?.custom_data?.poll_desc ? (
+                     <p>{projectData.custom_data.poll_desc}</p>
+                   ) : (
+                     <>
+                        <p><span className="font-black text-green-600">합격:</span> 시장에 바로 출시 가능하며 즉시 사용 가치가 검증된 프로젝트</p>
+                        <p><span className="font-black text-amber-500">보류:</span> 기획은 좋으나 디테일이나 UI/UX 측면의 보완이 필요한 경우</p>
+                        <p><span className="font-black text-red-500">불합격:</span> 컨셉의 전면적인 재검토나 핵심 기능의 재정의가 필요한 상태</p>
+                     </>
+                   )}
                 </div>
               </div>
            </div>

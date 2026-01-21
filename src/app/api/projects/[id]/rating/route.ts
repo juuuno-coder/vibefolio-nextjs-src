@@ -19,7 +19,14 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 
   try {
-    // 1. Fetch All Ratings for Calculation (Admin access)
+    // 1. Fetch Project for categories
+    const { data: project } = await supabaseAdmin
+      .from('Project')
+      .select('*, user_id, title, category, custom_data')
+      .eq('project_id', projectId)
+      .single();
+
+    // 2. Fetch All Ratings
     const { data: allRatings, error } = await supabaseAdmin
       .from('ProjectRating')
       .select('*')
@@ -27,49 +34,47 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     if (error) throw error;
 
+    // Determine Categories
+    const categories = project?.custom_data?.custom_categories || [
+      { id: 'score_1' }, { id: 'score_2' }, { id: 'score_3' }, { id: 'score_4' }
+    ];
+    const catIds = categories.map((c: any) => c.id);
+
     // Calculate Average
-    let averages = { score_1: 0, score_2: 0, score_3: 0, score_4: 0 };
+    let averages: Record<string, number> = {};
+    catIds.forEach((id: string) => averages[id] = 0);
+    
     let totalAvg = 0;
     const count = allRatings.length;
 
     if (count > 0) {
-      const sums = allRatings.reduce((acc: any, curr: any) => ({
-        score_1: acc.score_1 + (Number(curr.score_1) || 0),
-        score_2: acc.score_2 + (Number(curr.score_2) || 0),
-        score_3: acc.score_3 + (Number(curr.score_3) || 0),
-        score_4: acc.score_4 + (Number(curr.score_4) || 0),
-      }), { score_1: 0, score_2: 0, score_3: 0, score_4: 0 });
+      const sums: Record<string, number> = {};
+      catIds.forEach((id: string) => sums[id] = 0);
 
-      averages = {
-        score_1: Number((sums.score_1 / count).toFixed(1)),
-        score_2: Number((sums.score_2 / count).toFixed(1)),
-        score_3: Number((sums.score_3 / count).toFixed(1)),
-        score_4: Number((sums.score_4 / count).toFixed(1)),
-      };
+      allRatings.forEach((curr: any) => {
+        catIds.forEach((id: string) => {
+          sums[id] += (Number(curr[id]) || 0);
+        });
+      });
+
+      catIds.forEach((id: string) => {
+        averages[id] = Number((sums[id] / count).toFixed(1));
+      });
       
       const sumAvgs = Object.values(averages).reduce((a, b) => a + b, 0);
-      totalAvg = Number((sumAvgs / 4).toFixed(1));
+      totalAvg = Number((sumAvgs / catIds.length).toFixed(1));
     }
 
-    // 2. Fetch My Rating
+    // 3. Fetch My Rating
     let myRating = null;
     if (userId) {
       myRating = allRatings.find((r: any) => r.user_id === userId) || null;
     }
 
-    // 3. Check Visibility for Detailed Ratings (Owner or Collaborator)
+    // 4. Check Visibility
     let isAuthorized = false;
     if (userId) {
-        // Check Owner
-        const { data: project } = await supabaseAdmin
-            .from('Project')
-            .select('user_id')
-            .eq('project_id', projectId)
-            .single();
-            
         if (project && project.user_id === userId) isAuthorized = true;
-        
-        // Check Collaborator
         if (!isAuthorized) {
             const { data: collaborator } = await supabaseAdmin
                 .from('project_collaborators')
@@ -83,12 +88,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     return NextResponse.json({
       success: true,
+      project, // 반환 데이터에 프로젝트 정보 포함
       averages,
       totalAvg,
       totalCount: count,
       myRating,
-      isAuthorized, // Frontend can use this to show specific UI
-      // details: isAuthorized ? allRatings : [] // Uncomment if we list all ratings
+      isAuthorized
     });
 
   } catch (error: any) {
@@ -109,7 +114,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       
       const body = await req.json();
-      const { score_1, score_2, score_3, score_4, score } = body;
+      const { score, ...scores } = body;
 
       // 1. Upsert Rating
       const { error: ratingError } = await supabaseAdmin
@@ -117,7 +122,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         .upsert({
           project_id: projectId,
           user_id: user.id,
-          score_1, score_2, score_3, score_4, score,
+          score,
+          score_1: scores.score_1 || 0,
+          score_2: scores.score_2 || 0,
+          score_3: scores.score_3 || 0,
+          score_4: scores.score_4 || 0,
+          score_5: scores.score_5 || 0,
+          score_6: scores.score_6 || 0,
           updated_at: new Date().toISOString()
         }, { onConflict: 'project_id, user_id' });
 
