@@ -35,33 +35,34 @@ export async function POST(request: NextRequest) {
     const userId = authenticatedUser.id;
 
     const body = await request.json();
-    const { projectId } = body;
+    const { projectId, project_id } = body;
+    const targetProjectId = projectId || project_id;
 
-    if (!projectId) {
+    if (!targetProjectId) {
       return NextResponse.json({ error: '프로젝트 ID가 필요합니다.' }, { status: 400 });
     }
 
     // 이미 좋아요가 있는지 확인
     const { data: existingLike } = await supabaseAdmin
-      .from('Like')
+      .from('like')
       .select('user_id, project_id')
       .eq('user_id', userId)
-      .eq('project_id', projectId)
+      .eq('project_id', targetProjectId)
       .single();
 
     if (existingLike) {
       const { error } = await (supabaseAdmin as any)
-        .from('Like')
+        .from('like')
         .delete()
         .eq('user_id', userId)
-        .eq('project_id', projectId);
+        .eq('project_id', targetProjectId);
 
       if (error) return NextResponse.json({ error: '좋아요 제거 실패' }, { status: 500 });
       return NextResponse.json({ liked: false, message: '좋아요 취소' });
     } else {
       const { error } = await (supabaseAdmin as any)
-        .from('Like')
-        .insert([{ user_id: userId, project_id: projectId }] as any);
+        .from('like')
+        .insert([{ user_id: userId, project_id: targetProjectId }] as any);
 
       if (error) return NextResponse.json({ error: '좋아요 추가 실패' }, { status: 500 });
       return NextResponse.json({ liked: true, message: '좋아요 추가' });
@@ -73,13 +74,13 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
+      const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get('userId');
-    const projectId = searchParams.get('projectId');
+    const projectId = searchParams.get('projectId') || searchParams.get('project_id');
 
     if (userId && projectId) {
       const { data } = await supabaseAdmin
-        .from('Like')
+        .from('like')
         .select('user_id')
         .eq('user_id', userId)
         .eq('project_id', projectId)
@@ -87,7 +88,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ liked: !!data });
     } else if (userId) {
       const { data: likes, error } = await supabaseAdmin
-        .from('Like')
+        .from('like')
         .select('project_id, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -130,7 +131,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ likes: likes || [] });
     } else if (projectId) {
       const { count, error } = await supabaseAdmin
-        .from('Like')
+        .from('like')
         .select('project_id', { count: 'exact', head: true })
         .eq('project_id', projectId);
       if (error) return NextResponse.json({ error: '좋아요 수 조회 실패' }, { status: 500 });

@@ -65,6 +65,7 @@ export default function AdminPage() {
   const [recentProjects, setRecentProjects] = useState<any[]>([]);
   const [recentInquiries, setRecentInquiries] = useState<any[]>([]);
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
+  const [statsRange, setStatsRange] = useState(7); // 최근 7일(기본) or 30일
 
   // 관리자가 아니면 접근 차단
   useEffect(() => {
@@ -143,17 +144,15 @@ export default function AdminPage() {
 
         setRecentInquiries(recentInqs || []);
 
-        // 주간 데이터 (최근 7일) - 실제 데이터 병렬 조회
+        // 주간 데이터 (최근 statsRange일) - 실제 데이터 병렬 조회
         const days = ['일', '월', '화', '수', '목', '금', '토'];
-        const weeklyStats = [];
-        let currentWeekProjectCount = 0; // 성장률 계산용
+        const statsData = [];
+        let currentWeekProjectCount = 0; // 성장률 계산용 (최근 7일 기준)
 
-        for (let i = 6; i >= 0; i--) {
+        for (let i = statsRange - 1; i >= 0; i--) {
           const d = new Date();
           d.setDate(d.getDate() - i);
           
-          // [Fix] 날짜 범위 생성 수정 (로컬 시간 기준 -> UTC ISO 변환)
-          // 브라우저가 KST라고 가정할 때 안전하게 UTC 범위를 생성합니다.
           const startDate = new Date(d);
           startDate.setHours(0, 0, 0, 0);
           
@@ -177,9 +176,9 @@ export default function AdminPage() {
           ]);
           
           const pCount = projectRes.count || 0;
-          currentWeekProjectCount += pCount;
+          if (i < 7) currentWeekProjectCount += pCount;
 
-          weeklyStats.push({
+          statsData.push({
             day: days[d.getDay()],
             visits: visitRes.data?.visits || 0,
             users: userRes.count || 0,
@@ -187,10 +186,14 @@ export default function AdminPage() {
             recruits: recruitRes.count || 0,
             date: dateStr,
             fullDate: `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`,
-            displayDate: `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} (${days[d.getDay()]})`
+            displayDate: statsRange > 7 
+              ? `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+              : `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} (${days[d.getDay()]})`
           });
         }
         
+        setWeeklyData(statsData);
+
         // 성장률 계산을 위한 지난주 데이터 (프로젝트 기준)
         const prevWeekStart = new Date();
         prevWeekStart.setDate(prevWeekStart.getDate() - 14);
@@ -205,8 +208,6 @@ export default function AdminPage() {
 
         // 성장률 계산 (기존 로직 유지)
         const growth = (lastWeekCount || 0) === 0 ? (currentWeekProjectCount > 0 ? 100 : 0) : Math.round(((currentWeekProjectCount - (lastWeekCount || 0)) / (lastWeekCount || 0)) * 100);
-
-        setWeeklyData(weeklyStats);
 
         // 오늘 방문자수 조회
         let todayVisits = 0;
@@ -241,7 +242,7 @@ export default function AdminPage() {
     };
 
     loadStats();
-  }, [isAdmin]);
+  }, [isAdmin, statsRange]);
 
   const adminMenus = [
     {
@@ -435,9 +436,13 @@ export default function AdminPage() {
                        <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-indigo-500"></div> 프로젝트</div>
                   </div>
               </div>
-              <select className="bg-slate-50 border-none text-[10px] font-bold text-slate-500 rounded-lg px-3 py-1.5 focus:ring-0 cursor-pointer">
-                <option>최근 7일</option>
-                <option>최근 30일</option>
+              <select 
+                value={statsRange} 
+                onChange={(e) => setStatsRange(Number(e.target.value))}
+                className="bg-slate-50 border-none text-[10px] font-bold text-slate-500 rounded-lg px-3 py-1.5 focus:ring-0 cursor-pointer"
+              >
+                <option value={7}>최근 7일</option>
+                <option value={30}>최근 30일</option>
               </select>
             </div>
             

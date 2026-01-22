@@ -26,9 +26,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { projectId } = body;
+    const { projectId, project_id } = body;
+    const targetProjectId = projectId || project_id;
 
-    if (!projectId) {
+    if (!targetProjectId) {
       return NextResponse.json(
         { error: '프로젝트 ID가 필요합니다.' },
         { status: 400 }
@@ -37,19 +38,19 @@ export async function POST(request: NextRequest) {
 
     // 이미 위시리스트에 있는지 확인
     const { data: existingWishlist } = await supabaseAdmin
-      .from('Wishlist')
+      .from('bookmark')
       .select()
       .eq('user_id', user.id)
-      .eq('project_id', projectId)
+      .eq('project_id', targetProjectId)
       .single();
 
     if (existingWishlist) {
       // 위시리스트에서 제거
-      const { error } = await (supabaseAdmin as any)
-        .from('Wishlist')
+      const { error } = await supabaseAdmin
+        .from('bookmark')
         .delete()
         .eq('user_id', user.id)
-        .eq('project_id', projectId);
+        .eq('project_id', targetProjectId);
 
       if (error) {
         console.error('위시리스트 제거 실패:', error);
@@ -62,9 +63,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ bookmarked: false, message: '위시리스트에서 제거되었습니다.' });
     } else {
       // 위시리스트에 추가
-      const { error } = await (supabaseAdmin as any)
-        .from('Wishlist')
-        .insert([{ user_id: user.id, project_id: projectId }] as any);
+      const { error } = await supabaseAdmin
+        .from('bookmark')
+        .insert({ user_id: user.id, project_id: targetProjectId });
 
       if (error) {
         console.error('위시리스트 추가 실패:', error);
@@ -94,7 +95,7 @@ export async function GET(request: NextRequest) {
     if (userId && projectId) {
       // 특정 프로젝트에 대한 위시리스트 여부 확인
       const { data } = await supabaseAdmin
-        .from('Wishlist')
+        .from('bookmark')
         .select()
         .eq('user_id', userId)
         .eq('project_id', projectId)
@@ -104,7 +105,7 @@ export async function GET(request: NextRequest) {
     } else if (userId) {
       // 사용자의 위시리스트 조회
       const { data, error } = await supabaseAdmin
-        .from('Wishlist')
+        .from('bookmark')
         .select(`
           *,
           Project (

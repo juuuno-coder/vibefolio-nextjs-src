@@ -124,9 +124,10 @@ export async function POST(request: NextRequest) {
 
     const { id: userId, user } = authenticatedUser;
     const body = await request.json();
-    const { projectId, content, parentCommentId, mentionedUserId, isSecret, locationX, locationY } = body;
+    const { projectId, project_id, content, parentCommentId, mentionedUserId, isSecret, locationX, locationY } = body;
+    const targetProjectId = projectId || project_id;
 
-    if (!projectId || !content) {
+    if (!targetProjectId || !content) {
       return NextResponse.json({ error: '필수 필드 누락' }, { status: 400 });
     }
 
@@ -134,14 +135,14 @@ export async function POST(request: NextRequest) {
     const { data: projectData } = await (supabaseAdmin as any)
       .from('Project')
       .select('user_id')
-      .eq('project_id', projectId)
+      .eq('project_id', targetProjectId)
       .single();
 
     const { data, error } = await (supabaseAdmin as any)
       .from('Comment')
       .insert([{
           user_id: userId,
-          project_id: projectId,
+          project_id: targetProjectId,
           content,
           parent_comment_id: parentCommentId || null,
           mentioned_user_id: mentionedUserId || null,

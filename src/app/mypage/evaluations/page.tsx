@@ -37,10 +37,10 @@ export default function MyEvaluationsPage() {
         }
 
         // Fetch ratings with project details
-        const { data, error: queryError } = await supabase
+        const { data, error: queryError } = await (supabase as any)
           .from('ProjectRating')
           .select(`
-            rating_id,
+            id,
             project_id,
             score,
             comment,
@@ -56,7 +56,7 @@ export default function MyEvaluationsPage() {
         if (queryError) throw queryError;
 
         const mapped = (data || []).map((r: any) => ({
-          rating_id: String(r.rating_id),
+          rating_id: String(r.id),
           project_id: String(r.project_id),
           project_title: r.Project?.title || '제목 없음',
           thumbnail_url: r.Project?.thumbnail_url || '/placeholder.jpg',
@@ -147,7 +147,7 @@ export default function MyEvaluationsPage() {
                         <Eye className="w-4 h-4" /> 프로젝트 다시보기
                       </Button>
                     </Link>
-                    <Link href={`/review/viewer?id=${ev.project_id}&rating_id=${ev.rating_id}`} className="flex-1">
+                    <Link href={`/review/viewer?projectId=${ev.project_id}&ratingId=${ev.rating_id}`} className="flex-1">
                       <Button className="w-full h-12 rounded-2xl bg-slate-900 hover:bg-green-600 text-white font-black text-xs gap-2 transition-all">
                         <Edit3 className="w-4 h-4" /> 내 평가 수정하기
                       </Button>

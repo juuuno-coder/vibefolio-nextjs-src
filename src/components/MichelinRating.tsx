@@ -119,10 +119,10 @@ export function MichelinRating({ projectId, ratingId, isDemo = false }: Michelin
 
         // ratingId가 전달된 경우 해당 특정 평가 데이터를 강제로 덮어씀
         if (ratingId) {
-          const { data: specificRating, error: sError } = await supabase
+          const { data: specificRating, error: sError } = await (supabase as any)
             .from('ProjectRating')
             .select('*')
-            .eq('rating_id', Number(ratingId))
+            .eq('id', Number(ratingId))
             .single();
           
           if (!sError && specificRating) {
