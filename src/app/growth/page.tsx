@@ -109,7 +109,7 @@ function InteractiveHero() {
                {[
                   { id: 'rating', label: '미슐랭 평점 ⭐️', desc: '전문적인 다면 평가' },
                   { id: 'poll', label: '스티커 투표 🗳️', desc: '직관적인 반응 수집' },
-                  { id: 'proposal', label: '시크릿 제안 🔒', desc: '프라이빗한 협업 요청' },
+                  { id: 'proposal', label: '협업 제안 🔒', desc: '프라이빗한 협업 요청' },
                ].map((tab) => (
                   <button
                      key={tab.id}
@@ -161,7 +161,7 @@ function InteractiveHero() {
                         <h3 className="text-2xl font-black text-gray-900 mb-2">당신의 아이디어를 제안하세요</h3>
                         <p className="text-gray-500 mb-8 text-sm">
                            공개 댓글로는 말하기 힘든 제휴 제안이나<br/>
-                           디테일한 피드백을 <span className="font-bold text-gray-800">비공개</span>로 전달할 수 있습니다.
+                           디테일한 피드백을 <span className="font-bold text-gray-800">프라이빗한 제안</span>으로 전달할 수 있습니다.
                         </p>
                         
                         <div className="space-y-3">
@@ -324,7 +324,7 @@ function GrowthContent() {
                   className="rounded-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-14 px-10 shadow-xl shadow-orange-200 transition-all hover:-translate-y-1"
                 >
                    <Zap size={20} className="mr-2 fill-white" />
-                   지금 바로 제 평가는요? 의뢰
+                   지금 바로 평가 의뢰하기
                 </Button>
              </div>
          </div>

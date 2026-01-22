@@ -98,7 +98,7 @@ export default function MyEvaluationsPage() {
             <Link href="/project/upload?mode=audit">
               <Button className="hidden md:flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-full px-5 h-11 font-black shadow-lg shadow-green-100 transition-all hover:-translate-y-0.5">
                 <Star className="w-4 h-4 fill-white" />
-                제 평가는요? 의뢰
+                평가 의뢰하기
               </Button>
             </Link>
           </div>

@@ -371,7 +371,7 @@ export default function ProjectUploadPage() {
           <span className="text-sm font-bold uppercase tracking-wider">Back</span>
         </button>
         <h1 className="text-sm font-black text-gray-900 uppercase tracking-[0.2em]">
-          {isAuditMode ? "평가 의뢰 (제 평가는요?)" : isVersionMode ? "새 버전 등록" : "일반 등록"}
+          {isAuditMode ? "평가 의뢰하기" : isVersionMode ? "새 버전 등록" : "프로젝트 등록"}
         </h1>
         <div className="w-10" />
       </header>
