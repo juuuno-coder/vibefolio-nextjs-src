@@ -42,9 +42,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '프로젝트 ID가 필요합니다.' }, { status: 400 });
     }
 
-    // 이미 좋아요가 있는지 확인
     const { data: existingLike } = await supabaseAdmin
-      .from('like')
+      .from('Like')
       .select('user_id, project_id')
       .eq('user_id', userId)
       .eq('project_id', targetProjectId)
@@ -52,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     if (existingLike) {
       const { error } = await (supabaseAdmin as any)
-        .from('like')
+        .from('Like')
         .delete()
         .eq('user_id', userId)
         .eq('project_id', targetProjectId);
@@ -61,7 +60,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ liked: false, message: '좋아요 취소' });
     } else {
       const { error } = await (supabaseAdmin as any)
-        .from('like')
+        .from('Like')
         .insert([{ user_id: userId, project_id: targetProjectId }] as any);
 
       if (error) return NextResponse.json({ error: '좋아요 추가 실패' }, { status: 500 });
@@ -80,7 +79,7 @@ export async function GET(request: NextRequest) {
 
     if (userId && projectId) {
       const { data } = await supabaseAdmin
-        .from('like')
+        .from('Like')
         .select('user_id')
         .eq('user_id', userId)
         .eq('project_id', projectId)
@@ -88,7 +87,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ liked: !!data });
     } else if (userId) {
       const { data: likes, error } = await supabaseAdmin
-        .from('like')
+        .from('Like')
         .select('project_id, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -131,7 +130,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ likes: likes || [] });
     } else if (projectId) {
       const { count, error } = await supabaseAdmin
-        .from('like')
+        .from('Like')
         .select('project_id', { count: 'exact', head: true })
         .eq('project_id', projectId);
       if (error) return NextResponse.json({ error: '좋아요 수 조회 실패' }, { status: 500 });
