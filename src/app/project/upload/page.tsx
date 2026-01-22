@@ -1793,8 +1793,8 @@ export default function TiptapUploadPage() {
                  돌아가기
               </button>
               <div className="text-right">
-                 <h1 className="text-3xl font-black text-slate-900 tracking-tight">평가 게시 페이지</h1>
-                 <p className="text-sm text-slate-500 font-medium">내 아이디어의 가치를 검증받는 가장 빠른 방법</p>
+                 <h1 className="text-3xl font-black text-slate-900 tracking-tight">평가 의뢰하기</h1>
+                 <p className="text-sm text-slate-500 font-medium">내 아이디어의 가치를 평가받는 가장 빠른 방법</p>
               </div>
            </div>
 
@@ -1807,15 +1807,15 @@ export default function TiptapUploadPage() {
                        <FontAwesomeIcon icon={faLink} />
                     </div>
                     <div>
-                       <h2 className="text-2xl font-black text-slate-900">1. 무엇을 검증받고 싶으신가요?</h2>
-                       <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Diagnostic Media Setup</p>
+                       <h2 className="text-2xl font-black text-slate-900">1. 무엇을 평가받고 싶으신가요?</h2>
+                       <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Evaluation Media Setup</p>
                     </div>
                  </div>
 
                  {/* Media Type Toggles */}
                  <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8 w-fit space-x-1">
                     {[
-                      { id: 'link', label: '웹 라이브 URL', icon: faLink },
+                      { id: 'link', label: '웹 링크 URL', icon: faLink },
                       { id: 'video', label: '영상 (유튜브/비메오)', icon: faVideo },
                       { id: 'image', label: '시안 (이미지 갤러리)', icon: faImage },
                     ].map(t => (
@@ -1897,8 +1897,8 @@ export default function TiptapUploadPage() {
                        <FontAwesomeIcon icon={faPalette} />
                     </div>
                     <div>
-                       <h2 className="text-2xl font-black text-slate-900">2. 어떤 카테고리의 작품인가요?</h2>
-                       <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Categorization (Min 1)</p>
+                       <h2 className="text-2xl font-black text-slate-900">2. 어떤 작품인가요?</h2>
+                       <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Categorization</p>
                     </div>
                  </div>
                  <div className="flex flex-wrap gap-3">
@@ -1929,7 +1929,7 @@ export default function TiptapUploadPage() {
                           <FontAwesomeIcon icon={faTarget} />
                        </div>
                        <div>
-                          <h2 className="text-2xl font-black text-slate-900">3. 평가받고 싶은 구체적 항목</h2>
+                          <h2 className="text-2xl font-black text-slate-900">3. 미슐랭처럼 평가받기</h2>
                           <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Evaluation Metrics (Radar Chart)</p>
                        </div>
                     </div>
@@ -1976,9 +1976,12 @@ export default function TiptapUploadPage() {
                                placeholder="항목에 대한 간단한 가이드"
                              />
                           </div>
-                          {customCategories.length > 3 && (
-                             <button onClick={() => setCustomCategories(customCategories.filter((_, i) => i !== idx))} className="text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover/cat:opacity-100 px-2 text-xl">
-                                &times;
+                          {customCategories.length > 2 && (
+                             <button 
+                               onClick={() => setCustomCategories(customCategories.filter((_, i) => i !== idx))} 
+                               className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-white shadow-lg border border-red-50 text-slate-300 hover:text-red-500 hover:border-red-200 transition-all opacity-0 group-hover/cat:opacity-100 flex items-center justify-center font-bold z-10"
+                             >
+                                <FontAwesomeIcon icon={faTrash} className="text-[10px]" />
                              </button>
                           )}
                        </div>
