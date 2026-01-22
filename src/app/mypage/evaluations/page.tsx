@@ -43,7 +43,7 @@ export default function MyEvaluationsPage() {
             id,
             project_id,
             score,
-            comment,
+            proposal,
             created_at,
             Project (
               title,
@@ -61,7 +61,7 @@ export default function MyEvaluationsPage() {
           project_title: r.Project?.title || '제목 없음',
           thumbnail_url: r.Project?.thumbnail_url || '/placeholder.jpg',
           score: r.score || 0,
-          comment: r.comment || '',
+          comment: r.proposal || '',
           created_at: r.created_at,
         }));
 

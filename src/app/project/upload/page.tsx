@@ -854,10 +854,10 @@ export default function TiptapUploadPage() {
             </button>
             <div className="text-right">
                <h1 className="text-3xl font-black text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600">
-                {isVersionMode ? "새 버전 배포 설정" : "발행 설정"}
+                {isVersionMode ? "새 버전 배포 설정" : isGrowthMode ? "평가 게시 설정" : "발행 설정"}
                </h1>
                <p className="text-sm text-gray-500 mt-1">
-                 {isVersionMode ? "업데이트 내용을 요약해주세요" : "프로젝트의 마지막 디테일을 채워주세요"}
+                 {isVersionMode ? "업데이트 내용을 요약해주세요" : isGrowthMode ? "내 작품의 진단 항목을 확인하고 게시해주세요" : "프로젝트의 마지막 디테일을 채워주세요"}
                </p>
             </div>
           </div>
@@ -1758,7 +1758,7 @@ export default function TiptapUploadPage() {
                 ) : (
                   <span className="flex items-center gap-2">
                     <FontAwesomeIcon icon={faUpload} className="w-5 h-5" />
-                    {isVersionMode ? "버전 배포하기" : "프로젝트 발행하기"}
+                    {isVersionMode ? "버전 배포하기" : isGrowthMode ? "평가 게시하기" : "프로젝트 발행하기"}
                   </span>
                 )}
               </Button>
@@ -1789,7 +1789,7 @@ export default function TiptapUploadPage() {
                         <span className="text-gray-300">/</span>
                         <span className="text-black">{title || "버전 이름 입력 대기..."}</span>
                       </span>
-                  ) : (title || "새 프로젝트")}
+                  ) : isGrowthMode ? (title || "평가 게시 페이지 (진단 요청)") : (title || "새 프로젝트")}
               </h2>
               <p className="text-xs text-gray-500 truncate max-w-[300px]">{summary}</p>
               <p className="text-xs text-gray-500 flex items-center gap-1">
