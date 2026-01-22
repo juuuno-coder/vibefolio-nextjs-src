@@ -162,9 +162,9 @@ export default function TiptapUploadPage() {
     { id: 'score_4', label: '상업성', icon: 'TrendingUp', color: '#ef4444', desc: '시장 가치와 잠재력' }
   ]);
   const [pollOptions, setPollOptions] = useState<any[]>([
-    { id: 'opt_1', label: "합격입니다. 당장 쓸게요.", icon: 'CheckCircle2', image_url: 'https://cdn-icons-png.flaticon.com/512/5290/5290058.png', desc: '시장에 바로 출시 가능하며 즉시 사용 가치가 검증된 프로젝트' },
-    { id: 'opt_2', label: "보류하겠습니다.", icon: 'Clock', image_url: 'https://cdn-icons-png.flaticon.com/512/5290/5290076.png', desc: '기획은 좋으나 디테일이나 UI/UX 측면의 보완이 필요한 경우' },
-    { id: 'opt_3', label: "불합격드리겠습니다.", icon: 'XCircle', image_url: 'https://cdn-icons-png.flaticon.com/512/5290/5290117.png', desc: '컨셉의 전면적인 재검토나 핵심 기능의 재정의가 필요한 상태' }
+    { id: 'opt_1', label: "합격입니다.\n당장 쓸게요!", icon: 'CheckCircle2', image_url: 'https://cdn-icons-png.flaticon.com/512/5551/5551284.png', desc: '시장에 바로 출시 가능하며 즉시 사용 가치가 검증된 프로젝트' },
+    { id: 'opt_2', label: "보류하겠습니다.", icon: 'Clock', image_url: 'https://cdn-icons-png.flaticon.com/512/5551/5551323.png', desc: '기획은 좋으나 디테일이나 UI/UX 측면의 보완이 필요한 경우' },
+    { id: 'opt_3', label: "불합격드리겠습니다.\n연구가 필요해요", icon: 'XCircle', image_url: 'https://cdn-icons-png.flaticon.com/512/5551/5551310.png', desc: '컨셉의 전면적인 재검토나 핵심 기능의 재정의가 필요한 상태' }
   ]);
   const [pollDesc, setPollDesc] = useState<string>("");
   const [auditQuestions, setAuditQuestions] = useState<string[]>([]);
@@ -2048,14 +2048,15 @@ export default function TiptapUploadPage() {
                              <div className="flex flex-col gap-4">
                                 <div className="space-y-1">
                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">항목 명칭</p>
-                                   <input 
+                                   <textarea 
                                      value={opt.label}
                                      onChange={(e) => {
                                        const newPolls = [...pollOptions];
                                        newPolls[idx].label = e.target.value;
                                        setPollOptions(newPolls);
                                      }}
-                                     className="w-full bg-transparent font-black text-slate-900 border-b-2 border-slate-100 focus:border-violet-500 outline-none pb-2 transition-colors text-xl tracking-tight"
+                                     rows={2}
+                                     className="w-full bg-transparent font-black text-slate-900 border-b-2 border-slate-100 focus:border-violet-500 outline-none pb-1 transition-colors text-xl tracking-tight resize-none leading-tight"
                                      placeholder="예: 합격입니다"
                                    />
                                 </div>
@@ -2068,8 +2069,8 @@ export default function TiptapUploadPage() {
                                        newPolls[idx].desc = e.target.value;
                                        setPollOptions(newPolls);
                                      }}
-                                     rows={2}
-                                     className="w-full bg-transparent text-sm font-bold text-slate-500 outline-none resize-none leading-relaxed border-0 focus:ring-0 p-0 mt-1 placeholder:text-slate-300"
+                                     rows={4}
+                                     className="w-full bg-transparent text-sm font-bold text-slate-500 outline-none resize-none leading-relaxed border-0 focus:ring-0 p-0 mt-1 placeholder:text-slate-300 min-h-[80px]"
                                      placeholder="어떤 기준으로 이 스티커를 선택해야 하는지 리뷰어에게 알려주세요."
                                    />
                                 </div>

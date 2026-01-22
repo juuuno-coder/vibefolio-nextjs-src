@@ -183,7 +183,7 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
                 </div>
                 
                 <span className={cn(
-                  "font-black text-[15px] leading-snug text-center break-keep transition-colors px-2",
+                  "font-black text-[15px] leading-tight text-center transition-colors px-2 whitespace-pre-line",
                   isSelected ? "text-gray-900" : "text-gray-700"
                 )}>{opt.label}</span>
                 
