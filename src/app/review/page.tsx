@@ -44,7 +44,7 @@ function ReviewLanding() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-black tracking-widest uppercase"
           >
             <ChefHat size={14} className="text-orange-400" />
-            Vibefolio Expert Audit System
+            Vibefolio Expert Audit System (제 평가는요?)
           </motion.div>
           
           <motion.h1 
@@ -74,7 +74,7 @@ function ReviewLanding() {
             className="flex flex-wrap justify-center gap-4 pt-4"
           >
             <Button size="lg" className="h-16 px-10 rounded-2xl bg-slate-900 text-white font-black text-xl shadow-2xl hover:scale-105 transition-all" asChild>
-              <Link href="/">진단 시작하기</Link>
+              <Link href="/growth">진단 시작하기</Link>
             </Button>
             <Button variant="outline" size="lg" className="h-16 px-10 rounded-2xl border-2 border-slate-100 font-black text-xl hover:bg-slate-50 transition-all">
               시스템 가이드라인

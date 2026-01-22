@@ -243,21 +243,115 @@ export default function ProjectUploadPage() {
          
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {customCategories.map((cat, idx) => (
-              <div key={idx} className="flex items-center gap-4 p-4 border-2 rounded-2xl border-gray-100 focus-within:border-orange-500 transition-all">
-                <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400"><FontAwesomeIcon icon={faStar} /></div>
+              <div key={idx} className="flex items-center gap-4 p-4 border-2 rounded-2xl border-gray-100 focus-within:border-orange-500 transition-all bg-white">
+                <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500"><FontAwesomeIcon icon={faStar} /></div>
                 <div className="flex-1">
                   <input value={cat.label} onChange={e => {
                     const next = [...customCategories];
                     next[idx].label = e.target.value;
                     setCustomCategories(next);
-                  }} className="font-bold text-gray-900 outline-none w-full" />
+                  }} className="font-bold text-gray-900 outline-none w-full bg-transparent" placeholder="항목 이름 (예: 독창성)" />
                   <input value={cat.desc} onChange={e => {
                     const next = [...customCategories];
                     next[idx].desc = e.target.value;
                     setCustomCategories(next);
-                  }} className="text-xs text-gray-500 outline-none w-full" />
+                  }} className="text-xs text-gray-500 outline-none w-full bg-transparent" placeholder="상세 설명" />
                 </div>
               </div>
+            ))}
+         </div>
+      </section>
+
+      {/* 4. 스티커 투표 설정 */}
+      <section className="space-y-8">
+         <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+               <h3 className="text-xl font-black text-gray-900">스티커 투표 구성</h3>
+               <span className="text-xs text-gray-400 font-medium">유저들의 직관적인 반응을 수집하세요</span>
+            </div>
+         </div>
+         <div className="p-8 bg-blue-50 rounded-[2.5rem] border border-blue-100 space-y-6">
+            <Input 
+               value={pollDesc} 
+               onChange={e => setPollDesc(e.target.value)}
+               className="h-12 text-lg font-bold border-none bg-white rounded-xl shadow-sm px-6"
+               placeholder="투표 질문을 입력하세요 (예: 이 작품에 대해 어떻게 생각하시나요?)"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               {pollOptions.map((opt, idx) => (
+                  <div key={opt.id} className="bg-white p-4 rounded-2xl shadow-sm space-y-3">
+                     <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold">#{idx+1}</div>
+                        <input 
+                           value={opt.label}
+                           onChange={e => {
+                              const next = [...pollOptions];
+                              next[idx].label = e.target.value;
+                              setPollOptions(next);
+                           }}
+                           className="flex-1 font-bold text-gray-900 outline-none"
+                           placeholder="옵션 라벨"
+                        />
+                     </div>
+                     <textarea 
+                        value={opt.desc}
+                        onChange={e => {
+                           const next = [...pollOptions];
+                           next[idx].desc = e.target.value;
+                           setPollOptions(next);
+                        }}
+                        className="w-full text-xs text-gray-500 bg-gray-50 rounded-lg p-2 resize-none outline-none"
+                        placeholder="상세 설명"
+                        rows={2}
+                     />
+                  </div>
+               ))}
+            </div>
+         </div>
+      </section>
+
+      {/* 5. 주관식 질문 설정 */}
+      <section className="space-y-8">
+         <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+               <h3 className="text-xl font-black text-gray-900">심층 질문 리스트</h3>
+               <span className="text-xs text-gray-400 font-medium">전문가들에게 직접 물어보고 싶은 내용을 적어주세요</span>
+            </div>
+            <Button 
+               variant="outline" 
+               size="sm" 
+               onClick={() => setAuditQuestions([...auditQuestions, ""])}
+               className="rounded-full border-gray-200"
+            >
+               <FontAwesomeIcon icon={faPlus} className="mr-2" /> 질문 추가
+            </Button>
+         </div>
+         
+         <div className="space-y-4">
+            {auditQuestions.map((q, idx) => (
+               <div key={idx} className="flex gap-4 animate-in slide-in-from-right-4">
+                  <div className="shrink-0 w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black">Q{idx+1}</div>
+                  <div className="flex-1 relative">
+                     <Input 
+                        value={q}
+                        onChange={e => {
+                           const next = [...auditQuestions];
+                           next[idx] = e.target.value;
+                           setAuditQuestions(next);
+                        }}
+                        placeholder="질문 내용을 입력하세요"
+                        className="h-12 pr-12 rounded-2xl border-2 focus:border-slate-900"
+                     />
+                     {auditQuestions.length > 1 && (
+                        <button 
+                           onClick={() => setAuditQuestions(auditQuestions.filter((_, i) => i !== idx))}
+                           className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-red-500 transition-colors"
+                        >
+                           <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                     )}
+                  </div>
+               </div>
             ))}
          </div>
       </section>
@@ -344,6 +438,23 @@ export default function ProjectUploadPage() {
                         </button>
                       ))}
                    </div>
+                 </section>
+
+                 <section className="p-6 bg-orange-50 rounded-3xl border border-orange-100 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                       <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-xl shadow-sm">🌱</div>
+                       <div>
+                          <h3 className="font-bold text-gray-900">성장 피드백 요청</h3>
+                          <p className="text-xs text-gray-500 mt-0.5">성장하기 탭에 노출되어 동료들의 조언을 받을 수 있습니다.</p>
+                       </div>
+                    </div>
+                    <button 
+                       type="button"
+                       onClick={() => setIsFeedbackRequested(!isFeedbackRequested)}
+                       className={cn("w-14 h-8 rounded-full transition-all relative flex items-center px-1", isFeedbackRequested ? "bg-orange-500" : "bg-gray-200")}
+                    >
+                       <div className={cn("w-6 h-6 bg-white rounded-full shadow-sm transition-all", isFeedbackRequested ? "translate-x-6" : "translate-x-0")} />
+                    </button>
                  </section>
 
                  <Button disabled={isSubmitting} onClick={handleSubmit} className="w-full h-16 rounded-full bg-black text-white text-xl font-black hover:bg-slate-900 transition-all">

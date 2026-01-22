@@ -101,10 +101,10 @@ export function Header({
   };
 
   const menuItems = [
-    { label: "발견하기", path: "/" },
+    { label: "일반", path: "/" },
+    { label: "성장", path: "/growth" },
+    { label: "평가", path: "https://review.vibefolio.net" },
     { label: "연결하기", path: "/recruit" },
-    { label: "성장하기", path: "/growth" },
-    { label: "AI 도구", path: isAdmin ? "/tools/lean-canvas" : "#" },
   ];
 
   return (
@@ -139,11 +139,11 @@ export function Header({
                 {item.label === "연결하기" && (
                   <span className="absolute -top-1 -right-3 w-1 h-1 bg-green-500 rounded-full" />
                 )}
-                {item.label === "성장하기" && (
+                {item.label === "성장" && (
                   <span className="bg-orange-100 text-orange-600 text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1.5 align-middle tracking-tighter">NEW</span>
                 )}
-                {item.label === "AI 도구" && (
-                    <span className="bg-gray-100 text-gray-500 text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1.5 align-middle tracking-tighter">준비중</span>
+                {item.label === "평가" && (
+                  <span className="bg-blue-100 text-blue-600 text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1.5 align-middle tracking-tighter">Expert</span>
                 )}
                 {item.label !== "AI 도구" && (
                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black transition-all group-hover:w-full" />
@@ -337,10 +337,10 @@ export function Header({
                          </div>
                      </div>
                      <Link href="/project/upload" onClick={() => setIsMobileMenuOpen(false)} className="text-black font-bold bg-gray-50 px-3 py-2 rounded-lg inline-flex items-center w-fit">
-                       <Plus className="mr-2 h-4 w-4" /> 프로젝트 등록
+                       <Plus className="mr-2 h-4 w-4" /> 일반 등록
                      </Link>
-                     <Link href="/project/upload?mode=growth" onClick={() => setIsMobileMenuOpen(false)} className="text-orange-600 font-bold bg-orange-50 px-3 py-2 rounded-lg inline-flex items-center w-fit">
-                       <Zap className="mr-2 h-4 w-4 fill-orange-500" /> 평가 의뢰하기
+                     <Link href="/project/upload?mode=audit" onClick={() => setIsMobileMenuOpen(false)} className="text-orange-600 font-bold bg-orange-50 px-3 py-2 rounded-lg inline-flex items-center w-fit">
+                       <Zap className="mr-2 h-4 w-4 fill-orange-500" /> 제 평가는요? 의뢰
                      </Link>
                       <Link href="/mypage" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-700 font-medium py-1">마이페이지</Link>
                       <Link href="/mypage/evaluations" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-700 font-medium py-1">내 피드백</Link>

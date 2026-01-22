@@ -73,9 +73,11 @@ export async function GET(request: NextRequest) {
     const field = searchParams.get('field');
     const mode = searchParams.get('mode');
 
-    // [Growth Mode] Filter: 정석적인 컬럼 필터 + 하위 호환을 위한 JSONB Contains
+    // [Growth & Evaluation Mode] Filter
     if (mode === 'growth') {
        query = query.or(`is_growth_requested.eq.true,custom_data->>is_feedback_requested.eq.true`);
+    } else if (mode === 'audit') {
+       query = query.not('custom_data->audit_config', 'is', null);
     }
 
     if (field && field !== 'all') {

@@ -83,8 +83,9 @@ interface StickyMenuProps {
 // 새로운 메인 카테고리 (장르) - Font Awesome 아이콘
 const categories: Category[] = [
   { iconSolid: faHeart, label: "관심사", value: "interests" },
-  { iconSolid: faSeedling, label: "성장하기", value: "growth" }, // [New]
-  { iconSolid: faLayerGroup, label: "전체", value: "all" },
+  { iconSolid: faLayerGroup, label: "일반", value: "all" },
+  { iconSolid: faSeedling, label: "성장", value: "growth" },
+  { iconSolid: faWandMagicSparkles, label: "평가", value: "audit" },
   { iconSolid: faCamera, label: "포토", value: "photo" },
   { iconSolid: faWandMagicSparkles, label: "웹툰/애니", value: "animation" },
   { iconSolid: faPalette, label: "그래픽", value: "graphic" },

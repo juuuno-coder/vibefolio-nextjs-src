@@ -150,6 +150,8 @@ function HomeContent() {
         let modeParam = "";
         if (selectedCategory === 'growth') {
             modeParam = "&mode=growth";
+        } else if (selectedCategory === 'audit') {
+            modeParam = "&mode=audit";
         } else if (selectedCategory && selectedCategory !== 'all' && selectedCategory !== 'interests') {
             categoryParam = `&category=${selectedCategory}`;
         }
