@@ -40,11 +40,7 @@ export default function MyEvaluationsPage() {
         const { data, error: queryError } = await (supabase as any)
           .from('ProjectRating')
           .select(`
-            id,
-            project_id,
-            score,
-            proposal,
-            created_at,
+            *,
             Project (
               title,
               thumbnail_url
@@ -61,7 +57,7 @@ export default function MyEvaluationsPage() {
           project_title: r.Project?.title || '제목 없음',
           thumbnail_url: r.Project?.thumbnail_url || '/placeholder.jpg',
           score: r.score || 0,
-          comment: r.proposal || '',
+          comment: r.proposal || r.comment || '',
           created_at: r.created_at,
         }));
 
