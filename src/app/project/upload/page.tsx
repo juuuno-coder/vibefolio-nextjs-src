@@ -162,9 +162,9 @@ export default function TiptapUploadPage() {
     { id: 'score_4', label: '상업성', icon: 'TrendingUp', color: '#ef4444', desc: '시장 가치와 잠재력' }
   ]);
   const [pollOptions, setPollOptions] = useState<any[]>([
-    { id: 'opt_1', label: "합격입니다. 당장 쓸게요.", icon: 'CheckCircle2', image_url: 'https://images.unsplash.com/photo-1579338559194-a162d19bf842?w=200&h=200&fit=crop', desc: '이 작업은 즉시 배포 가능한 수준입니다.' },
-    { id: 'opt_2', label: "보류하겠습니다.", icon: 'Clock', image_url: 'https://images.unsplash.com/photo-1501139083538-0139583c060f?w=200&h=200&fit=crop', desc: '조금 더 보완이 필요해 보입니다.' },
-    { id: 'opt_3', label: "불합격드리겠습니다.", icon: 'XCircle', image_url: 'https://images.unsplash.com/photo-1594322436404-5a0526db4d13?w=200&h=200&fit=crop', desc: '기획부터 다시 검토가 필요합니다.' }
+    { id: 'opt_1', label: "합격입니다. 당장 쓸게요.", icon: 'CheckCircle2', image_url: 'https://cdn-icons-png.flaticon.com/512/5290/5290058.png', desc: '시장에 바로 출시 가능하며 즉시 사용 가치가 검증된 프로젝트' },
+    { id: 'opt_2', label: "보류하겠습니다.", icon: 'Clock', image_url: 'https://cdn-icons-png.flaticon.com/512/5290/5290076.png', desc: '기획은 좋으나 디테일이나 UI/UX 측면의 보완이 필요한 경우' },
+    { id: 'opt_3', label: "불합격드리겠습니다.", icon: 'XCircle', image_url: 'https://cdn-icons-png.flaticon.com/512/5290/5290117.png', desc: '컨셉의 전면적인 재검토나 핵심 기능의 재정의가 필요한 상태' }
   ]);
   const [pollDesc, setPollDesc] = useState<string>("");
   const [auditQuestions, setAuditQuestions] = useState<string[]>([]);
@@ -1890,36 +1890,7 @@ export default function TiptapUploadPage() {
                  </div>
               </div>
 
-              {/* Genre Section */}
-              <div className="p-10 md:p-14 border-b border-slate-50">
-                 <div className="flex items-center gap-4 mb-8">
-                    <div className="w-12 h-12 rounded-2xl bg-teal-500 text-white flex items-center justify-center text-xl shadow-lg shadow-teal-500/20">
-                       <FontAwesomeIcon icon={faPalette} />
-                    </div>
-                    <div>
-                       <h2 className="text-2xl font-black text-slate-900">2. 어떤 작품인가요?</h2>
-                       <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Categorization</p>
-                    </div>
-                 </div>
-                 <div className="flex flex-wrap gap-3">
-                    {genreCategories.map((genre) => {
-                      const isSelected = selectedGenres.includes(genre.id);
-                      return (
-                        <button
-                          key={genre.id}
-                          onClick={() => toggleGenre(genre.id)}
-                          className={cn(
-                            "flex items-center gap-2 px-5 py-3 rounded-xl border-2 font-black transition-all text-xs uppercase tracking-tighter",
-                            isSelected ? "bg-teal-50 border-teal-500 text-teal-700 shadow-md scale-[1.05]" : "bg-white border-slate-100 text-slate-400 hover:border-slate-300"
-                          )}
-                        >
-                           <FontAwesomeIcon icon={genre.icon as any} />
-                           {genre.label}
-                        </button>
-                      );
-                    })}
-                 </div>
-              </div>
+
 
               {/* Goals Section */}
               <div className="p-10 md:p-14 bg-slate-50/50 border-b border-slate-50">
@@ -1929,7 +1900,7 @@ export default function TiptapUploadPage() {
                           <FontAwesomeIcon icon={faTarget} />
                        </div>
                        <div>
-                          <h2 className="text-2xl font-black text-slate-900">3. 미슐랭처럼 평가받기</h2>
+                          <h2 className="text-2xl font-black text-slate-900">2. 미슐랭처럼 평가받기</h2>
                           <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Evaluation Metrics (Radar Chart)</p>
                        </div>
                     </div>
@@ -1997,7 +1968,7 @@ export default function TiptapUploadPage() {
                           <FontAwesomeIcon icon={faSquarePollVertical} />
                        </div>
                        <div>
-                          <h2 className="text-2xl font-black text-slate-900">4. 스티커 투표 항목 설정</h2>
+                          <h2 className="text-2xl font-black text-slate-900">3. 스티커 투표 항목 설정</h2>
                           <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Sticker Poll (2-6 Options with Icons)</p>
                        </div>
                     </div>
@@ -2018,43 +1989,52 @@ export default function TiptapUploadPage() {
 
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {pollOptions.map((opt, idx) => (
-                       <div key={opt.id} className="bg-slate-50/50 p-8 rounded-[3rem] border-2 border-slate-100 shadow-sm relative group/opt hover:border-violet-400 hover:bg-white transition-all">
+                       <div key={opt.id} className="bg-slate-50/50 p-8 rounded-[3.5rem] border-2 border-slate-100 shadow-sm relative group/opt hover:border-violet-400 hover:bg-white transition-all">
+                          {/* Floating Index Badge */}
+                          <div className="absolute -left-3 -top-3 w-12 h-12 rounded-[1.25rem] bg-slate-900 text-white flex flex-col items-center justify-center shadow-xl z-20 border-4 border-white group-hover/opt:bg-violet-600 transition-colors">
+                             <span className="text-[8px] font-black uppercase tracking-tighter mb-[-2px] opacity-60">Sticker</span>
+                             <span className="text-lg font-black leading-none">{idx + 1}</span>
+                          </div>
+
                           <div className="flex flex-col gap-6 font-pretendard">
                              {/* Image Attachment Area */}
-                             <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden border-2 border-dashed border-slate-200 bg-white group-hover/opt:border-violet-200 transition-all">
+                             <div className="relative aspect-square w-full rounded-[2.5rem] overflow-hidden border-2 border-dashed border-slate-200 bg-white group-hover/opt:border-violet-100 transition-all">
                                 {opt.image_url ? (
                                    <>
                                       <img src={opt.image_url} alt={opt.label} className="w-full h-full object-cover" />
-                                      <button 
-                                        onClick={() => {
-                                           const newPolls = [...pollOptions];
-                                           newPolls[idx].image_url = '';
-                                           setPollOptions(newPolls);
-                                        }}
-                                        className="absolute inset-0 bg-black/40 opacity-0 group-hover/opt:opacity-100 flex items-center justify-center transition-opacity"
-                                      >
-                                         <FontAwesomeIcon icon={faTrash} className="text-white text-xl" />
-                                      </button>
+                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/opt:opacity-100 flex items-center justify-center transition-opacity">
+                                         <button 
+                                           onClick={() => {
+                                              const newPolls = [...pollOptions];
+                                              newPolls[idx].image_url = '';
+                                              setPollOptions(newPolls);
+                                           }}
+                                           className="w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+                                         >
+                                            <FontAwesomeIcon icon={faTrash} />
+                                         </button>
+                                      </div>
                                    </>
                                 ) : (
                                    <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors">
-                                      <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-300 flex items-center justify-center mb-3 group-hover/opt:bg-violet-50 group-hover/opt:text-violet-500 transition-all">
-                                         <FontAwesomeIcon icon={faCamera} className="text-xl" />
+                                      <div className="w-16 h-16 rounded-3xl bg-slate-50 text-slate-300 flex items-center justify-center mb-4 group-hover/opt:bg-violet-50 group-hover/opt:text-violet-500 group-hover/opt:scale-110 transition-all border border-slate-100">
+                                         <FontAwesomeIcon icon={faCamera} className="text-2xl" />
                                       </div>
-                                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Attach Icon</span>
+                                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full">스티커 이미지 첨부</span>
                                       <input 
                                         type="file" 
                                         className="hidden" 
                                         onChange={async (e) => {
                                           const file = e.target.files?.[0];
                                           if (!file) return;
-                                          toast.loading("아이콘을 업로드 중입니다...");
+                                          toast.loading("스티커를 업로드 중입니다...");
                                           try {
                                             const url = await uploadImage(file);
                                             const newPolls = [...pollOptions];
                                             newPolls[idx].image_url = url;
                                             setPollOptions(newPolls);
                                             toast.dismiss();
+                                            toast.success("스티커가 등록되었습니다.");
                                           } catch (err) {
                                             toast.dismiss();
                                             toast.error("업로드에 실패했습니다.");
@@ -2065,35 +2045,40 @@ export default function TiptapUploadPage() {
                                 )}
                              </div>
 
-                             <div className="flex flex-col gap-3">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Label Name</p>
-                                <input 
-                                  value={opt.label}
-                                  onChange={(e) => {
-                                    const newPolls = [...pollOptions];
-                                    newPolls[idx].label = e.target.value;
-                                    setPollOptions(newPolls);
-                                  }}
-                                  className="w-full bg-transparent font-black text-slate-900 border-b-2 border-slate-100 focus:border-violet-500 outline-none pb-2 transition-colors text-lg"
-                                  placeholder="항목 제목 (예: 합격)"
-                                />
-                                <textarea 
-                                  value={opt.desc}
-                                  onChange={(e) => {
-                                    const newPolls = [...pollOptions];
-                                    newPolls[idx].desc = e.target.value;
-                                    setPollOptions(newPolls);
-                                  }}
-                                  rows={2}
-                                  className="w-full bg-transparent text-sm font-bold text-slate-400 outline-none resize-none leading-relaxed border-0 focus:ring-0 p-0 mt-1"
-                                  placeholder="어떤 경우에 이 항목을 선택해야 하는지 리뷰어에게 알려주세요."
-                                />
+                             <div className="flex flex-col gap-4">
+                                <div className="space-y-1">
+                                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">항목 명칭</p>
+                                   <input 
+                                     value={opt.label}
+                                     onChange={(e) => {
+                                       const newPolls = [...pollOptions];
+                                       newPolls[idx].label = e.target.value;
+                                       setPollOptions(newPolls);
+                                     }}
+                                     className="w-full bg-transparent font-black text-slate-900 border-b-2 border-slate-100 focus:border-violet-500 outline-none pb-2 transition-colors text-xl tracking-tight"
+                                     placeholder="예: 합격입니다"
+                                   />
+                                </div>
+                                <div className="space-y-1">
+                                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">투표 가이드라인</p>
+                                   <textarea 
+                                     value={opt.desc}
+                                     onChange={(e) => {
+                                       const newPolls = [...pollOptions];
+                                       newPolls[idx].desc = e.target.value;
+                                       setPollOptions(newPolls);
+                                     }}
+                                     rows={2}
+                                     className="w-full bg-transparent text-sm font-bold text-slate-500 outline-none resize-none leading-relaxed border-0 focus:ring-0 p-0 mt-1 placeholder:text-slate-300"
+                                     placeholder="어떤 기준으로 이 스티커를 선택해야 하는지 리뷰어에게 알려주세요."
+                                   />
+                                </div>
                              </div>
                           </div>
                           {pollOptions.length > 2 && (
                              <button 
                                onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))} 
-                               className="absolute -top-3 -right-3 w-10 h-10 rounded-2xl bg-white shadow-xl border border-red-50 text-slate-300 hover:text-red-500 hover:border-red-200 transition-all opacity-0 group-hover/opt:opacity-100 flex items-center justify-center font-bold z-10"
+                               className="absolute -top-3 -right-3 w-10 h-10 rounded-[1.25rem] bg-white shadow-xl border border-red-50 text-slate-300 hover:text-red-500 hover:border-red-200 transition-all opacity-0 group-hover/opt:opacity-100 flex items-center justify-center font-bold z-10"
                              >
                                 <FontAwesomeIcon icon={faTrash} className="text-xs" />
                              </button>
@@ -2111,7 +2096,7 @@ export default function TiptapUploadPage() {
                           <FontAwesomeIcon icon={faCircleQuestion} />
                        </div>
                        <div>
-                          <h2 className="text-2xl font-black text-slate-900 tracking-tight">5. 시크릿 피드백 질문 (주관식)</h2>
+                          <h2 className="text-2xl font-black text-slate-900 tracking-tight">4. 시크릿 피드백 질문 (주관식)</h2>
                           <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Custom Subjective Questions (1-3)</p>
                        </div>
                     </div>
@@ -2223,7 +2208,6 @@ export default function TiptapUploadPage() {
                    onClick={() => {
                       if (!title.trim()) { toast.error("제목을 입력해 주세요."); return; }
                       if (!mediaData) { toast.error("평가받을 작업물을 첨부해 주세요."); return; }
-                      if (selectedGenres.length === 0) { toast.error("최소 1개의 카테고리를 선택해 주세요."); return; }
                       setStep('info');
                    }}
                    className="h-20 px-12 rounded-3xl bg-green-500 text-black font-black text-xl hover:bg-green-400 hover:-translate-y-1 transition-all shadow-[0_20px_40px_rgba(34,197,94,0.2)]"
