@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from "react";
 import dynamic from 'next/dynamic';
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Zap } from "lucide-react";
 import { ProjectGridSkeleton } from "@/components/ui/ProjectSkeleton";
 import { ImageCard } from "@/components/ImageCard";
 import { getCategoryNameById } from "@/lib/categoryMap";
@@ -312,14 +313,52 @@ function GrowthContent() {
             <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">
                서로의 성장을 위한 <br className="md:hidden" /> 피드백 공간
             </h1>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-               더 나은 작품을 위해 용기 내어 피드백을 요청한 크리에이터들입니다. <br/>
-               따뜻한 조언과 냉철한 평가로 성장을 도와주세요.
-            </p>
+             <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
+                더 나은 작품을 위해 용기 내어 피드백을 요청한 크리에이터들입니다. <br/>
+                따뜻한 조언과 냉철한 평가로 성장을 도와주세요.
+             </p>
+             <div className="flex justify-center mb-16">
+                <Button 
+                  onClick={() => router.push('/project/upload?mode=audit')}
+                  size="lg"
+                  className="rounded-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-14 px-10 shadow-xl shadow-orange-200 transition-all hover:-translate-y-1"
+                >
+                   <Zap size={20} className="mr-2 fill-white" />
+                   지금 바로 제 평가는요? 의뢰
+                </Button>
+             </div>
          </div>
 
          {/* Interactive Demo Section - Only show when onboarded */}
          <InteractiveHero />
+
+         {/* [New] Growth Mode Highlighting */}
+         {projects.length > 0 && (
+              <div className="mb-16">
+                 <div className="flex items-center justify-between mb-8">
+                     <div className="flex flex-col gap-1 text-left">
+                         <h2 className="text-2xl font-bold text-slate-950 flex items-center gap-3 tracking-tight">
+                             <span className="bg-orange-500 text-white p-2.5 rounded-[1.2rem] shadow-lg shadow-orange-200">
+                                🌱
+                             </span>
+                             심사 평가를 기다리고 있어요
+                         </h2>
+                         <p className="text-slate-500 text-sm font-medium">여러분의 냉철한 시선이 작품을 더욱 미슐랭스럽게 만듭니다.</p>
+                     </div>
+                 </div>
+                 <div className="flex gap-6 overflow-x-auto pb-6 no-scrollbar -mx-4 px-4">
+                     {projects.slice(0, 6).map(project => (
+                          <div key={project.id} className="min-w-[280px] md:min-w-[340px]">
+                             <ImageCard props={project} onClick={() => {
+                                setSelectedProject(project);
+                                setModalOpen(true);
+                             }} className="transition-all hover:-translate-y-2" />
+                          </div>
+                     ))}
+                 </div>
+                 <div className="h-px bg-slate-100 w-full mt-8" />
+              </div>
+         )}
 
          {/* Grid */}
          {loading ? (

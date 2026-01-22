@@ -12,10 +12,10 @@ import {
   LayoutDashboard,
   Bell,
   ChevronDown,
-  Zap,
   Plus,
   Upload,
-  BarChart3
+  BarChart3,
+  Zap
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,6 @@ export function Header({
   const [trends, setTrends] = useState<{ query: string; count: number }[]>([]);
   const router = useRouter();
 
-  // 검색 트렌드 불러오기
   useEffect(() => {
     if (isSearchOpen) {
       fetch("/api/search/trends")
@@ -77,7 +76,6 @@ export function Header({
       const target = e.target as HTMLInputElement;
       const query = target.value.trim();
       if (query) {
-        // 검색 로그 기록 (비동기로 실행)
         fetch("/api/search/log", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -92,7 +90,6 @@ export function Header({
   };
 
   const handleTrendClick = (query: string) => {
-    // 트렌드 클릭 시에도 로그 기록
     fetch("/api/search/log", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -117,7 +114,6 @@ export function Header({
       }`}
     >
       <div className="max-w-[1920px] mx-auto px-6 md:px-10 flex items-center justify-between h-full w-full">
-        {/* Left: Logo & Nav */}
         <div className="flex items-center gap-12">
           <Link href="/" className="flex items-center">
             <VibeLogo className="h-7 w-auto" />
@@ -157,9 +153,7 @@ export function Header({
           </nav>
         </div>
 
-        {/* Right: Search & Auth */}
         <div className="flex items-center gap-5">
-           {/* Search Bar */}
            <div className="hidden lg:flex items-center relative">
               <div className={`flex items-center transition-all duration-300 ${isSearchOpen ? 'w-80 bg-gray-100 px-4 py-2.5 opacity-100 shadow-inner' : 'w-10 opacity-70'} rounded-full`}>
                  <button 
@@ -179,7 +173,6 @@ export function Header({
                   )}
                </div>
 
-               {/* Trending Keywords Dropdown */}
                {isSearchOpen && (
                   <div className="absolute top-full mt-3 right-0 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 animate-in fade-in slide-in-from-top-2 duration-200 z-[101]">
                      <div className="flex items-center justify-between mb-4">
@@ -207,28 +200,31 @@ export function Header({
                            <p className="text-sm text-gray-400 py-2">인기 검색어를 불러오는 중...</p>
                         )}
                      </div>
-                     <div className="mt-5 pt-4 border-t border-gray-50">
-                        <p className="text-[11px] text-gray-400 text-center">지금 유저들이 가장 많이 찾는 영감입니다.</p>
-                     </div>
                   </div>
                )}
             </div>
 
-            {/* Auth Buttons */}
             <div className="hidden md:flex items-center gap-4 font-poppins text-[15px] font-medium">
                {loading ? (
-                  <div className="w-20" /> // 로딩 중일 때 깜빡임 방지용 빈 공간
+                  <div className="w-20" />
                ) : isAuthenticated && user ? (
-                  // 로그인 상태
                   <div className="flex items-center gap-2 md:gap-4">
-                    {/* 프로젝트 등록 버튼 */}
-                    <Button 
-                      onClick={() => router.push('/project/upload')}
-                      className="hidden lg:flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-full px-4 h-9 text-sm font-medium shadow-sm"
-                    >
-                      <Plus className="w-4 h-4" />
-                      프로젝트 등록
-                    </Button>
+                    <div className="hidden lg:flex items-center gap-2">
+                      <Button 
+                        onClick={() => router.push('/project/upload')}
+                        className="flex items-center gap-2 bg-slate-900 hover:bg-black text-white rounded-full px-4 h-9 text-sm font-medium shadow-sm transition-all"
+                      >
+                        <Plus className="w-4 h-4" />
+                        일반 등록
+                      </Button>
+                      <Button 
+                        onClick={() => router.push('/project/upload?mode=audit')} 
+                        className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-full px-4 h-9 text-sm font-medium shadow-sm shadow-orange-100 transition-all"
+                      >
+                        <Zap className="w-4 h-4 fill-white" />
+                        제 평가는요? 의뢰
+                      </Button>
+                    </div>
                     <NotificationBell />
                     <div 
                       className="relative"
@@ -247,7 +243,6 @@ export function Header({
                           </Avatar>
                         </button>
 
-                        {/* Hover Menu */}
                         <div 
                           className={`absolute top-full right-0 mt-2 w-60 bg-white rounded-xl border border-gray-100 shadow-xl p-2 transition-all duration-200 origin-top-right z-[100] ${
                             isAvatarMenuOpen 
@@ -287,7 +282,6 @@ export function Header({
                     </div>
                   </div>
                ) : (
-                  // 비로그인 상태
                   <div className="flex items-center gap-1">
                      <Link href="/login">
                         <Button variant="ghost" className="text-[15px] font-medium text-black hover:bg-gray-100 hover:text-black rounded-full px-5">
@@ -303,7 +297,6 @@ export function Header({
                )}
             </div>
 
-          {/* Mobile Menu Button */}
           <button 
             className="xl:hidden p-2 text-black"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -313,7 +306,6 @@ export function Header({
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
          <div className="xl:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-100 shadow-xl p-6 flex flex-col gap-6 animate-in slide-in-from-top-2">
             <nav className="flex flex-col gap-4">
@@ -344,8 +336,11 @@ export function Header({
                             <span className="text-xs text-gray-500">{user.email}</span>
                          </div>
                      </div>
-                     <Link href="/project/upload" onClick={() => setIsMobileMenuOpen(false)} className="text-green-600 font-bold bg-green-50 px-3 py-2 rounded-lg inline-flex items-center w-fit">
+                     <Link href="/project/upload" onClick={() => setIsMobileMenuOpen(false)} className="text-black font-bold bg-gray-50 px-3 py-2 rounded-lg inline-flex items-center w-fit">
                        <Plus className="mr-2 h-4 w-4" /> 프로젝트 등록
+                     </Link>
+                     <Link href="/project/upload?mode=growth" onClick={() => setIsMobileMenuOpen(false)} className="text-orange-600 font-bold bg-orange-50 px-3 py-2 rounded-lg inline-flex items-center w-fit">
+                       <Zap className="mr-2 h-4 w-4 fill-orange-500" /> 평가 의뢰하기
                      </Link>
                       <Link href="/mypage" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-700 font-medium py-1">마이페이지</Link>
                       <Link href="/mypage/evaluations" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-700 font-medium py-1">내 피드백</Link>
@@ -368,3 +363,5 @@ export function Header({
     </header>
   );
 }
+
+export default Header;

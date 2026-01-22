@@ -103,3 +103,32 @@ export function filterByInterests(
     return matchGenre;
   });
 }
+
+// UI에서 사용할 장르 카테고리 리스트
+export const genreCategories = [
+  { id: "video", label: "영상", icon: "faVideo" }, // 실제 아이콘은 컴포넌트에서 매핑
+  { id: "graphic", label: "그래픽", icon: "faImage" },
+  { id: "design", label: "디자인", icon: "faPenNib" },
+  { id: "animation", label: "웹툰/애니", icon: "faFilm" },
+  { id: "cinema", label: "영화·드라마", icon: "faClapperboard" },
+  { id: "audio", label: "오디오", icon: "faMusic" },
+  { id: "text", label: "텍스트", icon: "faQuoteLeft" },
+  { id: "code", label: "코드", icon: "faCode" },
+  { id: "webapp", label: "웹/앱", icon: "faMobileScreen" },
+  { id: "game", label: "게임", icon: "faGamepad" },
+];
+
+export const fieldCategories = [
+  { id: "finance", label: "경제/금융" },
+  { id: "healthcare", label: "헬스케어" },
+  { id: "beauty", label: "뷰티/패션" },
+  { id: "pet", label: "반려" },
+  { id: "fnb", label: "F&B" },
+  { id: "travel", label: "여행/레저" },
+  { id: "education", label: "교육" },
+  { id: "it", label: "IT" },
+  { id: "lifestyle", label: "라이프스타일" },
+  { id: "business", label: "비즈니스" },
+  { id: "marketing", label: "마케팅" },
+  { id: "art", label: "문화/예술" },
+];

@@ -10,27 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FontAwesomeIcon } from "./FaIcon";
-import {
-  faHeart,
-  faShareNodes,
-  faComment,
-  faBookmark,
-  faPaperPlane,
-  faUser,
-  faXmark,
-  faChartSimple,
-  faSpinner,
-  faFolder,
-  faEye,
-  faCheck,
-  faLock,
-  faUnlock,
-  faRocket,
-  faStar,
-  faFaceSmile,
-  faMapPin, // New Icon for Pin Mode
-  faClock,
-} from "@fortawesome/free-solid-svg-icons";
+import { faHeart, faShareNodes, faComment, faBookmark, faPaperPlane, faUser, faXmark, faChartSimple, faSpinner, faFolder, faEye, faCheck, faLock, faUnlock, faRocket, faStar, faFaceSmile, faMapPin, faClock } from "@fortawesome/free-solid-svg-icons";
+import { toast } from "sonner";
 
 import { VersionHistoryModal } from "./VersionHistoryModal";
 import { getProjectVersions, ProjectVersion } from "@/lib/versions";
@@ -246,8 +227,12 @@ export function ProjectDetailModalV2({
   // [Growth Mode] Feedback Settings Derived State
   const cData = project && typeof project.custom_data === 'string' ? JSON.parse(project.custom_data) : project?.custom_data;
   const isFeedbackRequested = cData?.is_feedback_requested === true;
+  const isAuditMode = (project as any)?.is_growth_requested === true && cData?.audit_config;
+  const isGrowthMode = (project as any)?.is_growth_requested === true && !cData?.audit_config;
   const allowMichelin = project?.allow_michelin_rating ?? true;
   const allowStickers = project?.allow_stickers ?? true;
+
+  const isAuthor = currentUserId === project?.userId;
 
   // [New] 실시간 좋아요 수 동기화
   useEffect(() => {
@@ -1116,54 +1101,104 @@ export function ProjectDetailModalV2({
 
               {/* 프로젝트 정보 헤더 (기존 디자인 유지) */}
               <div className="p-6 bg-white border-b border-gray-100 flex-shrink-0 z-20">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2 truncate">
-                  {project.title || stripHtml(project.description || project.alt_description || "제목 없음")}
-                </h1>
-                <button
-                  onClick={() => {
-                    window.location.href = `/creator/${project.user.username}`;
-                  }}
-                  className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
-                >
-                  <Avatar className="w-10 h-10 bg-white">
-                    <AvatarImage src={project.user.profile_image.large} />
-                    <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-4 h-4" /></AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium text-sm">{project.user.username}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-[10px] text-gray-500">{dayjs(project.created_at).format('YYYY.MM.DD')}</p>
-                      <span className="text-[10px] text-gray-300">|</span>
-                      <div className="flex items-center gap-3 text-[10px] text-gray-500 font-medium">
-                        <span className="flex items-center gap-1">
-                          <FontAwesomeIcon icon={faEye} className="w-3 h-3 opacity-60" />
-                          {viewsCount}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <FontAwesomeIcon icon={faHeart} className="w-3 h-3 opacity-60 text-red-400" />
-                          {likesCount}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <FontAwesomeIcon icon={faComment} className="w-3 h-3 opacity-60" />
-                          {comments.length}
-                        </span>
+                <div className="flex flex-col gap-2 mb-3">
+                  <div className="flex gap-2">
+                    {isAuditMode ? (
+                      <span className="px-2.5 py-1 bg-orange-500 text-white text-[9px] font-black rounded-full shadow-lg shadow-orange-100 flex items-center gap-1.5 uppercase tracking-wider">
+                         <FontAwesomeIcon icon={faStar} className="w-2.5 h-2.5" /> 평가 진단 중
+                      </span>
+                    ) : isGrowthMode ? (
+                      <span className="px-2.5 py-1 bg-green-500 text-white text-[9px] font-black rounded-full shadow-lg shadow-green-100 flex items-center gap-1.5 uppercase tracking-wider">
+                         <FontAwesomeIcon icon={faRocket} className="w-2.5 h-2.5" /> 성장 피드백 중
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 bg-gray-100 text-gray-500 text-[9px] font-black rounded-full flex items-center gap-1.5 uppercase tracking-wider border border-gray-200">
+                         <FontAwesomeIcon icon={faFolder} className="w-2.5 h-2.5" /> 일반 전시
+                      </span>
+                    )}
+                  </div>
+                  <h1 className="text-2xl font-bold text-gray-900 truncate">
+                    {project.title || stripHtml(project.description || project.alt_description || "제목 없음")}
+                  </h1>
+                </div>
+
+                {isAuthor && !isAuditMode && !isGrowthMode && (
+                   <div className="mb-4 p-3 bg-orange-50 rounded-xl border border-orange-100 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-orange-200 text-orange-600 flex items-center justify-center text-xs">🚀</div>
+                        <div>
+                          <p className="text-[11px] font-bold text-orange-900">이 작품으로 피드백을 받아볼까요?</p>
+                          <p className="text-[9px] text-orange-600">성장 섹션에 노출되어 조언을 얻을 수 있습니다.</p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={async () => {
+                          if (!confirm("이 프로젝트를 '성장' 피드백 게시물로 전환하시겠습니까?")) return;
+                          const { error } = await supabase
+                            .from('Project')
+                            .update({ is_growth_requested: true } as any)
+                            .eq('project_id', parseInt(project.id));
+                          
+                          if (!error) {
+                             toast.success("성장 등록 완료!");
+                             window.location.reload();
+                          }
+                        }}
+                        size="sm" 
+                        className="bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-full text-[10px] h-7"
+                      >
+                         전환하기
+                      </Button>
+                   </div>
+                )}
+                
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => {
+                      window.location.href = `/creator/${project.user.username}`;
+                    }}
+                    className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+                  >
+                    <Avatar className="w-10 h-10 bg-white">
+                      <AvatarImage src={project.user.profile_image.large} />
+                      <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-4 h-4" /></AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-sm">{project.user.username}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[10px] text-gray-500">{dayjs(project.created_at).format('YYYY.MM.DD')}</p>
+                        <span className="text-[10px] text-gray-300">|</span>
+                        <div className="flex items-center gap-3 text-[10px] text-gray-500 font-medium">
+                          <span className="flex items-center gap-1">
+                            <FontAwesomeIcon icon={faEye} className="w-3 h-3 opacity-60" />
+                            {viewsCount}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <FontAwesomeIcon icon={faHeart} className="w-3 h-3 opacity-60 text-red-400" />
+                            {likesCount}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <FontAwesomeIcon icon={faComment} className="w-3 h-3 opacity-60" />
+                            {comments.length}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
-                
-                {/* 버전 히스토리 버튼 */}
-                {versions.length > 0 && (
-                  <Button
-                    onClick={() => setHistoryModalOpen(true)}
-                    variant="outline"
-                    size="sm"
-                    className="ml-auto text-xs gap-2"
-                  >
-                    <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
-                    버전 히스토리 ({versions.length})
-                  </Button>
-                )}
+                  </button>
+                  
+                  {/* 버전 히스토리 버튼 */}
+                  {versions.length > 0 && (
+                    <Button
+                      onClick={() => setHistoryModalOpen(true)}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs gap-2"
+                    >
+                      <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
+                      버전 히스토리 ({versions.length})
+                    </Button>
+                  )}
+                </div>
               </div>
               
               {/* 스크롤 가능한 본문 영역 */}

@@ -95,10 +95,10 @@ export default function MyEvaluationsPage() {
                 피드백 게시판
               </Button>
             </Link>
-            <Link href="/project/upload?mode=growth">
+            <Link href="/project/upload?mode=audit">
               <Button className="hidden md:flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-full px-5 h-11 font-black shadow-lg shadow-green-100 transition-all hover:-translate-y-0.5">
                 <Star className="w-4 h-4 fill-white" />
-                내 평가는요? 게시하기
+                제 평가는요? 의뢰
               </Button>
             </Link>
           </div>

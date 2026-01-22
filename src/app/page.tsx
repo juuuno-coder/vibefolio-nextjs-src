@@ -409,8 +409,8 @@ function HomeContent() {
         />
         
         <div className="max-w-[1800px] mx-auto px-4 md:px-8 pb-20 pt-8">
-            {/* [New] Growth Mode Highlighting */}
-            {!searchQuery && selectedCategory === 'all' && projects.some(p => p.is_growth_requested || p.is_feedback_requested) && (
+            {/* [New] Growth Mode Highlighting - Only show in 'growth' category tab */}
+            {!searchQuery && selectedCategory === 'growth' && projects.some(p => p.is_growth_requested || p.is_feedback_requested) && (
                  <div className="mb-16">
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex flex-col gap-1">
@@ -424,10 +424,10 @@ function HomeContent() {
                         </div>
                         <Button 
                           variant="outline" 
-                          onClick={() => setSelectedCategory('growth')}
+                          onClick={() => router.push('/growth')}
                           className="rounded-full border-slate-200 font-bold hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-all text-xs"
                         >
-                            전체 보기
+                            가이드 보기
                         </Button>
                     </div>
                     <div className="flex gap-6 overflow-x-auto pb-6 no-scrollbar -mx-4 px-4">
