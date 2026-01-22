@@ -1933,24 +1933,24 @@ export default function TiptapUploadPage() {
                           <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Evaluation Metrics (Radar Chart)</p>
                        </div>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      className="rounded-full font-black text-xs border-2 border-slate-200 hover:border-amber-500 hover:text-amber-600 transition-all font-pretendard" 
-                      onClick={() => {
-                         if (customCategories.length < 6) {
-                           setCustomCategories([...customCategories, { id: `score_${customCategories.length + 1}`, label: '새 항목', icon: 'Target', color: '#888888', desc: '항목 설명' }]);
-                         } else {
-                           toast.error("항목은 최대 6개까지만 설정 가능합니다.");
-                         }
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faPlus} className="mr-2" /> 항목 추가
-                    </Button>
+                    <div className="flex items-center gap-3">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">{customCategories.length}/6</p>
+                       <Button 
+                         variant="outline" 
+                         disabled={customCategories.length >= 6}
+                         className="rounded-xl font-black text-xs border-2 border-slate-100 hover:border-amber-500 hover:text-amber-600 transition-all font-pretendard h-10 px-4 shadow-sm bg-white" 
+                         onClick={() => {
+                            setCustomCategories([...customCategories, { id: `score_${customCategories.length + 1}`, label: '새 항목', icon: 'Target', color: '#888888', desc: '항목 설명' }]);
+                         }}
+                       >
+                         <FontAwesomeIcon icon={faPlus} className="mr-2" /> 추가
+                       </Button>
+                    </div>
                  </div>
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {customCategories.map((cat, idx) => (
-                       <div key={cat.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 group/cat hover:border-amber-200 transition-all">
+                       <div key={cat.id} className="bg-white p-6 rounded-3xl border-2 border-slate-100 shadow-sm flex items-center gap-4 group/cat hover:border-amber-500 hover:shadow-lg transition-all relative">
                           <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center shrink-0 group-hover/cat:bg-amber-50 group-hover/cat:text-amber-500 transition-colors">
                              <FontAwesomeIcon icon={faStar} />
                           </div>
@@ -1976,7 +1976,7 @@ export default function TiptapUploadPage() {
                                placeholder="항목에 대한 간단한 가이드"
                              />
                           </div>
-                          {customCategories.length > 2 && (
+                          {customCategories.length > 3 && (
                              <button 
                                onClick={() => setCustomCategories(customCategories.filter((_, i) => i !== idx))} 
                                className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-white shadow-lg border border-red-50 text-slate-300 hover:text-red-500 hover:border-red-200 transition-all opacity-0 group-hover/cat:opacity-100 flex items-center justify-center font-bold z-10"
@@ -2106,8 +2106,11 @@ export default function TiptapUploadPage() {
                              />
                           </div>
                           {auditQuestions.length > 1 && (
-                             <button onClick={() => setAuditQuestions(auditQuestions.filter((_, i) => i !== idx))} className="w-10 h-10 rounded-full hover:bg-red-50 text-slate-200 hover:text-red-500 transition-all opacity-0 group-hover/q:opacity-100 flex items-center justify-center text-2xl">
-                                &times;
+                             <button 
+                               onClick={() => setAuditQuestions(auditQuestions.filter((_, i) => i !== idx))} 
+                               className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-white shadow-lg border border-red-50 text-slate-300 hover:text-red-500 hover:border-red-200 transition-all opacity-0 group-hover/q:opacity-100 flex items-center justify-center font-bold z-10"
+                             >
+                                <FontAwesomeIcon icon={faTrash} className="text-[10px]" />
                              </button>
                           )}
                           <div className="absolute -left-4 top-1/2 -translate-y-1/2 opacity-5 pointer-events-none group-hover/q:opacity-10 transition-opacity">
