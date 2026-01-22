@@ -5,6 +5,7 @@ import { Star, Info, Target, Zap, Lightbulb, TrendingUp, Sparkles, MessageSquare
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 interface MichelinRatingProps {
   projectId: string;
@@ -243,7 +244,7 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
            <div className="relative group">
               <div className="w-32 h-32 rounded-[2.5rem] bg-slate-900 flex items-center justify-center shadow-2xl transition-transform group-hover:scale-110 duration-500">
                  {activeCategory.sticker ? (
-                   <img src={activeCategory.sticker} alt={activeCategory.label} className="w-20 h-20 object-contain" />
+                   <Image src={activeCategory.sticker} alt={activeCategory.label} width={80} height={80} className="object-contain" />
                  ) : (
                    React.createElement(activeCategory.icon || Target, { className: "w-12 h-12 text-white" })
                  )}

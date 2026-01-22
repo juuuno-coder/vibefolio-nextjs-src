@@ -41,10 +41,13 @@ function RenderSingleMedia({ type, data }: { type: string, data: any }) {
     return (
       <div className="relative w-full h-full bg-slate-900 flex items-center justify-center group">
         <div className="relative w-full h-full flex items-center justify-center p-4">
-          <img 
+          <Image 
             src={images[activeIdx]} 
             alt="Preview" 
-            className="max-w-full max-h-full object-contain shadow-2xl rounded-lg transition-all duration-500"
+            fill
+            className="object-contain shadow-2xl rounded-lg transition-all duration-500"
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority
           />
         </div>
         

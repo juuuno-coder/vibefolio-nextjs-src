@@ -5,6 +5,7 @@ import { Rocket, FlaskConical, HelpCircle, CheckCircle2, Clock, XCircle } from '
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase/client';
+import Image from 'next/image';
 
 interface FeedbackPollProps {
   projectId: string;
@@ -176,7 +177,7 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
                   isSelected ? "bg-white scale-110 shadow-lg rotate-0" : "bg-white"
                 )}>
                   {opt.image_url ? (
-                    <img src={opt.image_url} alt={opt.label} className="w-full h-full object-cover" />
+                    <Image src={opt.image_url} alt={opt.label} width={80} height={80} className="object-cover" />
                   ) : (
                     <Icon className={cn("w-10 h-10", opt.color)} />
                   )}

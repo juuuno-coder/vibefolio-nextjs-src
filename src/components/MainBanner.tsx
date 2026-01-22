@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/index";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import Image from "next/image";
 
 interface Banner {
   id: number;
@@ -202,14 +203,13 @@ export function MainBanner() {
                   className="w-full aspect-video overflow-hidden rounded-[40px] relative group isolate shadow-lg"
                 >
                   <div className="absolute inset-0 z-0">
-                    <img 
+                    <Image 
                       src={banner.image_url || "/placeholder.jpg"}
                       alt={banner.title} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      onError={(e) => {
-                        // @ts-ignore
-                        e.target.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop";
-                      }}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
+                      priority={index === 0}
                     />
                     {/* Simple Gradient Overlay for text readability */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />

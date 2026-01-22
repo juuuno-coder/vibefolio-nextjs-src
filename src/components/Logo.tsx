@@ -1,5 +1,6 @@
 // src/components/Logo.tsx
 import React from "react";
+import Image from "next/image";
 
 interface LogoProps {
   className?: string;
@@ -13,10 +14,13 @@ export const VibeLogo = ({ className = "h-8", showText = true }: LogoProps) => {
   
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <img
+      <Image
         src="/vibefolio6.png"
         alt="Vibefolio Logo"
+        width={120}
+        height={32}
         className="h-full w-auto object-contain"
+        priority
       />
     </div>
   );

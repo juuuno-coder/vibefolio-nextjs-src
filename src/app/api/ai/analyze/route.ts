@@ -36,18 +36,33 @@ export async function POST(req: NextRequest) {
       - **반드시 존댓말을 사용하세요.**
     `;
 
-    // Gemini API 호출
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    // Gemini API 호출 (Promise.race를 통한 타임아웃 구현)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8초 타임아웃
 
-    return NextResponse.json({ 
-        success: true, 
-        analysis: text 
-    });
+    try {
+      const result = await model.generateContent(prompt);
+      clearTimeout(timeoutId);
+      
+      const response = await result.response;
+      const text = response.text();
+
+      return NextResponse.json({ 
+          success: true, 
+          analysis: text 
+      });
+    } catch (apiError: any) {
+      clearTimeout(timeoutId);
+      console.error('[Gemini API Error]', apiError);
+      return NextResponse.json({ 
+        success: false, 
+        analysis: "데이터를 분석하는 중 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+        error: apiError.message 
+      }, { status: 200 }); // 사용자에게는 에러 메시지 보여주되 프로세스는 정상 종료
+    }
 
   } catch (error: any) {
-    console.error('[AI Analysis Error]', error);
+    console.error('[AI Analysis Route Error]', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

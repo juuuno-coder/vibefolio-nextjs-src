@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Upload, ArrowLeft, Trash2, Eye, Heart, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -175,11 +176,12 @@ export default function MyProjectsPage() {
                 >
                   {/* 썸네일 */}
                   <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
-                    <img 
+                    <Image 
                       src={project.thumbnail_url}
                       alt={project.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.jpg'; }}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                     
                     {isAuditActive && (

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Star, ArrowLeft, Edit3, Eye, Calendar, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -128,7 +129,13 @@ export default function MyEvaluationsPage() {
               <div key={ev.rating_id} className="bg-white rounded-[2rem] border border-slate-200 overflow-hidden hover:shadow-xl transition-all group flex flex-col md:flex-row">
                 {/* Image Section */}
                 <div className="w-full md:w-64 h-48 md:h-auto bg-slate-100 shrink-0 relative overflow-hidden">
-                  <img src={ev.thumbnail_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={ev.project_title} />
+                  <Image 
+                    src={ev.thumbnail_url} 
+                    alt={ev.project_title} 
+                    fill 
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 768px) 100vw, 256px"
+                  />
                   <div className="absolute top-4 left-4 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-[10px] font-black border border-white/20">
                     <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
                     {ev.score.toFixed(1)}

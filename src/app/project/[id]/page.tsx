@@ -4,6 +4,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { createNotification } from "@/hooks/useNotifications";
 import { Heart, Eye, Share2, Bookmark, ArrowLeft, ExternalLink, MessageCircle, MessageSquare, Plus, Lock, Unlock, Rocket } from "lucide-react";
@@ -374,10 +375,14 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
         <div className="max-w-[1240px] mx-auto px-4 md:px-6 py-8 md:py-12">
            {/* 프로젝트 이미지 (흰색 배경 위) */}
            <div className="bg-gray-50/50 rounded-xl border border-gray-100 overflow-hidden mb-12 shadow-sm flex items-center justify-center min-h-[400px]">
-             <img
+             <Image
                src={project.urls.full}
                alt={project.alt_description || "프로젝트 이미지"}
+               width={project.width || 1200}
+               height={project.height || 900}
                className="w-full h-auto object-contain max-h-[85vh] mx-auto"
+               priority
+               sizes="(max-width: 1240px) 100vw, 1240px"
              />
            </div>
 
@@ -488,9 +493,11 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
         <div className="max-w-2xl mx-auto px-4 py-20 text-center border-b border-gray-100">
             <div className="mb-6 relative inline-block group cursor-pointer">
               <div className="absolute inset-0 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-full blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
-              <img 
+              <Image 
                 src={project.user.profile_image.large} 
                 alt={project.user.username}
+                width={112}
+                height={112}
                 className="relative w-28 h-28 rounded-full border-4 border-white shadow-lg mx-auto object-cover"
               />
             </div>
@@ -565,7 +572,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
               {comments.length > 0 ? (
                 comments.map((comment) => (
                   <div key={comment.id} className="flex gap-4 group">
-                      <img src={comment.userAvatar} className="w-10 h-10 rounded-full object-cover border border-gray-100 mt-1" />
+                      <Image src={comment.userAvatar} alt={comment.username} width={40} height={40} className="w-10 h-10 rounded-full object-cover border border-gray-100 mt-1" />
                       <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                               <span className="font-bold text-sm text-gray-900">{comment.username}</span>
