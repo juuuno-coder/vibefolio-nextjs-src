@@ -52,7 +52,10 @@ import {
   faLightbulb,
   faLink,
   faArrowRight,
-  faBullseye as faTarget
+  faBullseye as faTarget,
+  faSquarePollVertical,
+  faCircleQuestion,
+  faQuoteLeft
 } from "@fortawesome/free-solid-svg-icons";
 
 
@@ -165,6 +168,12 @@ export default function TiptapUploadPage() {
   ]);
   const [pollDesc, setPollDesc] = useState<string>("");
   const [auditQuestions, setAuditQuestions] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (isGrowthMode && auditQuestions.length === 0) {
+      setAuditQuestions([""]);
+    }
+  }, [isGrowthMode, auditQuestions.length]);
 
   const handleLightroomImport = (images: string[]) => {
     if (!editor || images.length === 0) return;
@@ -1977,7 +1986,134 @@ export default function TiptapUploadPage() {
                  </div>
               </div>
 
-              {/* Title & Deadline Section */}
+              {/* Sticker Vote (Poll) Section */}
+              <div className="p-10 md:p-14 border-b border-slate-50">
+                 <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                       <div className="w-12 h-12 rounded-2xl bg-violet-500 text-white flex items-center justify-center text-xl shadow-lg shadow-violet-500/20">
+                          <FontAwesomeIcon icon={faSquarePollVertical} />
+                       </div>
+                       <div>
+                          <h2 className="text-2xl font-black text-slate-900">4. 스티커 투표 항목 설정</h2>
+                          <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Sticker Poll (2-6 Options)</p>
+                       </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">{pollOptions.length}/6</p>
+                       <Button 
+                         variant="outline" 
+                         disabled={pollOptions.length >= 6}
+                         className="rounded-xl font-black text-xs border-2 border-slate-100 hover:border-violet-500 hover:text-violet-600 transition-all font-pretendard h-10 px-4" 
+                         onClick={() => {
+                            setPollOptions([...pollOptions, { id: `opt_${Date.now()}`, label: '새 투표 항목', icon: 'Smile', desc: '이 항목에 투표할 기준을 적어주세요.' }]);
+                         }}
+                       >
+                         <FontAwesomeIcon icon={faPlus} className="mr-2" /> 추가
+                       </Button>
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {pollOptions.map((opt, idx) => (
+                       <div key={opt.id} className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-sm relative group/opt hover:border-violet-300 hover:bg-white transition-all">
+                          <div className="flex flex-col gap-4 font-pretendard">
+                             <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-violet-500 shadow-sm text-sm">
+                                   {idx + 1}
+                                </div>
+                                <input 
+                                  value={opt.label}
+                                  onChange={(e) => {
+                                    const newPolls = [...pollOptions];
+                                    newPolls[idx].label = e.target.value;
+                                    setPollOptions(newPolls);
+                                  }}
+                                  className="flex-1 bg-transparent font-black text-slate-900 border-0 focus:ring-0 outline-none p-0 text-base placeholder:text-slate-300"
+                                  placeholder="항목 제목 (예: 합격)"
+                                />
+                             </div>
+                             <textarea 
+                               value={opt.desc}
+                               onChange={(e) => {
+                                 const newPolls = [...pollOptions];
+                                 newPolls[idx].desc = e.target.value;
+                                 setPollOptions(newPolls);
+                               }}
+                               rows={2}
+                               className="w-full bg-transparent text-xs font-bold text-slate-400 outline-none resize-none leading-relaxed px-1 border-0 focus:ring-0"
+                               placeholder="어떤 경우에 이 항목을 선택해야 하는지 리뷰어에게 알려주세요."
+                             />
+                          </div>
+                          {pollOptions.length > 2 && (
+                             <button 
+                               onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))} 
+                               className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-white shadow-lg border border-red-50 text-slate-300 hover:text-red-500 hover:border-red-200 transition-all opacity-0 group-hover/opt:opacity-100 flex items-center justify-center font-bold z-10"
+                             >
+                                <FontAwesomeIcon icon={faTrash} className="text-[10px]" />
+                             </button>
+                          )}
+                       </div>
+                    ))}
+                 </div>
+              </div>
+
+              {/* Subjective Questions Section */}
+              <div className="p-10 md:p-14 bg-indigo-600/5 border-b border-slate-50">
+                 <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                       <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-xl shadow-lg">
+                          <FontAwesomeIcon icon={faCircleQuestion} />
+                       </div>
+                       <div>
+                          <h2 className="text-2xl font-black text-slate-900 tracking-tight">5. 시크릿 피드백 질문 (주관식)</h2>
+                          <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Custom Subjective Questions (1-3)</p>
+                       </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">{auditQuestions.length}/3</p>
+                       {auditQuestions.length < 3 && (
+                        <Button 
+                          variant="outline" 
+                          className="rounded-xl font-black text-xs border-2 border-slate-100 hover:border-slate-900 hover:text-slate-900 transition-all font-pretendard h-10 px-4 bg-white shadow-sm" 
+                          onClick={() => setAuditQuestions([...auditQuestions, ""])}
+                        >
+                          <FontAwesomeIcon icon={faPlus} className="mr-2" /> 질문 추가
+                        </Button>
+                       )}
+                    </div>
+                 </div>
+
+                 <div className="space-y-6">
+                    {auditQuestions.map((q, idx) => (
+                       <div key={idx} className="bg-white p-8 rounded-[2.5rem] border-2 border-slate-100 shadow-sm flex items-center gap-8 group/q hover:border-indigo-500 hover:shadow-xl hover:shadow-indigo-500/5 transition-all relative">
+                          <div className="w-14 h-14 rounded-2xl bg-slate-50 text-slate-900 flex flex-col items-center justify-center shrink-0 border border-slate-100 group-hover/q:bg-indigo-600 group-hover/q:text-white group-hover/q:border-indigo-600 transition-all">
+                             <span className="text-[8px] font-black uppercase tracking-tighter mb-0.5">Question</span>
+                             <span className="text-xl font-black leading-none">{idx + 1}</span>
+                          </div>
+                          <div className="flex-1 font-pretendard relative">
+                             <Input 
+                               value={q}
+                               onChange={(e) => {
+                                 const newQs = [...auditQuestions];
+                                 newQs[idx] = e.target.value;
+                                 setAuditQuestions(newQs);
+                               }}
+                               className="w-full bg-transparent font-black text-slate-900 border-0 focus:ring-0 px-0 placeholder:text-slate-200 text-xl tracking-tight"
+                               placeholder="리뷰어에게 묻고 싶은 질문을 입력하세요 (예: 이 디자인에서 가장 먼저 개선해야 할 점은?)"
+                             />
+                          </div>
+                          {auditQuestions.length > 1 && (
+                             <button onClick={() => setAuditQuestions(auditQuestions.filter((_, i) => i !== idx))} className="w-10 h-10 rounded-full hover:bg-red-50 text-slate-200 hover:text-red-500 transition-all opacity-0 group-hover/q:opacity-100 flex items-center justify-center text-2xl">
+                                &times;
+                             </button>
+                          )}
+                          <div className="absolute -left-4 top-1/2 -translate-y-1/2 opacity-5 pointer-events-none group-hover/q:opacity-10 transition-opacity">
+                             <FontAwesomeIcon icon={faQuoteLeft} size="3x" />
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              </div>
               <div className="p-10 md:p-14">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-4">
