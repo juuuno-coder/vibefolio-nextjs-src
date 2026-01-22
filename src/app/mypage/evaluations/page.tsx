@@ -81,13 +81,30 @@ export default function MyEvaluationsPage() {
     <div className="min-h-screen bg-slate-50 pt-24 pb-12 font-sans">
       <div className="max-w-5xl mx-auto px-6">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-10">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full bg-white shadow-sm">
-            <ArrowLeft size={20} />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">내 평가 발자취</h1>
-            <p className="text-slate-500 text-sm font-medium mt-1">내가 작성한 총 {evaluations.length}개의 정밀 진단 기록입니다.</p>
+        <div className="flex items-center justify-between gap-4 mb-10">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full bg-white shadow-sm">
+              <ArrowLeft size={20} />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight">내 피드백</h1>
+              <p className="text-slate-500 text-sm font-medium mt-1">내가 작성한 총 {evaluations.length}개의 정밀 진단 기록입니다.</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Link href="/growth">
+              <Button variant="outline" className="hidden md:flex items-center gap-2 border-slate-200 hover:bg-slate-50 text-slate-600 rounded-full px-5 h-11 font-bold transition-all">
+                <Eye className="w-4 h-4" />
+                피드백 게시판
+              </Button>
+            </Link>
+            <Link href="/project/upload?mode=growth">
+              <Button className="hidden md:flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-full px-5 h-11 font-black shadow-lg shadow-green-100 transition-all hover:-translate-y-0.5">
+                <Star className="w-4 h-4 fill-white" />
+                내 평가는요? 게시하기
+              </Button>
+            </Link>
           </div>
         </div>
 

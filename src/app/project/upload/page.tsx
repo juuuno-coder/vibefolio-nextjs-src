@@ -92,6 +92,7 @@ export default function TiptapUploadPage() {
   const mode = searchParams.get('mode');
   const projectIdParam = searchParams.get('projectId');
   const isVersionMode = mode === 'version' && !!projectIdParam;
+  const isGrowthMode = mode === 'growth';
 
   // Step 1: Content (Editor), Step 2: Info (Settings)
   const [step, setStep] = useState<'content' | 'info'>('content');
@@ -104,7 +105,7 @@ export default function TiptapUploadPage() {
   const [allowMichelinRating, setAllowMichelinRating] = useState(true);
   const [allowStickers, setAllowStickers] = useState(true);
   const [allowSecretComments, setAllowSecretComments] = useState(true);
-  const [isFeedbackRequested, setIsFeedbackRequested] = useState(false); // [Growth Mode]
+  const [isFeedbackRequested, setIsFeedbackRequested] = useState(isGrowthMode); // [Growth Mode]
   const [isAiGeneratingTitle, setIsAiGeneratingTitle] = useState(false);
   const [isAiGeneratingSummary, setIsAiGeneratingSummary] = useState(false);
   const [content, setContent] = useState("");
@@ -147,7 +148,7 @@ export default function TiptapUploadPage() {
   const [mediaDataB, setMediaDataB] = useState<any>(null);
   const [isAB, setIsAB] = useState(false);
   const [auditDeadline, setAuditDeadline] = useState<string>("");
-  const [isGrowthRequested, setIsGrowthRequested] = useState(false);
+  const [isGrowthRequested, setIsGrowthRequested] = useState(isGrowthMode);
   const [customCategories, setCustomCategories] = useState<any[]>([
     { id: 'score_1', label: '기획력', icon: 'Lightbulb', color: '#f59e0b', desc: '논리적 구조와 의도' },
     { id: 'score_2', label: '완성도', icon: 'Zap', color: '#3b82f6', desc: '디테일과 마감 수준' },
