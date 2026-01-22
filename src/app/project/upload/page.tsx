@@ -49,7 +49,10 @@ import {
   faImage,
   faPlus,
   faTrash,
-  faLightbulb
+  faLightbulb,
+  faLink,
+  faArrowRight,
+  faBullseye as faTarget
 } from "@fortawesome/free-solid-svg-icons";
 
 
@@ -850,7 +853,7 @@ export default function TiptapUploadPage() {
               className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors group px-4 py-2 rounded-lg hover:bg-gray-100"
             >
               <FontAwesomeIcon icon={faArrowLeft} className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              <span className="text-sm font-medium">에디터로 돌아가기</span>
+              <span className="text-sm font-medium">{isGrowthMode ? "이전 단계로" : "에디터로 돌아가기"}</span>
             </button>
             <div className="text-right">
                <h1 className="text-3xl font-black text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600">
@@ -1765,6 +1768,288 @@ export default function TiptapUploadPage() {
             </div>
           </div>
       </div>;
+  }
+
+  if (isGrowthMode && step === 'content') {
+    return (
+      <div className="w-full min-h-screen bg-[#F8FAFC] py-12 px-4 md:px-0">
+        <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in duration-700">
+           {/* Header with back button */}
+           <div className="flex items-center justify-between">
+              <button 
+                onClick={() => router.push('/')} 
+                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold transition-all group"
+              >
+                 <FontAwesomeIcon icon={faArrowLeft} className="group-hover:-translate-x-1 transition-transform" />
+                 돌아가기
+              </button>
+              <div className="text-right">
+                 <h1 className="text-3xl font-black text-slate-900 tracking-tight">평가 게시 페이지</h1>
+                 <p className="text-sm text-slate-500 font-medium">내 아이디어의 가치를 검증받는 가장 빠른 방법</p>
+              </div>
+           </div>
+
+           {/* Core Setup Card */}
+           <div className="bg-white rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+              {/* Media Section */}
+              <div className="p-10 md:p-14 border-b border-slate-50">
+                 <div className="flex items-center gap-4 mb-8">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-lg shadow-indigo-600/20">
+                       <FontAwesomeIcon icon={faLink} />
+                    </div>
+                    <div>
+                       <h2 className="text-2xl font-black text-slate-900">1. 무엇을 검증받고 싶으신가요?</h2>
+                       <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Diagnostic Media Setup</p>
+                    </div>
+                 </div>
+
+                 {/* Media Type Toggles */}
+                 <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8 w-fit space-x-1">
+                    {[
+                      { id: 'link', label: '웹 라이브 URL', icon: faLink },
+                      { id: 'video', label: '영상 (유튜브/비메오)', icon: faVideo },
+                      { id: 'image', label: '시안 (이미지 갤러리)', icon: faImage },
+                    ].map(t => (
+                      <button 
+                        key={t.id}
+                        onClick={() => {
+                           setAuditType(t.id as any);
+                           setMediaData(null);
+                        }}
+                        className={cn(
+                          "flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-black transition-all",
+                          auditType === t.id ? "bg-white text-indigo-600 shadow-md scale-[1.02]" : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
+                        )}
+                      >
+                         <FontAwesomeIcon icon={t.icon} />
+                         {t.label}
+                      </button>
+                    ))}
+                 </div>
+
+                 {/* Large Input Area */}
+                 <div className="relative group">
+                    {auditType === 'image' ? (
+                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          {Array.isArray(mediaData) && (mediaData as any[]).map((url, idx) => (
+                             <div key={idx} className="aspect-square rounded-3xl overflow-hidden border-2 border-slate-100 relative group/img shadow-sm">
+                                <img src={url} className="w-full h-full object-cover" />
+                                <button 
+                                  onClick={() => setMediaData((mediaData as any[]).filter((_, i) => i !== idx))} 
+                                  className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
+                                >
+                                   <FontAwesomeIcon icon={faTrash} className="text-white" />
+                                </button>
+                             </div>
+                          ))}
+                          <label className="aspect-square rounded-3xl border-3 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50/30 transition-all group/upload">
+                             <div className="w-12 h-12 rounded-full bg-slate-50 text-slate-300 flex items-center justify-center transition-all group-hover/upload:scale-110 group-hover/upload:bg-white group-hover/upload:text-indigo-500 group-hover/upload:shadow-md">
+                                <FontAwesomeIcon icon={faPlus} className="text-xl" />
+                             </div>
+                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter text-center">Add Image</span>
+                             <input type="file" multiple className="hidden" onChange={async (e) => {
+                                const files = e.target.files;
+                                if (!files) return;
+                                toast.loading("이미지를 업로드 중입니다...");
+                                try {
+                                  const urls = await Promise.all(Array.from(files).map(f => uploadImage(f)));
+                                  setMediaData([...(Array.isArray(mediaData) ? mediaData : []), ...urls]);
+                                  toast.dismiss();
+                                  toast.success("이미지가 추가되었습니다.");
+                                  // Auto-set cover image if not set
+                                  if (!coverPreview && urls[0]) setCoverPreview(urls[0]);
+                                } catch (err) {
+                                  toast.dismiss();
+                                  toast.error("업로드에 실패했습니다.");
+                                }
+                             }} />
+                          </label>
+                       </div>
+                    ) : (
+                       <div className="relative">
+                          <Input 
+                            placeholder={auditType === 'link' ? "검증받을 웹사이트나 랜딩페이지 주소를 입력하세요 (URL)" : "유튜브 또는 비메오 영상 주소를 입력하세요"}
+                            className="h-24 px-10 text-xl font-bold bg-slate-50 border-2 border-slate-100 rounded-[2rem] focus:bg-white focus:border-indigo-500 transition-all placeholder:text-slate-300 shadow-inner"
+                            value={typeof mediaData === 'string' ? mediaData : ''}
+                            onChange={(e) => setMediaData(e.target.value)}
+                          />
+                          <div className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none transition-all group-focus-within:text-indigo-500">
+                             <FontAwesomeIcon icon={faArrowRight} size="lg" />
+                          </div>
+                       </div>
+                    )}
+                 </div>
+              </div>
+
+              {/* Genre Section */}
+              <div className="p-10 md:p-14 border-b border-slate-50">
+                 <div className="flex items-center gap-4 mb-8">
+                    <div className="w-12 h-12 rounded-2xl bg-teal-500 text-white flex items-center justify-center text-xl shadow-lg shadow-teal-500/20">
+                       <FontAwesomeIcon icon={faPalette} />
+                    </div>
+                    <div>
+                       <h2 className="text-2xl font-black text-slate-900">2. 어떤 카테고리의 작품인가요?</h2>
+                       <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Categorization (Min 1)</p>
+                    </div>
+                 </div>
+                 <div className="flex flex-wrap gap-3">
+                    {genreCategories.map((genre) => {
+                      const isSelected = selectedGenres.includes(genre.id);
+                      return (
+                        <button
+                          key={genre.id}
+                          onClick={() => toggleGenre(genre.id)}
+                          className={cn(
+                            "flex items-center gap-2 px-5 py-3 rounded-xl border-2 font-black transition-all text-xs uppercase tracking-tighter",
+                            isSelected ? "bg-teal-50 border-teal-500 text-teal-700 shadow-md scale-[1.05]" : "bg-white border-slate-100 text-slate-400 hover:border-slate-300"
+                          )}
+                        >
+                           <FontAwesomeIcon icon={genre.icon as any} />
+                           {genre.label}
+                        </button>
+                      );
+                    })}
+                 </div>
+              </div>
+
+              {/* Goals Section */}
+              <div className="p-10 md:p-14 bg-slate-50/50 border-b border-slate-50">
+                 <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                       <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-xl shadow-lg shadow-amber-500/20">
+                          <FontAwesomeIcon icon={faTarget} />
+                       </div>
+                       <div>
+                          <h2 className="text-2xl font-black text-slate-900">3. 평가받고 싶은 구체적 항목</h2>
+                          <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">Evaluation Metrics (Radar Chart)</p>
+                       </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="rounded-full font-black text-xs border-2 border-slate-200 hover:border-amber-500 hover:text-amber-600 transition-all font-pretendard" 
+                      onClick={() => {
+                         if (customCategories.length < 6) {
+                           setCustomCategories([...customCategories, { id: `score_${customCategories.length + 1}`, label: '새 항목', icon: 'Target', color: '#888888', desc: '항목 설명' }]);
+                         } else {
+                           toast.error("항목은 최대 6개까지만 설정 가능합니다.");
+                         }
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faPlus} className="mr-2" /> 항목 추가
+                    </Button>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {customCategories.map((cat, idx) => (
+                       <div key={cat.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 group/cat hover:border-amber-200 transition-all">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center shrink-0 group-hover/cat:bg-amber-50 group-hover/cat:text-amber-500 transition-colors">
+                             <FontAwesomeIcon icon={faStar} />
+                          </div>
+                          <div className="flex-1 font-pretendard">
+                             <input 
+                               value={cat.label}
+                               onChange={(e) => {
+                                 const newCats = [...customCategories];
+                                 newCats[idx].label = e.target.value;
+                                 setCustomCategories(newCats);
+                               }}
+                               className="w-full bg-transparent font-black text-slate-900 border-b border-transparent focus:border-amber-500 outline-none pb-0.5 transition-colors"
+                               placeholder="항목 명칭"
+                             />
+                             <input 
+                               value={cat.desc}
+                               onChange={(e) => {
+                                 const newCats = [...customCategories];
+                                 newCats[idx].desc = e.target.value;
+                                 setCustomCategories(newCats);
+                               }}
+                               className="w-full bg-transparent text-[10px] font-bold text-slate-400 outline-none mt-1 uppercase tracking-tighter"
+                               placeholder="항목에 대한 간단한 가이드"
+                             />
+                          </div>
+                          {customCategories.length > 3 && (
+                             <button onClick={() => setCustomCategories(customCategories.filter((_, i) => i !== idx))} className="text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover/cat:opacity-100 px-2 text-xl">
+                                &times;
+                             </button>
+                          )}
+                       </div>
+                    ))}
+                 </div>
+              </div>
+
+              {/* Title & Deadline Section */}
+              <div className="p-10 md:p-14">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-4">
+                       <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                          평가 의뢰 프로젝트 제목
+                       </label>
+                       <Input 
+                          placeholder="어떤 프로젝트를 위한 피드백인가요?"
+                          className="h-16 px-6 text-lg font-bold border-2 border-slate-100 bg-slate-50/50 rounded-2xl focus:bg-white focus:border-indigo-500 transition-all font-pretendard"
+                          value={title}
+                          onChange={(e) => setTitle(e.target.value)}
+                       />
+                    </div>
+                    <div className="space-y-4">
+                       <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                          평가 모집 마감일
+                       </label>
+                       <Input 
+                          type="date"
+                          className="h-16 px-6 text-lg font-bold border-2 border-slate-100 bg-slate-50/50 rounded-2xl focus:bg-white focus:border-rose-500 transition-all font-pretendard"
+                          value={auditDeadline}
+                          onChange={(e) => setAuditDeadline(e.target.value)}
+                       />
+                    </div>
+                    <div className="col-span-1 md:col-span-2 space-y-4">
+                       <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          한줄 가이드 (심사위원 배포용)
+                       </label>
+                       <Input 
+                          placeholder="진단 시 고려해줬으면 하는 핵심 포인트 한줄 (예: 전체적인 분위기와 가독성 위주로 봐주세요)"
+                          className="h-16 px-6 text-lg font-bold border-2 border-slate-100 bg-slate-50/50 rounded-2xl focus:bg-white focus:border-amber-500 transition-all font-pretendard"
+                          value={summary}
+                          onChange={(e) => setSummary(e.target.value)}
+                       />
+                    </div>
+                 </div>
+              </div>
+
+              {/* Bottom Nav */}
+              <div className="p-10 md:p-14 bg-slate-900 flex flex-col md:flex-row items-center justify-between gap-8">
+                 <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 rounded-3xl bg-green-500/20 text-green-500 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(34,197,94,0.1)]">
+                       <FontAwesomeIcon icon={faRocket} className="text-xl" />
+                    </div>
+                    <div>
+                       <p className="text-sm text-white font-black tracking-tight">전문가들의 날카로운 안목을 맞이할 준비가 되셨나요?</p>
+                       <p className="text-[11px] text-slate-400 font-medium leading-relaxed mt-1">
+                          설정된 항목을 바탕으로 심도 깊은 분석 리포트가 생성됩니다. <br className="hidden md:block"/> 
+                          기본 정보를 확인하고 <span className="text-green-500 font-bold">마지막 발행 단계</span>로 진입하세요.
+                       </p>
+                    </div>
+                 </div>
+                 <Button 
+                   size="lg" 
+                   onClick={() => {
+                      if (!title.trim()) { toast.error("제목을 입력해 주세요."); return; }
+                      if (!mediaData) { toast.error("평가받을 작업물을 첨부해 주세요."); return; }
+                      if (selectedGenres.length === 0) { toast.error("최소 1개의 카테고리를 선택해 주세요."); return; }
+                      setStep('info');
+                   }}
+                   className="h-20 px-12 rounded-3xl bg-green-500 text-black font-black text-xl hover:bg-green-400 hover:-translate-y-1 transition-all shadow-[0_20px_40px_rgba(34,197,94,0.2)]"
+                 >
+                    게시 설정 확인하기 <FontAwesomeIcon icon={faArrowRight} className="ml-4" />
+                 </Button>
+              </div>
+           </div>
+        </div>
+      </div>
+    );
   }
 
   // Content Step
