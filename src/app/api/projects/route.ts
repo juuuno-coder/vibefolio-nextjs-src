@@ -307,6 +307,8 @@ export async function POST(request: NextRequest) {
         isGrowthMode = true;
     }
 
+    // [Point System] Growth Mode 포인트 차감 로직 비활성화 (USER 요청)
+    /*
     if (isGrowthMode) {
         const { data: profile } = await (supabaseAdmin as any)
             .from('profiles').select('points').eq('id', user_id).single();
@@ -321,6 +323,7 @@ export async function POST(request: NextRequest) {
         await (supabaseAdmin as any).from('profiles').update({ points: currentPoints - COST }).eq('id', user_id);
         await (supabaseAdmin as any).from('point_logs').insert({ user_id: user_id, amount: -COST, reason: 'Growth Mode Project' });
     }
+    */
 
     let { data, error } = await (supabaseAdmin as any)
       .from('Project')
