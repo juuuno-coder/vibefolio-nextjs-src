@@ -532,7 +532,7 @@ export default function TiptapUploadPage() {
       return;
     }
     
-    if (finalGenres.length === 0) {
+    if (!isGrowthMode && finalGenres.length === 0) {
       toast.error('최소 1개의 장르를 선택해주세요.');
       return;
     }
@@ -1021,7 +1021,7 @@ export default function TiptapUploadPage() {
               </div>
             </div>
 
-            {!isVersionMode && (
+            {!isVersionMode && !isGrowthMode && (
               <>
             {/* 장르 */}
             <div className="space-y-4">
@@ -2378,6 +2378,7 @@ export default function TiptapUploadPage() {
                onStyleClick={() => setStyleModalOpen(true)}
                onSettingsClick={() => setSettingsModalOpen(true)}
                onAddAsset={() => setAssetModalOpen(true)}
+               isGrowthMode={isGrowthMode}
              />
            </div>
            

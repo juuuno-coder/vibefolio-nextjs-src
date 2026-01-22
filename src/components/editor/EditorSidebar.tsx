@@ -29,6 +29,7 @@ interface EditorSidebarProps {
   onStyleClick?: () => void;
   onSettingsClick?: () => void;
   onAddAsset?: () => void;
+  isGrowthMode?: boolean;
 }
 
 export function EditorSidebar({ 
@@ -44,6 +45,7 @@ export function EditorSidebar({
   onStyleClick,
   onSettingsClick,
   onAddAsset,
+  isGrowthMode = false,
 }: EditorSidebarProps) {
   
   const contentButtons = [
@@ -103,14 +105,16 @@ export function EditorSidebar({
             <Palette className="w-5 h-5" />
             <span className="text-xs">스타일</span>
           </Button>
-          <Button 
-            variant="outline" 
-            className="flex-1 py-6 flex-col gap-2 h-auto hover:border-green-500 hover:text-green-600"
-            onClick={onSettingsClick || (() => alert('설정 기능 준비 중'))}
-          >
-            <Settings className="w-5 h-5" />
-            <span className="text-xs">설정</span>
-          </Button>
+          {!isGrowthMode && (
+            <Button 
+              variant="outline" 
+              className="flex-1 py-6 flex-col gap-2 h-auto hover:border-green-500 hover:text-green-600"
+              onClick={onSettingsClick || (() => alert('설정 기능 준비 중'))}
+            >
+              <Settings className="w-5 h-5" />
+              <span className="text-xs">설정</span>
+            </Button>
+          )}
         </div>
       </div>
 

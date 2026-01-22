@@ -9,13 +9,86 @@ import { supabase } from './client';
  * @param bucket - 버킷 이름 (기본값: 'project-images')
  * @returns 업로드된 이미지의 공개 URL
  */
+/**
+ * 이미지 압축 및 리사이징 (Client-side)
+ */
+async function compressImage(file: File, maxWidth: number = 1920, maxHeight: number = 1080, quality: number = 0.8): Promise<File | Blob> {
+  if (typeof window === 'undefined' || !file.type.startsWith('image/')) return file;
+  
+  // GIF는 압축하지 않음 (애니메이션 손실 방지)
+  if (file.type === 'image/gif') return file;
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // 리사이징 로직
+        if (width > maxWidth) {
+          height = Math.round(height * (maxWidth / width));
+          width = maxWidth;
+        }
+        if (height > maxHeight) {
+          width = Math.round(width * (maxHeight / height));
+          height = maxHeight;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        // 이미지 그리기 (배경을 배경색으로 채울수도 있으나 기본 투명/검정)
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // JPEG로 변환하여 용량 최적화
+        canvas.toBlob((blob) => {
+          if (blob) {
+            // 원본보다 커지면 원본 반환
+            if (blob.size > file.size) {
+              resolve(file);
+            } else {
+              resolve(new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' }));
+            }
+          } else {
+            resolve(file);
+          }
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * 이미지를 Supabase Storage에 업로드
+ * @param file - 업로드할 파일
+ * @param bucket - 버킷 이름 (기본값: 'project-images')
+ * @returns 업로드된 이미지의 공개 URL
+ */
 export async function uploadImage(
   file: File,
   bucket: string = 'projects'
 ): Promise<string> {
   try {
+    // 0. 이미지 압축 (이미지인 경우)
+    let finalFile: File | Blob = file;
+    if (file.type.startsWith('image/')) {
+      finalFile = await compressImage(file);
+    }
+
     // 파일 확장자 추출
-    const fileExt = file.name.split('.').pop();
+    const fileExt = (finalFile instanceof File ? finalFile.name : file.name).split('.').pop();
     // 고유한 파일명 생성 (타임스탬프 + 랜덤 문자열)
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
     const filePath = `uploads/${fileName}`;
@@ -23,14 +96,13 @@ export async function uploadImage(
     // Supabase Storage에 업로드
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(filePath, file, {
+      .upload(filePath, finalFile, {
         cacheControl: '3600',
         upsert: false,
       });
 
     if (error) {
       console.error('이미지 업로드 실패:', error);
-      // 에러 메시지 상세화
       throw new Error(`이미지 업로드 실패: ${error.message}`);
     }
 
