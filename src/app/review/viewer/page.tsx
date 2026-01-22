@@ -62,7 +62,24 @@ function ViewerContent() {
 
         if (error) throw error;
         setProject(data);
-        if ((data as any).custom_data?.review_steps) setSteps((data as any).custom_data.review_steps);
+        
+        // [Granular Step Generation]
+        const newSteps: string[] = [];
+        
+        // 1. Michelin Ratings (split into 4)
+        newSteps.push('rating_0', 'rating_1', 'rating_2', 'rating_3');
+        
+        // 2. Custom Audit Questions
+        const auditConfig = (data as any).custom_data?.audit_config;
+        const questions = auditConfig?.questions || (data as any).custom_data?.audit_questions || [];
+        questions.forEach((_: any, idx: number) => {
+           newSteps.push(`q_${idx}`);
+        });
+        
+        // 3. Voting & Final
+        newSteps.push('voting', 'proposal', 'summary');
+        
+        setSteps(newSteps);
 
         // Check deadline
         if ((data as any).audit_deadline && new Date((data as any).audit_deadline) < new Date()) {
@@ -194,57 +211,101 @@ function ViewerContent() {
 
   const renderReviewStep = () => {
     const stepType = steps[currentStep];
-    switch (stepType) {
-      case 'rating': return <MichelinRating projectId={projectId || ""} ratingId={ratingId || undefined} />;
-      case 'voting': return <FeedbackPoll projectId={projectId || ""} />;
-      case 'proposal': 
-        const customQuestions = project?.custom_data?.audit_questions || [];
-        return (
-          <div className="space-y-8 pb-10">
-             <div className="bg-slate-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                   <Monitor size={80} />
-                </div>
-                <h4 className="text-xl font-black mb-2 tracking-tight flex items-center gap-2">
-                   <ChevronRight className="text-green-500" /> 핵심 역량 및 개선 제안
+
+    // Handle Granular Rating Steps
+    if (stepType.startsWith('rating_')) {
+       const index = parseInt(stepType.split('_')[1]);
+       return <MichelinRating projectId={projectId || ""} ratingId={ratingId || undefined} activeCategoryIndex={index} />;
+    }
+
+    // Handle Custom Question Steps
+    if (stepType.startsWith('q_')) {
+       const index = parseInt(stepType.split('_')[1]);
+       const questions = project?.custom_data?.audit_config?.questions || project?.custom_data?.audit_questions || [];
+       const q = questions[index];
+       
+       return (
+          <div className="space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
+             <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-xl relative overflow-hidden">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
+                <span className="text-[10px] font-black text-green-400 uppercase tracking-[0.3em] mb-4 block">Special Question {index + 1}</span>
+                <h4 className="text-3xl font-black mb-4 tracking-tighter leading-tight">
+                   {q}
                 </h4>
-                <p className="text-slate-400 text-sm leading-relaxed">작업물의 가치를 높이기 위한 구체적인 제안을 남겨주세요.</p>
+                <p className="text-slate-400 text-sm font-medium">이 질문에 대해 당신의 날카로운 안목을 들려주세요.</p>
              </div>
 
-             {/* Custom Questions Section */}
-             {customQuestions.length > 0 && (
-               <div className="space-y-8">
-                  {customQuestions.map((q: string, idx: number) => (
-                    <div key={idx} className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
-                       <div className="flex items-start gap-3">
-                          <span className="shrink-0 w-8 h-8 rounded-xl bg-green-500/10 text-green-600 flex items-center justify-center text-xs font-black border border-green-500/20">Q{idx+1}</span>
-                          <h5 className="text-lg font-black text-slate-900 leading-snug pt-1">{q}</h5>
-                       </div>
-                       <textarea 
-                         value={customAnswers[q] || ""}
-                         onChange={(e) => setCustomAnswers(prev => ({ ...prev, [q]: e.target.value }))}
-                         placeholder="이 질문에 대한 당신의 안목을 공유해 주세요..."
-                         className="w-full h-40 bg-white border-2 border-slate-100 rounded-[2.5rem] p-8 text-slate-800 focus:border-green-500 focus:ring-4 focus:ring-green-500/5 transition-all outline-none resize-none font-medium text-lg shadow-sm"
-                       />
-                    </div>
-                  ))}
-               </div>
-             )}
+             <div className="space-y-4">
+                <textarea 
+                  value={customAnswers[q] || ""}
+                  onChange={(e) => setCustomAnswers(prev => ({ ...prev, [q]: e.target.value }))}
+                  placeholder="여기에 답변을 입력하세요..."
+                  className="w-full h-64 bg-white border-2 border-slate-100 rounded-[3rem] p-10 text-slate-800 focus:border-green-500 transition-all outline-none resize-none font-medium text-xl shadow-lg"
+                />
+                <div className="flex justify-end px-6">
+                   <p className="text-[11px] font-black text-slate-300 uppercase tracking-widest">Thoughtful response highly appreciated</p>
+                </div>
+             </div>
+          </div>
+       );
+    }
 
-             <div className="space-y-4 pt-4 border-t border-slate-100">
-                <div className="flex items-center gap-3">
-                   <span className="shrink-0 w-8 h-8 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center text-xs font-black">C</span>
-                   <h5 className="text-sm font-black text-slate-400 uppercase tracking-widest leading-snug">종합 총평 및 제안</h5>
+    switch (stepType) {
+      case 'voting': return <FeedbackPoll projectId={projectId || ""} />;
+      case 'proposal': 
+        return (
+          <div className="space-y-8 pb-10 animate-in fade-in slide-in-from-right-8 duration-500">
+             <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-10 opacity-10">
+                   <ChefHat size={100} />
+                </div>
+                <h4 className="text-3xl font-black mb-4 tracking-tighter flex items-center gap-4">
+                   종합 총평 및 제안
+                </h4>
+                <p className="text-slate-400 text-lg leading-relaxed font-medium">진단을 마무리하며 작가에게 전하고픈 <br/>마지막 메시지를 남겨주세요.</p>
+             </div>
+
+             <div className="space-y-4">
+                <div className="flex items-center gap-3 px-2">
+                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                   <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest">Final Audit Comments</h5>
                 </div>
                 <textarea 
                   value={proposalContent}
                   onChange={(e) => setProposalContent(e.target.value)}
                   placeholder="기획, 디자인, 기술적 관점에서 전체적인 소감을 자유롭게 적어주세요..."
-                  className="w-full h-64 bg-slate-50 border-2 border-slate-100 rounded-[2.5rem] p-8 text-slate-800 focus:border-slate-900 focus:bg-white transition-all outline-none resize-none font-medium text-lg shadow-inner"
+                  className="w-full h-80 bg-slate-50 border-2 border-slate-100 rounded-[3rem] p-10 text-slate-800 focus:border-slate-900 focus:bg-white transition-all outline-none resize-none font-medium text-xl shadow-inner"
                 />
              </div>
           </div>
         );
+      case 'summary':
+         return (
+            <div className="flex flex-col items-center justify-center py-10 space-y-10 animate-in zoom-in-95 duration-500 text-center">
+               <div className="w-24 h-24 bg-green-500 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl shadow-green-200">
+                  <CheckCircle2 size={48} />
+               </div>
+               <div className="space-y-4">
+                  <h3 className="text-4xl font-black text-slate-900 tracking-tighter">모든 진단이 준비되었습니다</h3>
+                  <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-sm">
+                     준비된 진단 결과를 작가에게 전달하시겠습니까? <br/>
+                     보내기 버튼을 누르면 최종 반영됩니다.
+                  </p>
+               </div>
+               <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 w-full">
+                   <div className="flex flex-col gap-4">
+                      <div className="flex justify-between items-center text-sm">
+                         <span className="font-black text-slate-300 uppercase tracking-widest">Rating Completed</span>
+                         <span className="text-green-600 font-bold">YES</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                         <span className="font-black text-slate-300 uppercase tracking-widest">Custom Answers</span>
+                         <span className="text-green-600 font-bold">{Object.keys(customAnswers).length} Questions</span>
+                      </div>
+                   </div>
+               </div>
+            </div>
+         );
       default: return null;
     }
   };
@@ -319,13 +380,23 @@ function ViewerContent() {
                 <div className="flex flex-col h-full bg-slate-50/80">
                   {/* Panel Header */}
                   <div className="p-6 md:p-8 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
-                    <div>
-                      <h3 className="text-2xl font-black text-slate-900 tracking-tighter leading-none">
-                        {currentStep === 0 ? "항목별 상세 진단" : currentStep === 1 ? "최종 합불 판정" : "상세 개선 제안"}
-                      </h3>
-                      <p className="text-[11px] font-black text-green-600 uppercase tracking-[0.2em] mt-3 bg-green-50 inline-block px-3 py-1 rounded-full">{currentStep + 1} / {steps.length} 단계</p>
-                    </div>
-                    <button onClick={() => setIsReviewOpen(false)} className="p-3 hover:bg-slate-100 rounded-2xl text-slate-400 transition-all active:scale-95"><X size={20} /></button>
+                    {(() => {
+                      const stepType = steps[currentStep];
+                      return (
+                        <>
+                          <div>
+                            <h3 className="text-2xl font-black text-slate-900 tracking-tighter leading-none">
+                              {stepType.startsWith('rating_') ? "항목별 정밀 진단" : 
+                               stepType.startsWith('q_') ? "프로젝트 심층 질문" :
+                               stepType === 'voting' ? "최종 합불 판정" : 
+                               stepType === 'summary' ? "진단 최종 확인" : "상세 개선 제안"}
+                            </h3>
+                            <p className="text-[11px] font-black text-green-600 uppercase tracking-[0.2em] mt-3 bg-green-50 inline-block px-3 py-1 rounded-full">{currentStep + 1} / {steps.length} 단계</p>
+                          </div>
+                          <button onClick={() => setIsReviewOpen(false)} className="p-3 hover:bg-slate-100 rounded-2xl text-slate-400 transition-all active:scale-95"><X size={20} /></button>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* Main Evaluation Area - Optimized for direct content flow */}

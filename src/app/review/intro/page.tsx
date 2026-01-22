@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 function IntroContent() {
   const searchParams = useSearchParams();
@@ -41,9 +42,11 @@ function IntroContent() {
   }, [projectId, router]);
 
   const handleFinishCloche = () => {
-    if (isDataLoaded) {
-      router.push(`/review/viewer?projectId=${projectId}`);
-    }
+    // Automatic redirect removed as per user request
+  };
+
+  const handleStartReview = () => {
+    router.push(`/review/viewer?projectId=${projectId}`);
   };
 
   return (
@@ -100,8 +103,7 @@ function IntroContent() {
                      <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: isDataLoaded ? "100%" : "30%" }}
-                        transition={{ duration: isDataLoaded ? 2.5 : 8, ease: "linear" }}
-                        onAnimationComplete={handleFinishCloche}
+                        transition={{ duration: isDataLoaded ? 1.5 : 8, ease: "linear" }}
                         className="h-full bg-slate-900" 
                      />
                   </div>
@@ -128,14 +130,25 @@ function IntroContent() {
                </motion.div>
             </div>
 
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="text-slate-400 text-sm font-medium italic"
-            >
-              당신의 전문적인 한 표가 창작자에게 큰 영감이 됩니다.
-            </motion.p>
+            <AnimatePresence>
+              {isDataLoaded && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6"
+                >
+                  <p className="text-slate-400 text-sm font-medium italic">
+                    당신의 전문적인 한 표가 창작자에게 큰 영감이 됩니다.
+                  </p>
+                  <Button 
+                    onClick={handleStartReview}
+                    className="h-16 px-12 rounded-2xl bg-slate-900 text-white font-black text-xl shadow-2xl hover:bg-orange-500 transition-all hover:-translate-y-1"
+                  >
+                    진단 시작하기
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </motion.div>
       </AnimatePresence>

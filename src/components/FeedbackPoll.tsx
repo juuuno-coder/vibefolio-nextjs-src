@@ -115,9 +115,9 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
 
   // Dynamic Options Base
   const DEFAULT_OPTIONS = [
-    { id: 'launch', icon: CheckCircle2, label: "합격입니다. 당장 쓸게요.", color: "text-green-500", bgFrom: "from-green-500/10", bgTo: "to-green-600/20", border: "border-green-200", activeBorder: "border-green-500", desc: "시장에 바로 출시 가능하며 즉시 사용 가치가 검증된 프로젝트", image_url: undefined },
-    { id: 'more', icon: Clock, label: "보류하겠습니다.", color: "text-amber-500", bgFrom: "from-amber-500/10", bgTo: "to-amber-600/20", border: "border-amber-200", activeBorder: "border-amber-500", desc: "기획은 좋으나 디테일이나 UI/UX 측면의 보완이 필요한 경우", image_url: undefined },
-    { id: 'research', icon: XCircle, label: "불합격드리겠습니다. 더 연구해 주세요.", color: "text-red-500", bgFrom: "from-red-500/10", bgTo: "to-red-600/20", border: "border-red-200", activeBorder: "border-red-500", desc: "컨셉의 전면적인 재검토나 핵심 기능의 재정의가 필요한 상태", image_url: undefined }
+    { id: 'launch', icon: CheckCircle2, label: "합격입니다. 당장 쓸게요.", color: "text-green-500", bgFrom: "from-green-500/10", bgTo: "to-green-600/20", border: "border-green-200", activeBorder: "border-green-500", desc: "시장에 바로 출시 가능하며 즉시 사용 가치가 검증된 프로젝트", image_url: '/review/a1.jpeg' },
+    { id: 'more', icon: Clock, label: "보류하겠습니다.", color: "text-amber-500", bgFrom: "from-amber-500/10", bgTo: "to-amber-600/20", border: "border-amber-200", activeBorder: "border-amber-500", desc: "기획은 좋으나 디테일이나 UI/UX 측면의 보완이 필요한 경우", image_url: '/review/a2.jpeg' },
+    { id: 'research', icon: XCircle, label: "불합격드리겠습니다. 더 연구해 주세요.", color: "text-red-500", bgFrom: "from-red-500/10", bgTo: "to-red-600/20", border: "border-red-200", activeBorder: "border-red-500", desc: "컨셉의 전면적인 재검토나 핵심 기능의 재정의가 필요한 상태", image_url: '/review/a3.jpeg' }
   ];
 
   const options = React.useMemo(() => {

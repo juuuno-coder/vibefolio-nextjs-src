@@ -4,25 +4,27 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Star, Info, Target, Zap, Lightbulb, TrendingUp, Sparkles, MessageSquareQuote } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface MichelinRatingProps {
   projectId: string;
-  ratingId?: string; // [New] 기존 평가 수정을 위한 ID
+  ratingId?: string; 
   isDemo?: boolean; 
+  activeCategoryIndex?: number; // [New] 단계별 노출을 위한 인덱스
 }
 
 const DEFAULT_CATEGORIES = [
-  { id: 'score_1', label: '기획력', icon: Lightbulb, color: '#f59e0b', desc: '논리적 구조와 의도' },
-  { id: 'score_2', label: '완성도', icon: Zap, color: '#3b82f6', desc: '디테일과 마감 수준' },
-  { id: 'score_3', label: '독창성', icon: Target, color: '#10b981', desc: '작가 고유의 스타일' },
-  { id: 'score_4', label: '상업성', icon: TrendingUp, color: '#ef4444', desc: '시장 가치와 잠재력' },
+  { id: 'score_1', label: '기획력', icon: Lightbulb, color: '#f59e0b', desc: '논리적 구조와 의도', sticker: '/review/s1.png' },
+  { id: 'score_2', label: '완성도', icon: Zap, color: '#3b82f6', desc: '디테일과 마감 수준', sticker: '/review/s2.png' },
+  { id: 'score_3', label: '독창성', icon: Target, color: '#10b981', desc: '작가 고유의 스타일', sticker: '/review/s3.png' },
+  { id: 'score_4', label: '상업성', icon: TrendingUp, color: '#ef4444', desc: '시장 가치와 잠재력', sticker: '/review/s4.png' },
 ];
 
 const ICON_MAP: Record<string, any> = {
   Lightbulb, Zap, Target, TrendingUp, Star, Info, Sparkles, MessageSquareQuote
 };
 
-export function MichelinRating({ projectId, ratingId, isDemo = false }: MichelinRatingProps) {
+export function MichelinRating({ projectId, ratingId, isDemo = false, activeCategoryIndex }: MichelinRatingProps) {
   const [projectData, setProjectData] = useState<any>(null);
   const [categories, setCategories] = useState<any[]>(DEFAULT_CATEGORIES);
   const [scores, setScores] = useState<Record<string, number>>({});
@@ -231,6 +233,77 @@ export function MichelinRating({ projectId, ratingId, isDemo = false }: Michelin
     return `M ${points.map(p => `${p[0]} ${p[1]}`).join(' L ')} Z`;
   };
 
+  // 단계별 모드일 때 렌더링할 특정 카테고리
+  const activeCategory = typeof activeCategoryIndex === 'number' ? categories[activeCategoryIndex] : null;
+
+  if (activeCategory) {
+    return (
+      <div className="w-full space-y-10 animate-in fade-in slide-in-from-right-8 duration-500">
+        <div className="flex flex-col items-center gap-6">
+           <div className="relative group">
+              <div className="w-32 h-32 rounded-[2.5rem] bg-slate-900 flex items-center justify-center shadow-2xl transition-transform group-hover:scale-110 duration-500">
+                 {activeCategory.sticker ? (
+                   <img src={activeCategory.sticker} alt={activeCategory.label} className="w-20 h-20 object-contain" />
+                 ) : (
+                   React.createElement(activeCategory.icon || Target, { className: "w-12 h-12 text-white" })
+                 )}
+              </div>
+              <div className="absolute -top-2 -right-2 w-10 h-10 bg-white rounded-full shadow-lg border border-slate-100 flex items-center justify-center font-black text-slate-900">
+                {activeCategoryIndex! + 1}
+              </div>
+           </div>
+           <div className="text-center">
+              <h4 className="text-3xl font-black text-slate-900 uppercase tracking-tighter mb-2">{activeCategory.label}</h4>
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">{activeCategory.desc}</p>
+           </div>
+        </div>
+
+        <div className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-xl space-y-8">
+           <div className="flex justify-between items-end">
+              <div className="flex gap-2">
+                 {[1, 2, 3, 4, 5].map(i => (
+                    <Star key={i} className={cn("w-6 h-6", (scores[activeCategory.id] || 0) >= i ? "text-amber-400 fill-current" : "text-slate-100")} />
+                 ))}
+              </div>
+              <div className="text-right">
+                 <span className="text-6xl font-black tabular-nums tracking-tighter" style={{ color: activeCategory.color || '#f59e0b' }}>
+                    {(scores[activeCategory.id] || 0).toFixed(1)}
+                 </span>
+                 <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Score / 5.0</p>
+              </div>
+           </div>
+
+           <div className="relative h-12 flex items-center">
+              <input 
+                 type="range" 
+                 min="0" 
+                 max="5" 
+                 step="0.1" 
+                 value={scores[activeCategory.id] || 0} 
+                 onChange={(e) => { 
+                   setScores(prev => ({ ...prev, [activeCategory.id]: parseFloat(e.target.value) })); 
+                   setIsEditing(true); 
+                 }} 
+                 className="w-full h-4 bg-slate-100 rounded-full appearance-none cursor-pointer accent-amber-500 hover:accent-amber-600 transition-all z-10" 
+              />
+              <div className="absolute inset-0 flex justify-between px-1 pointer-events-none items-center">
+                 {[0, 1, 2, 3, 4, 5].map(v => (
+                   <div key={v} className="flex flex-col items-center gap-2">
+                      <div className="w-1 h-3 bg-slate-200 mt-8" />
+                      <span className="text-[10px] font-bold text-slate-300">{v}</span>
+                   </div>
+                 ))}
+              </div>
+           </div>
+        </div>
+
+        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 italic text-slate-400 text-sm text-center font-medium">
+           "이 항목은 프로젝트의 {activeCategory.label}을(를) 중점적으로 평가합니다."
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full relative overflow-hidden group">
       {/* Header Section */}
@@ -293,7 +366,7 @@ export function MichelinRating({ projectId, ratingId, isDemo = false }: Michelin
                 <span className="text-4xl font-black text-gray-900 tabular-nums leading-none mb-1">{currentTotalAvg.toFixed(1)}</span>
                 <div className="flex gap-0.5">
                   {[1, 2, 3, 4, 5].map((i) => (
-                     <Star key={i} className={`w-3 h-3 ${currentTotalAvg >= i ? 'text-amber-400 fill-current' : 'text-gray-200'}`} />
+                    <Star key={i} className={`w-3 h-3 ${currentTotalAvg >= i ? 'text-amber-400 fill-current' : 'text-gray-200'}`} />
                   ))}
                 </div>
               </div>
