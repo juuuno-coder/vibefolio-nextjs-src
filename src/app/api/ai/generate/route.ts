@@ -8,6 +8,14 @@ const genAI = new GoogleGenerativeAI(apiKey);
 export const runtime = 'edge'; // Optional: Use Edge Runtime if supported, helps with timeouts
 
 export async function POST(req: NextRequest) {
+  // API 키가 없으면 즉시 종료하여 리소스 낭비 방지
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY && !process.env.GEMINI_API_KEY) {
+    return NextResponse.json({ 
+      error: "AI 서비스 점검 중",
+      message: "현재 AI 서비스 점검 중입니다."
+    }, { status: 200 });
+  }
+
   try {
     const { type, topic } = await req.json();
 

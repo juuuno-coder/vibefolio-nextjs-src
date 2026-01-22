@@ -104,7 +104,6 @@ export function Header({
     { label: "발견하기", path: "/" },
     { label: "성장하기", path: "/growth" },
     { label: "연결하기", path: "/recruit" },
-    { label: "AI 도구", path: "/ai-tools", isPending: true },
   ];
 
   return (

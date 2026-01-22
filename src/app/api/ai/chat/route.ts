@@ -3,6 +3,15 @@ import { createClient } from "@/lib/supabase/server";
 import { processUserQuery } from "@/lib/ai/search-service";
 
 export async function POST(req: NextRequest) {
+  // API 키가 없으면 즉시 종료하여 리소스 낭비 방지
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+    return NextResponse.json({ 
+      error: "AI 서비스 점검 중",
+      answer: "현재 AI 서비스 안정화를 위해 점검 중입니다. 이용에 불편을 드려 죄송합니다.",
+      results: []
+    }, { status: 200 });
+  }
+
   try {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();

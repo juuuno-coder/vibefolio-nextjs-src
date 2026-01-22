@@ -3,6 +3,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { model } from '@/lib/ai/client';
 
 export async function POST(req: NextRequest) {
+  // API 키가 없으면 즉시 종료하여 리소스 낭비 방지
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+    return NextResponse.json({ 
+      success: false, 
+      analysis: "AI 서비스가 현재 점검 중입니다. 이용에 불편을 드려 죄송합니다.",
+      error: "API Key missing" 
+    }, { status: 200 }); // status 200으로 반환하여 클라이언트 측에서의 불필요한 재시도나 에러 로그 범람 방지
+  }
+
   try {
     const body = await req.json();
     const { scores, projectTitle, category } = body;

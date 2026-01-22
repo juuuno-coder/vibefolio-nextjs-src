@@ -52,19 +52,10 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
     }
     setIsAnalyzing(true);
     try {
-      const res = await fetch('/api/ai/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          scores: scoresToAnalyze,
-          projectTitle: projectData?.title || "현재 프로젝트",
-          category: projectData?.category || "포트폴리오"
-        })
-      });
-      const data = await res.json();
-      if (data.analysis) setAnalysis(data.analysis);
+      // AI 분석 서비스 일시 중단
+      setAnalysis("현재 서비스 안정화를 위해 AI 정밀 분석 기능이 잠시 중단되었습니다. 곧 더 나은 서비스로 찾아뵙겠습니다.");
     } catch (e) {
-      console.error("AI Analysis failed:", e);
+      console.error("AI Analysis error:", e);
     } finally {
       setIsAnalyzing(false);
     }
@@ -137,7 +128,7 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
           }
         }
 
-        fetchAIAnalysis(data.averages);
+        // fetchAIAnalysis(data.averages);
       }
     } catch (e) {
       console.error("Failed to load ratings", e);
@@ -169,7 +160,7 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
     if (isDemo) {
         toast.success(`[데모] 평가가 반영되었습니다! (평균 ${currentTotalAvg}점)`);
         setIsEditing(false);
-        fetchAIAnalysis(scores);
+        // fetchAIAnalysis(scores);
         return;
     }
     const { data: { session } } = await supabase.auth.getSession();
@@ -180,7 +171,7 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
           // [Guest Mode]
           toast.success(`[비회원] 평가가 반영되었습니다! (평균 ${currentTotalAvg}점)`);
           setIsEditing(false);
-          fetchAIAnalysis(scores);
+          // fetchAIAnalysis(scores);
           return;
       }
       const res = await fetch(`/api/projects/${projectId}/rating`, {
@@ -203,7 +194,7 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
       fetchRatingData();
       
       // 내 점수 기반으로 분석 갱신
-      fetchAIAnalysis(scores);
+      // fetchAIAnalysis(scores);
     } catch (e) {
       console.error(e);
       toast.error("평가 등록에 실패했습니다.");

@@ -448,7 +448,6 @@ export default function MyPage() {
     { id: 'collections' as TabType, label: '컬렉션', icon: Folder, color: 'text-blue-500', bgColor: 'bg-blue-500' },
     { id: 'proposals' as TabType, label: '제안 및 평가 의견', icon: Send, color: 'text-green-500', bgColor: 'bg-green-500' },
     { id: 'comments' as TabType, label: '내 댓글', icon: MessageCircle, color: 'text-orange-500', bgColor: 'bg-orange-500' },
-    { id: 'ai_tools' as TabType, label: 'AI 도구', icon: Sparkles, color: 'text-purple-600', bgColor: 'bg-purple-600', isNew: true },
     { id: 'settings' as TabType, label: '설정', icon: Settings, color: 'text-gray-700', bgColor: 'bg-gray-700' },
   ];
 
@@ -543,11 +542,6 @@ export default function MyPage() {
               >
                 <Icon size={18} fill={tab.id === 'likes' && isActive ? 'currentColor' : 'none'} />
                 {tab.label}
-                {tab.isNew && (
-                  <span className="ml-1.5 px-1.5 py-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[8px] font-black rounded-full shadow-sm animate-pulse">
-                    NEW
-                  </span>
-                )}
                 {isActive && <div className={`absolute bottom-0 left-0 w-full h-0.5 ${tab.bgColor}`} />}
               </button>
             );
