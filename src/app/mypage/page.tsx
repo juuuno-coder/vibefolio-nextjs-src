@@ -167,7 +167,7 @@ export default function MyPage() {
         if (activeTab === 'projects') {
           const { data } = await supabase
             .from('Project')
-            .select('project_id, title, thumbnail_url, likes_count, views_count, created_at, content_text, rendering_type, custom_data, scheduled_at, visibility, audit_deadline')
+            .select('project_id, title, thumbnail_url, likes_count, views_count, created_at, updated_at, content_text, rendering_type, custom_data, scheduled_at, visibility, audit_deadline')
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
           
@@ -183,7 +183,17 @@ export default function MyPage() {
             alt_description: p.title || '',
             custom_data: p.custom_data,
             scheduled_at: p.scheduled_at,
-            visibility: p.visibility || 'public', // [New]
+            visibility: p.visibility || 'public',
+            updated_at: p.updated_at,
+            userId: userId,
+            audit_deadline: p.audit_deadline,
+            user: { 
+                username: userProfile?.username || 'Me', 
+                profile_image: { 
+                    small: userProfile?.profile_image_url || '/globe.svg', 
+                    large: userProfile?.profile_image_url || '/globe.svg' 
+                } 
+            }
           })));
           
         } else if (activeTab === 'likes') {
@@ -261,7 +271,7 @@ export default function MyPage() {
     };
     
     loadData();
-  }, [userId, activeTab, initialized]);
+  }, [userId, activeTab, initialized, userProfile]);
 
   const cn = (...classes: any[]) => classes.filter(Boolean).join(' ');
 
@@ -604,83 +614,13 @@ export default function MyPage() {
                       if (projectFilter === 'active') return p.visibility === 'public';
                       return true;
                     }).map((project) => (
-                      <div key={project.id} className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden hover:shadow-2xl transition-all group relative">
-                        {/* [New] V-Audit Status Badge */}
-                        {(project.custom_data?.audit_config || project.audit_deadline) && (
-                          <div className="absolute top-4 left-4 z-10">
-                             <div className="bg-orange-600/90 text-white px-3 py-1.5 rounded-xl text-[10px] font-black tracking-tighter shadow-lg flex items-center gap-1.5 backdrop-blur-md">
-                                <Zap size={14} />
-                                피드백 진행 중
-                             </div>
-                          </div>
-                        )}
-
-                        <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
-                          <img 
-                            src={project.thumbnail_url || '/placeholder.jpg'}
-                            alt={project.title}
-                            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${project.scheduled_at && new Date(project.scheduled_at) > new Date() ? 'grayscale-[0.5]' : ''}`}
-                            onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.jpg'; }}
-                          />
-                          
-                          {/* Visibility/Schedule Badges */}
-                          <div className="absolute top-4 right-4 flex flex-col gap-2 items-end z-10">
-                            {project.scheduled_at && new Date(project.scheduled_at) > new Date() && (
-                              <div className="bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-1 rounded-lg shadow-md flex items-center gap-1 animate-pulse">
-                                <Clock size={12} strokeWidth={3} />
-                                <span>{new Date(project.scheduled_at).toLocaleDateString()}</span>
-                              </div>
-                            )}
-                            {project.visibility === 'private' && (
-                               <div className="bg-gray-800/80 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-md flex items-center gap-1 backdrop-blur-sm">
-                                 <Lock size={12} strokeWidth={3} />
-                                 <span>비공개</span>
-                               </div>
-                            )}
-                          </div>
-
-                          {/* Hover Actions */}
-                          <div className="absolute inset-x-4 bottom-4 z-10 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
-                             <div className="flex gap-2">
-                                <Button 
-                                  onClick={(e) => { e.stopPropagation(); router.push(`/project/upload?mode=${project.custom_data?.audit_config ? 'audit' : ''}&edit=${project.id}`); }}
-                                  className="flex-1 bg-white text-slate-900 rounded-xl font-bold text-[11px] h-11 hover:bg-orange-600 hover:text-white transition-all shadow-xl"
-                                >
-                                  <Settings className="w-3.5 h-3.5 mr-2" /> 수정
-                                </Button>
-                                <Button 
-                                  onClick={(e) => { e.stopPropagation(); router.push(`/review/viewer?projectId=${project.id}`); }}
-                                  className="flex-1 bg-slate-900 text-white rounded-xl font-bold text-[11px] h-11 transition-all shadow-xl"
-                                >
-                                  <Eye className="w-3.5 h-3.5 mr-2" /> 진단
-                                </Button>
-                             </div>
-                             <Button 
-                                onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id); }}
-                                className="w-full mt-2 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 rounded-xl font-bold text-[11px] h-9 transition-all shadow-sm"
-                              >
-                                <Trash2 className="w-3.5 h-3.5 mr-2" /> 삭제하기
-                              </Button>
-                          </div>
-                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                        </div>
-                        
-                        <div className="p-5 space-y-3">
-                          <div className="flex justify-between items-start">
-                             <h3 className="font-bold text-gray-900 line-clamp-1 group-hover:text-orange-600 transition-colors">{project.title}</h3>
-                             <div className="flex items-center gap-1.5 text-slate-400">
-                                <Heart size={14} className={project.likes > 0 ? "fill-red-500 text-red-500" : ""} />
-                                <span className="text-[11px] font-bold">{project.likes || 0}</span>
-                             </div>
-                          </div>
-                          
-                          {project.audit_deadline && (
-                            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 bg-slate-50 p-2 rounded-xl">
-                               <Clock size={14} className="text-orange-500" />
-                               진단 마감일: <span className="text-orange-600">{new Date(project.audit_deadline).toLocaleDateString()}</span>
-                            </div>
-                          )}
-                        </div>
+                      <div key={project.id} className="h-full">
+                        <ImageCard 
+                          props={project} 
+                          onClick={() => { setSelectedProject(project); setModalOpen(true); }}
+                          onDelete={handleDeleteProject}
+                          className="w-full h-full"
+                        />
                       </div>
                     ))}
                   </div>

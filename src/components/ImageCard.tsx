@@ -3,7 +3,7 @@
 import React, { forwardRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { Heart, BarChart3, Image as ImageIcon, Edit, Rocket, Trash2, Eye, Megaphone } from 'lucide-react';
+import { Heart, BarChart3, Image as ImageIcon, Edit, Rocket, Trash2, Eye, Megaphone, Zap, Clock } from 'lucide-react';
 import { supabase } from "@/lib/supabase/client";
 import { addCommas } from "@/lib/format/comma";
 import { useLikes } from "@/hooks/useLikes";
@@ -44,6 +44,9 @@ interface ImageCardProps {
     userId?: string;
     is_feedback_requested?: boolean;
     is_growth_requested?: boolean;
+    custom_data?: any;
+    audit_deadline?: string;
+    scheduled_at?: string;
   } | null;
   className?: string;
   onClick?: () => void;
@@ -109,69 +112,91 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
         {...rest}
       >
         {/* 이미지 영역 - 4:3 비율 고정 */}
+          {/* 이미지 영역 - 4:3 비율 고정 */}
         <div className="relative overflow-hidden rounded-xl aspect-[4/3] bg-gray-100 shadow-sm">
            {/* Owner Actions Overlay */}
             {isOwner && (
-             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex flex-col items-center justify-center gap-3 backdrop-blur-[2px]">
+             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex flex-col items-center justify-center gap-2 backdrop-blur-[2px] p-4">
+                {/* 1. 보기 */}
+                <button 
+                  onClick={(e) => { 
+                      if (onClick) onClick();
+                  }}
+                  className="bg-gray-100 text-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-white transition-colors transform hover:scale-105 shadow-lg w-36 justify-center"
+                >
+                  <Eye className="w-4 h-4" /> 보기
+                </button>
+
+                {/* 2. 피드백 요청 */}
                 {!props.is_feedback_requested && (
                     <button 
                       onClick={handlePromote}
-                      className="bg-gradient-to-r from-orange-400 to-red-500 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:from-orange-500 hover:to-red-600 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center mb-2"
+                      className="bg-gradient-to-r from-orange-400 to-red-500 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:from-orange-500 hover:to-red-600 transition-colors transform hover:scale-105 shadow-lg w-36 justify-center"
                     >
                       <Megaphone className="w-4 h-4" /> 피드백 요청
                     </button>
                 )}
                 
-                {/* [Report Button] V-Audit or Growth Mode */}
+                {/* 3. 새 에피소드 */}
+                <button 
+                  onClick={(e) => { e.stopPropagation(); router.push(`/project/upload?mode=version&projectId=${props.id}`); }}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-colors transform hover:scale-105 shadow-lg w-36 justify-center"
+                >
+                  <Rocket className="w-4 h-4" /> 새 에피소드
+                </button>
+
+                {/* 4. 수정 */}
+                <button 
+                  onClick={(e) => { 
+                     e.stopPropagation(); 
+                     const isAudit = props.custom_data?.audit_config;
+                     router.push(`/project/upload?mode=${isAudit ? 'audit' : 'default'}&edit=${props.id}`);
+                  }}
+                  className="bg-white text-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-green-500 hover:text-white transition-colors transform hover:scale-105 shadow-lg w-36 justify-center"
+                >
+                  <Edit className="w-4 h-4" /> 수정
+                </button>
+                
+                {/* 5. 삭제 */}
+                {onDelete && (
+                  <button 
+                    onClick={(e) => { 
+                        e.stopPropagation(); 
+                        onDelete(props.id);
+                    }}
+                    className="bg-red-50 text-red-600 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-red-100 transition-colors transform hover:scale-105 shadow-lg w-36 justify-center"
+                  >
+                    <Trash2 className="w-4 h-4" /> 삭제
+                  </button>
+                )}
+
+                {/* 6. 진단 리포트 (Growth Mode) */}
                 {(props.is_growth_requested || props.is_feedback_requested) && (
                     <button 
                       onClick={(e) => { 
                           e.stopPropagation(); 
                           router.push(`/mypage/projects/${props.id}/audit`);
                       }}
-                      className="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-indigo-700 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center mb-2"
+                      className="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-indigo-700 transition-colors transform hover:scale-105 shadow-lg w-36 justify-center"
                     >
                       <BarChart3 className="w-4 h-4" /> 진단 리포트
                     </button>
                 )}
-
-                <div className="flex flex-col gap-2">
-                    <button 
-                      onClick={(e) => { 
-                          if (onClick) onClick();
-                      }}
-                      className="bg-gray-100 text-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-white transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
-                    >
-                      <Eye className="w-4 h-4" /> 보기
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); router.push(`/project/edit/${props.id}`); }}
-                      className="bg-white text-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-green-500 hover:text-white transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
-                    >
-                      <Edit className="w-4 h-4" /> 수정
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); router.push(`/project/upload?mode=version&projectId=${props.id}`); }}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
-                    >
-                      <Rocket className="w-4 h-4" /> 새 에피소드
-                    </button>
-                    {onDelete && (
-                      <button 
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            onDelete(props.id);
-                        }}
-                        className="bg-red-50 text-red-600 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-red-100 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
-                      >
-                        <Trash2 className="w-4 h-4" /> 삭제
-                      </button>
-                    )}
-                </div>
              </div>
            )}
           {/* Badges Container */}
           <div className="absolute top-3 left-3 z-10 flex flex-col gap-2 items-start pointer-events-none">
+              {(props.custom_data?.audit_config || props.audit_deadline) && (
+                <div className="bg-orange-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1 backdrop-blur-md">
+                   <Zap size={12} fill="currentColor" /> <span>피드백 진행 중</span>
+                </div>
+              )}
+              {props.scheduled_at && new Date(props.scheduled_at) > new Date() && (
+                 <div className="bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-1 rounded-full shadow-md flex items-center gap-1 animate-pulse">
+                   <Clock size={12} strokeWidth={3} />
+                   <span>{new Date(props.scheduled_at).toLocaleDateString()}</span>
+                 </div>
+              )}
               {likes >= 100 && (
                 <div className="bg-yellow-400 text-yellow-950 text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
                    <span>🏆</span> <span>POPULAR</span>
@@ -192,7 +217,7 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
             <OptimizedImage
               src={imageUrl}
               alt={altText}
-              className="object-cover transition-all duration-300 group-hover:brightness-110"
+              className={`object-cover transition-all duration-300 group-hover:brightness-110 ${props.scheduled_at && new Date(props.scheduled_at) > new Date() ? 'grayscale-[0.8]' : ''}`}
               fill
             />
           )}
