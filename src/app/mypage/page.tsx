@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, EyeOff, Lock, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket, Sparkles, Wand2, Lightbulb, Zap, UserCircle2, Search, Clock, BarChart, ChefHat } from "lucide-react";
+import { Heart, Folder, Upload, Settings, Grid, Send, MessageCircle, Eye, EyeOff, Lock, Trash2, Camera, UserMinus, AlertTriangle, Loader2, Plus, Edit, Rocket, Sparkles, Wand2, Lightbulb, Zap, UserCircle2, Search, Clock, BarChart, ChefHat, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileManager } from "@/components/ProfileManager";
 import { ImageCard } from "@/components/ImageCard";
@@ -655,6 +655,12 @@ export default function MyPage() {
                                   <Eye className="w-3.5 h-3.5 mr-2" /> 진단
                                 </Button>
                              </div>
+                             <Button 
+                                onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id); }}
+                                className="w-full mt-2 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 rounded-xl font-bold text-[11px] h-9 transition-all shadow-sm"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 mr-2" /> 삭제하기
+                              </Button>
                           </div>
                           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                         </div>
@@ -880,8 +886,8 @@ export default function MyPage() {
             {activeTab === 'settings' && (
               <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                 <ProfileManager 
-                   userProfile={userProfile} 
-                   setUserProfile={setUserProfile} 
+                   user={userProfile} 
+                   onUpdate={() => initStats()}
                    onDeleteClick={() => setDeleteModalOpen(true)}
                 />
                  <ApiKeyManager />
@@ -927,30 +933,25 @@ export default function MyPage() {
       </Dialog>
       
       {/* 상세 모달들 */}
+      {/* 상세 모달들 */}
       {selectedProject && (
         <ProjectDetailModalV2
-          isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
-          projectId={selectedProject.id}
-          initialData={{
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          project={{
              ...selectedProject,
-             // Ensure legacy compatibility
              user: {
                 username: selectedProject.user?.username || 'Unknown',
-                profile_image_url: selectedProject.user?.profile_image?.small || '/globe.svg'
+                profile_image: { small: selectedProject.user?.profile_image?.small || '/globe.svg', large: selectedProject.user?.profile_image?.large || '/globe.svg' }
              }
           }}
-          onDelete={() => handleDeleteProject(selectedProject.id)}
-          onEdit={() => router.push(`/project/edit/${selectedProject.id}`)}
-          isOwner={true}
-          onToggleVisibility={() => handleToggleVisibility(selectedProject.id, selectedProject.visibility)}
         />
       )}
 
       {selectedProposal && (
         <ProposalDetailModal
-          isOpen={proposalModalOpen}
-          onClose={() => setProposalModalOpen(false)}
+          open={proposalModalOpen}
+          onOpenChange={setProposalModalOpen}
           proposal={selectedProposal}
         />
       )}
@@ -958,33 +959,33 @@ export default function MyPage() {
       {/* AI 결과 모달들 */}
       {leanModalOpen && savedLeanCanvas && (
         <LeanCanvasModal
-          isOpen={leanModalOpen}
-          onClose={() => setLeanModalOpen(false)}
-          data={savedLeanCanvas}
+          open={leanModalOpen}
+          onOpenChange={setLeanModalOpen}
+          initialData={savedLeanCanvas}
         />
       )}
 
       {personaModalOpen && savedPersona && (
         <PersonaDefinitionModal
-          isOpen={personaModalOpen}
-          onClose={() => setPersonaModalOpen(false)}
-          data={savedPersona}
+          open={personaModalOpen}
+          onOpenChange={setPersonaModalOpen}
+          initialData={savedPersona}
         />
       )}
 
       {assistantModalOpen && savedAssistant && (
         <AssistantResultModal
-           isOpen={assistantModalOpen}
-           onClose={() => setAssistantModalOpen(false)}
-           data={savedAssistant}
+           open={assistantModalOpen}
+           onOpenChange={setAssistantModalOpen}
+           initialData={savedAssistant}
         />
       )}
 
       {/* [New] Report Modal */}
       {feedbackReportOpen && currentFeedbackProject && (
          <FeedbackReportModal
-            isOpen={feedbackReportOpen}
-            onClose={() => setFeedbackReportOpen(false)}
+            open={feedbackReportOpen}
+            onOpenChange={setFeedbackReportOpen}
             projectId={currentFeedbackProject.id}
             projectTitle={currentFeedbackProject.title}
          />

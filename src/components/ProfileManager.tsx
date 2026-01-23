@@ -11,16 +11,17 @@ import { supabase } from "@/lib/supabase/client";
 import { 
   Loader2, Globe, Github, Twitter, Instagram, 
   Settings, Check, X, Copy, ExternalLink, 
-  Eye, EyeOff, Terminal, Key, Plus, Trash2, RefreshCw
+  Eye, EyeOff, Terminal, Key, Plus, Trash2, RefreshCw, AlertTriangle
 } from "lucide-react";
 import { GENRE_CATEGORIES_WITH_ICONS, FIELD_CATEGORIES_WITH_ICONS } from "@/lib/ui-constants";
 
 interface ProfileManagerProps {
   user: any; 
   onUpdate: () => void;
+  onDeleteClick?: () => void;
 }
 
-export function ProfileManager({ user, onUpdate }: ProfileManagerProps) {
+export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManagerProps) {
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
@@ -483,6 +484,26 @@ export function ProfileManager({ user, onUpdate }: ProfileManagerProps) {
             </div>
         </section>
         
+        {/* 5. 계정 관리 (Danger Zone) */}
+        <section className="space-y-6 pt-8 border-t border-red-100">
+             <h2 className="text-xl font-bold text-red-600 flex items-center gap-2">
+                 <AlertTriangle className="w-6 h-6" /> Danger Zone
+             </h2>
+             <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-center justify-between">
+                 <div>
+                     <h3 className="font-bold text-red-900">회원 탈퇴</h3>
+                     <p className="text-sm text-red-700 mt-1">
+                         계정을 삭제하면 모든 프로젝트와 활동 내역이 연구적으로 삭제됩니다.
+                     </p>
+                 </div>
+                 {onDeleteClick && (
+                    <Button variant="destructive" onClick={onDeleteClick} className="bg-white text-red-600 border border-red-200 hover:bg-red-100 font-bold">
+                        계정 삭제
+                    </Button>
+                 )}
+             </div>
+        </section>
+
         {/* 하단 저장 버튼 (Floating also possible) */}
         <div className="flex justify-end pt-8">
              <Button onClick={handleSave} size="lg" disabled={loading} className="bg-green-600 hover:bg-green-700 shadow-lg px-8">

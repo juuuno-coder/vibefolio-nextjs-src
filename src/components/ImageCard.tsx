@@ -47,11 +47,12 @@ interface ImageCardProps {
   } | null;
   className?: string;
   onClick?: () => void;
+  onDelete?: (id: string) => void;
 }
 
 // forwardRef를 사용하여 컴포넌트를 래핑
 export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
-  ({ props, onClick, className, ...rest }, ref) => {
+  ({ props, onClick, onDelete, className, ...rest }, ref) => {
     const [imgError, setImgError] = useState(false);
     const [avatarError, setAvatarError] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
@@ -155,15 +156,17 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
                     >
                       <Rocket className="w-4 h-4" /> 새 에피소드
                     </button>
-                    <button 
-                      onClick={(e) => { 
-                          e.stopPropagation(); 
-                          toast.error("삭제 기능은 상위 컴포넌트에서 처리해야 합니다.");
-                      }}
-                      className="bg-red-50 text-red-600 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-red-100 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
-                    >
-                      <Trash2 className="w-4 h-4" /> 삭제
-                    </button>
+                    {onDelete && (
+                      <button 
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            onDelete(props.id);
+                        }}
+                        className="bg-red-50 text-red-600 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-red-100 transition-colors transform hover:scale-105 shadow-lg w-32 justify-center"
+                      >
+                        <Trash2 className="w-4 h-4" /> 삭제
+                      </button>
+                    )}
                 </div>
              </div>
            )}
