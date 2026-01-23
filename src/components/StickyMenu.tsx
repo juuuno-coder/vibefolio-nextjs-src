@@ -84,7 +84,6 @@ interface StickyMenuProps {
 const categories: Category[] = [
   { iconSolid: faHeart, label: "관심사", value: "interests" },
   { iconSolid: faLayerGroup, label: "전체보기", value: "all" },
-  { iconSolid: faSeedling, label: "성장하기", value: "growth" },
   { iconSolid: faCamera, label: "포토", value: "photo" },
   { iconSolid: faWandMagicSparkles, label: "웹툰/애니", value: "animation" },
   { iconSolid: faPalette, label: "그래픽", value: "graphic" },
