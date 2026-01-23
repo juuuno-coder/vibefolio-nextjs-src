@@ -32,12 +32,14 @@ import {
 import { useAuth } from "@/lib/auth/AuthContext";
 import { uploadImage } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChefHat, Clock, Sparkles, Rocket } from "lucide-react";
 import dynamic from "next/dynamic";
 import { genreCategories, fieldCategories } from "@/lib/categoryMap";
 
 // Dynamic Imports
 const TiptapEditor = dynamic(() => import("@/components/editor/TiptapEditor.client"), { ssr: false });
-const CollaboratorManager = dynamic(() => import("@/components/CollaboratorManager"), { ssr: false });
+const CollaboratorManager = dynamic(() => import("@/components/CollaboratorManager").then(mod => mod.CollaboratorManager), { ssr: false });
 
 export default function ProjectUploadPage() {
   const router = useRouter();
@@ -66,31 +68,78 @@ export default function ProjectUploadPage() {
   const [collaboratorEmails, setCollaboratorEmails] = useState<string[]>([]);
 
   // V-Audit 전용 상태
-  const [isFeedbackRequested, setIsFeedbackRequested] = useState(isAuditMode);
+  const [isFeedbackRequested, setIsFeedbackRequested] = useState(false); // Default to NO
+  const [auditDeadline, setAuditDeadline] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7); // Default 1 week
+    return d.toISOString().split('T')[0];
+  });
   const [auditType, setAuditType] = useState<'link' | 'image' | 'video'>('link');
   const [mediaData, setMediaData] = useState<string | string[]>(auditType === 'image' ? [] : "");
   const [isAB, setIsAB] = useState(false);
   const [mediaDataB, setMediaDataB] = useState<string | string[]>(auditType === 'image' ? [] : "");
   const [customCategories, setCustomCategories] = useState<any[]>([
-    { id: 'creative', label: '독창성', desc: '아이디어가 참신한가요?' },
-    { id: 'visual', label: '완성도', desc: '시각적 완성도가 높은가요?' },
-    { id: 'usability', label: '시장성', desc: '실제 사용 가치가 있나요?' }
+    { id: 'score_1', label: '독창성', desc: '아이디어가 참신한가요?', sticker: '/review/s1.png' },
+    { id: 'score_2', label: '완성도', desc: '시각적 완성도가 높은가요?', sticker: '/review/s2.png' },
+    { id: 'score_3', label: '시장성', desc: '실제 사용 가치가 있나요?', sticker: '/review/s3.png' }
   ]);
   const [pollOptions, setPollOptions] = useState<any[]>([
     { id: 'p1', label: '당장 쓸게요!', desc: '매우 만족스러운 결과물입니다.', image_url: '/review/a1.jpeg' },
-    { id: 'p2', label: '조금 아쉬워요', desc: '개선이 필요해 보입니다.', image_url: '/review/a2.jpeg' }
+    { id: 'p2', label: '조금 아쉬워요', desc: '개선이 필요해 보입니다.', image_url: '/review/a2.jpeg' },
+    { id: 'p3', label: '더 연구해 주세요', desc: '방향성 재검토가 필요합니다.', image_url: '/review/a3.jpeg' }
   ]);
   const [pollDesc, setPollDesc] = useState("이 작품에 대해 어떻게 생각하시나요?");
   const [auditQuestions, setAuditQuestions] = useState<string[]>(["가장 인상적인 부분은 어디인가요?"]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [auditStep, setAuditStep] = useState(1); // 1: Project & Media, 2: Criteria, 3: Poll & Questions
 
-  // 모드에 따른 초기 테마 설정
+  // 모드 및 데이터 로딩
   useEffect(() => {
     if (isAuditMode) {
       setIsFeedbackRequested(true);
     }
-  }, [isAuditMode]);
+    
+    if (editId) {
+      const loadProject = async () => {
+        try {
+          const res = await fetch(`/api/projects?id=${editId}`);
+          const data = await res.json();
+          if (data.success && data.project) {
+            const p = data.project;
+            setTitle(p.title || "");
+            setSummary(p.summary || "");
+            setContent(p.content_text || "");
+            setCoverPreview(p.thumbnail_url);
+            setVisibility(p.visibility);
+            setSelectedGenres(p.custom_data?.genres || []);
+            setSelectedFields(p.custom_data?.fields || []);
+            
+            if (p.audit_deadline) setAuditDeadline(p.audit_deadline.split('T')[0]);
+            
+            if (p.custom_data?.audit_config) {
+              const cfg = p.custom_data.audit_config;
+              setAuditType(cfg.type || 'link');
+              setMediaData(cfg.mediaA || "");
+              setMediaDataB(cfg.mediaB || "");
+              setIsAB(cfg.isAB || false);
+              if (cfg.categories) setCustomCategories(cfg.categories);
+              if (cfg.poll) {
+                setPollDesc(cfg.poll.desc || "");
+                setPollOptions(cfg.poll.options || []);
+              }
+              if (cfg.questions) setAuditQuestions(cfg.questions);
+            }
+            
+            setIsFeedbackRequested(p.is_growth_requested || p.is_feedback_requested || false);
+          }
+        } catch (e) {
+          console.error("Failed to load project", e);
+        }
+      };
+      loadProject();
+    }
+  }, [isAuditMode, editId]);
 
   const handleSubmit = async () => {
     if (!title.trim()) return toast.error("제목을 입력해주세요.");
@@ -109,13 +158,14 @@ export default function ProjectUploadPage() {
         content_text: content,
         thumbnail_url: coverUrl,
         is_published: visibility === 'public',
-        visibility,
+        visibility: isAuditMode ? 'unlisted' : visibility, // Default unlisted for audit
         category_id: selectedGenres[0],
+        audit_deadline: isAuditMode ? auditDeadline : null,
         custom_data: {
           genres: selectedGenres,
           fields: selectedFields,
           is_feedback_requested: isFeedbackRequested,
-          audit_config: isFeedbackRequested ? {
+          audit_config: isAuditMode ? {
             type: auditType,
             mediaA: mediaData,
             mediaB: isAB ? mediaDataB : null,
@@ -125,7 +175,7 @@ export default function ProjectUploadPage() {
             questions: auditQuestions
           } : null
         },
-        is_growth_requested: isFeedbackRequested || isAuditMode,
+        is_growth_requested: isFeedbackRequested,
         collaborators: collaboratorEmails
       } as any;
 
@@ -158,209 +208,423 @@ export default function ProjectUploadPage() {
 
   // --- Render Functions ---
 
-  const renderAuditSettings = () => (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* 1. 기본 정보 */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-3">
-           <div className="w-12 h-12 rounded-2xl bg-orange-500 text-white flex items-center justify-center text-xl shadow-lg ring-4 ring-orange-100">🕵️</div>
-           <h2 className="text-3xl font-black text-gray-900">제 평가는요? 의뢰 정보</h2>
-        </div>
-        <Input 
-          placeholder="진단받을 제목을 입력하세요" 
-          value={title} 
-          onChange={e => setTitle(e.target.value)}
-          className="h-16 text-2xl font-bold border-2 focus:border-orange-500 rounded-2xl px-6"
-        />
-        <Input 
-          placeholder="전문가들이 참고할 간단한 요약을 적어주세요" 
-          value={summary} 
-          onChange={e => setSummary(e.target.value)}
-          className="h-14 text-lg border-2 focus:border-orange-500 rounded-xl px-6"
-        />
-      </section>
+  const renderAuditSettings = () => {
+    const steps = [
+      { id: 1, title: '기본 정보 & 미디어', icon: <Sparkles size={16} /> },
+      { id: 2, title: '심사 기준 설정', icon: <ChefHat size={16} /> },
+      { id: 3, title: '심층 질문 & 발행', icon: <Rocket className="w-4 h-4" /> }
+    ];
 
-      {/* 2. 진단 미디어 설정 */}
-      <section className="p-8 bg-slate-900 rounded-[2.5rem] text-white shadow-2xl space-y-8">
-        <div className="flex justify-between items-center">
-          <h3 className="text-xl font-black flex items-center gap-2">
-            <FontAwesomeIcon icon={faCamera} className="text-orange-500" />
-            진단 미디어 설정
-          </h3>
-          <button onClick={() => setIsAB(!isAB)} className={cn("px-4 py-2 rounded-full text-xs font-bold transition-all", isAB ? "bg-orange-500 text-white" : "bg-white/10 text-gray-400")}>
-            A/B 테스트 {isAB ? "활성" : "비활성"}
-          </button>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
-          {['link', 'image', 'video'].map((t) => (
-            <button key={t} onClick={() => setAuditType(t as any)} className={cn("py-4 rounded-2xl border-2 transition-all font-bold text-sm", auditType === t ? "bg-white text-black border-orange-500 shadow-xl" : "bg-white/5 border-white/5 text-gray-500 hover:bg-white/10")}>
-              {t === 'link' ? "웹 링크" : t === 'image' ? "이미지 갤러리" : "유튜브 영상"}
-            </button>
-          ))}
-        </div>
-
-        {/* Media Input Area */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <div className="space-y-2">
-              <label className="text-[10px] font-black text-orange-500 uppercase">Version A (필수)</label>
-              {auditType === 'image' ? (
-                <div className="flex flex-wrap gap-2 p-4 bg-white/5 rounded-2xl border border-white/10">
-                   {Array.isArray(mediaData) && mediaData.map((img, i) => (
-                     <div key={i} className="w-16 h-16 rounded-lg overflow-hidden relative">
-                       <img src={img} className="w-full h-full object-cover" />
-                     </div>
-                   ))}
-                   <label className="w-16 h-16 rounded-lg border-2 border-dashed border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/10">
-                      <FontAwesomeIcon icon={faPlus} className="text-gray-500" />
-                      <input type="file" multiple className="hidden" onChange={async e => {
-                         if (e.target.files) {
-                           const urls = await Promise.all(Array.from(e.target.files).map(f => uploadImage(f)));
-                           setMediaData([...(Array.isArray(mediaData) ? mediaData : []), ...urls]);
-                         }
-                      }} />
-                   </label>
+    return (
+      <div className="space-y-10">
+        {/* Step Indicator */}
+        <div className="flex items-center justify-between bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden relative">
+           <div className="absolute inset-0 bg-gradient-to-r from-orange-50/50 to-transparent pointer-events-none" />
+           <div className="flex items-center gap-8 relative z-10 w-full justify-around md:justify-start md:gap-16">
+              {steps.map((s, i) => (
+                <div key={s.id} className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black transition-all ${auditStep === s.id ? 'bg-orange-600 text-white shadow-lg shadow-orange-200 scale-110' : 'bg-gray-100 text-gray-400'}`}>
+                    {auditStep > s.id ? <FontAwesomeIcon icon={faCheck} className="text-orange-600" /> : s.icon}
+                  </div>
+                  <div className="hidden md:flex flex-col">
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${auditStep === s.id ? 'text-orange-600' : 'text-gray-300'}`}>Step 0{s.id}</span>
+                    <span className={`text-sm font-bold ${auditStep === s.id ? 'text-gray-900' : 'text-gray-400'}`}>{s.title}</span>
+                  </div>
+                  {i < steps.length - 1 && <div className="hidden md:block w-12 h-px bg-gray-100 ml-4" />}
                 </div>
-              ) : (
-                <Input className="bg-white/5 border-white/10 h-12 text-white" placeholder="URL을 입력하세요" value={typeof mediaData === 'string' ? mediaData : ''} onChange={e => setMediaData(e.target.value)} />
-              )}
+              ))}
            </div>
-           {isAB && (
-             <div className="space-y-2">
-                <label className="text-[10px] font-black text-blue-400 uppercase">Version B (비교군)</label>
-                <Input className="bg-white/5 border-white/10 h-12 text-white" placeholder="URL을 입력하세요" value={typeof mediaDataB === 'string' ? mediaDataB : ''} onChange={e => setMediaDataB(e.target.value)} />
-             </div>
-           )}
         </div>
-      </section>
 
-      {/* 3. 평가 항목 구성 */}
-      <section className="space-y-8">
-         <div className="flex items-center gap-2">
-            <h3 className="text-xl font-black text-gray-900">심사 기준 설정</h3>
-            <span className="text-xs text-gray-400 font-medium">유저들이 어떤 기준으로 평가할지 정해주세요</span>
-         </div>
-         
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {customCategories.map((cat, idx) => (
-              <div key={idx} className="flex items-center gap-4 p-4 border-2 rounded-2xl border-gray-100 focus-within:border-orange-500 transition-all bg-white">
-                <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500"><FontAwesomeIcon icon={faStar} /></div>
-                <div className="flex-1">
-                  <input value={cat.label} onChange={e => {
-                    const next = [...customCategories];
-                    next[idx].label = e.target.value;
-                    setCustomCategories(next);
-                  }} className="font-bold text-gray-900 outline-none w-full bg-transparent" placeholder="항목 이름 (예: 독창성)" />
-                  <input value={cat.desc} onChange={e => {
-                    const next = [...customCategories];
-                    next[idx].desc = e.target.value;
-                    setCustomCategories(next);
-                  }} className="text-xs text-gray-500 outline-none w-full bg-transparent" placeholder="상세 설명" />
-                </div>
-              </div>
-            ))}
-         </div>
-      </section>
-
-      {/* 4. 스티커 투표 설정 */}
-      <section className="space-y-8">
-         <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-               <h3 className="text-xl font-black text-gray-900">스티커 투표 구성</h3>
-               <span className="text-xs text-gray-400 font-medium">유저들의 직관적인 반응을 수집하세요</span>
-            </div>
-         </div>
-         <div className="p-8 bg-blue-50 rounded-[2.5rem] border border-blue-100 space-y-6">
-            <Input 
-               value={pollDesc} 
-               onChange={e => setPollDesc(e.target.value)}
-               className="h-12 text-lg font-bold border-none bg-white rounded-xl shadow-sm px-6"
-               placeholder="투표 질문을 입력하세요 (예: 이 작품에 대해 어떻게 생각하시나요?)"
-            />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               {pollOptions.map((opt, idx) => (
-                  <div key={opt.id} className="bg-white p-4 rounded-2xl shadow-sm space-y-3">
-                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold">#{idx+1}</div>
-                        <input 
-                           value={opt.label}
-                           onChange={e => {
-                              const next = [...pollOptions];
-                              next[idx].label = e.target.value;
-                              setPollOptions(next);
-                           }}
-                           className="flex-1 font-bold text-gray-900 outline-none"
-                           placeholder="옵션 라벨"
-                        />
-                     </div>
-                     <textarea 
-                        value={opt.desc}
-                        onChange={e => {
-                           const next = [...pollOptions];
-                           next[idx].desc = e.target.value;
-                           setPollOptions(next);
-                        }}
-                        className="w-full text-xs text-gray-500 bg-gray-50 rounded-lg p-2 resize-none outline-none"
-                        placeholder="상세 설명"
-                        rows={2}
-                     />
-                  </div>
-               ))}
-            </div>
-         </div>
-      </section>
-
-      {/* 5. 주관식 질문 설정 */}
-      <section className="space-y-8">
-         <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-               <h3 className="text-xl font-black text-gray-900">심층 질문 리스트</h3>
-               <span className="text-xs text-gray-400 font-medium">전문가들에게 직접 물어보고 싶은 내용을 적어주세요</span>
-            </div>
-            <Button 
-               variant="outline" 
-               size="sm" 
-               onClick={() => setAuditQuestions([...auditQuestions, ""])}
-               className="rounded-full border-gray-200"
+        <AnimatePresence mode="wait">
+          {auditStep === 1 && (
+            <motion.div 
+              key="step1"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-10"
             >
-               <FontAwesomeIcon icon={faPlus} className="mr-2" /> 질문 추가
-            </Button>
-         </div>
-         
-         <div className="space-y-4">
-            {auditQuestions.map((q, idx) => (
-               <div key={idx} className="flex gap-4 animate-in slide-in-from-right-4">
-                  <div className="shrink-0 w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black">Q{idx+1}</div>
-                  <div className="flex-1 relative">
-                     <Input 
-                        value={q}
-                        onChange={e => {
-                           const next = [...auditQuestions];
-                           next[idx] = e.target.value;
-                           setAuditQuestions(next);
-                        }}
-                        placeholder="질문 내용을 입력하세요"
-                        className="h-12 pr-12 rounded-2xl border-2 focus:border-slate-900"
-                     />
-                     {auditQuestions.length > 1 && (
-                        <button 
-                           onClick={() => setAuditQuestions(auditQuestions.filter((_, i) => i !== idx))}
-                           className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-red-500 transition-colors"
-                        >
-                           <FontAwesomeIcon icon={faTrash} />
-                        </button>
-                     )}
-                  </div>
-               </div>
-            ))}
-         </div>
-      </section>
+              <section className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-600 text-white flex items-center justify-center text-xl shadow-lg ring-4 ring-orange-100">🕵️</div>
+                  <h2 className="text-3xl font-black text-gray-900 tracking-tight">어떤 프로젝트를 진단할까요?</h2>
+                </div>
+                <div className="space-y-4">
+                  <Input 
+                    placeholder="진단받을 제목을 입력하세요" 
+                    value={title} 
+                    onChange={e => setTitle(e.target.value)}
+                    className="h-16 text-2xl font-bold border-2 border-gray-100 focus:border-orange-500 rounded-2xl px-6 transition-all"
+                  />
+                  <Input 
+                    placeholder="전문가들이 참고할 간단한 요약을 적어주세요" 
+                    value={summary} 
+                    onChange={e => setSummary(e.target.value)}
+                    className="h-14 text-lg border-2 border-gray-100 focus:border-orange-500 rounded-xl px-6 transition-all"
+                  />
+                </div>
+              </section>
 
-      <Button onClick={handleSubmit} className="w-full h-16 rounded-[2rem] bg-orange-600 hover:bg-orange-700 text-xl font-black text-white shadow-xl shadow-orange-200">
-        진단 의뢰 게시하기
-      </Button>
-    </div>
-  );
+              <section className="p-8 bg-slate-900 rounded-[2.5rem] text-white shadow-2xl space-y-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl -mr-32 -mt-32" />
+                <div className="flex justify-between items-center relative z-10">
+                  <h3 className="text-xl font-black flex items-center gap-2">
+                    <FontAwesomeIcon icon={faCamera} className="text-orange-500" />
+                    진단 미디어 및 기한 설정
+                  </h3>
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-end">
+                       <span className="text-[10px] font-black text-white/40 uppercase mb-1">진단 마감일</span>
+                       <input 
+                         type="date" 
+                         value={auditDeadline} 
+                         onChange={e => setAuditDeadline(e.target.value)}
+                         className="bg-white/10 border-none rounded-lg px-3 py-1 text-xs font-bold text-orange-400 outline-none focus:ring-1 focus:ring-orange-500"
+                       />
+                    </div>
+                    <button onClick={() => setIsAB(!isAB)} className={cn("px-4 py-2 rounded-full text-xs font-bold transition-all h-fit", isAB ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" : "bg-white/10 text-gray-400 hover:bg-white/20")}>
+                       A/B 테스트 {isAB ? "활성" : "비활성"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 relative z-10">
+                  {['link', 'image', 'video'].map((t) => (
+                    <button key={t} onClick={() => setAuditType(t as any)} className={cn("py-4 rounded-2xl border-2 transition-all font-bold text-sm", auditType === t ? "bg-white text-black border-orange-500 shadow-xl scale-105" : "bg-white/5 border-white/5 text-gray-500 hover:bg-white/10")}>
+                      {t === 'link' ? "웹 링크" : t === 'image' ? "이미지 갤러리" : "유튜브 영상"}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                   <div className="space-y-4">
+                      <label className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Version A (Main)</label>
+                      {auditType === 'image' ? (
+                        <div className="flex flex-wrap gap-2 p-4 bg-white/5 rounded-2xl border border-white/10">
+                           {Array.isArray(mediaData) && (mediaData as string[]).map((img, i) => (
+                             <div key={i} className="w-20 h-20 rounded-xl overflow-hidden relative shadow-lg group/img">
+                               <img src={img} className="w-full h-full object-cover" />
+                               <button onClick={() => setMediaData((mediaData as string[]).filter((_, j) => j !== i))} className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
+                                 <FontAwesomeIcon icon={faTrash} size="xs" />
+                               </button>
+                             </div>
+                           ))}
+                           <label className="w-20 h-20 rounded-xl border-2 border-dashed border-white/20 flex flex-col items-center justify-center cursor-pointer hover:bg-white/10 transition-colors">
+                              <FontAwesomeIcon icon={faPlus} className="text-gray-500 mb-1" />
+                              <span className="text-[9px] font-bold text-gray-500">추가</span>
+                              <input type="file" multiple className="hidden" onChange={async e => {
+                                 if (e.target.files) {
+                                   const urls = await Promise.all(Array.from(e.target.files).map(f => uploadImage(f)));
+                                   setMediaData([...(Array.isArray(mediaData) ? mediaData : []), ...urls]);
+                                 }
+                              }} />
+                           </label>
+                        </div>
+                      ) : (
+                        <Input className="bg-white/5 border-white/10 h-14 text-white rounded-xl focus:border-orange-500 transition-all px-5" placeholder="URL을 입력하세요 (예: https://...)" value={typeof mediaData === 'string' ? mediaData : ''} onChange={e => setMediaData(e.target.value)} />
+                      )}
+                   </div>
+                   {isAB && (
+                     <div className="space-y-4">
+                        <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Version B (Comparator)</label>
+                        <Input className="bg-white/5 border-white/10 h-14 text-white rounded-xl focus:border-blue-400 transition-all px-5" placeholder="비교할 URL을 입력하세요" value={typeof mediaDataB === 'string' ? mediaDataB : ''} onChange={e => setMediaDataB(e.target.value)} />
+                     </div>
+                   )}
+                </div>
+              </section>
+
+              <div className="flex justify-end pt-4">
+                <Button onClick={() => setAuditStep(2)} className="h-14 px-12 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-lg shadow-xl shadow-orange-100 transition-all group">
+                  다음 단계로 <FontAwesomeIcon icon={faCheck} className="ml-3 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {auditStep === 2 && (
+            <motion.div 
+              key="step2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-10"
+            >
+              <section className="space-y-8">
+                 <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2">
+                       <h3 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                         <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-xl shadow-lg ring-4 ring-slate-100">⚖️</div>
+                         심사 기준 설정
+                       </h3>
+                       <p className="text-sm text-gray-400 font-medium pl-14">유저들이 어떤 기준으로 평가할지 정해주세요 (최대 6개)</p>
+                    </div>
+                    <Button 
+                       variant="outline" 
+                       onClick={() => setCustomCategories([...customCategories, { id: `cat-${Date.now()}`, label: "", desc: "", sticker: "" }])}
+                       className="rounded-2xl border-2 border-gray-100 h-12 font-bold hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition-all"
+                       disabled={customCategories.length >= 6}
+                    >
+                       <FontAwesomeIcon icon={faPlus} className="mr-2" /> 새 기준 추가
+                    </Button>
+                 </div>
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {customCategories.map((cat, idx) => (
+                      <div key={idx} className="flex items-center gap-5 p-6 border-2 rounded-3xl border-gray-100 focus-within:border-orange-500 transition-all bg-white relative group shadow-sm hover:shadow-md">
+                        <label className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 cursor-pointer overflow-hidden shrink-0 group/img relative shadow-inner">
+                          {cat.sticker ? (
+                            <img src={cat.sticker} className="w-full h-full object-contain" />
+                          ) : (
+                            <FontAwesomeIcon icon={faStar} />
+                          )}
+                          <input type="file" className="hidden" onChange={async e => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const url = await uploadImage(file);
+                              const next = [...customCategories];
+                              next[idx].sticker = url;
+                              setCustomCategories(next);
+                            }
+                          }} />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
+                            <FontAwesomeIcon icon={faCamera} className="text-white text-xs" />
+                          </div>
+                        </label>
+
+                        <div className="flex-1 space-y-1">
+                          <input value={cat.label} onChange={e => {
+                            const next = [...customCategories];
+                            next[idx].label = e.target.value;
+                            setCustomCategories(next);
+                          }} className="font-bold text-gray-900 outline-none w-full bg-transparent text-lg placeholder:text-gray-200" placeholder="항목 이름 (예: 독창성)" />
+                          <input value={cat.desc} onChange={e => {
+                            const next = [...customCategories];
+                            next[idx].desc = e.target.value;
+                            setCustomCategories(next);
+                          }} className="text-xs text-gray-400 outline-none w-full bg-transparent font-medium" placeholder="간단한 심사 가이드" />
+                        </div>
+                        {customCategories.length > 1 && (
+                          <button 
+                            onClick={() => setCustomCategories(customCategories.filter((_, i) => i !== idx))}
+                            className="opacity-0 group-hover:opacity-100 absolute -top-3 -right-3 w-8 h-8 bg-white border border-gray-100 rounded-full text-gray-300 hover:text-red-500 hover:border-red-500 transition-all shadow-lg flex items-center justify-center"
+                          >
+                            <FontAwesomeIcon icon={faTrash} size="sm" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {customCategories.length === 0 && (
+                       <div className="col-span-full py-20 bg-gray-50 rounded-[2.5rem] border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-gray-400">
+                          <p className="font-bold">심사 기준이 없습니다.</p>
+                          <Button variant="link" onClick={() => setCustomCategories([{ id: '1', label: '', desc: '' }])}>기준 추가하기</Button>
+                       </div>
+                    )}
+                 </div>
+              </section>
+
+              <div className="flex justify-between pt-4">
+                <Button variant="ghost" onClick={() => setAuditStep(1)} className="h-14 px-8 rounded-2xl font-bold text-gray-400 hover:text-gray-900">
+                   <FontAwesomeIcon icon={faArrowLeft} className="mr-2" /> 이전으로
+                </Button>
+                <Button onClick={() => setAuditStep(3)} className="h-14 px-12 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-lg shadow-xl shadow-orange-100 transition-all group">
+                  마지막 단계로 <FontAwesomeIcon icon={faCheck} className="ml-3 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {auditStep === 3 && (
+            <motion.div 
+              key="step3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-12"
+            >
+              {/* 스티커 투표 설정 */}
+              <section className="space-y-8">
+                 <div className="flex flex-col gap-2">
+                    <h3 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl shadow-lg ring-4 ring-blue-100">🗳️</div>
+                      스티커 투표 구성
+                    </h3>
+                    <p className="text-sm text-gray-400 font-medium pl-14">유저들의 직관적인 반응을 수집하세요 (질문과 옵션)</p>
+                 </div>
+                 <div className="p-10 bg-blue-50/50 rounded-[3rem] border border-blue-100/50 space-y-8">
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-blue-100 focus-within:ring-4 focus-within:ring-blue-50 transition-all flex items-center gap-4">
+                       <div className="w-10 h-10 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600">
+                         <FontAwesomeIcon icon={faQuoteLeft} />
+                       </div>
+                       <input 
+                          value={pollDesc} 
+                          onChange={e => setPollDesc(e.target.value)}
+                          className="flex-1 h-12 text-xl font-black border-none outline-none placeholder:text-slate-200"
+                          placeholder="투표 질문 (예: 이 작품에 대해 어떻게 생각하시나요?)"
+                       />
+                       <Button 
+                          variant="secondary"
+                          size="sm" 
+                          onClick={() => setPollOptions([...pollOptions, { id: `p-${Date.now()}`, label: "", desc: "", image_url: "" }])}
+                          className="bg-blue-600 text-white hover:bg-blue-700 font-black rounded-xl h-10 shadow-lg shadow-blue-200"
+                          disabled={pollOptions.length >= 5}
+                       >
+                          <FontAwesomeIcon icon={faPlus} className="mr-2" /> 옵션 추가
+                       </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                       {pollOptions.map((opt, idx) => (
+                          <div key={opt.id} className="bg-white p-6 rounded-[2.5rem] shadow-sm space-y-5 relative group border border-gray-50 hover:border-blue-200 hover:shadow-xl transition-all">
+                             <label className="w-full aspect-square bg-slate-50 rounded-3xl flex items-center justify-center cursor-pointer overflow-hidden border-2 border-dashed border-gray-100 hover:border-blue-400 transition-all group/sticker relative">
+                                {opt.image_url ? (
+                                   <img src={opt.image_url} className="w-full h-full object-cover" />
+                                ) : (
+                                   <div className="flex flex-col items-center gap-2">
+                                      <FontAwesomeIcon icon={faUpload} className="text-gray-300 text-3xl" />
+                                      <span className="text-[10px] font-black text-gray-300 uppercase">Upload Icon</span>
+                                   </div>
+                                )}
+                                <input type="file" className="hidden" onChange={async e => {
+                                   const file = e.target.files?.[0];
+                                   if (file) {
+                                      const url = await uploadImage(file);
+                                      const next = [...pollOptions];
+                                      next[idx].image_url = url;
+                                      setPollOptions(next);
+                                   }
+                                }} />
+                                <div className="absolute inset-x-4 top-4 bottom-14 bg-black/40 opacity-0 group-hover/sticker:opacity-100 transition-opacity flex flex-col items-center justify-center rounded-2xl backdrop-blur-sm">
+                                   <FontAwesomeIcon icon={faCamera} className="text-white mb-2" />
+                                   <span className="text-[10px] text-white font-black">아이콘 변경</span>
+                                </div>
+                             </label>
+
+                             <div className="space-y-3">
+                                <div className="flex items-center gap-3">
+                                   <div className="w-8 h-8 bg-slate-950 text-white rounded-xl flex items-center justify-center font-black text-[10px]">0{idx+1}</div>
+                                   <input 
+                                      value={opt.label}
+                                      onChange={e => {
+                                         const next = [...pollOptions];
+                                         next[idx].label = e.target.value;
+                                         setPollOptions(next);
+                                      }}
+                                      className="flex-1 font-black text-gray-900 outline-none text-[15px] placeholder:text-gray-200"
+                                      placeholder="직관적인 답안"
+                                   />
+                                </div>
+                                <textarea 
+                                   value={opt.desc}
+                                   onChange={e => {
+                                      const next = [...pollOptions];
+                                      next[idx].desc = e.target.value;
+                                      setPollOptions(next);
+                                   }}
+                                   className="w-full text-xs text-gray-500 bg-gray-50 rounded-2xl p-4 resize-none outline-none leading-relaxed border border-transparent focus:border-blue-100 focus:bg-white transition-all font-medium"
+                                   placeholder="보충 설명 (선택)"
+                                   rows={2}
+                                />
+                             </div>
+                             {pollOptions.length > 2 && (
+                                <button 
+                                   onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}
+                                   className="opacity-0 group-hover:opacity-100 absolute -top-2 -right-2 w-8 h-8 bg-white border border-gray-100 rounded-full text-gray-300 hover:text-red-500 hover:border-red-500 transition-all shadow-lg flex items-center justify-center"
+                                >
+                                   <FontAwesomeIcon icon={faTrash} size="sm" />
+                                </button>
+                             )}
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+              </section>
+
+              {/* 주관식 질문 설정 */}
+              <section className="space-y-8">
+                 <div className="flex flex-col gap-2">
+                    <h3 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-lg ring-4 ring-indigo-100">💬</div>
+                      심층 진단 질문
+                    </h3>
+                    <p className="text-sm text-gray-400 font-medium pl-14">전문가들에게 직접 물어보고 싶은 내용을 적어주세요</p>
+                 </div>
+                 
+                 <div className="space-y-4">
+                    {auditQuestions.map((q, idx) => (
+                       <div key={idx} className="flex gap-4 group">
+                          <div className="shrink-0 w-14 h-14 bg-slate-950 text-white rounded-[1.2rem] flex items-center justify-center font-black text-lg shadow-xl shadow-slate-200">Q{idx+1}</div>
+                          <div className="flex-1 relative">
+                             <Input 
+                                value={q}
+                                onChange={e => {
+                                   const next = [...auditQuestions];
+                                   next[idx] = e.target.value;
+                                   setAuditQuestions(next);
+                                }}
+                                placeholder="질문 내용을 입력하세요 (예: 가장 인상적인 부분은 어디인가요?)"
+                                className="h-14 pr-14 rounded-2xl border-2 border-gray-100 focus:border-indigo-600 text-lg font-bold transition-all px-6 shadow-sm"
+                             />
+                             {auditQuestions.length > 1 && (
+                                <button 
+                                   onClick={() => setAuditQuestions(auditQuestions.filter((_, i) => i !== idx))}
+                                   className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-200 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                >
+                                   <FontAwesomeIcon icon={faTrash} />
+                                </button>
+                             )}
+                          </div>
+                       </div>
+                    ))}
+                    <Button 
+                       variant="ghost" 
+                       onClick={() => setAuditQuestions([...auditQuestions, ""])}
+                       className="w-full h-14 rounded-2xl border-2 border-dashed border-gray-100 text-gray-400 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 font-bold transition-all"
+                       disabled={auditQuestions.length >= 5}
+                    >
+                       <FontAwesomeIcon icon={faPlus} className="mr-2" /> 새 질문 추가하기
+                    </Button>
+                 </div>
+              </section>
+
+              {/* 성장하기 갤러리 */}
+              <section className="p-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-[3rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl shadow-orange-200 relative overflow-hidden group">
+                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[80px] -mr-32 -mt-32" />
+                 <div className="flex items-center gap-6 relative z-10">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center text-3xl shadow-xl">🌱</div>
+                    <div className="space-y-1">
+                       <h3 className="font-black text-2xl tracking-tight">성장하기 갤러리에 동시 공개</h3>
+                       <p className="text-orange-50/80 text-sm font-medium">Vibefolio AI 피드백과 동료들의 소중한 조언을 함께 받으시겠습니까?</p>
+                    </div>
+                 </div>
+                 <button 
+                    type="button"
+                    onClick={() => setIsFeedbackRequested(!isFeedbackRequested)}
+                    className={cn("w-20 h-10 rounded-full transition-all relative flex items-center px-1.5 shadow-inner z-10", isFeedbackRequested ? "bg-white" : "bg-black/20")}
+                 >
+                    <div className={cn("w-7 h-7 rounded-full shadow-lg transition-all flex items-center justify-center font-black text-[10px]", isFeedbackRequested ? "translate-x-10 bg-orange-600 text-white" : "translate-x-0 bg-white text-gray-300")}>
+                       {isFeedbackRequested ? "YES" : "NO"}
+                    </div>
+                 </button>
+              </section>
+
+              <div className="flex justify-between pt-6">
+                <Button variant="ghost" onClick={() => setAuditStep(2)} className="h-16 px-10 rounded-3xl font-black text-gray-400 hover:text-gray-900 text-lg">
+                   <FontAwesomeIcon icon={faArrowLeft} className="mr-3" /> 이전 단계
+                </Button>
+                <Button onClick={handleSubmit} disabled={isSubmitting} className="h-20 px-16 rounded-[2.5rem] bg-slate-950 hover:bg-black text-white text-2xl font-black transition-all shadow-2xl shadow-slate-300 hover:scale-105 active:scale-95 flex items-center gap-4">
+                  {isSubmitting ? (
+                     <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : <ChefHat className="w-8 h-8" />}
+                  진단 의뢰 게시하기
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#fafafa]">

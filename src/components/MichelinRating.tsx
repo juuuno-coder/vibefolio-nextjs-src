@@ -6,6 +6,15 @@ import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { 
+  Radar, 
+  RadarChart, 
+  PolarGrid, 
+  PolarAngleAxis, 
+  PolarRadiusAxis, 
+  ResponsiveContainer,
+  Text
+} from 'recharts';
 
 interface MichelinRatingProps {
   projectId: string;
@@ -74,9 +83,11 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
       if (data.success) {
         setProjectData(data.project);
         
-        // 커스텀 카테고리 설정 확인
-        if (data.project?.custom_data?.custom_categories) {
-          const custom = data.project.custom_data.custom_categories.map((c: any) => ({
+        // 커스텀 카테고리 설정 확인 (audit_config.categories 또는 legacy custom_categories)
+        const customCategories = data.project?.custom_data?.audit_config?.categories || data.project?.custom_data?.custom_categories;
+        
+        if (customCategories) {
+          const custom = customCategories.map((c: any) => ({
             ...c,
             icon: ICON_MAP[c.icon] || Target
           }));
@@ -95,16 +106,15 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
           setAverages(data.averages || {});
         } else {
           // 기본 카테고리 사용 시
+          const initial: Record<string, number> = {};
+          DEFAULT_CATEGORIES.forEach(c => initial[c.id] = 0);
+          
           if (data.myRating) {
-            setScores({
-              score_1: Number(data.myRating.score_1 || 0),
-              score_2: Number(data.myRating.score_2 || 0),
-              score_3: Number(data.myRating.score_3 || 0),
-              score_4: Number(data.myRating.score_4 || 0),
+            DEFAULT_CATEGORIES.forEach(c => {
+               initial[c.id] = Number(data.myRating[c.id] || 0);
             });
-          } else {
-            setScores({ score_1: 0, score_2: 0, score_3: 0, score_4: 0 });
           }
+          setScores(initial);
           setAverages(data.averages || {});
         }
         
@@ -203,26 +213,29 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
     }
   };
 
-  // 레이더 차트 생성 헬퍼
-  const getRadarPath = (data: Record<string, number>, scale: number = 1) => {
-    const center = 100;
-    const max = 5;
-    const radius = 80 * scale;
-    const numPoints = categories.length;
-    
-    if (numPoints < 3) return ""; // Radar needs at least 3 points
-    
-    const points = categories.map((cat, i) => {
-      const angle = (Math.PI * 2 * i) / numPoints - Math.PI / 2;
-      const score = data[cat.id] || 0;
-      const r = (score / max) * radius;
-      return [
-        center + r * Math.cos(angle),
-        center + r * Math.sin(angle)
-      ];
-    });
+  // Recharts Data Transformation
+  const chartData = useMemo(() => {
+    return categories.map(cat => ({
+      subject: cat.label,
+      A: scores[cat.id] || 0,
+      B: averages[cat.id] || 0,
+      fullMark: 5,
+    }));
+  }, [categories, scores, averages]);
 
-    return `M ${points.map(p => `${p[0]} ${p[1]}`).join(' L ')} Z`;
+  // 커스텀 라벨 렌더러
+  const renderCustomPolarAngleAxis = ({ payload, x, y, cx, cy, ...rest }: any) => {
+    return (
+      <Text
+        {...rest}
+        verticalAnchor="middle"
+        y={y + (y > cy ? 10 : -10)}
+        x={x + (x > cx ? 10 : -10)}
+        className="text-[12px] font-black fill-slate-900 uppercase tracking-tighter"
+      >
+        {payload.value}
+      </Text>
+    );
   };
 
   // 단계별 모드일 때 렌더링할 특정 카테고리
@@ -300,57 +313,47 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
     <div className="w-full relative overflow-hidden group">
       {/* Header Section */}
       <div className="flex flex-col gap-12 items-center">
-        {/* Radar Chart Visual */}
-        <div className="relative flex justify-center items-center py-8">
-            <svg width="100%" height="100%" viewBox="-40 -40 280 280" className="drop-shadow-2xl overflow-visible max-w-[280px]">
-              {/* Radial Guides */}
-              {[1, 0.8, 0.6, 0.4, 0.2].map((s, idx) => (
-                <path key={s} d={getRadarPath({ score_1: 5, score_2: 5, score_3: 5, score_4: 5, score_5: 5, score_6: 5 }, s)} fill={idx % 2 === 0 ? "rgba(0,0,0,0.02)" : "none"} stroke="#e2e8f0" strokeWidth="1" />
-              ))}
-              
-              {/* Dynamic Axes */}
-              {categories.map((_, i) => {
-                const angle = (Math.PI * 2 * i) / categories.length - Math.PI / 2;
-                return (
-                  <line 
-                    key={i}
-                    x1="100" y1="100" 
-                    x2={100 + 90 * Math.cos(angle)} 
-                    y2={100 + 90 * Math.sin(angle)} 
-                    stroke="#e2e8f0" strokeWidth="1" strokeDasharray="2 2" 
+        {/* Radar Chart Visual with Recharts */}
+        <div className="relative w-full aspect-square max-w-[400px] flex justify-center items-center py-8">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
+                <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
+                <PolarAngleAxis 
+                  dataKey="subject" 
+                  tick={renderCustomPolarAngleAxis}
+                />
+                <PolarRadiusAxis 
+                  angle={30} 
+                  domain={[0, 5]} 
+                  tick={false} 
+                  axisLine={false} 
+                />
+                
+                {/* Community Average */}
+                {totalAvg > 0 && (
+                  <Radar
+                    name="Community"
+                    dataKey="B"
+                    stroke="#cbd5e1"
+                    strokeWidth={1}
+                    fill="#f1f5f9"
+                    fillOpacity={0.4}
                   />
-                );
-              })}
-              
-              {/* Community Average (Dashed) */}
-              {totalAvg > 0 && Object.keys(averages).length > 0 && (
-                <path d={getRadarPath(averages)} fill="rgba(0, 0, 0, 0.03)" stroke="rgba(0, 0, 0, 0.2)" strokeWidth="1.5" strokeDasharray="4 4" className="animate-in fade-in duration-1000" />
-              )}
-              
-              {/* My Score (Solid) */}
-              {Object.keys(scores).length > 0 && (
-                <path d={getRadarPath(scores)} fill="rgba(245, 158, 11, 0.15)" stroke="#f59e0b" strokeWidth="4" strokeLinejoin="round" className="transition-all duration-500 ease-out drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
-              )}
-              
-              {/* Dynamic Labels */}
-              {categories.map((cat, i) => {
-                const angle = (Math.PI * 2 * i) / categories.length - Math.PI / 2;
-                const r = 115;
-                const x = 100 + r * Math.cos(angle);
-                const y = 100 + r * Math.sin(angle);
-                return (
-                  <text 
-                    key={cat.id}
-                    x={x} y={y} 
-                    textAnchor="middle" 
-                    dominantBaseline="middle"
-                    className="text-[14px] font-black fill-slate-900 uppercase tracking-tighter"
-                  >
-                    {cat.label}
-                  </text>
-                );
-              })}
-            </svg>
+                )}
+                
+                {/* My Score */}
+                <Radar
+                  name="My Score"
+                  dataKey="A"
+                  stroke={activeCategoryIndex !== undefined ? categories[activeCategoryIndex]?.color || "#f59e0b" : "#f59e0b"}
+                  strokeWidth={4}
+                  fill="#f59e0b"
+                  fillOpacity={0.15}
+                  animationBegin={0}
+                  animationDuration={500}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
            
            {/* Center Score Badge */}
            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none scale-110">

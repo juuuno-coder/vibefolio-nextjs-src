@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { getCategoryName, getCategoryNameById, getCategoryValue } from "@/lib/categoryMap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWandSparkles, faXmark, faCheck, faBullhorn } from "@fortawesome/free-solid-svg-icons";
-import { Megaphone } from "lucide-react";
+import { Megaphone, ChefHat, Clock } from "lucide-react";
 
 
 const ProjectDetailModalV2 = dynamic(() => 
@@ -413,33 +413,64 @@ function HomeContent() {
         <div className="max-w-[1800px] mx-auto px-4 md:px-8 pb-20 pt-8">
             {/* [New] Growth Mode Highlighting - Only show in 'growth' category tab */}
             {!searchQuery && selectedCategory === 'growth' && projects.some(p => p.is_growth_requested || p.is_feedback_requested) && (
-                 <div className="mb-16">
-                    <div className="flex items-center justify-between mb-8">
-                        <div className="flex flex-col gap-1">
-                            <h2 className="text-2xl font-bold text-slate-950 flex items-center gap-3 tracking-tight">
-                                <span className="bg-orange-500 text-white p-2.5 rounded-[1.2rem] shadow-lg shadow-orange-200">
-                                   <Megaphone size={22} strokeWidth={2.5} />
-                                </span>
-                                심사 평가를 기다리고 있어요
-                            </h2>
-                            <p className="text-slate-500 text-sm font-medium">여러분의 냉철한 시선이 작품을 더욱 미슐랭스럽게 만듭니다.</p>
+                 <div className="mb-20 relative px-8 py-10 bg-gradient-to-br from-orange-50 via-white to-white rounded-[3rem] border border-orange-100/50 shadow-sm overflow-hidden group">
+                    {/* Background Decor */}
+                    <div className="absolute top-0 right-0 w-80 h-80 bg-orange-100/30 rounded-full blur-[80px] -mr-32 -mt-32 animate-pulse" />
+                    <div className="absolute bottom-0 left-0 w-40 h-40 bg-orange-50/50 rounded-full blur-[40px] -ml-16 -mb-16" />
+                    
+                    <div className="relative z-10">
+                        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center gap-3">
+                                   <div className="bg-orange-600 text-white p-2.5 rounded-2xl shadow-lg shadow-orange-200">
+                                      <ChefHat size={22} strokeWidth={2.5} />
+                                   </div>
+                                   <span className="text-orange-600 font-black text-[10px] tracking-[0.2em] uppercase">Special Mission</span>
+                                </div>
+                                <h2 className="text-4xl font-black text-slate-950 tracking-tighter leading-tight mt-1">
+                                    제 평가는요? <span className="text-orange-600">전문 진단</span> 프로젝트
+                                </h2>
+                                <p className="text-slate-500 text-[16px] font-medium max-w-lg leading-relaxed">
+                                    창작자의 치열한 고민이 담긴 작품들입니다.<br/>
+                                    여러분의 냉철한 시선으로 미슐랭 평점을 매겨주세요.
+                                </p>
+                            </div>
+                            <Button 
+                              variant="outline"
+                              onClick={() => router.push('/growth')}
+                              className="rounded-2xl border-slate-200 font-bold h-12 px-8 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-all text-sm shadow-xl shadow-slate-100/50"
+                            >
+                                가이드 보기
+                            </Button>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => router.push('/growth')}
-                          className="rounded-full border-slate-200 font-bold hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-all text-xs"
-                        >
-                            가이드 보기
-                        </Button>
+                        
+                        <div className="flex gap-8 overflow-x-auto pb-6 no-scrollbar -mx-4 px-4 h-[440px] items-center">
+                            {projects.filter(p => p.is_growth_requested || p.is_feedback_requested).slice(0, 8).map(project => (
+                                 <div key={project.id} className="min-w-[320px] md:min-w-[400px] transition-all duration-500 hover:scale-[1.02]">
+                                    <ImageCard 
+                                        props={project} 
+                                        onClick={() => handleProjectClick(project)} 
+                                        className="shadow-2xl shadow-slate-200/40" 
+                                    />
+                                    {/* Mini Info for Audit */}
+                                    <div className="mt-6 flex flex-col gap-3 px-2">
+                                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                            <div className="h-full bg-orange-500 w-[65%] animate-pulse" />
+                                        </div>
+                                        <div className="flex justify-between items-center text-[11px] font-bold">
+                                            <div className="flex items-center gap-2 text-slate-400">
+                                                <Clock size={14} className="text-orange-500" />
+                                                마감 D-3
+                                            </div>
+                                            <div className="px-2.5 py-1 bg-orange-600 text-white rounded-lg text-[9px] font-black uppercase tracking-tighter shadow-md">
+                                                진단 필수
+                                            </div>
+                                        </div>
+                                    </div>
+                                 </div>
+                            ))}
+                        </div>
                     </div>
-                    <div className="flex gap-6 overflow-x-auto pb-6 no-scrollbar -mx-4 px-4">
-                        {projects.filter(p => p.is_growth_requested || p.is_feedback_requested).slice(0, 6).map(project => (
-                             <div key={project.id} className="min-w-[280px] md:min-w-[340px]">
-                                <ImageCard props={project} onClick={() => handleProjectClick(project)} className="transition-all hover:-translate-y-2" />
-                             </div>
-                        ))}
-                    </div>
-                    <div className="h-px bg-slate-100 w-full mt-8" />
                  </div>
             )}
 

@@ -122,19 +122,21 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
   ];
 
   const options = React.useMemo(() => {
-    const custom = projectData?.custom_data?.poll_options;
-    if (custom && Array.isArray(custom)) {
-      return custom.map((opt: any, idx: number) => ({
+    const customPoll = projectData?.custom_data?.audit_config?.poll || projectData?.custom_data?.poll_config;
+    const customOptions = customPoll?.options || projectData?.custom_data?.poll_options;
+    
+    if (customOptions && Array.isArray(customOptions)) {
+      return customOptions.map((opt: any, idx: number) => ({
         id: opt.id || `opt_${idx}`,
         icon: opt.icon === 'flask' ? FlaskConical : opt.icon === 'help' ? HelpCircle : opt.id === 'launch' ? CheckCircle2 : CheckCircle2,
         image_url: opt.image_url,
         label: opt.label,
         desc: opt.desc,
-        color: opt.color || (idx === 0 ? "text-green-500" : idx === 1 ? "text-amber-500" : "text-red-500"),
-        bgFrom: opt.bgFrom || (idx === 0 ? "from-green-500/10" : idx === 1 ? "from-amber-500/10" : "from-red-500/10"),
-        bgTo: opt.bgTo || (idx === 0 ? "to-green-600/20" : idx === 1 ? "to-amber-600/20" : "to-red-600/20"),
-        border: opt.border || (idx === 0 ? "border-green-200" : idx === 1 ? "border-amber-200" : "border-red-200"),
-        activeBorder: opt.activeBorder || (idx === 0 ? "border-green-500" : idx === 1 ? "border-amber-500" : "border-red-500"),
+        color: opt.color || (idx === 0 ? "text-green-500" : idx === 1 ? "text-amber-500" : "text-blue-500"),
+        bgFrom: opt.bgFrom || (idx === 0 ? "from-green-500/10" : idx === 1 ? "from-amber-500/10" : "from-blue-500/10"),
+        bgTo: opt.bgTo || (idx === 0 ? "to-green-600/20" : idx === 1 ? "to-amber-600/20" : "to-blue-600/20"),
+        border: opt.border || (idx === 0 ? "border-green-200" : idx === 1 ? "border-amber-200" : "border-blue-200"),
+        activeBorder: opt.activeBorder || (idx === 0 ? "border-green-500" : idx === 1 ? "border-amber-500" : "border-blue-500"),
         count: counts[opt.id] || 0
       }));
     }

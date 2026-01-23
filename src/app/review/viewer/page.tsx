@@ -63,21 +63,26 @@ function ViewerContent() {
         if (error) throw error;
         setProject(data);
         
-        // [Granular Step Generation]
+        // [3-Stage Granular Step Generation]
         const newSteps: string[] = [];
-        
-        // 1. Michelin Ratings (split into 4)
-        newSteps.push('rating_0', 'rating_1', 'rating_2', 'rating_3');
-        
-        // 2. Custom Audit Questions
         const auditConfig = (data as any).custom_data?.audit_config;
-        const questions = auditConfig?.questions || (data as any).custom_data?.audit_questions || [];
-        questions.forEach((_: any, idx: number) => {
-           newSteps.push(`q_${idx}`);
-        });
         
-        // 3. Voting & Final
-        newSteps.push('voting', 'proposal', 'summary');
+        // Phase 1. Michelin Ratings (split into categories for focus)
+        const categories = auditConfig?.categories || (data as any).custom_data?.categories || [];
+        if (categories.length > 0) {
+           categories.forEach((_: any, idx: number) => newSteps.push(`rating_${idx}`));
+        } else {
+           newSteps.push('rating_0', 'rating_1', 'rating_2'); // Defaults
+        }
+        
+        // Phase 2. Voting & Poll
+        newSteps.push('voting');
+        
+        // Phase 3. Custom Questions + Final Proposal (Merged)
+        newSteps.push('final_review');
+        
+        // Finishing
+        newSteps.push('summary');
         
         setSteps(newSteps);
 
@@ -218,54 +223,54 @@ function ViewerContent() {
        return <MichelinRating projectId={projectId || ""} ratingId={ratingId || undefined} activeCategoryIndex={index} />;
     }
 
-    // Handle Custom Question Steps
+    // Handle Custom Question Steps (Deprecated in favor of combined final_review, but keeping for logic)
     if (stepType.startsWith('q_')) {
-       const index = parseInt(stepType.split('_')[1]);
-       const questions = project?.custom_data?.audit_config?.questions || project?.custom_data?.audit_questions || [];
-       const q = questions[index];
-       
-       return (
-          <div className="space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
-             <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-xl relative overflow-hidden">
-                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
-                <span className="text-[10px] font-black text-green-400 uppercase tracking-[0.3em] mb-4 block">Special Question {index + 1}</span>
-                <h4 className="text-3xl font-black mb-4 tracking-tighter leading-tight">
-                   {q}
-                </h4>
-                <p className="text-slate-400 text-sm font-medium">이 질문에 대해 당신의 날카로운 안목을 들려주세요.</p>
-             </div>
-
-             <div className="space-y-4">
-                <textarea 
-                  value={customAnswers[q] || ""}
-                  onChange={(e) => setCustomAnswers(prev => ({ ...prev, [q]: e.target.value }))}
-                  placeholder="여기에 답변을 입력하세요..."
-                  className="w-full h-64 bg-white border-2 border-slate-100 rounded-[3rem] p-10 text-slate-800 focus:border-green-500 transition-all outline-none resize-none font-medium text-xl shadow-lg"
-                />
-                <div className="flex justify-end px-6">
-                   <p className="text-[11px] font-black text-slate-300 uppercase tracking-widest">Thoughtful response highly appreciated</p>
-                </div>
-             </div>
-          </div>
-       );
+       return null; 
     }
 
     switch (stepType) {
       case 'voting': return <FeedbackPoll projectId={projectId || ""} />;
-      case 'proposal': 
+      case 'final_review': 
+        const questions = project?.custom_data?.audit_config?.questions || project?.custom_data?.audit_questions || [];
         return (
-          <div className="space-y-8 pb-10 animate-in fade-in slide-in-from-right-8 duration-500">
+          <div className="space-y-12 pb-10 animate-in fade-in slide-in-from-right-8 duration-500">
+             {/* Header */}
              <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-10 opacity-10">
                    <ChefHat size={100} />
                 </div>
                 <h4 className="text-3xl font-black mb-4 tracking-tighter flex items-center gap-4">
-                   종합 총평 및 제안
+                   심층 질문 및 종합 제안
                 </h4>
-                <p className="text-slate-400 text-lg leading-relaxed font-medium">진단을 마무리하며 작가에게 전하고픈 <br/>마지막 메시지를 남겨주세요.</p>
+                <p className="text-slate-400 text-lg leading-relaxed font-medium">진단을 마무리하며 작가가 요청한 질문에 답하고 <br/>전체적인 소감을 남겨주세요.</p>
              </div>
 
-             <div className="space-y-4">
+             {/* Custom Questions */}
+             {questions.length > 0 && (
+                <div className="space-y-10">
+                   <div className="flex items-center gap-3 px-2">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                      <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest">Expert Q&A Session</h5>
+                   </div>
+                   {questions.map((q: string, idx: number) => (
+                      <div key={idx} className="space-y-4">
+                         <div className="flex gap-4 items-start">
+                            <span className="text-xl font-black text-slate-300">Q{idx+1}</span>
+                            <p className="text-lg font-bold text-slate-800 pt-0.5">{q}</p>
+                         </div>
+                         <textarea 
+                           value={customAnswers[q] || ""}
+                           onChange={(e) => setCustomAnswers(prev => ({ ...prev, [q]: e.target.value }))}
+                           placeholder="이 질문에 대한 생각을 적어주세요..."
+                           className="w-full h-32 bg-white border-2 border-slate-100 rounded-[2rem] p-6 text-slate-800 focus:border-orange-500 transition-all outline-none resize-none font-medium text-lg shadow-sm"
+                         />
+                      </div>
+                   ))}
+                </div>
+             )}
+
+             {/* Final Proposal */}
+             <div className="space-y-6 pt-6 border-t border-slate-200">
                 <div className="flex items-center gap-3 px-2">
                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                    <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest">Final Audit Comments</h5>
@@ -274,7 +279,7 @@ function ViewerContent() {
                   value={proposalContent}
                   onChange={(e) => setProposalContent(e.target.value)}
                   placeholder="기획, 디자인, 기술적 관점에서 전체적인 소감을 자유롭게 적어주세요..."
-                  className="w-full h-80 bg-slate-50 border-2 border-slate-100 rounded-[3rem] p-10 text-slate-800 focus:border-slate-900 focus:bg-white transition-all outline-none resize-none font-medium text-xl shadow-inner"
+                  className="w-full h-64 bg-slate-50 border-2 border-slate-100 rounded-[3.5rem] p-10 text-slate-800 focus:border-slate-900 focus:bg-white transition-all outline-none resize-none font-medium text-xl shadow-inner"
                 />
              </div>
           </div>
@@ -386,10 +391,9 @@ function ViewerContent() {
                         <>
                           <div>
                             <h3 className="text-2xl font-black text-slate-900 tracking-tighter leading-none">
-                              {stepType.startsWith('rating_') ? "항목별 정밀 진단" : 
-                               stepType.startsWith('q_') ? "프로젝트 심층 질문" :
-                               stepType === 'voting' ? "최종 합불 판정" : 
-                               stepType === 'summary' ? "진단 최종 확인" : "상세 개선 제안"}
+                              {stepType.startsWith('rating_') ? "Phase 1: 항목별 정밀 진단" : 
+                               stepType === 'voting' ? "Phase 2: 직관적 투표/판정" : 
+                               stepType === 'final_review' ? "Phase 3: 심층 질문 및 총평" : "진단 최종 확인"}
                             </h3>
                             <p className="text-[11px] font-black text-green-600 uppercase tracking-[0.2em] mt-3 bg-green-50 inline-block px-3 py-1 rounded-full">{currentStep + 1} / {steps.length} 단계</p>
                           </div>
