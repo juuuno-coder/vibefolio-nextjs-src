@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import { OptimizedImage } from "./OptimizedImage";
 import { FeedbackPoll } from "./FeedbackPoll";
 import { MichelinRating } from "./MichelinRating";
 import { useLikes } from "@/hooks/useLikes";
@@ -730,30 +730,34 @@ export function ProjectDetailModalV2({
                   dangerouslySetInnerHTML={{ __html: unescapeHtml(project.description || '') }}
                 />
               ) : (
-                    <div className="relative inline-block">
-                        {/* Image with Click Handler for Pin Mode */}
-                        <img
+                    <div 
+                      className={`relative inline-block w-full ${isPinMode ? 'cursor-crosshair' : 'cursor-zoom-in'}`}
+                      onClick={(e) => {
+                         if (isPinMode) {
+                            // Calculate % coordinates
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const x = ((e.clientX - rect.left) / rect.width) * 100;
+                            const y = ((e.clientY - rect.top) / rect.height) * 100;
+                            setTempPin({ x, y });
+                            setCommentsPanelOpen(true); // Open panel to type comment
+                            
+                            // Focus input if possible
+                            setTimeout(() => {
+                                const input = document.querySelector('textarea[placeholder="댓글 작성..."]') as HTMLTextAreaElement;
+                                if(input) input.focus();
+                            }, 100);
+                         } else {
+                            setLightboxOpen(true);
+                         }
+                      }}
+                    >
+                        <OptimizedImage
                           src={project.urls.full}
                           alt={project.alt_description || "Project Image"}
-                          className={`max-w-full h-auto object-contain shadow-sm ${isPinMode ? 'cursor-crosshair' : 'cursor-zoom-in'}`}
-                          onClick={(e) => {
-                             if (isPinMode) {
-                                // Calculate % coordinates
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                                setTempPin({ x, y });
-                                setCommentsPanelOpen(true); // Open panel to type comment
-                                
-                                // Focus input if possible
-                                setTimeout(() => {
-                                    const input = document.querySelector('textarea[placeholder="댓글 작성..."]') as HTMLTextAreaElement;
-                                    if(input) input.focus();
-                                }, 100);
-                             } else {
-                                setLightboxOpen(true);
-                             }
-                          }}
+                          className="w-full h-auto object-contain shadow-sm"
+                          width={1200}
+                          height={1600}
+                          priority={true}
                         />
                         
                         {/* Render Existing Pins */}
@@ -899,10 +903,12 @@ export function ProjectDetailModalV2({
                     {otherProjects.map((p) => (
                       <a key={p.project_id} href={`/project/${p.project_id}`} className="block group">
                         <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 mb-2">
-                          <img 
+                          <OptimizedImage
                             src={p.thumbnail_url || '/placeholder.jpg'} 
                             alt={p.title} 
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            width={300}
+                            height={300}
                           />
                         </div>
                         <p className="text-xs font-medium text-gray-900 truncate">{p.title}</p>
@@ -1135,79 +1141,78 @@ export function ProjectDetailModalV2({
                   {project.rendering_type === 'rich_text' ? (
                     <div 
                       className="prose prose-lg prose-h1:text-3xl max-w-4xl w-full bg-white p-4 whitespace-pre-wrap"
-                      dangerouslySetInnerHTML={{ __html: unescapeHtml(project.description || '') }}
+                      dangerouslySetInnerHTML={{ __html: unescapeHtml(project?.description || '') }}
                     />
                   ) : (
-                    <div className="relative inline-block w-full">
-                        {/* Image with Click Handler for Pin Mode */}
-                        <img
-                          src={project.urls.full}
-                          alt={project.alt_description || "Project Image"}
-                          className={`w-auto max-w-full h-auto object-contain mx-auto shadow-sm ${isPinMode ? 'cursor-crosshair' : 'cursor-zoom-in'}`}
-                          style={{ maxHeight: '80vh' }}
-                          draggable={false}
-                          onClick={(e) => {
-                             if (isPinMode) {
-                                // Calculate % coordinates
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                                setTempPin({ x, y });
-                                setCommentsPanelOpen(true); // Open panel to type comment
-                                
-                                // Focus input if possible
-                                setTimeout(() => {
-                                    const input = document.querySelector('textarea[placeholder="댓글 작성..."]') as HTMLTextAreaElement;
-                                    if(input) input.focus();
-                                }, 100);
-                             } else {
-                                setLightboxOpen(true);
-                             }
-                          }}
-                        />
-                        
-                        {/* Render Existing Pins */}
-                        {comments.map((comment) => {
-                            if (comment.location_x != null && comment.location_y != null) {
-                                return (
-                                    <div
-                                        key={`pin-${comment.comment_id}`}
-                                        className="absolute w-8 h-8 -ml-4 -mt-8 z-10 group"
-                                        style={{ left: `${comment.location_x}%`, top: `${comment.location_y}%` }}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setActivePinId(comment.comment_id);
-                                            setCommentsPanelOpen(true);
-                                        }}
-                                    >
-                                        <div className={`w-full h-full flex items-center justify-center drop-shadow-md transition-transform hover:scale-110 cursor-pointer ${activePinId === comment.comment_id ? 'text-green-600 scale-125' : 'text-red-500'}`}>
-                                            <FontAwesomeIcon icon={faMapPin} className="w-full h-full filter drop-shadow-sm" />
-                                        </div>
-                                        {/* Tooltip on Hover */}
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white p-2 rounded-lg shadow-xl text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
-                                            <div className="font-bold mb-1 truncate">{comment.user_name}</div>
-                                            <div className="text-gray-600 line-clamp-2">{comment.content}</div>
-                                            <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white"></div>
-                                        </div>
-                                    </div>
-                                );
-                            }
-                            return null;
-                        })}
+                    <div 
+                       className={`relative inline-block w-full ${isPinMode ? 'cursor-crosshair' : 'cursor-zoom-in'}`}
+                       style={{ maxHeight: '80vh' }}
+                       onClick={(e) => {
+                          if (isPinMode) {
+                             const rect = e.currentTarget.getBoundingClientRect();
+                             const x = ((e.clientX - rect.left) / rect.width) * 100;
+                             const y = ((e.clientY - rect.top) / rect.height) * 100;
+                             setTempPin({ x, y });
+                             setCommentsPanelOpen(true);
+                             setTimeout(() => {
+                                 const input = document.querySelector('textarea[placeholder="댓글 작성..."]') as HTMLTextAreaElement;
+                                 if(input) input.focus();
+                             }, 100);
+                          } else {
+                             setLightboxOpen(true);
+                          }
+                       }}
+                    >
+                      <OptimizedImage
+                        src={project.urls.full}
+                        alt={project.alt_description || "Project Image"}
+                        className="w-auto max-w-full h-auto object-contain mx-auto shadow-sm"
+                        width={1600}
+                        height={1200}
+                        priority={true}
+                      />
+                      
+                      {/* Render Existing Pins INSIDE relative container */}
+                      {comments.map((comment) => {
+                          if (comment.location_x != null && comment.location_y != null) {
+                              return (
+                                  <div
+                                      key={`pin-${comment.comment_id}`}
+                                      className="absolute w-8 h-8 -ml-4 -mt-8 z-10 group"
+                                      style={{ left: `${comment.location_x}%`, top: `${comment.location_y}%` }}
+                                      onClick={(e) => {
+                                          e.stopPropagation();
+                                          setActivePinId(comment.comment_id);
+                                          setCommentsPanelOpen(true);
+                                      }}
+                                  >
+                                      <div className={`w-full h-full flex items-center justify-center drop-shadow-md transition-transform hover:scale-110 cursor-pointer ${activePinId === comment.comment_id ? 'text-green-600 scale-125' : 'text-red-500'}`}>
+                                          <FontAwesomeIcon icon={faMapPin} className="w-full h-full filter drop-shadow-sm" />
+                                      </div>
+                                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white p-2 rounded-lg shadow-xl text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                                          <div className="font-bold mb-1 truncate">{comment.user_name}</div>
+                                          <div className="text-gray-600 line-clamp-2">{comment.content}</div>
+                                          <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white"></div>
+                                      </div>
+                                  </div>
+                              );
+                          }
+                          return null;
+                      })}
 
-                        {/* Render Temp Pin */}
-                        {tempPin && (
-                             <div
-                                className="absolute w-8 h-8 -ml-4 -mt-8 z-20 animate-bounce"
-                                style={{ left: `${tempPin.x}%`, top: `${tempPin.y}%` }}
-                            >
-                                <FontAwesomeIcon icon={faMapPin} className="w-full h-full text-green-500 drop-shadow-lg" />
-                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap">
-                                    작성 중...
-                                </div>
-                            </div>
-                        )}
-                     </div>
+                      {/* Render Temp Pin INSIDE relative container */}
+                      {tempPin && (
+                           <div
+                              className="absolute w-8 h-8 -ml-4 -mt-8 z-20 animate-bounce"
+                              style={{ left: `${tempPin.x}%`, top: `${tempPin.y}%` }}
+                          >
+                              <FontAwesomeIcon icon={faMapPin} className="w-full h-full text-green-500 drop-shadow-lg" />
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap">
+                                  작성 중...
+                              </div>
+                          </div>
+                      )}
+                    </div>
                   )}
 
                   {/* RichText가 아닐 경우의 텍스트 설명 */}
@@ -1220,58 +1225,55 @@ export function ProjectDetailModalV2({
 
                 {/* 2. 하단 리뉴얼 섹션 (노트폴리오 스타일) - 본문 끝나고 나타남 */}
                 <div className="w-full mt-24 border-t border-gray-100">
-                   
                    {/* Feedback Integration Section */}
-                   {/* Feedback Integration Section */}
-                   {/* Feedback Integration Section */}
-             {isFeedbackRequested && ((project as any).allow_michelin_rating || (project as any).allow_stickers) && (
-               <div id="feedback-section" className="w-full mt-24 border-t-2 border-dashed border-gray-100 pt-16 pb-8 space-y-12">
-                 {/* Audit Expert Section */}
-                 {isAuditMode && (
-                   <div className="max-w-4xl mx-auto px-6 mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                     <div className="bg-slate-950 rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl border border-white/10">
-                        <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
-                           <FontAwesomeIcon icon={faStar} className="text-9xl text-orange-500" />
-                        </div>
-                        <div className="relative z-10">
-                           <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500 rounded-lg text-[10px] font-black uppercase mb-4 shadow-lg shadow-orange-500/20">
-                              Expert Audit Report
+                   {isFeedbackRequested && ((project as any).allow_michelin_rating || (project as any).allow_stickers) && (
+                     <div id="feedback-section" className="w-full mt-24 border-t-2 border-dashed border-gray-100 pt-16 pb-8 space-y-12">
+                       {/* Audit Expert Section */}
+                       {isAuditMode && (
+                         <div className="max-w-4xl mx-auto px-6 mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                           <div className="bg-slate-950 rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl border border-white/10">
+                              <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
+                                 <FontAwesomeIcon icon={faStar} className="text-9xl text-orange-500" />
+                              </div>
+                              <div className="relative z-10">
+                                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500 rounded-lg text-[10px] font-black uppercase mb-4 shadow-lg shadow-orange-500/20">
+                                    Expert Audit Report
+                                 </div>
+                                 <h3 className="text-3xl font-black mb-4">전문가가 진단한 리포트가 도착했습니다</h3>
+                                 <p className="text-slate-400 text-lg mb-8 leading-relaxed max-w-xl">
+                                   본 프로젝트는 Vibefolio 인증 전문가들에 의해 기획력, 완성도, 시장성 등 다각도 분석이 완료되었습니다. 자세한 분석 내용은 전용 뷰어에서 확인하실 수 있습니다.
+                                 </p>
+                                 <Button 
+                                   onClick={() => window.open(`https://review.vibefolio.net/viewer?projectId=${project.id}`, '_blank')}
+                                   className="h-14 px-8 rounded-2xl bg-white text-black font-black text-lg hover:bg-gray-100 transition-all shadow-xl gap-3"
+                                 >
+                                    <FontAwesomeIcon icon={faStar} className="text-orange-500" />
+                                    전체 리포트 열람하기
+                                 </Button>
+                              </div>
                            </div>
-                           <h3 className="text-3xl font-black mb-4">전문가가 진단한 리포트가 도착했습니다</h3>
-                           <p className="text-slate-400 text-lg mb-8 leading-relaxed max-w-xl">
-                             본 프로젝트는 Vibefolio 인증 전문가들에 의해 기획력, 완성도, 시장성 등 다각도 분석이 완료되었습니다. 자세한 분석 내용은 전용 뷰어에서 확인하실 수 있습니다.
-                           </p>
-                           <Button 
-                             onClick={() => window.open(`https://review.vibefolio.net/viewer?projectId=${project.id}`, '_blank')}
-                             className="h-14 px-8 rounded-2xl bg-white text-black font-black text-lg hover:bg-gray-100 transition-all shadow-xl gap-3"
-                           >
-                              <FontAwesomeIcon icon={faStar} className="text-orange-500" />
-                              전체 리포트 열람하기
-                           </Button>
-                        </div>
-                     </div>
-                   </div>
-                 )}
-                 <div className="text-center mb-8 animate-in fade-in slide-in-from-bottom-2 duration-700">
-                    <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-full border border-gray-200 text-gray-600 shadow-sm">
-                       <FontAwesomeIcon icon={faComment} className="w-4 h-4 text-gray-400" />
-                       <span className="text-sm font-bold tracking-wide">Review & Feedback</span>
-                    </span>
-                    <p className="text-xs text-gray-400 mt-4 font-medium">크리에이터의 성장을 위해 솔직한 의견을 남겨주세요.</p>
-                 </div>
+                         </div>
+                       )}
+                       <div className="text-center mb-8 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                          <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-full border border-gray-200 text-gray-600 shadow-sm">
+                             <FontAwesomeIcon icon={faComment} className="w-4 h-4 text-gray-400" />
+                             <span className="text-sm font-bold tracking-wide">Review & Feedback</span>
+                          </span>
+                          <p className="text-xs text-gray-400 mt-4 font-medium">크리에이터의 성장을 위해 솔직한 의견을 남겨주세요.</p>
+                       </div>
 
-                 {(project as any).allow_michelin_rating && (
-                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                     <MichelinRating projectId={project.id} />
-                   </div>
-                 )}
-                 {(project as any).allow_stickers && (
-                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
-                     <FeedbackPoll projectId={project.id} />
-                   </div>
-                 )}
-               </div>
-             )}
+                       {(project as any).allow_michelin_rating && (
+                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                           <MichelinRating projectId={project.id} />
+                         </div>
+                       )}
+                       {(project as any).allow_stickers && (
+                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
+                           <FeedbackPoll projectId={project.id} />
+                         </div>
+                       )}
+                     </div>
+                   )}
                    {/* Black Action Bar */}
                    <div className="w-full bg-[#18181b] text-white py-10">
                       <div className="max-w-3xl mx-auto px-4 text-center">
@@ -1293,12 +1295,10 @@ export function ProjectDetailModalV2({
                                 {bookmarked ? '컬렉션 저장됨' : '컬렉션 저장'}
                              </Button>
                           </div>
-                          
                           <div className="inline-block px-3 py-1 bg-green-500 text-white text-xs font-bold rounded mb-3">
                              VIBEFOLIO PICK
                           </div>
                           <h2 className="text-xl font-bold mb-3">{project.title}</h2>
-                          
                           <div className="flex items-center justify-center gap-6 text-gray-500 mt-6">
                              <div className="flex items-center gap-2">
                                 <FontAwesomeIcon icon={faEye} className="w-4 h-4" />
@@ -1311,8 +1311,7 @@ export function ProjectDetailModalV2({
                           </div>
                       </div>
                    </div>
-
-                   {/* Profile Section - 사이즈 축소 */}
+                   {/* Profile Section */}
                    <div className="bg-gray-50 py-10 border-b border-gray-100">
                        <div className="max-w-xl mx-auto px-4 text-center">
                            <div className="mb-3 inline-block relative cursor-pointer group" onClick={() => window.location.href=`/creator/${project.user.username}`}>
@@ -1323,7 +1322,6 @@ export function ProjectDetailModalV2({
                            </div>
                            <h3 className="text-lg font-bold text-gray-900 mb-1">{project.user.username}</h3>
                            <p className="text-sm text-gray-500 mb-6">{authorBio || "크리에이티브한 작업을 공유합니다."}</p>
-                           
                            <div className="flex items-center justify-center gap-2">
                               {isLoggedIn && project.userId && currentUserId !== project.userId && (
                                 <Button onClick={handleFollow} variant="outline" className="h-9 px-5 rounded-full border-gray-300 bg-white hover:bg-gray-100 gap-2 text-sm">
@@ -1336,8 +1334,7 @@ export function ProjectDetailModalV2({
                            </div>
                        </div>
                    </div>
-
-                   {/* 작성자의 다른 프로젝트 (데스크톱) */}
+                   {/* Other Projects */}
                    {otherProjects.length > 0 && (
                      <div className="bg-white py-12 border-b border-gray-100">
                        <div className="max-w-4xl mx-auto px-6">
@@ -1346,10 +1343,12 @@ export function ProjectDetailModalV2({
                            {otherProjects.map((p) => (
                              <a key={p.project_id} href={`/project/${p.project_id}`} className="block group cursor-pointer">
                                <div className="aspect-[4/3] rounded-lg overflow-hidden bg-gray-100 mb-3 shadow-sm group-hover:shadow-md transition-all">
-                                 <img 
+                                 <OptimizedImage 
                                    src={p.thumbnail_url || '/placeholder.jpg'} 
                                    alt={p.title} 
                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                   width={400}
+                                   height={300}
                                  />
                                </div>
                                <p className="text-sm font-medium text-gray-900 truncate text-center group-hover:text-green-600 transition-colors">{p.title}</p>
@@ -1359,8 +1358,6 @@ export function ProjectDetailModalV2({
                        </div>
                      </div>
                    )}
-                   
-                   {/* 하단 댓글 영역 삭제됨 (요청사항 반영) */}
                 </div>
               </div>
             </div>
@@ -1546,24 +1543,24 @@ export function ProjectDetailModalV2({
       <ShareModal
         open={shareModalOpen}
         onOpenChange={setShareModalOpen}
-        url={typeof window !== 'undefined' ? `${window.location.origin}/project/${project.id}` : ''}
-        title={project.title || stripHtml(project.description || project.alt_description || "프로젝트 공유")}
-        description={stripHtml(project.description || "")}
-        imageUrl={project.urls.full}
+        url={typeof window !== 'undefined' ? `${window.location.origin}/project/${project?.id}` : ''}
+        title={project?.title || stripHtml(project?.description || project?.alt_description || "프로젝트 공유")}
+        description={stripHtml(project?.description || "")}
+        imageUrl={project?.urls?.full}
       />
 
       <ProposalModal
         open={proposalModalOpen}
         onOpenChange={setProposalModalOpen}
-        projectId={project.id}
-        receiverId={project.userId || ''}
-        projectTitle={project.title || stripHtml(project.description || project.alt_description || "프로젝트")}
+        projectId={project?.id || ''}
+        receiverId={project?.userId || ''}
+        projectTitle={project?.title || stripHtml(project?.description || project?.alt_description || "프로젝트")}
       />
 
       <CollectionModal
         open={collectionModalOpen}
         onOpenChange={setCollectionModalOpen}
-        projectId={project.id}
+        projectId={project?.id || ''}
       />
 
       <LoginRequiredModal
@@ -1587,8 +1584,8 @@ export function ProjectDetailModalV2({
           {/* 이미지 영역 */}
           <div className="w-full h-full flex items-center justify-center p-4 md:p-10 select-none">
             <img
-              src={project.urls.full}
-              alt={project.alt_description || "Detail View"}
+              src={project?.urls?.full}
+              alt={project?.alt_description || "Detail View"}
               className="max-w-full max-h-full object-contain shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             />
@@ -1607,10 +1604,9 @@ export function ProjectDetailModalV2({
         open={isHistoryModalOpen}
         onOpenChange={setHistoryModalOpen}
         versions={versions}
-        projectId={project.id}
-        isOwner={String(currentUserId) === String(project.userId)}
+        projectId={project?.id || ''}
+        isOwner={String(currentUserId) === String(project?.userId)}
         onSelectVersion={(v) => {
-           // TODO: Scroll to version content
            setHistoryModalOpen(false);
         }}
       />
