@@ -186,8 +186,8 @@ export function ProjectDetailModalV2({
   project,
 }: ProjectDetailModalV2Props) {
 
-  // [Refactor] useLikes 훅 사용
-  const { isLiked, likesCount, toggleLike, isLoading: isLikeLoading } = useLikes(project?.id, project?.likes || 0);
+  // [Refactor] useLikes 훅 사용 - 상세 모달에서는 실시간 구독 활성화
+  const { isLiked, likesCount, toggleLike, isLoading: isLikeLoading } = useLikes(project?.id, project?.likes || 0, true);
 
   const [bookmarked, setBookmarked] = useState(false);
   const [following, setFollowing] = useState(false);

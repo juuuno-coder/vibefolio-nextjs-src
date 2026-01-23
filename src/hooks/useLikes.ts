@@ -8,8 +8,9 @@ import { useAuth } from "@/lib/auth/AuthContext";
  * 프로젝트 좋아요 관련 기능을 제공하는 커스텀 훅
  * @param projectId 프로젝트 ID (없을 경우 훅이 비활성화됨)
  * @param initialLikes 초기 좋아요 수 (Optimistic UI용 - 사용하지 않음, 호환성 유지)
+ * @param enableRealtimeSync 실시간 동기화 활성화 여부 (기본값: false, 상세 모달에서만 true 권장)
  */
-export function useLikes(projectId?: string, initialLikes: number = 0) {
+export function useLikes(projectId?: string, initialLikes: number = 0, enableRealtimeSync: boolean = false) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const userId = user?.id || null;
@@ -17,9 +18,9 @@ export function useLikes(projectId?: string, initialLikes: number = 0) {
   // 0. 좋아요 수 상태 관리
   const [likesCount, setLikesCount] = useState(initialLikes);
 
-  // 실시간 좋아요 수 동기화 (구독)
+  // 실시간 좋아요 수 동기화 (구독) - 옵션에 따라 활성화
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId || !enableRealtimeSync) return; // enableRealtimeSync가 false면 구독 안 함
     const numericId = Number(projectId);
     if (isNaN(numericId)) return;
 
@@ -55,7 +56,7 @@ export function useLikes(projectId?: string, initialLikes: number = 0) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [projectId]);
+  }, [projectId, enableRealtimeSync]); // enableRealtimeSync 의존성 추가
 
   // 1. 좋아요 여부 조회 (로그인 시에만)
   const { data: isLiked = false } = useQuery({
