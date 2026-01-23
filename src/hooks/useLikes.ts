@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createNotification } from "@/hooks/useNotifications";
 import { useAuth } from "@/lib/auth/AuthContext";
 
@@ -129,7 +129,7 @@ export function useLikes(projectId?: string, initialLikes: number = 0) {
       queryClient.setQueryData(queryKey, !currentIsLiked);
       
       // 카운트도 즉시 반영 (Optimistic)
-      setLikesCount(prev => currentIsLiked ? Math.max(0, prev - 1) : prev + 1);
+      setLikesCount((prev: number) => currentIsLiked ? Math.max(0, prev - 1) : prev + 1);
 
       return { previousLiked };
     },
@@ -137,7 +137,7 @@ export function useLikes(projectId?: string, initialLikes: number = 0) {
       if (context?.previousLiked !== undefined) {
          queryClient.setQueryData(["like", projectId, userId], context.previousLiked);
          // 카운트 롤백
-         setLikesCount(prev => context.previousLiked ? prev + 1 : Math.max(0, prev - 1));
+         setLikesCount((prev: number) => context.previousLiked ? prev + 1 : Math.max(0, prev - 1));
       }
       console.error("Like toggle error:", err);
     },

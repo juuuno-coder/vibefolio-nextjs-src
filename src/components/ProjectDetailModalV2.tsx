@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { FeedbackPoll } from "./FeedbackPoll";
 import { MichelinRating } from "./MichelinRating";
+import { useLikes } from "@/hooks/useLikes";
 import {
   Dialog,
   DialogContent,
@@ -185,7 +186,9 @@ export function ProjectDetailModalV2({
   project,
 }: ProjectDetailModalV2Props) {
 
-  const [liked, setLiked] = useState(false);
+  // [Refactor] useLikes 훅 사용
+  const { isLiked, likesCount, toggleLike, isLoading: isLikeLoading } = useLikes(project?.id, project?.likes || 0);
+
   const [bookmarked, setBookmarked] = useState(false);
   const [following, setFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
@@ -202,7 +205,7 @@ export function ProjectDetailModalV2({
   const [replyingTo, setReplyingTo] = useState<{ id: string; username: string } | null>(null);
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [likesCount, setLikesCount] = useState(0);
+  // const [likesCount, setLikesCount] = useState(0); // useLikes로 대체됨
   const [viewsCount, setViewsCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -210,7 +213,7 @@ export function ProjectDetailModalV2({
   const { refreshUserProfile } = useAuth();
 
   const [loading, setLoading] = useState({
-    like: false,
+    // like: false, // useLikes isLoading으로 대체됨
     bookmark: false,
     comment: false,
     follow: false,
@@ -235,51 +238,13 @@ export function ProjectDetailModalV2({
 
   const isAuthor = currentUserId === project?.userId;
 
-  // [New] 실시간 좋아요 수 동기화
-  useEffect(() => {
-    if (!open || !project?.id) return;
 
-    const fetchLikesCount = async () => {
-      const { count } = await supabase
-        .from('Like')
-        .select('*', { count: 'exact', head: true })
-        .eq('project_id', Number(project.id));
-      
-      if (count !== null) setLikesCount(count);
-    };
-
-    // 초기 로드 시에도 실제 DB 카운트와 동기화
-    fetchLikesCount();
-
-    const channel = supabase
-      .channel(`project-likes-${project.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'Like',
-          filter: `project_id=eq.${project.id}`,
-        },
-        (payload) => {
-          // INSERT나 DELETE 발생 시 카운트 재조회
-          if (payload.eventType === 'INSERT' || payload.eventType === 'DELETE') {
-             fetchLikesCount();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [open, project?.id]);
 
   useEffect(() => {
     if (!project || !open) return;
 
     // 초기값 세팅
-    setLikesCount(project.likes || 0);
+
     setViewsCount(project.views || 0);
 
     const checkUserAndFetchData = async () => {
@@ -290,16 +255,8 @@ export function ProjectDetailModalV2({
       setCurrentUserId(currentId);
 
       // 2. 좋아요 체크
+      // 2. 팔로우 체크 (좋아요 체크 제거됨)
       if (currentId) {
-        const { data: likeData } = await supabase
-          .from('Like')
-          .select('id')
-          .eq('project_id', parseInt(project.id)) // project.id가 있어야 함
-          .eq('user_id', currentId)
-          .single();
-        setLiked(!!likeData);
-
-        // 3. 팔로우 체크
         if (project.userId && project.userId !== currentId) {
           const { data: followData } = await supabase
             .from('Follow')
@@ -476,13 +433,7 @@ export function ProjectDetailModalV2({
         console.error('조회수 증가 실패:', error);
       }
 
-      try {
-        const likeRes = await fetch(`/api/likes?projectId=${projectId}`);
-        const likeData = await likeRes.json();
-        setLikesCount(likeData.count || project.likes || 0);
-      } catch (error) {
-        setLikesCount(project.likes || 0);
-      }
+
 
       try {
         const commentRes = await fetch(`/api/comments?projectId=${projectId}`);
@@ -497,7 +448,6 @@ export function ProjectDetailModalV2({
       if (user) {
         try {
           const fetchPromises = [
-            fetch(`/api/likes?projectId=${projectId}&userId=${user.id}`),
             fetch(`/api/wishlists?projectId=${projectId}&userId=${user.id}`)
           ];
           
@@ -509,12 +459,10 @@ export function ProjectDetailModalV2({
           }
 
           const results = await Promise.all(fetchPromises);
-          const [likeCheckData, bookmarkCheckData] = await Promise.all([
-            results[0].json(),
-            results[1].json()
+          const [bookmarkCheckData] = await Promise.all([
+            results[0].json()
           ]);
           
-          setLiked(likeCheckData.liked || false);
           setBookmarked(bookmarkCheckData.bookmarked || false);
           
           // 팔로우 상태 확인
@@ -538,38 +486,7 @@ export function ProjectDetailModalV2({
     checkUserAndFetchData();
   }, [project, open]);
 
-  const handleLike = async () => {
-    if (!project) return;
-    
-    // isLoggedIn 상태만 믿지 말고 실제 세션 확인
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      setLoginModalOpen(true);
-      return;
-    }
-    
-    setLoading(prev => ({ ...prev, like: true }));
-    try {
-      const res = await fetch('/api/likes', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ projectId: parseInt(project.id) }),
-      });
-      
-      if (res.ok) {
-        setLiked(!liked);
-        setLikesCount(prev => liked ? prev - 1 : prev + 1);
-      }
-    } catch (error) {
-      console.error('좋아요 실패:', error);
-    } finally {
-      setLoading(prev => ({ ...prev, like: false }));
-    }
-  };
+
 
   const handleCollectionClick = async () => {
     // isLoggedIn 상태만 믿지 말고 실제 세션 확인
@@ -887,12 +804,12 @@ export function ProjectDetailModalV2({
               <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100">
                 <div className="flex items-center gap-3">
                   <button 
-                    onClick={handleLike}
+                    onClick={() => toggleLike()}
                     className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                      liked ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'
+                      isLiked ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'
                     }`}
                   >
-                    <FontAwesomeIcon icon={liked ? faHeart : faHeartRegular} className="w-5 h-5" />
+                    <FontAwesomeIcon icon={isLiked ? faHeart : faHeartRegular} className="w-5 h-5" />
                   </button>
                   <button 
                     onClick={handleCollectionClick}
@@ -1360,13 +1277,13 @@ export function ProjectDetailModalV2({
                       <div className="max-w-3xl mx-auto px-4 text-center">
                           <div className="flex items-center justify-center gap-4 mb-8">
                              <Button 
-                               onClick={handleLike}
+                               onClick={() => toggleLike()}
                                className={`h-11 px-6 rounded-full text-base font-bold transition-all shadow-md hover:scale-105 gap-2 border-0 ${
-                                 liked ? 'bg-[#ff4e4e] hover:bg-[#e04545] text-white' : 'bg-[#333] hover:bg-[#444] text-white'
+                                 isLiked ? 'bg-[#ff4e4e] hover:bg-[#e04545] text-white' : 'bg-[#333] hover:bg-[#444] text-white'
                                }`}
                              >
-                                <FontAwesomeIcon icon={liked ? faHeart : faHeartRegular} className="w-4 h-4" />
-                                {liked ? '좋아요 취소' : '작업 좋아요'}
+                                <FontAwesomeIcon icon={isLiked ? faHeart : faHeartRegular} className="w-4 h-4" />
+                                {isLiked ? '좋아요 취소' : '작업 좋아요'}
                              </Button>
                              <Button 
                                onClick={handleCollectionClick} 
@@ -1506,8 +1423,8 @@ export function ProjectDetailModalV2({
                 </div>
               )}
 
-              <button onClick={handleLike} disabled={!isLoggedIn} className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex flex-col items-center justify-center transition-all hover:scale-105 ${liked ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 hover:bg-red-50 hover:text-red-500'}`}>
-                {loading.like ? <FontAwesomeIcon icon={faSpinner} className="w-5 h-5 animate-spin" /> : <FontAwesomeIcon icon={liked ? faHeart : faHeartRegular} className="w-5 h-5" />}
+              <button onClick={() => toggleLike()} disabled={!isLoggedIn} className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex flex-col items-center justify-center transition-all hover:scale-105 ${isLiked ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 hover:bg-red-50 hover:text-red-500'}`}>
+                {isLikeLoading ? <FontAwesomeIcon icon={faSpinner} className="w-5 h-5 animate-spin" /> : <FontAwesomeIcon icon={isLiked ? faHeart : faHeartRegular} className="w-5 h-5" />}
               </button>
 
               <button onClick={handleCollectionClick} className="w-12 h-12 rounded-full bg-white text-gray-700 border border-gray-100 shadow-lg hover:bg-blue-500 hover:text-white hover:scale-105 flex items-center justify-center transition-all" title="컬렉션에 저장">
