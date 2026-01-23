@@ -101,7 +101,6 @@ export default function MyPage() {
   const { user: authUser, userProfile: authProfile, loading: authLoading } = useAuth();
   
   // 1. 초기화 - 사용자 정보 및 통계 로드
-  // 1. 초기화 - 사용자 정보 및 통계 로드
   const initStats = async () => {
       if (!authUser) return;
       setUserId(authUser.id);
@@ -450,7 +449,7 @@ export default function MyPage() {
     { id: 'projects' as TabType, label: '내 프로젝트', icon: Grid, color: 'text-green-600', bgColor: 'bg-green-600' },
     { id: 'likes' as TabType, label: '좋아요', icon: Heart, color: 'text-red-500', bgColor: 'bg-red-500' },
     { id: 'collections' as TabType, label: '컬렉션', icon: Folder, color: 'text-blue-500', bgColor: 'bg-blue-500' },
-    { id: 'proposals' as TabType, label: '제안 및 평가 의견', icon: Send, color: 'text-green-500', bgColor: 'bg-green-500' },
+    { id: 'proposals' as TabType, label: '피드백 관리', icon: Zap, color: 'text-indigo-600', bgColor: 'bg-indigo-600' },
     { id: 'comments' as TabType, label: '내 댓글', icon: MessageCircle, color: 'text-orange-500', bgColor: 'bg-orange-500' },
     { id: 'settings' as TabType, label: '설정', icon: Settings, color: 'text-gray-700', bgColor: 'bg-gray-700' },
   ];
@@ -459,7 +458,6 @@ export default function MyPage() {
     <div className="w-full min-h-screen bg-gray-50 pt-20 pb-12">
       <div className="w-full max-w-[1400px] mx-auto px-4 md:px-8">
         
-        {/* 프로필 섹션 */}
         {/* 프로필 섹션 */}
         <div className="bg-white rounded-xl mb-6 border border-gray-100 shadow-sm overflow-hidden">
           {/* 커버 이미지 (hover 시 변경 버튼 노출) */}
@@ -584,7 +582,7 @@ export default function MyPage() {
                 {/* [New] Project Sub-filters */}
                 <div className="flex gap-2">
                    <button onClick={() => setProjectFilter('all')} className={cn("px-4 py-2 rounded-full text-xs font-bold transition-all", projectFilter === 'all' ? "bg-slate-900 text-white" : "bg-white border border-gray-200 text-slate-500")}>전체</button>
-                   <button onClick={() => setProjectFilter('audit')} className={cn("px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2", projectFilter === 'audit' ? "bg-orange-600 text-white" : "bg-white border border-gray-200 text-orange-600")}><ChefHat size={12} /> 제 평가는요?</button>
+                   <button onClick={() => setProjectFilter('audit')} className={cn("px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2", projectFilter === 'audit' ? "bg-orange-600 text-white" : "bg-white border border-gray-200 text-orange-600")}><Zap size={12} /> 전문 피드백 요청</button>
                    <button onClick={() => setProjectFilter('active')} className={cn("px-4 py-2 rounded-full text-xs font-bold transition-all", projectFilter === 'active' ? "bg-green-600 text-white" : "bg-white border border-gray-200 text-green-600")}>발행 중</button>
                 </div>
 
@@ -611,8 +609,8 @@ export default function MyPage() {
                         {(project.custom_data?.audit_config || project.audit_deadline) && (
                           <div className="absolute top-4 left-4 z-10">
                              <div className="bg-orange-600/90 text-white px-3 py-1.5 rounded-xl text-[10px] font-black tracking-tighter shadow-lg flex items-center gap-1.5 backdrop-blur-md">
-                                <ChefHat size={14} />
-                                전문 진단 진행 중
+                                <Zap size={14} />
+                                피드백 진행 중
                              </div>
                           </div>
                         )}
@@ -717,18 +715,40 @@ export default function MyPage() {
 
             {/* 받은 제안 탭 */}
             {activeTab === 'proposals' && (
-              projects.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-12">
-                  {projects.map((item) => (
-                    <ProposalCard key={item.proposal_id} proposal={item} type="received" onClick={() => { setSelectedProposal(item); setProposalModalOpen(true); }} />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-200 border-dashed">
-                  <Send className="w-16 h-16 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900">받은 제안이나 평가 의견이 없습니다</h3>
-                </div>
-              )
+              <div className="space-y-6">
+                 {/* Feedback Status Header */}
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
+                       <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center"><Zap size={20}/></div>
+                       <div>
+                          <p className="text-[10px] font-black text-gray-400 uppercase">Received Feedback</p>
+                          <p className="text-lg font-black text-gray-900">전문 피드백</p>
+                       </div>
+                    </div>
+                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
+                       <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center"><Send size={20}/></div>
+                       <div>
+                          <p className="text-[10px] font-black text-gray-400 uppercase">Collaboration Proposals</p>
+                          <p className="text-lg font-black text-gray-900">협업 제안</p>
+                       </div>
+                    </div>
+                 </div>
+
+                 {projects.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-12">
+                      {projects.map((item) => (
+                        <ProposalCard key={item.proposal_id || item.id} proposal={item} type="received" onClick={() => { setSelectedProposal(item); setProposalModalOpen(true); }} />
+                      ))}
+                    </div>
+                 ) : (
+                    <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                      <BarChart3 className="w-16 h-16 text-gray-200 mb-4" />
+                      <h3 className="text-xl font-bold text-gray-900 mb-1">도착한 피드백이 없습니다</h3>
+                      <p className="text-gray-400 text-sm">프로젝트를 업로드하고 전문가들의 의견을 받아보세요.</p>
+                      <Button onClick={() => router.push('/project/upload')} className="mt-6 rounded-full bg-slate-900 text-white font-bold px-8">프로젝트 등록하기</Button>
+                    </div>
+                 )}
+              </div>
             )}
 
             {/* 내 댓글 탭 */}
@@ -847,133 +867,127 @@ export default function MyPage() {
                         <div className="h-full relative z-10">
                              <AiAssistantChat onGenerate={handleAssistantGenerate} />
                         </div>
-
                    ) : (
-                    <div className="relative z-10 flex flex-col items-center justify-center h-full text-center max-w-xl mx-auto space-y-6 py-20 px-8">
-                        {/* Fallback Intro or Empty State */}
-                        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-400">
-                             <Sparkles className="w-10 h-10" />
-                        </div>
-                        <p className="text-gray-500">도구를 선택해주세요.</p>
+                    <div className="h-full flex items-center justify-center text-gray-400">
+                       <p>도구를 선택해주세요</p>
                     </div>
-                   )}
+                  )}
                 </div>
               </div>
             )}
-            {activeTab === 'settings' && userProfile && (
-               <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
-                  <ProfileManager user={userProfile} onUpdate={initStats} />
-               </div>
+
+            {/* 설정 탭 */}
+            {activeTab === 'settings' && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                <ProfileManager 
+                   userProfile={userProfile} 
+                   setUserProfile={setUserProfile} 
+                   onDeleteClick={() => setDeleteModalOpen(true)}
+                />
+                 <ApiKeyManager />
+              </div>
             )}
           </>
         )}
       </div>
 
-      {/* 모달 */}
-      <ProjectDetailModalV2 open={modalOpen} onOpenChange={setModalOpen} project={selectedProject} />
-      <ProposalDetailModal open={proposalModalOpen} onOpenChange={setProposalModalOpen} proposal={selectedProposal} />
-      <LeanCanvasModal 
-        open={leanModalOpen} 
-        onOpenChange={setLeanModalOpen} 
-        onSave={(data) => setSavedLeanCanvas(data)}
-        initialData={savedLeanCanvas || undefined}
-      />
-      <PersonaDefinitionModal 
-        open={personaModalOpen} 
-        onOpenChange={setPersonaModalOpen} 
-        onSave={(data) => setSavedPersona(data)}
-        initialData={savedPersona || undefined}
-        onApply={() => {}} 
-      />
-      <AssistantResultModal
-        open={assistantModalOpen}
-        onOpenChange={setAssistantModalOpen}
-        onSave={(data) => setSavedAssistant(data)}
-        initialData={savedAssistant || undefined}
-        onApply={() => {}}
-      />
-      
-      {/* 회원탈퇴 확인 모달 */}
       <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
-              </div>
-              <div>
-                <DialogTitle className="text-xl text-red-600">회원탈퇴</DialogTitle>
-                <DialogDescription className="text-sm text-gray-500">
-                  이 작업은 되돌릴 수 없습니다.
-                </DialogDescription>
-              </div>
-            </div>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" /> 회원탈퇴
+            </DialogTitle>
+            <DialogDescription>
+              탈퇴 시 작성한 모든 프로젝트, 컬렉션, 좋아요 정보가 영구적으로 삭제되며 복구할 수 없습니다.
+              <br /><br />
+              계속하시려면 아래 입력창에 <strong>회원탈퇴</strong>를 입력해주세요.
+            </DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <h4 className="font-semibold text-red-800 mb-2">⚠️ 삭제되는 데이터</h4>
-              <ul className="text-sm text-red-700 space-y-1">
-                <li>• 업로드한 모든 프로젝트</li>
-                <li>• 좋아요, 댓글, 팔로우 기록</li>
-                <li>• 컬렉션 및 저장된 항목</li>
-                <li>• 받은 제안 및 평가 의견</li>
-                <li>• 프로필 정보</li>
-              </ul>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                탈퇴를 확인하려면 <span className="font-bold text-red-600">"회원탈퇴"</span>를 입력하세요
-              </label>
-              <Input
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value)}
-                placeholder="회원탈퇴"
-                className="border-gray-300 focus:border-red-500 focus:ring-red-500"
-              />
-            </div>
+          <div className="py-4">
+            <Input
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="회원탈퇴"
+              className="border-red-200 focus:ring-red-500"
+            />
           </div>
-          
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteModalOpen(false);
-                setDeleteConfirmText("");
-              }}
-              disabled={isDeleting}
-            >
-              취소
-            </Button>
-            <Button
-              variant="destructive"
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>취소</Button>
+            <Button 
+              variant="destructive" 
               onClick={handleDeleteAccount}
               disabled={deleteConfirmText !== "회원탈퇴" || isDeleting}
               className="bg-red-600 hover:bg-red-700"
             >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  처리 중...
-                </>
-              ) : (
-                <>
-                  <UserMinus className="w-4 h-4 mr-2" />
-                  회원탈퇴
-                </>
-              )}
+              {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserMinus className="mr-2 h-4 w-4" />}
+              탈퇴하기
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {currentFeedbackProject && (
-        <FeedbackReportModal 
-          open={feedbackReportOpen} 
-          onOpenChange={setFeedbackReportOpen}
-          projectId={currentFeedbackProject.id}
-          projectTitle={currentFeedbackProject.title}
+      
+      {/* 상세 모달들 */}
+      {selectedProject && (
+        <ProjectDetailModalV2
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          projectId={selectedProject.id}
+          initialData={{
+             ...selectedProject,
+             // Ensure legacy compatibility
+             user: {
+                username: selectedProject.user?.username || 'Unknown',
+                profile_image_url: selectedProject.user?.profile_image?.small || '/globe.svg'
+             }
+          }}
+          onDelete={() => handleDeleteProject(selectedProject.id)}
+          onEdit={() => router.push(`/project/edit/${selectedProject.id}`)}
+          isOwner={true}
+          onToggleVisibility={() => handleToggleVisibility(selectedProject.id, selectedProject.visibility)}
         />
+      )}
+
+      {selectedProposal && (
+        <ProposalDetailModal
+          isOpen={proposalModalOpen}
+          onClose={() => setProposalModalOpen(false)}
+          proposal={selectedProposal}
+        />
+      )}
+      
+      {/* AI 결과 모달들 */}
+      {leanModalOpen && savedLeanCanvas && (
+        <LeanCanvasModal
+          isOpen={leanModalOpen}
+          onClose={() => setLeanModalOpen(false)}
+          data={savedLeanCanvas}
+        />
+      )}
+
+      {personaModalOpen && savedPersona && (
+        <PersonaDefinitionModal
+          isOpen={personaModalOpen}
+          onClose={() => setPersonaModalOpen(false)}
+          data={savedPersona}
+        />
+      )}
+
+      {assistantModalOpen && savedAssistant && (
+        <AssistantResultModal
+           isOpen={assistantModalOpen}
+           onClose={() => setAssistantModalOpen(false)}
+           data={savedAssistant}
+        />
+      )}
+
+      {/* [New] Report Modal */}
+      {feedbackReportOpen && currentFeedbackProject && (
+         <FeedbackReportModal
+            isOpen={feedbackReportOpen}
+            onClose={() => setFeedbackReportOpen(false)}
+            projectId={currentFeedbackProject.id}
+            projectTitle={currentFeedbackProject.title}
+         />
       )}
     </div>
   );

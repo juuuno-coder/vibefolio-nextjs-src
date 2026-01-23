@@ -261,12 +261,15 @@ export async function POST(request: NextRequest) {
         finalContent = description;
     }
 
-    // [Strict] 인증된 사용자 ID가 곧 작성자 ID입니다.
     const user_id = authenticatedUserId;
 
-    // Default category for API usage if missing
-    if (isApiContext && !category_id) {
-        category_id = 1; 
+    // [Robustness] Handle category_id as slug or missing
+    if (typeof category_id === 'string' && isNaN(Number(category_id))) {
+        category_id = GENRE_TO_CATEGORY_ID[category_id] || 1;
+    } else if (!category_id) {
+        category_id = 1; // Default to 'photo' (1) if missing
+    } else {
+        category_id = Number(category_id);
     }
 
     if (!title) {
@@ -435,7 +438,8 @@ export async function POST(request: NextRequest) {
 
     // [New] 시리즈(에피소드) 연재 기능
     // 'collection'은 북마크 용도, 'series'는 연재 용도로 구분합니다.
-    const { collaborator_emails, series_id, collection_id } = body;
+    const { series_id, collection_id } = body;
+    const collaborator_emails = body.collaborator_emails || body.collaborators || [];
     
     // 1. 시리즈(에피소드)로 추가하는 경우 (우선순위 높음)
     if (data && data.project_id && series_id) {

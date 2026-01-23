@@ -35,7 +35,9 @@ export function Header({
   onSetCategory?: (value: string) => void;
 }) {
   const pathname = usePathname();
-  const isReviewUrl = typeof window !== 'undefined' && (window.location.host.includes('review') || window.location.pathname.includes('review'));
+  const isReviewUrl = typeof window !== 'undefined' && 
+    (window.location.host.includes('review') || window.location.pathname.includes('review')) && 
+    !window.location.pathname.startsWith('/growth');
   
   const { user, userProfile, isAdmin, signOut, isAuthenticated, loading } = useAuth();
   
@@ -102,7 +104,7 @@ export function Header({
 
   const menuItems = [
     { label: "발견하기", path: "/" },
-    { label: "성장하기", path: "/growth" },
+    { label: "피드백 요청", path: "/growth" },
     { label: "연결하기", path: "/recruit" },
   ];
 

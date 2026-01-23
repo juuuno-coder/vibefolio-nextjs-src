@@ -272,36 +272,41 @@ function GrowthContent() {
     loadGrowthProjects();
   }, [isAuthenticated, authLoading]);
 
-  // 비로그인 화면
-  if (!authLoading && !isAuthenticated) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
-        <div className="bg-white p-10 rounded-3xl shadow-xl text-center max-w-md border border-gray-100">
-          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-             <FontAwesomeIcon icon={faLock} className="text-gray-400 text-3xl" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">로그인이 필요합니다</h2>
-          <p className="text-gray-500 mb-8 leading-relaxed">
-            성장하기 메뉴는 크리에이터들이 서로 피드백을 주고받는 프라이빗한 공간입니다.<br/>
-            로그인하고 서로의 성장을 응원해주세요!
-          </p>
-          <div className="flex gap-3 justify-center">
-            <Button onClick={() => router.push('/login')} className="bg-green-600 hover:bg-green-700 rounded-full px-8">
-               로그인
-            </Button>
-            <Button variant="outline" onClick={() => router.push('/signup')} className="rounded-full px-8">
-               회원가입
-            </Button>
-          </div>
+  // [Updated] 비로그인 시에도 상위 섹션은 노출하고 실제 기능부만 블로킹하는 부드러운 UX 적용
+  const renderLoginGuard = () => (
+    <div className="py-20 flex flex-col items-center justify-center bg-gray-50/50 rounded-[3rem] border border-dashed border-gray-200 px-4">
+      <div className="bg-white p-10 rounded-3xl shadow-xl text-center max-w-md border border-gray-100 animate-in zoom-in-95 duration-300">
+        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+           <FontAwesomeIcon icon={faLock} className="text-gray-400 text-3xl" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-3">로그인이 필요합니다</h2>
+        <p className="text-gray-500 mb-8 leading-relaxed">
+          성장하기 메뉴는 크리에이터들이 서로 피드백을 주고받는 프라이빗한 공간입니다.<br/>
+          로그인하고 서로의 성장을 응원해주세요!
+        </p>
+        <div className="flex gap-3 justify-center">
+          <Button 
+            onClick={() => router.push(`/login?returnTo=${encodeURIComponent(window.location.pathname)}`)} 
+            className="bg-green-600 hover:bg-green-700 rounded-full px-8 h-12 font-bold"
+          >
+             로그인
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => router.push('/signup')} 
+            className="rounded-full px-8 h-12 font-bold border-gray-200"
+          >
+             회원가입
+          </Button>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-white">
       {/* Onboarding Modal Overlay */}
-      {showOnboarding && <GrowthOnboardingModal onAgree={handleAgree} />}
+      {showOnboarding && isAuthenticated && <GrowthOnboardingModal onAgree={handleAgree} />}
 
       <main className="w-full max-w-[1800px] mx-auto px-4 md:px-8 pb-20 pt-24">
          {/* Header */}
@@ -319,18 +324,28 @@ function GrowthContent() {
              </p>
              <div className="flex justify-center mb-16">
                 <Button 
-                  onClick={() => router.push('/project/upload?mode=audit')}
+                  onClick={() => {
+                    if(!isAuthenticated) {
+                        router.push(`/login?returnTo=${encodeURIComponent(window.location.pathname)}`);
+                        return;
+                    }
+                    router.push('/project/upload?mode=audit');
+                  }}
                   size="lg"
                   className="rounded-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-14 px-10 shadow-xl shadow-orange-200 transition-all hover:-translate-y-1"
                 >
                    <Zap size={20} className="mr-2 fill-white" />
-                   지금 바로 평가 의뢰하기
+                   지금 바로 피드백 요청하기
                 </Button>
              </div>
          </div>
 
-         {/* Interactive Demo Section - Only show when onboarded */}
-         <InteractiveHero />
+         {!authLoading && !isAuthenticated ? (
+            renderLoginGuard()
+         ) : (
+            <>
+               {/* Interactive Demo Section - Only show when onboarded */}
+               <InteractiveHero />
 
          {/* [New] Growth Mode Highlighting */}
          {projects.length > 0 && (
@@ -385,6 +400,8 @@ function GrowthContent() {
                  프로젝트 등록하기
               </Button>
            </div>
+         )}
+            </>
          )}
       </main>
 

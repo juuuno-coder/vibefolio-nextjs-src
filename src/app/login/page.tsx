@@ -45,7 +45,8 @@ function LoginContent() {
 
       if (data.user) {
         toast.success("로그인 성공!");
-        router.push("/");
+        const returnTo = searchParams.get("returnTo") || "/";
+        router.push(returnTo);
       }
     } catch (error: any) {
       console.error("로그인 오류:", error);
@@ -60,10 +61,11 @@ function LoginContent() {
     try {
       console.log("Google Login Redirect URL:", `${window.location.origin}/auth/callback`);
       
+      const returnTo = searchParams.get("returnTo") || "/";
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(returnTo)}`,
           queryParams: {
             access_type: 'offline', // 리프레시 토큰 발급
             // prompt: 'consent', // 테스트용 속성 제거 (모바일 호환성)
