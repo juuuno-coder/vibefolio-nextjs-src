@@ -104,7 +104,7 @@ export function Header({
 
   const menuItems = [
     { label: "발견하기", path: "/" },
-    { label: "피드백 요청", path: "/growth" },
+    { label: "성장하기", path: "/growth" },
     { label: "연결하기", path: "/recruit" },
   ];
 

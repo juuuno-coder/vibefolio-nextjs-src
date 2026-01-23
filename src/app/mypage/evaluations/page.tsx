@@ -99,7 +99,7 @@ export default function MyEvaluationsPage() {
             <Link href="/project/upload?mode=audit">
               <Button className="hidden md:flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-full px-5 h-11 font-black shadow-lg shadow-green-100 transition-all hover:-translate-y-0.5">
                 <Star className="w-4 h-4 fill-white" />
-                평가 의뢰하기
+                피드백 요청하기
               </Button>
             </Link>
           </div>
@@ -119,7 +119,7 @@ export default function MyEvaluationsPage() {
             <Star className="w-16 h-16 text-slate-200 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-slate-900 mb-2">아직 남긴 평가가 없습니다</h2>
             <p className="text-slate-500 mb-8 max-w-xs mx-auto">새로운 프로젝트들을 진단하고 나만의 인사이트를 공유해보세요!</p>
-            <Button onClick={() => router.push('/')} className="bg-slate-900 hover:bg-green-600 transition-all rounded-2xl px-8 h-12 font-black">
+            <Button onClick={() => router.push('/growth')} className="bg-slate-900 hover:bg-green-600 transition-all rounded-2xl px-8 h-12 font-black">
               프로젝트 구경가기
             </Button>
           </div>

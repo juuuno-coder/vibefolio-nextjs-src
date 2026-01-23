@@ -179,31 +179,19 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
                    <span>✨</span> <span>NEW RELEASE</span>
                 </div>
               )}
-              {(props.is_growth_requested || props.is_feedback_requested) && (
-                <div className="bg-slate-900 border border-white/20 text-white text-[9px] font-black px-2.5 py-1.5 rounded-full shadow-2xl flex items-center gap-1.5">
-                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping" />
-                   <span className="tracking-widest">V-AUDIT ACTIVE</span>
-                </div>
-              )}
           </div>
-
-          {/* [Removed] 카테고리 & 분야 뱃지 제거됨 */}
           
             {imgError ? (
             <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
               <ImageIcon className="w-12 h-12" />
             </div>
           ) : (
-            <>
-              {/* 이미지: 호버 시 확대 없이 밝기만 살짝 증가 */}
-              <OptimizedImage
-                src={imageUrl}
-                alt={altText}
-                className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-110"
-                width={800}
-                height={600}
-              />
-            </>
+            <OptimizedImage
+              src={imageUrl}
+              alt={altText}
+              className="object-cover transition-all duration-300 group-hover:brightness-110"
+              fill
+            />
           )}
         </div>
 
@@ -237,9 +225,21 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
             </div>
             
             <div className="flex items-center gap-3 text-xs text-gray-400 flex-shrink-0">
-               <div className="flex items-center gap-1" title={`좋아요 ${displayLikes}`}>
-                  <Heart className={`w-3.5 h-3.5 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
-                  <span>{addCommas(displayLikes)}</span>
+               <div 
+                  className="flex items-center gap-1 cursor-pointer hover:bg-gray-100 p-1 rounded-full px-2 transition-colors" 
+                  title={`좋아요 ${displayLikes}`}
+                  onClick={(e) => {
+                      e.stopPropagation();
+                      if (!user) {
+                          toast.error("로그인이 필요합니다.");
+                          router.push('/login');
+                          return;
+                      }
+                      toggleLike();
+                  }}
+               >
+                  <Heart className={`w-3.5 h-3.5 transition-colors ${isLiked ? "fill-red-500 text-red-500" : "group-hover:text-red-400"}`} />
+                  <span className={isLiked ? "text-red-500 font-bold" : ""}>{addCommas(displayLikes)}</span>
                </div>
                <div className="flex items-center gap-1" title={`조회수 ${views}`}>
                   <BarChart3 className="w-3.5 h-3.5" />

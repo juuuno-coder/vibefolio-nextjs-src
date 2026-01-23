@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useState, useEffect, useCallback } from "react";
+import React, { Suspense, useState, useEffect, useCallback, useMemo } from "react";
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -279,60 +279,62 @@ function HomeContent() {
   
   // 필터링 로직 강화 (카테고리 + 분야 + 관심사) - 검색어는 서버 사이드에서 처리됨
   // 필터링 로직 강화 (카테고리 + 분야 + 관심사) - 복수 선택 지원
-  const filtered = projects.filter(p => {
-    // 0. [New] 성장하기(Growth) 탭 로직
-    if (selectedCategory === "growth") {
-        return p.is_growth_requested === true || p.is_feedback_requested === true;
-    }
+  const filtered = useMemo(() => {
+    return projects.filter(p => {
+      // 0. [New] 성장하기(Growth) 탭 로직
+      if (selectedCategory === "growth") {
+          return p.is_growth_requested === true || p.is_feedback_requested === true;
+      }
 
-    // 1. 관심사 탭 ("interests") 선택 시 로직 (OR 조건: 하나라도 맞으면 노출)
-    if (selectedCategory === "interests") {
-      if (!userInterests) return false;
+      // 1. 관심사 탭 ("interests") 선택 시 로직 (OR 조건: 하나라도 맞으면 노출)
+      if (selectedCategory === "interests") {
+        if (!userInterests) return false;
+        
+        const myGenres = userInterests.genres || [];
+        const myFields = userInterests.fields || [];
+        
+        const hasGenres = myGenres.length > 0;
+        const hasFields = myFields.length > 0;
+
+        // 둘 다 설정 안했으면 통과 X (관심사 설정 모달이 뜰 것임)
+        if (!hasGenres && !hasFields) return false;
+
+        // Genre 매칭 확인
+        const isGenreMatched = hasGenres && myGenres.some(g => {
+           return p.categories?.includes(g) || 
+                  p.categories?.includes(getCategoryValue(g)) || 
+                  (p.category && p.category === g) ||
+                  (p.category && p.category === getCategoryName(g));
+        });
+
+        // Field 매칭 확인
+        const isFieldMatched = hasFields && (p.fields && myFields.some(f => 
+           p.fields?.includes(f) || 
+           p.fields?.includes(getCategoryValue(f)) ||
+           p.fields?.includes(f.toLowerCase())
+        ));
+        
+        // 사용자 요구사항: "1개라도 해당되는게 있으면 소팅" -> 합집합(OR)
+        return isGenreMatched || isFieldMatched;
+      }
+
+      // 2. 일반 카테고리 필터 (복수 매칭)
+      const matchCategory = selectedCategory === "all" || (
+        Array.isArray(selectedCategory) 
+          ? selectedCategory.some(cat => p.categories?.includes(cat))
+          : p.categories?.includes(selectedCategory)
+      );
       
-      const myGenres = userInterests.genres || [];
-      const myFields = userInterests.fields || [];
+      // 3. 분야 필터 (복수 매칭)
+      const matchField = selectedFields.length === 0 || (
+         p.fields && p.fields.some(f => 
+            selectedFields.includes(f) || selectedFields.includes(getCategoryName(f))
+         )
+      );
       
-      const hasGenres = myGenres.length > 0;
-      const hasFields = myFields.length > 0;
-
-      // 둘 다 설정 안했으면 통과 X (관심사 설정 모달이 뜰 것임)
-      if (!hasGenres && !hasFields) return false;
-
-      // Genre 매칭 확인
-      const isGenreMatched = hasGenres && myGenres.some(g => {
-         return p.categories?.includes(g) || 
-                p.categories?.includes(getCategoryValue(g)) || 
-                (p.category && p.category === g) ||
-                (p.category && p.category === getCategoryName(g));
-      });
-
-      // Field 매칭 확인
-      const isFieldMatched = hasFields && (p.fields && myFields.some(f => 
-         p.fields?.includes(f) || 
-         p.fields?.includes(getCategoryValue(f)) ||
-         p.fields?.includes(f.toLowerCase())
-      ));
-      
-      // 사용자 요구사항: "1개라도 해당되는게 있으면 소팅" -> 합집합(OR)
-      return isGenreMatched || isFieldMatched;
-    }
-
-    // 2. 일반 카테고리 필터 (복수 매칭)
-    const matchCategory = selectedCategory === "all" || (
-      Array.isArray(selectedCategory) 
-        ? selectedCategory.some(cat => p.categories?.includes(cat))
-        : p.categories?.includes(selectedCategory)
-    );
-    
-    // 3. 분야 필터 (복수 매칭)
-    const matchField = selectedFields.length === 0 || (
-       p.fields && p.fields.some(f => 
-          selectedFields.includes(f) || selectedFields.includes(getCategoryName(f))
-       )
-    );
-    
-    return matchCategory && matchField;
-  });
+      return matchCategory && matchField;
+    });
+  }, [projects, selectedCategory, userInterests, selectedFields]);
 
   // 관심사 탭 선택 시 유효성 검사
   useEffect(() => {
@@ -356,7 +358,7 @@ function HomeContent() {
     }
   }, [selectedCategory, isAuthenticated, userInterests, router]);
   
-  const sortedProjects = sortProjects(filtered, sortBy);
+  const sortedProjects = useMemo(() => sortProjects(filtered, sortBy), [filtered, sortBy, sortProjects]);
 
   const handleProjectClick = (proj: ImageDialogProps) => {
     setSelectedProject(proj);
@@ -374,17 +376,28 @@ function HomeContent() {
 
   // 무한 스크롤
   useEffect(() => {
+    let ticking = false;
+
     const handleScroll = () => {
-      if (
-        window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 &&
-        !loading &&
-        hasMore
-      ) {
-        setLoadingMore(true);
-        setPage(prev => prev + 1);
-        loadProjects(page + 1).then(() => setLoadingMore(false));
+      if (isFetchingRef.current || ticking) return;
+      
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+            if (
+              window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 &&
+              !loading &&
+              hasMore
+            ) {
+              setLoadingMore(true);
+              setPage(prev => prev + 1);
+              loadProjects(page + 1).then(() => setLoadingMore(false));
+            }
+            ticking = false;
+        });
+        ticking = true;
       }
     };
+    
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loading, hasMore, page, loadProjects]);

@@ -95,8 +95,6 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
-        <link rel="preconnect" href="https://vibefolio.com" />
-        <link rel="dns-prefetch" href="https://vibefolio.com" />
         {/* Naver Search Advisor */}
         {process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION && (
           <meta name="naver-site-verification" content={process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION} />
@@ -109,7 +107,7 @@ export default function RootLayout({
           src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
           integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2txfLEH92VRGWkpM1PZ+j"
           crossOrigin="anonymous"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
         {/* Google Analytics (GA4) */}
         {process.env.NEXT_PUBLIC_GA_ID && (
