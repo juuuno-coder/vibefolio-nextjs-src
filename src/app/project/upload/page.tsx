@@ -352,31 +352,34 @@ export default function ProjectUploadPage() {
             >
               <section className="space-y-8">
                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2">
-                       <h3 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-                         <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-xl shadow-lg ring-4 ring-slate-100">⚖️</div>
-                         심사 기준 설정
-                       </h3>
-                       <p className="text-sm text-gray-400 font-medium pl-14">유저들이 어떤 기준으로 평가할지 정해주세요 (최대 6개)</p>
+                    <div className="flex items-center gap-4">
+                       <div className="w-14 h-14 rounded-[1.2rem] bg-orange-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-orange-200">🎯</div>
+                       <div>
+                          <h3 className="text-2xl font-black text-gray-900 tracking-tight">2. 미술랭처럼 평가받기</h3>
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">EVALUATION METRICS (RADAR CHART)</p>
+                       </div>
                     </div>
-                    <Button 
-                       variant="outline" 
-                       onClick={() => setCustomCategories([...customCategories, { id: `cat-${Date.now()}`, label: "", desc: "", sticker: "" }])}
-                       className="rounded-2xl border-2 border-gray-100 h-12 font-bold hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition-all"
-                       disabled={customCategories.length >= 6}
-                    >
-                       <FontAwesomeIcon icon={faPlus} className="mr-2" /> 새 기준 추가
-                    </Button>
+                    <div className="flex items-center gap-4">
+                       <span className="text-xs font-black text-gray-300">{customCategories.length}/6</span>
+                       <Button 
+                          variant="outline" 
+                          onClick={() => setCustomCategories([...customCategories, { id: `cat-${Date.now()}`, label: "", desc: "", sticker: "" }])}
+                          className="rounded-xl border-gray-100 h-10 font-bold hover:bg-gray-50 flex items-center gap-2 px-4"
+                          disabled={customCategories.length >= 6}
+                       >
+                          <FontAwesomeIcon icon={faPlus} className="text-[10px]" /> 추가
+                       </Button>
+                    </div>
                  </div>
                  
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {customCategories.map((cat, idx) => (
-                      <div key={idx} className="flex items-center gap-5 p-6 border-2 rounded-3xl border-gray-100 focus-within:border-orange-500 transition-all bg-white relative group shadow-sm hover:shadow-md">
-                        <label className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 cursor-pointer overflow-hidden shrink-0 group/img relative shadow-inner">
+                      <div key={idx} className="flex items-center gap-5 p-6 rounded-[2rem] border border-gray-50 bg-white relative group shadow-sm hover:shadow-md transition-all">
+                        <label className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 cursor-pointer overflow-hidden shrink-0 group/img relative">
                           {cat.sticker ? (
                             <img src={cat.sticker} className="w-full h-full object-contain" />
                           ) : (
-                            <FontAwesomeIcon icon={faStar} />
+                            <FontAwesomeIcon icon={faStar} className="text-sm" />
                           )}
                           <input type="file" className="hidden" onChange={async e => {
                             const file = e.target.files?.[0];
@@ -388,7 +391,7 @@ export default function ProjectUploadPage() {
                             }
                           }} />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                            <FontAwesomeIcon icon={faCamera} className="text-white text-xs" />
+                            <FontAwesomeIcon icon={faCamera} className="text-white text-[10px]" />
                           </div>
                         </label>
 
@@ -397,29 +400,23 @@ export default function ProjectUploadPage() {
                             const next = [...customCategories];
                             next[idx].label = e.target.value;
                             setCustomCategories(next);
-                          }} className="font-bold text-gray-900 outline-none w-full bg-transparent text-lg placeholder:text-gray-200" placeholder="항목 이름 (예: 독창성)" />
+                          }} className="font-black text-gray-900 outline-none w-full bg-transparent text-lg placeholder:text-gray-200" placeholder="항목 이름" />
                           <input value={cat.desc} onChange={e => {
                             const next = [...customCategories];
                             next[idx].desc = e.target.value;
                             setCustomCategories(next);
-                          }} className="text-xs text-gray-400 outline-none w-full bg-transparent font-medium" placeholder="간단한 심사 가이드" />
+                          }} className="text-xs text-gray-400 outline-none w-full bg-transparent font-bold" placeholder="항목에 대한 간단한 가이드" />
                         </div>
                         {customCategories.length > 1 && (
                           <button 
                             onClick={() => setCustomCategories(customCategories.filter((_, i) => i !== idx))}
-                            className="opacity-0 group-hover:opacity-100 absolute -top-3 -right-3 w-8 h-8 bg-white border border-gray-100 rounded-full text-gray-300 hover:text-red-500 hover:border-red-500 transition-all shadow-lg flex items-center justify-center"
+                            className="opacity-0 group-hover:opacity-100 absolute top-4 right-4 text-gray-200 hover:text-red-500 transition-all"
                           >
-                            <FontAwesomeIcon icon={faTrash} size="sm" />
+                            <FontAwesomeIcon icon={faTrash} size="xs" />
                           </button>
                         )}
                       </div>
                     ))}
-                    {customCategories.length === 0 && (
-                       <div className="col-span-full py-20 bg-gray-50 rounded-[2.5rem] border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-gray-400">
-                          <p className="font-bold">심사 기준이 없습니다.</p>
-                          <Button variant="link" onClick={() => setCustomCategories([{ id: '1', label: '', desc: '' }])}>기준 추가하기</Button>
-                       </div>
-                    )}
                  </div>
               </section>
 
@@ -428,7 +425,7 @@ export default function ProjectUploadPage() {
                    <FontAwesomeIcon icon={faArrowLeft} className="mr-2" /> 이전으로
                 </Button>
                 <Button onClick={() => setAuditStep(3)} className="h-14 px-12 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-lg shadow-xl shadow-orange-100 transition-all group">
-                  마지막 단계로 <FontAwesomeIcon icon={faCheck} className="ml-3 group-hover:translate-x-1 transition-transform" />
+                  마지막 단계로 <FontAwesomeIcon icon={faCheck} className="ml-3 transition-transform" />
                 </Button>
               </div>
             </motion.div>
@@ -444,76 +441,71 @@ export default function ProjectUploadPage() {
             >
               {/* 스티커 투표 설정 */}
               <section className="space-y-8">
-                 <div className="flex flex-col gap-2">
-                    <h3 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl shadow-lg ring-4 ring-blue-100">🗳️</div>
-                      스티커 투표 구성
-                    </h3>
-                    <p className="text-sm text-gray-400 font-medium pl-14">유저들의 직관적인 반응을 수집하세요 (질문과 옵션)</p>
-                 </div>
-                 <div className="p-10 bg-blue-50/50 rounded-[3rem] border border-blue-100/50 space-y-8">
-                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-blue-100 focus-within:ring-4 focus-within:ring-blue-50 transition-all flex items-center gap-4">
-                       <div className="w-10 h-10 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600">
-                         <FontAwesomeIcon icon={faQuoteLeft} />
+                 <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                       <div className="w-14 h-14 rounded-[1.2rem] bg-indigo-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-indigo-200">📊</div>
+                       <div>
+                          <h3 className="text-2xl font-black text-gray-900 tracking-tight">3. 스티커 투표 항목 설정</h3>
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">STICKER POLL (2-6 OPTIONS WITH ICONS)</p>
                        </div>
-                       <input 
-                          value={pollDesc} 
-                          onChange={e => setPollDesc(e.target.value)}
-                          className="flex-1 h-12 text-xl font-black border-none outline-none placeholder:text-slate-200"
-                          placeholder="투표 질문 (예: 이 작품에 대해 어떻게 생각하시나요?)"
-                       />
+                    </div>
+                    <div className="flex items-center gap-4">
+                       <span className="text-xs font-black text-gray-300">{pollOptions.length}/6</span>
                        <Button 
-                          variant="secondary"
-                          size="sm" 
+                          variant="outline" 
                           onClick={() => setPollOptions([...pollOptions, { id: `p-${Date.now()}`, label: "", desc: "", image_url: "" }])}
-                          className="bg-blue-600 text-white hover:bg-blue-700 font-black rounded-xl h-10 shadow-lg shadow-blue-200"
-                          disabled={pollOptions.length >= 5}
+                          className="rounded-xl border-gray-100 h-10 font-bold hover:bg-gray-50 flex items-center gap-2 px-4"
+                          disabled={pollOptions.length >= 6}
                        >
-                          <FontAwesomeIcon icon={faPlus} className="mr-2" /> 옵션 추가
+                          <FontAwesomeIcon icon={faPlus} className="text-[10px]" /> 추가
                        </Button>
                     </div>
+                 </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                       {pollOptions.map((opt, idx) => (
-                          <div key={opt.id} className="bg-white p-6 rounded-[2.5rem] shadow-sm space-y-5 relative group border border-gray-50 hover:border-blue-200 hover:shadow-xl transition-all">
-                             <label className="w-full aspect-square bg-slate-50 rounded-3xl flex items-center justify-center cursor-pointer overflow-hidden border-2 border-dashed border-gray-100 hover:border-blue-400 transition-all group/sticker relative">
-                                {opt.image_url ? (
-                                   <img src={opt.image_url} className="w-full h-full object-cover" />
-                                ) : (
-                                   <div className="flex flex-col items-center gap-2">
-                                      <FontAwesomeIcon icon={faUpload} className="text-gray-300 text-3xl" />
-                                      <span className="text-[10px] font-black text-gray-300 uppercase">Upload Icon</span>
-                                   </div>
-                                )}
-                                <input type="file" className="hidden" onChange={async e => {
-                                   const file = e.target.files?.[0];
-                                   if (file) {
-                                      const url = await uploadImage(file);
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {pollOptions.map((opt, idx) => (
+                       <div key={opt.id} className="bg-white p-8 rounded-[2.5rem] border border-gray-50 relative group hover:shadow-xl transition-all pt-12">
+                          {/* Sticker Badge */}
+                          <div className="absolute top-4 left-4 bg-slate-900 text-white px-3 py-1 rounded-full text-[8px] font-black tracking-tighter uppercase z-20">
+                             STICKER {idx + 1}
+                          </div>
+
+                          <label className="w-full aspect-square bg-white rounded-[2rem] flex items-center justify-center cursor-pointer overflow-hidden border-2 border-dashed border-gray-100 hover:border-indigo-400 transition-all group/sticker relative mb-8">
+                             {opt.image_url ? (
+                                <img src={opt.image_url} className="w-full h-full object-cover" />
+                             ) : (
+                                <div className="flex flex-col items-center gap-3">
+                                   <FontAwesomeIcon icon={faCamera} className="text-gray-200 text-2xl" />
+                                   <div className="bg-gray-50 text-gray-400 px-4 py-1.5 rounded-full text-[9px] font-bold">스티커 이미지 첨부</div>
+                                </div>
+                             )}
+                             <input type="file" className="hidden" onChange={async e => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                   const url = await uploadImage(file);
+                                   const next = [...pollOptions];
+                                   next[idx].image_url = url;
+                                   setPollOptions(next);
+                                }
+                             }} />
+                          </label>
+
+                          <div className="space-y-6">
+                             <div className="space-y-1.5">
+                                <label className="text-[9px] font-black text-gray-300 uppercase tracking-widest pl-1">항목 명칭</label>
+                                <input 
+                                   value={opt.label}
+                                   onChange={e => {
                                       const next = [...pollOptions];
-                                      next[idx].image_url = url;
+                                      next[idx].label = e.target.value;
                                       setPollOptions(next);
-                                   }
-                                }} />
-                                <div className="absolute inset-x-4 top-4 bottom-14 bg-black/40 opacity-0 group-hover/sticker:opacity-100 transition-opacity flex flex-col items-center justify-center rounded-2xl backdrop-blur-sm">
-                                   <FontAwesomeIcon icon={faCamera} className="text-white mb-2" />
-                                   <span className="text-[10px] text-white font-black">아이콘 변경</span>
-                                </div>
-                             </label>
-
-                             <div className="space-y-3">
-                                <div className="flex items-center gap-3">
-                                   <div className="w-8 h-8 bg-slate-950 text-white rounded-xl flex items-center justify-center font-black text-[10px]">0{idx+1}</div>
-                                   <input 
-                                      value={opt.label}
-                                      onChange={e => {
-                                         const next = [...pollOptions];
-                                         next[idx].label = e.target.value;
-                                         setPollOptions(next);
-                                      }}
-                                      className="flex-1 font-black text-gray-900 outline-none text-[15px] placeholder:text-gray-200"
-                                      placeholder="직관적인 답안"
-                                   />
-                                </div>
+                                   }}
+                                   className="w-full font-black text-gray-900 outline-none text-xl placeholder:text-gray-200 leading-tight"
+                                   placeholder="옵션 입력"
+                                />
+                             </div>
+                             <div className="space-y-1.5">
+                                <label className="text-[9px] font-black text-gray-300 uppercase tracking-widest pl-1">투표 가이드라인</label>
                                 <textarea 
                                    value={opt.desc}
                                    onChange={e => {
@@ -521,22 +513,22 @@ export default function ProjectUploadPage() {
                                       next[idx].desc = e.target.value;
                                       setPollOptions(next);
                                    }}
-                                   className="w-full text-xs text-gray-500 bg-gray-50 rounded-2xl p-4 resize-none outline-none leading-relaxed border border-transparent focus:border-blue-100 focus:bg-white transition-all font-medium"
-                                   placeholder="보충 설명 (선택)"
-                                   rows={2}
+                                   className="w-full text-sm text-gray-500 bg-transparent resize-none outline-none leading-relaxed font-bold placeholder:text-gray-200"
+                                   placeholder="설명을 입력하세요"
+                                   rows={3}
                                 />
                              </div>
-                             {pollOptions.length > 2 && (
-                                <button 
-                                   onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}
-                                   className="opacity-0 group-hover:opacity-100 absolute -top-2 -right-2 w-8 h-8 bg-white border border-gray-100 rounded-full text-gray-300 hover:text-red-500 hover:border-red-500 transition-all shadow-lg flex items-center justify-center"
-                                >
-                                   <FontAwesomeIcon icon={faTrash} size="sm" />
-                                </button>
-                             )}
                           </div>
-                       ))}
-                    </div>
+                          {pollOptions.length > 2 && (
+                             <button 
+                                onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}
+                                className="opacity-0 group-hover:opacity-100 absolute top-4 right-4 text-gray-200 hover:text-red-500 transition-all"
+                             >
+                                <FontAwesomeIcon icon={faTrash} size="xs" />
+                             </button>
+                          )}
+                       </div>
+                    ))}
                  </div>
               </section>
 

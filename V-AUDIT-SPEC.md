@@ -1,81 +1,78 @@
-# V-Audit (제 평가는요?) Functional Specification v1.0
+# V-Audit (전문 진단 서비스: 제 평가는요?) Functional Specification v1.1
 
 ## 1. 개요
 
-**V-Audit**은 프로젝트 창작자가 전문가나 동료들에게 정밀 진단을 의뢰하고, 체계적인 피드백을 수합하여 개선 방향을 도출하는 전문 평가 시스템입니다. 기존 Vibefolio의 단순 댓글 시스템을 넘어, 다각도의 분석 도구와 시각화된 리포트를 제공합니다.
-
-## 2. 3단계 정밀 진단 프로세스 (Flow)
-
-사용자 경험을 최적화하기 위해 기존 4단계를 통합하여 **총 3단계**의 진단 흐름을 가집니다.
-
-### Phase 1: 항목별 다각도 별점 진단 (Michelin Rating)
-
-- **목적**: 프로젝트의 정량적 가치를 측정하고 레이더 차트로 시각화.
-- **기능**:
-  - 창작자가 설정한 N개의 평가 기준(예: 독창성, 완성도, 시장성 등)에 대해 5점 만점의 별점 부여.
-  - 각 기준별로 '스티커' UX(아이콘 기반)를 활용하여 직관성 극대화.
-- **데이터**: `scores` (Object), `radar_data` (Object).
-
-### Phase 2: 직관적 투표 및 합불 판정 (Intuitive Poll)
-
-- **목적**: 작품에 대한 최종적인 의사결정 또는 직관적인 선호도 확인.
-- **기능**:
-  - 창작자가 설정한 2~4개의 옵션 중 하나를 선택 (예: "당장 쓸게요!", "개선이 필요해요").
-  - A/B 테스트 모드 지원: 두 가지 시안 중 하나를 투표 가능.
-- **데이터**: `poll_choice` (String/ID).
-
-### Phase 3: 심층 질문 및 종합 제안 (Deep-Dive & Summary)
-
-- **목적**: 주관식 답변을 통한 정밀 피드백 수집 (기존 Phase 2와 4 통합).
-- **기능**:
-  - **심층 질문 (Custom Questions)**: 창작자가 등록한 특정 질문들에 대해 상세 답변 작성.
-  - **종합 총평 (Final Comments)**: 프로젝트 전체에 대한 전문가적 소감 및 개선 제안 작성.
-- **데이터**: `custom_answers` (Record<string, string>), `proposal` (String).
+**V-Audit**은 Vibefolio 내의 전문 피드백 및 프로젝트 진단 시스템입니다. 창작자가 자신의 프로젝트에 대해 전문가나 동료들에게 정밀 진단을 의뢰하고, 체계적인 데이터를 수집하여 성장을 도모하는 것을 목적으로 합니다. 기존의 단순 댓글 시스템을 넘어선 다각도 분석 UX와 시각화된 리포트를 제공합니다.
 
 ---
 
-## 3. 기능 상세 (Features)
+## 2. 주요 아키텍처 및 흐름
 
-### 3.1 진단 의뢰 (Creator Mode)
+### 2.1 창작자 전용: 고도화된 등록 및 관리 플로우
 
-- **미디어 설정**: 웹 링크(URL), 이미지 갤러리(Multiple), 유튜브 영상(Embed) 중 선택.
-- **A/B 테스트**: 시안 A와 B를 동시에 보여주고 비교 진단 요청 가능.
-- **동적 질문 관리**:
-  - 평가 기준(Categories), 투표 옵션(Poll Options), 심층 질문(Audit Questions)을 사용자가 직접 **추가 및 삭제** 가능.
-  - 각 항목별 기본 템플릿 제공.
+복잡한 진단 설정을 사용자 경험(UX) 관점에서 체계화하여 **3단계 위저드** 시스템으로 구현했습니다.
 
-### 3.2 진단 참여 (Reviewer Mode)
+- **Step 1: 미디어 및 마감 기한**
+  - 진단 대상 선택 (웹 링크, 이미지 갤러리, 유튜브 영상)
+  - A/B 테스트 모드 지원 (시안 A와 B의 비교 분석)
+  - 진단 마감일(Deadline) 설정 기능
+- **Step 2: 심사 기준 설정 (Dynamic Categories)**
+  - 최대 6개의 평가 항목을 창작자가 직접 정의
+  - 각 항목별 고유 스티커(아이콘) 이미지 업로드 지원
+  - 실시간 레이더 차트 시각화 구성 요소
+- **Step 3: 심층 진단 구성 (Poll & Questions)**
+  - 직관적 반응 수집을 위한 스티커 투표(Poll) 구성
+  - 서술형 답변 유도를 위한 사용자 지정 질문 리스트 작성
+  - 마이페이지/랜딩 페이지 노출 설정 (성장하기 갤러리 공개 여부)
 
-- **Split-View UX**: 화면 좌측에는 프로젝트 미리보기(Internal Browser), 우측에는 진단 패널 배치.
-- **기기 모드 전환**: PC와 Mobile 뷰를 실시간으로 전환하며 진단 가능.
-- **진행 상태 표시**: 현재 단계를 인디케이터로 노출 (1/3, 2/3, 3/3).
-- **최종 완료**: 모든 단계 완료 시 최종 전송 및 완료 애니메이션 노출.
+### 2.2 리뷰어 전용: 1:1 정밀 진단 뷰어
+
+전문적인 진단을 위해 분할 화면과 최적화된 UX를 제공합니다.
+
+- **Split-View**: 좌측 프로젝트 프리미엄 뷰어 + 우측 진단 패널
+- **3-Phase 진단 흐름**:
+  1. **Phase 1: Michelin Rating**: 항목별 별점 및 시각적 피드백
+  2. **Phase 2: Stick Poll**: 직관적이고 빠른 반응 투표
+  3. **Phase 3: Deep Proposal**: 주관식 답변 및 최종 개선 제안서 작성
+
+---
+
+## 3. 서비스 통합 위치 (Integration)
+
+V-Audit은 Vibefolio의 핵심 가치인 '성장'을 극대화하기 위해 플랫폼 전반에 유기적으로 통합되어 있습니다.
+
+- **MyPage (관리)**: '제 평가는요?' 프로젝트 전용 필터를 통해 자신의 진단 의뢰 현황을 한눈에 관리하고, 설정 수정 및 진단 결과 조회가 가능합니다.
+- **Landing Page (홍보)**: Vibefolio 메인 화면의 프리미엄 섹션을 통해 현재 진행 중인 핵심 진단 미션들을 홍보하고 참여를 유도합니다.
+- **Upload Flow (진입)**: 프로젝트 등록 시 '전문 진단 의뢰(V-Audit)' 모드를 선택하여 간편하게 기능을 시작할 수 있습니다.
 
 ---
 
 ## 4. 데이터 모델 (Data Schema)
 
-### Project (진단 설정 정보)
+### Project (진단 설정 정보 - `custom_data.audit_config`)
 
 ```json
 {
-  "custom_data": {
-    "audit_config": {
-      "type": "link | image | video",
-      "mediaA": "string | string[]",
-      "isAB": "boolean",
-      "mediaB": "string | null",
-      "categories": [
-        { "id": "uuid", "label": "독창성", "desc": "아이디어가 참신한가요?" }
-      ],
-      "poll": {
-        "desc": "이 작품에 대해 어떻게 생각하시나요?",
-        "options": [
-          { "id": "p1", "label": "당장 쓸게요!", "desc": "매우 만족..." }
-        ]
-      },
-      "questions": ["가장 인상적인 부분은 어디인가요?"]
-    }
+  "audit_config": {
+    "type": "link | image | video",
+    "mediaA": "string | string[]",
+    "isAB": "boolean",
+    "mediaB": "string | null",
+    "categories": [
+      {
+        "id": "uuid",
+        "label": "Label",
+        "desc": "Description",
+        "sticker": "url"
+      }
+    ],
+    "poll": {
+      "desc": "Question",
+      "options": [
+        { "id": "p1", "label": "Label", "desc": "Desc", "image_url": "url" }
+      ]
+    },
+    "questions": ["Q1", "Q2"]
   }
 }
 ```
@@ -84,19 +81,21 @@
 
 ```json
 {
-  "scores": { "creative": 4, "visual": 5, ... },
-  "poll_choice": "p1",
-  "custom_answers": {
-    "가장 인상적인 부분은 어디인가요?": "배색 처리가 돋보입니다."
-  },
-  "proposal": "전반적으로 훌륭하나 버튼 폰트를 조금 키우면 좋겠습니다."
+  "scores": { "cat_id": number },
+  "poll_choice": "option_id",
+  "custom_answers": { "Question": "Answer" },
+  "proposal": "Final feedback summary"
 }
 ```
 
 ---
 
-## 5. 기술 스택
+## 5. 향후 로드맵
 
-- **Frontend**: Next.js 14, TailwindCSS, Framer Motion, Lucide Icons.
-- **Backend**: Supabase (Database, Auth, Storage), Vercel.
-- **Components**: Shadcn UI 기반 커스텀 컴포넌트.
+- **AI 분석 통합 (재개)**: 일시 중단된 AI 정밀 분석 기능을 고도화하여 리뷰어의 의견과 AI의 분석을 결합한 하이브리드 리포트 제공.
+- **진단 리포트 PDF**: 수집된 데이터를 수려한 디자인의 PDF 리포트로 다운로드하는 기능.
+- **진단 보상 시스템**: 양질의 피드백을 남긴 유저에게 제공할 수 있는 플랫폼 내 보상 체계 구축.
+
+---
+
+_본 문서는 V-Audit 시스템의 최종 구현 사양을 기준으로 작성되었습니다._
