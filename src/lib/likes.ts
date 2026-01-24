@@ -2,8 +2,8 @@
 import { supabase } from "./supabase/client";
 import { Database } from "./supabase/types";
 
-type LikeRow = Database["public"]["Tables"]["like"]["Row"];
-type LikeInsert = Database["public"]["Tables"]["like"]["Insert"];
+type LikeRow = Database["public"]["Tables"]["Like"]["Row"];
+type LikeInsert = Database["public"]["Tables"]["Like"]["Insert"];
 
 /**
  * Get the current user.
@@ -18,7 +18,7 @@ async function getUser() {
  */
 export async function getUserLikes(userId: string) {
   const { data, error } = await supabase
-    .from("like")
+    .from("Like")
     .select("project_id")
     .eq("user_id", userId);
   if (error) {
@@ -37,7 +37,7 @@ export async function isProjectLiked(projectId: string | number): Promise<boolea
   if (!user) return false;
 
   const { data, error } = await supabase
-    .from("like")
+    .from("Like")
     .select("project_id")
     .eq("user_id", user.id)
     .eq("project_id", Number(projectId))
@@ -58,7 +58,7 @@ export async function addLike(projectId: string | number): Promise<void> {
   if (!user) return;
 
   const { error } = await supabase
-    .from("like")
+    .from("Like")
     .insert({ user_id: user.id, project_id: Number(projectId) } as LikeInsert);
 
   if (error) {
@@ -74,7 +74,7 @@ export async function removeLike(projectId: string | number): Promise<void> {
   if (!user) return;
 
   const { error } = await supabase
-    .from("like")
+    .from("Like")
     .delete()
     .eq("user_id", user.id)
     .eq("project_id", Number(projectId));
@@ -103,7 +103,7 @@ export async function toggleLike(projectId: string | number): Promise<boolean> {
  */
 export async function getProjectLikeCount(projectId: string | number): Promise<number> {
   const { count, error } = await supabase
-    .from("like")
+    .from("Like")
     .select("*", { count: "exact", head: true })
     .eq("project_id", Number(projectId));
 

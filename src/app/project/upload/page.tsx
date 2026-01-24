@@ -66,8 +66,9 @@ export default function ProjectUploadPage() {
   const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>('public');
   const [collaboratorEmails, setCollaboratorEmails] = useState<string[]>([]);
 
-  // 피드백 설정 상태
-  const [isFeedbackRequested, setIsFeedbackRequested] = useState(false);
+  // 노출 범위 관리
+  const [showInDiscover, setShowInDiscover] = useState(true);
+  const [showInGrowth, setShowInGrowth] = useState(false);
   const [auditDeadline, setAuditDeadline] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() + 7); // Default 1 week
@@ -96,28 +97,34 @@ export default function ProjectUploadPage() {
   // 데이터 로딩 및 초기 설정
   useEffect(() => {
     if (mode === 'audit') {
-      setIsFeedbackRequested(true);
+      // Force update state immediately when mode is present
+      setShowInGrowth(true);
+      setShowInDiscover(true);
+      // Optional: Set a flag to indicate 'feedback mode' for UI
     }
     
     if (editId) {
       const loadProject = async () => {
         try {
-          const res = await fetch(`/api/projects?id=${editId}`);
+          const res = await fetch(`/api/projects/${editId}`);
           const data = await res.json();
-          if (data.success && data.project) {
+          if (data.project) {
             const p = data.project;
             setTitle(p.title || "");
             setSummary(p.summary || "");
             setContent(p.content_text || "");
             setCoverPreview(p.thumbnail_url);
             setVisibility(p.visibility);
-            setSelectedGenres(p.custom_data?.genres || []);
-            setSelectedFields(p.custom_data?.fields || []);
+            
+            // custom_data 파싱 안전하게 처리
+            const cData = typeof p.custom_data === 'string' ? JSON.parse(p.custom_data) : p.custom_data;
+            setSelectedGenres(cData?.genres || []);
+            setSelectedFields(cData?.fields || []);
             
             if (p.audit_deadline) setAuditDeadline(p.audit_deadline.split('T')[0]);
             
-            if (p.custom_data?.audit_config) {
-              const cfg = p.custom_data.audit_config;
+            if (cData?.audit_config) {
+              const cfg = cData.audit_config;
               setAuditType(cfg.type || 'link');
               setMediaData(cfg.mediaA || "");
               setMediaDataB(cfg.mediaB || "");
@@ -130,15 +137,17 @@ export default function ProjectUploadPage() {
               if (cfg.questions) setAuditQuestions(cfg.questions);
             }
             
-            setIsFeedbackRequested(p.is_growth_requested || p.is_feedback_requested || false);
+            setShowInGrowth(p.is_growth_requested || cData?.is_feedback_requested || false);
+            setShowInDiscover(p.visibility === 'public');
           }
         } catch (e) {
           console.error("Failed to load project", e);
+          toast.error("프로젝트 정보를 불러오는데 실패했습니다.");
         }
       };
       loadProject();
     }
-  }, [editId]);
+  }, [editId, mode]);
 
   const handleSubmit = async () => {
     if (!title.trim()) return toast.error("제목을 입력해주세요.");
@@ -156,14 +165,15 @@ export default function ProjectUploadPage() {
         summary,
         content_text: content,
         thumbnail_url: coverUrl,
-        visibility: isFeedbackRequested ? 'unlisted' : visibility,
+        visibility: showInDiscover ? 'public' : 'unlisted',
         category_id: selectedGenres[0],
-        audit_deadline: isFeedbackRequested ? auditDeadline : null,
+        audit_deadline: showInGrowth ? auditDeadline : null,
         custom_data: {
           genres: selectedGenres,
           fields: selectedFields,
-          is_feedback_requested: isFeedbackRequested,
-          audit_config: isFeedbackRequested ? {
+          show_in_discover: showInDiscover,
+          show_in_growth: showInGrowth,
+          audit_config: showInGrowth ? {
             type: auditType,
             mediaA: coverUrl, // Use project thumbnail as default media
             mediaB: null,
@@ -173,7 +183,7 @@ export default function ProjectUploadPage() {
             questions: auditQuestions
           } : null
         },
-        is_growth_requested: isFeedbackRequested,
+        is_growth_requested: showInGrowth,
         collaborators: collaboratorEmails
       } as any;
 
@@ -185,8 +195,8 @@ export default function ProjectUploadPage() {
 
       if (!res.ok) throw new Error("등록 실패");
       
-      toast.success(isFeedbackRequested ? "피드백 요청이 성공적으로 등록되었습니다!" : "프로젝트가 발행되었습니다!");
-      router.push(isFeedbackRequested ? "/growth" : "/");
+      toast.success(showInGrowth ? "전문 피드백 설정이 완료되었습니다!" : "프로젝트가 발행되었습니다!");
+      router.push(showInGrowth ? "/growth" : "/discover");
     } catch (error) {
       console.error(error);
       toast.error("등록 중 오류가 발생했습니다.");
@@ -334,12 +344,28 @@ export default function ProjectUploadPage() {
           <span className="text-sm font-bold uppercase tracking-wider">Back</span>
         </button>
         <h1 className="text-sm font-black text-gray-900 uppercase tracking-[0.2em]">
-          {isFeedbackRequested ? "포트폴리오 & 피드백" : isVersionMode ? "새 버전 등록" : "프로젝트 등록"}
+          {showInGrowth ? "포트폴리오 & 전문 피드백" : isVersionMode ? "새 버전 등록" : "프로젝트 등록"}
         </h1>
         <div className="w-10" />
       </header>
 
       <main className="max-w-4xl mx-auto py-12 px-6">
+        {/* [New] Feedback Mode Indicator */}
+        {mode === 'audit' && (
+           <div className="mb-8 p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-center justify-between animate-in fade-in slide-in-from-top-4">
+              <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center text-lg">🌱</div>
+                 <div>
+                    <p className="text-sm font-bold text-gray-900">전문가 피드백 요청 모드</p>
+                    <p className="text-xs text-gray-500">작품을 등록하면 자동으로 성장하기 메뉴에 노출됩니다.</p>
+                 </div>
+              </div>
+              <div className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-400">
+                 AUTO-ON
+              </div>
+           </div>
+        )}
+
         {step === 'audit' ? renderFeedbackSettings() : (
           <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-300">
             {step === 'content' ? (
@@ -402,29 +428,49 @@ export default function ProjectUploadPage() {
                     </div>
                  </section>
 
-                 <section className="p-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden group">
+                  <section className="p-8 bg-zinc-900 rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-[80px] -mr-32 -mt-32" />
+                    <div className="flex items-center gap-6 relative z-10">
+                       <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center text-3xl">📡</div>
+                       <div className="space-y-1">
+                          <h3 className="font-black text-2xl tracking-tight">발견하기 메뉴에 등록</h3>
+                          <p className="text-gray-400 text-sm font-medium">바이브폴리오의 메인 갤러리 피드에 작업을 노출합니다.</p>
+                       </div>
+                    </div>
+                    <button 
+                       type="button"
+                       onClick={() => setShowInDiscover(!showInDiscover)}
+                       className={cn("w-20 h-10 rounded-full transition-all relative flex items-center px-1.5 shadow-inner z-10", showInDiscover ? "bg-green-500" : "bg-white/10")}
+                    >
+                       <div className={cn("w-7 h-7 rounded-full shadow-lg transition-all flex items-center justify-center font-black text-[10px]", showInDiscover ? "translate-x-10 bg-white text-green-600" : "translate-x-0 bg-white text-gray-300")}>
+                          {showInDiscover ? "YES" : "NO"}
+                       </div>
+                    </button>
+                  </section>
+
+                  <section className="p-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[80px] -mr-32 -mt-32" />
                     <div className="flex items-center gap-6 relative z-10">
                        <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center text-3xl">🌱</div>
                        <div className="space-y-1">
-                          <h3 className="font-black text-2xl tracking-tight">전문 피드백 동시에 받기</h3>
+                          <h3 className="font-black text-2xl tracking-tight">성장하기 메뉴에 등록</h3>
                           <p className="text-orange-50/80 text-sm font-medium">동료 전문가들에게 미슐랭 평점과 스티커 투표를 받을까요?</p>
                        </div>
                     </div>
                     <button 
                        type="button"
-                       onClick={() => setIsFeedbackRequested(!isFeedbackRequested)}
-                       className={cn("w-20 h-10 rounded-full transition-all relative flex items-center px-1.5 shadow-inner z-10", isFeedbackRequested ? "bg-white" : "bg-black/20")}
+                       onClick={() => setShowInGrowth(!showInGrowth)}
+                       className={cn("w-20 h-10 rounded-full transition-all relative flex items-center px-1.5 shadow-inner z-10", showInGrowth ? "bg-white" : "bg-black/20")}
                     >
-                       <div className={cn("w-7 h-7 rounded-full shadow-lg transition-all flex items-center justify-center font-black text-[10px]", isFeedbackRequested ? "translate-x-10 bg-orange-600 text-white" : "translate-x-0 bg-white text-gray-300")}>
-                          {isFeedbackRequested ? "YES" : "NO"}
+                       <div className={cn("w-7 h-7 rounded-full shadow-lg transition-all flex items-center justify-center font-black text-[10px]", showInGrowth ? "translate-x-10 bg-orange-600 text-white" : "translate-x-0 bg-white text-gray-300")}>
+                          {showInGrowth ? "YES" : "NO"}
                        </div>
                     </button>
-                 </section>
+                  </section>
 
-                 <div className="flex gap-4">
+                  <div className="flex gap-4">
                     <Button variant="ghost" onClick={() => setStep('content')} className="w-1/3 h-16 rounded-full font-bold text-gray-400">이전으로</Button>
-                    {isFeedbackRequested ? (
+                    {showInGrowth ? (
                        <Button onClick={() => setStep('audit')} className="flex-1 h-16 rounded-full bg-orange-600 hover:bg-orange-700 text-white text-xl font-black shadow-lg shadow-orange-200 transition-all flex items-center justify-center gap-3">
                           피드백 상세 설정하기 <ChevronRight />
                        </Button>
@@ -433,7 +479,7 @@ export default function ProjectUploadPage() {
                           지금 발행하기
                        </Button>
                     )}
-                 </div>
+                  </div>
               </div>
             )}
           </div>

@@ -256,7 +256,8 @@ function GrowthContent() {
             allow_michelin_rating: proj.allow_michelin_rating,
             allow_stickers: proj.allow_stickers,
             allow_secret_comments: proj.allow_secret_comments,
-            is_feedback_requested: typeof proj.custom_data === 'string' ? JSON.parse(proj.custom_data)?.is_feedback_requested : proj.custom_data?.is_feedback_requested,
+            is_feedback_requested: proj.is_growth_requested || (typeof proj.custom_data === 'string' ? JSON.parse(proj.custom_data)?.is_feedback_requested : proj.custom_data?.is_feedback_requested),
+            is_growth_requested: proj.is_growth_requested,
             custom_data: typeof proj.custom_data === 'string' ? JSON.parse(proj.custom_data) : proj.custom_data,
           } as ImageDialogProps;
         });
@@ -347,33 +348,7 @@ function GrowthContent() {
                {/* Interactive Demo Section - Only show when onboarded */}
                <InteractiveHero />
 
-         {/* [New] Growth Mode Highlighting */}
-         {projects.length > 0 && (
-              <div className="mb-16">
-                 <div className="flex items-center justify-between mb-8">
-                     <div className="flex flex-col gap-1 text-left">
-                         <h2 className="text-2xl font-bold text-slate-950 flex items-center gap-3 tracking-tight">
-                             <span className="bg-orange-500 text-white p-2.5 rounded-[1.2rem] shadow-lg shadow-orange-200">
-                                🌱
-                             </span>
-                             심사 평가를 기다리고 있어요
-                         </h2>
-                         <p className="text-slate-500 text-sm font-medium">여러분의 냉철한 시선이 작품을 더욱 미슐랭스럽게 만듭니다.</p>
-                     </div>
-                 </div>
-                 <div className="flex gap-6 overflow-x-auto pb-6 no-scrollbar -mx-4 px-4">
-                     {projects.slice(0, 6).map(project => (
-                          <div key={project.id} className="min-w-[280px] md:min-w-[340px]">
-                             <ImageCard props={project} onClick={() => {
-                                setSelectedProject(project);
-                                setModalOpen(true);
-                             }} className="transition-all hover:-translate-y-2" />
-                          </div>
-                     ))}
-                 </div>
-                 <div className="h-px bg-slate-100 w-full mt-8" />
-              </div>
-         )}
+
 
          {/* Grid */}
          {loading ? (
@@ -396,7 +371,7 @@ function GrowthContent() {
            <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
               <h3 className="text-xl font-bold text-gray-900 mb-2">아직 피드백 요청이 없습니다</h3>
               <p className="text-gray-500">첫 번째로 용기 내어 피드백을 요청해보세요!</p>
-              <Button onClick={() => router.push('/project/upload')} className="mt-6 rounded-full">
+              <Button onClick={() => router.push('/project/upload?mode=audit')} className="mt-6 rounded-full">
                  프로젝트 등록하기
               </Button>
            </div>

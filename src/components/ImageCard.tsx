@@ -72,9 +72,9 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
     if (!props) return null;
 
     // 안전한 데이터 접근
-    const imageUrl = props.urls?.regular || props.urls?.full || FALLBACK_IMAGE;
+    const imageUrl = props.urls?.regular || props.urls?.full || (props as any).thumbnail_url || (props as any).image_url || FALLBACK_IMAGE;
     const username = props.user?.username || 'Unknown';
-    const avatarUrl = props.user?.profile_image?.large || props.user?.profile_image?.small || FALLBACK_AVATAR;
+    const avatarUrl = props.user?.profile_image?.large || props.user?.profile_image?.small || (props.user as any)?.profile_image_url || FALLBACK_AVATAR;
     const likes = props.likes ?? 0;
     const views = props.views;
     const altText = props.alt_description || props.title || '@THUMBNAIL';
@@ -149,7 +149,8 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
                 <button 
                   onClick={(e) => { 
                      e.stopPropagation(); 
-                     const isAudit = props.custom_data?.audit_config;
+                     const cData = typeof props.custom_data === 'string' ? JSON.parse(props.custom_data) : props.custom_data;
+                     const isAudit = cData?.audit_config;
                      router.push(`/project/upload?mode=${isAudit ? 'audit' : 'default'}&edit=${props.id}`);
                   }}
                   className="bg-white text-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-green-500 hover:text-white transition-colors transform hover:scale-105 shadow-lg w-36 justify-center"

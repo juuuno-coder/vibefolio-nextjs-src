@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { OptimizedImage } from "./OptimizedImage";
 import { FeedbackPoll } from "./FeedbackPoll";
 import { MichelinRating } from "./MichelinRating";
@@ -185,6 +186,7 @@ export function ProjectDetailModalV2({
   onOpenChange,
   project,
 }: ProjectDetailModalV2Props) {
+  const router = useRouter();
 
   // [Refactor] useLikes 훅 사용 - 상세 모달에서는 실시간 구독 활성화
   const { isLiked, likesCount, toggleLike, isLoading: isLikeLoading } = useLikes(project?.id, project?.likes || 0, true);
@@ -1065,17 +1067,9 @@ export function ProjectDetailModalV2({
                         </div>
                       </div>
                       <Button 
-                        onClick={async () => {
-                          if (!confirm("이 프로젝트를 '성장' 피드백 게시물로 전환하시겠습니까?")) return;
-                          const { error } = await supabase
-                            .from('Project')
-                            .update({ is_growth_requested: true } as any)
-                            .eq('project_id', parseInt(project.id));
-                          
-                          if (!error) {
-                             toast.success("성장 등록 완료!");
-                             window.location.reload();
-                          }
+                        onClick={() => {
+                           // isAuditMode가 아니면 'audit' 모드로 편집 화면 이동
+                           router.push(`/project/upload?mode=audit&edit=${project?.id}`);
                         }}
                         size="sm" 
                         className="bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-full text-[10px] h-7"

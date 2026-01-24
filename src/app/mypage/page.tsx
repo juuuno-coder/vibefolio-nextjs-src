@@ -203,14 +203,22 @@ export default function MyPage() {
             .eq('user_id', userId)
             .order('created_at', { ascending: false }) as any;
           
-          setProjects((data || []).filter((i: any) => i.Project).map((i: any) => ({
-            id: String(i.Project.project_id),
-            title: i.Project.title,
-            urls: { full: i.Project.thumbnail_url || '/placeholder.jpg', regular: i.Project.thumbnail_url || '/placeholder.jpg' },
-            user: { username: 'Creator', profile_image: { small: '/globe.svg', large: '/globe.svg' } },
-            likes: i.Project.likes_count || 0,
-            views: i.Project.views_count || 0,
-          })));
+          setProjects((data || []).map((i: any) => {
+            const p = i.Project || i.project;
+            if (!p) return null;
+            return {
+              id: String(p.project_id),
+              title: p.title,
+              urls: { 
+                full: p.thumbnail_url || p.image_url || '/placeholder.jpg', 
+                regular: p.thumbnail_url || p.image_url || '/placeholder.jpg' 
+              },
+              thumbnail_url: p.thumbnail_url || p.image_url,
+              user: { username: 'Creator', profile_image: { small: '/globe.svg', large: '/globe.svg' } },
+              likes: p.likes_count ?? 0,
+              views: p.views_count ?? 0,
+            };
+          }).filter(Boolean));
           
         } else if (activeTab === 'collections') {
           // 컬렉션 목록 로드

@@ -144,10 +144,7 @@ export default function TiptapEditor({
       Color.configure({
         types: ['textStyle'],
       }),
-      Dropcursor.configure({
-        color: '#16A34A',
-        width: 2,
-      }),
+      // Dropcursor 제거 (StarterKit 또는 다른 곳과 중복 가능성)
       IframeExtension,
     ],
     content,
