@@ -450,7 +450,7 @@ export default function ProjectUploadPage() {
               <TiptapEditor 
                 content={content} 
                 onChange={setContent} 
-                onCreate={setEditor}
+                onEditorReady={setEditor}
               />
            </div>
 
@@ -533,7 +533,7 @@ export default function ProjectUploadPage() {
         </main>
 
         {/* Right Sidebar - Toolbox */}
-        <aside className="hidden xl:block w-[320px] flex-shrink-0 pt-12 pr-6 sticky top-24 h-[calc(100vh-120px)] overflow-y-auto no-scrollbar">
+        <aside className="hidden lg:block w-[320px] flex-shrink-0 pt-12 pr-6 sticky top-24 h-[calc(100vh-120px)] overflow-y-auto no-scrollbar">
            {editor && (
               <EditorSidebar 
                  onAddText={() => editor.chain().focus().setParagraph().run()}
