@@ -18,6 +18,7 @@ interface Evaluation {
   score: number;
   comment: string;
   created_at: string;
+  project_owner_id: string; // New field
 }
 
 export default function MyEvaluationsPage() {
@@ -25,6 +26,7 @@ export default function MyEvaluationsPage() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEvaluations = async () => {
@@ -36,6 +38,7 @@ export default function MyEvaluationsPage() {
           router.push('/login');
           return;
         }
+        setCurrentUserId(user.id);
 
         // Fetch ratings with project details
         const { data, error: queryError } = await (supabase as any)
@@ -44,7 +47,8 @@ export default function MyEvaluationsPage() {
             *,
             Project (
               title,
-              thumbnail_url
+              thumbnail_url,
+              user_id
             )
           `)
           .eq('user_id', user.id)
@@ -60,6 +64,7 @@ export default function MyEvaluationsPage() {
           score: r.score || 0,
           comment: r.proposal || r.comment || '',
           created_at: r.created_at,
+          project_owner_id: String(r.Project?.user_id || ''),
         }));
 
         setEvaluations(mapped);
@@ -167,11 +172,19 @@ export default function MyEvaluationsPage() {
                         <Eye className="w-4 h-4" /> 프로젝트 다시보기
                       </Button>
                     </Link>
-                    <Link href={`/review/viewer?projectId=${ev.project_id}&ratingId=${ev.rating_id}`} className="flex-1">
-                      <Button className="w-full h-12 rounded-2xl bg-slate-900 hover:bg-green-600 text-white font-black text-xs gap-2 transition-all">
-                        <Edit3 className="w-4 h-4" /> 내 평가 수정하기
-                      </Button>
-                    </Link>
+                    {currentUserId === ev.project_owner_id ? (
+                      <Link href={`/project/upload?mode=audit&edit=${ev.project_id}`} className="flex-1">
+                        <Button className="w-full h-12 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-xs gap-2 transition-all">
+                          <Edit3 className="w-4 h-4" /> 평가 의뢰 수정하기
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link href={`/review/viewer?projectId=${ev.project_id}&ratingId=${ev.rating_id}`} className="flex-1">
+                        <Button className="w-full h-12 rounded-2xl bg-slate-900 hover:bg-green-600 text-white font-black text-xs gap-2 transition-all">
+                          <Edit3 className="w-4 h-4" /> 내 평가 수정하기
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>

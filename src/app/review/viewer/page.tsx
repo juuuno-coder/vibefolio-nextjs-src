@@ -63,27 +63,8 @@ function ViewerContent() {
         if (error) throw error;
         setProject(data);
         
-        // [3-Stage Granular Step Generation]
-        const newSteps: string[] = [];
-        const auditConfig = (data as any).custom_data?.audit_config;
-        
-        // Phase 1. Michelin Ratings (split into categories for focus)
-        const categories = auditConfig?.categories || (data as any).custom_data?.categories || [];
-        if (categories.length > 0) {
-           categories.forEach((_: any, idx: number) => newSteps.push(`rating_${idx}`));
-        } else {
-           newSteps.push('rating_0', 'rating_1', 'rating_2'); // Defaults
-        }
-        
-        // Phase 2. Voting & Poll
-        newSteps.push('voting');
-        
-        // Phase 3. Custom Questions + Final Proposal (Merged)
-        newSteps.push('final_review');
-        
-        // Finishing
-        newSteps.push('summary');
-        
+        // [3-Stage Evaluation Flow]
+        const newSteps = ['rating', 'voting', 'final_review'];
         setSteps(newSteps);
 
         // Check deadline
@@ -210,17 +191,17 @@ function ViewerContent() {
   const isAB = project?.custom_data?.is_ab_test;
   const url2 = project?.custom_data?.alternate_url;
 
-  const auditType = project?.custom_data?.audit_type || 'link';
-  const mediaData = project?.custom_data?.media_data || project?.primary_url || project?.preview_url || project?.url;
+  // Audit Media Data with Fallback to Thumbnail
+  const auditType = project?.custom_data?.audit_type || (project?.thumbnail_url ? 'image' : 'link');
+  const mediaData = project?.custom_data?.media_data || project?.primary_url || project?.preview_url || project?.url || project?.thumbnail_url;
   const mediaDataB = project?.custom_data?.media_data_b || project?.custom_data?.alternate_url;
 
   const renderReviewStep = () => {
     const stepType = steps[currentStep];
 
-    // Handle Granular Rating Steps
-    if (stepType.startsWith('rating_')) {
-       const index = parseInt(stepType.split('_')[1]);
-       return <MichelinRating projectId={projectId || ""} ratingId={ratingId || undefined} activeCategoryIndex={index} />;
+    // Handle All-in-One Rating Page
+    if (stepType === 'rating') {
+       return <MichelinRating projectId={projectId || ""} ratingId={ratingId || undefined} />;
     }
 
     // Handle Custom Question Steps (Deprecated in favor of combined final_review, but keeping for logic)
@@ -391,7 +372,7 @@ function ViewerContent() {
                         <>
                           <div>
                             <h3 className="text-2xl font-black text-slate-900 tracking-tighter leading-none">
-                              {stepType.startsWith('rating_') ? "Phase 1: 항목별 정밀 진단" : 
+                              {stepType === 'rating' ? "Phase 1: 항목별 정밀 진단" : 
                                stepType === 'voting' ? "Phase 2: 직관적 투표/판정" : 
                                stepType === 'final_review' ? "Phase 3: 심층 질문 및 총평" : "진단 최종 확인"}
                             </h3>

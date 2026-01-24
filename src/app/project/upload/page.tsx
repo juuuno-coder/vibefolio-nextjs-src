@@ -70,7 +70,7 @@ export default function ProjectUploadPage() {
 
   // 노출 범위 관리
   const [showInDiscover, setShowInDiscover] = useState(true);
-  const [showInGrowth, setShowInGrowth] = useState(false);
+  const [showInGrowth, setShowInGrowth] = useState(false); // Default OFF
   const [auditDeadline, setAuditDeadline] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() + 7); // Default 1 week
@@ -331,10 +331,10 @@ export default function ProjectUploadPage() {
             </div>
          </section>
 
-         <div className="flex justify-between pt-12">
+         {/* <div className="flex justify-between pt-12">
             <Button variant="ghost" onClick={() => setStep('info')} className="h-16 px-10 rounded-full font-black text-gray-400 hover:text-gray-900 text-lg">이전 단계</Button>
             <Button onClick={handleSubmit} className="h-20 px-20 rounded-full bg-black text-white text-2xl font-black shadow-2xl hover:scale-105 active:scale-95 transition-all">등록 및 발행하기</Button>
-         </div>
+         </div> */}
       </div>
     );
   };
@@ -352,10 +352,13 @@ export default function ProjectUploadPage() {
         <div className="w-10" />
       </header>
       
-      <div className="flex justify-center min-h-[calc(100vh-64px)] relative">
+      </header>
+      
+      <div className="flex justify-center min-h-[calc(100vh-64px)] relative bg-[#fafafa]">
+        <div className="flex w-full max-w-[1600px] relative">
         
         {/* Left Sidebar - Versions / Navigation */}
-        <aside className="hidden xl:block w-64 fixed left-8 top-24 h-[calc(100vh-120px)]">
+        <aside className="hidden 2xl:block w-[300px] flex-shrink-0 pt-12 px-6 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto no-scrollbar">
            <div className="space-y-6">
               <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -391,7 +394,7 @@ export default function ProjectUploadPage() {
            </div>
         </aside>
 
-        <main className="w-full max-w-4xl py-12 px-6 bg-white shadow-sm min-h-screen border-x border-slate-50 mx-auto">
+        <main className="flex-1 w-full max-w-[900px] mx-auto py-12 px-6 bg-white shadow-sm min-h-screen border-x border-slate-50">
         {/* [New] Feedback Mode Indicator */}
         {mode === 'audit' && (
            <div className="mb-8 p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-center justify-between animate-in fade-in slide-in-from-top-4">
@@ -408,129 +411,120 @@ export default function ProjectUploadPage() {
            </div>
         )}
 
-        {step === 'audit' ? renderFeedbackSettings() : (
-          <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-300">
-            {step === 'content' ? (
-              <>
-                <div className="space-y-4">
-                   <Input 
-                     autoFocus
-                     placeholder="프로젝트 제목" 
-                     className="h-20 text-4xl font-black border-none bg-transparent focus-visible:ring-0 px-0 placeholder:text-gray-200" 
-                     value={title}
-                     onChange={e => setTitle(e.target.value)}
-                   />
-                   <div className="h-px bg-gray-100" />
-                </div>
-                <TiptapEditor 
-                  content={content} 
-                  onChange={setContent} 
-                  placeholder="당신의 멋진 이야기를 들려주세요..." 
-                  onEditorReady={setEditor}
-                />
-                <div className="flex justify-end pt-8">
-                  <Button onClick={() => setStep('info')} className="bg-green-600 hover:bg-green-700 text-white px-10 h-14 rounded-full text-lg font-bold shadow-lg shadow-green-200 transition-all">
-                    다음 단계로 <ChevronRight className="ml-2 w-5 h-5" />
-                  </Button>
+                <div className="pb-20">
+                   <div className="h-px bg-slate-100 my-10" />
+                   
+                   {/* Inline Project Settings */}
+                   <div className="space-y-12">
+                      <section className="space-y-6">
+                         <h2 className="text-2xl font-black text-gray-900">발행 설정</h2>
+                         <div className="aspect-video bg-gray-100 rounded-[2rem] border-2 border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden group hover:border-gray-300 transition-colors">
+                            {coverPreview ? (
+                              <img src={coverPreview} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="text-center">
+                                 <FontAwesomeIcon icon={faCamera} className="text-gray-300 text-4xl mb-2" />
+                                 <p className="text-sm text-gray-400 font-bold">커버 이미지를 등록해주세요</p>
+                              </div>
+                            )}
+                            <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                               <Button variant="outline" className="bg-white text-black font-bold">이미지 선택</Button>
+                               <input type="file" className="hidden" onChange={e => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    setCoverImage(file);
+                                    setCoverPreview(URL.createObjectURL(file));
+                                  }
+                               }} />
+                            </label>
+                         </div>
+                      </section>
+
+                      <section className="space-y-4">
+                         <label className="text-lg font-bold text-gray-900">장르 선택</label>
+                         <div className="flex flex-wrap gap-2">
+                            {genreCategories.map(cat => (
+                              <button key={cat.id} onClick={() => setSelectedGenres(prev => prev.includes(cat.id) ? prev.filter(i => i !== cat.id) : [...prev, cat.id])} className={cn("px-4 py-2 rounded-full border-2 transition-all font-bold text-sm", selectedGenres.includes(cat.id) ? "bg-green-500 border-green-500 text-white shadow-md" : "border-gray-200 text-gray-400 hover:border-green-200 bg-white")}>
+                                {cat.label}
+                              </button>
+                            ))}
+                         </div>
+                      </section>
+
+                      <section className="p-8 bg-zinc-900 rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-[80px] -mr-32 -mt-32" />
+                        <div className="flex items-center gap-6 relative z-10">
+                           <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center text-3xl">📡</div>
+                           <div className="space-y-1">
+                              <h3 className="font-black text-2xl tracking-tight">발견하기 메뉴에 등록</h3>
+                              <p className="text-gray-400 text-sm font-medium">바이브폴리오의 메인 갤러리 피드에 작업을 노출합니다.</p>
+                           </div>
+                        </div>
+                        <button 
+                           type="button"
+                           onClick={() => setShowInDiscover(!showInDiscover)}
+                           className={cn("w-20 h-10 rounded-full transition-all relative flex items-center px-1.5 shadow-inner z-10", showInDiscover ? "bg-green-500" : "bg-white/10")}
+                        >
+                           <div className={cn("w-7 h-7 rounded-full shadow-lg transition-all flex items-center justify-center font-black text-[10px]", showInDiscover ? "translate-x-10 bg-white text-green-600" : "translate-x-0 bg-white text-gray-300")}>
+                              {showInDiscover ? "YES" : "NO"}
+                           </div>
+                        </button>
+                      </section>
+
+                      <section className="space-y-6">
+                         <div className="p-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden group">
+                           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[80px] -mr-32 -mt-32" />
+                           <div className="flex items-center gap-6 relative z-10">
+                              <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center text-3xl">🌱</div>
+                              <div className="space-y-1">
+                                 <h3 className="font-black text-2xl tracking-tight">성장하기 메뉴에 등록</h3>
+                                 <p className="text-orange-50/80 text-sm font-medium">전문적인 피드백(미슐랭 평점, 스티커)을 요청합니다.</p>
+                              </div>
+                           </div>
+                           <button 
+                              type="button"
+                              onClick={() => setShowInGrowth(!showInGrowth)}
+                              className={cn("w-20 h-10 rounded-full transition-all relative flex items-center px-1.5 shadow-inner z-10", showInGrowth ? "bg-white" : "bg-black/20")}
+                           >
+                              <div className={cn("w-7 h-7 rounded-full shadow-lg transition-all flex items-center justify-center font-black text-[10px]", showInGrowth ? "translate-x-10 bg-orange-600 text-white" : "translate-x-0 bg-white text-gray-300")}>
+                                 {showInGrowth ? "YES" : "NO"}
+                              </div>
+                           </button>
+                         </div>
+                         
+                         {/* Conditional Feedback Settings */}
+                         <AnimatePresence>
+                            {showInGrowth && (
+                               <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden"
+                               >
+                                  <div className="pt-4 pb-8">
+                                     {renderFeedbackSettings()}
+                                  </div>
+                               </motion.div>
+                            )}
+                         </AnimatePresence>
+                      </section>
+
+                      <div className="flex justify-end pt-8">
+                        <Button 
+                           disabled={isSubmitting} 
+                           onClick={handleSubmit} 
+                           className="h-20 px-24 rounded-full bg-black text-white text-2xl font-black shadow-2xl hover:bg-slate-900 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
+                        >
+                           {isSubmitting ? "발행 중..." : "발행하기"}
+                        </Button>
+                      </div>
+                   </div>
                 </div>
               </>
-            ) : (
-              <div className="space-y-10">
-                 <section className="space-y-6">
-                    <h2 className="text-2xl font-black text-gray-900">발행 설정</h2>
-                    <div className="aspect-video bg-gray-100 rounded-[2rem] border-2 border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden group">
-                       {coverPreview ? (
-                         <img src={coverPreview} className="w-full h-full object-cover" />
-                       ) : (
-                         <div className="text-center">
-                            <FontAwesomeIcon icon={faCamera} className="text-gray-300 text-4xl mb-2" />
-                            <p className="text-sm text-gray-400 font-bold">커버 이미지를 등록해주세요</p>
-                         </div>
-                       )}
-                       <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="outline" className="bg-white text-black">이미지 선택</Button>
-                          <input type="file" className="hidden" onChange={e => {
-                             const file = e.target.files?.[0];
-                             if (file) {
-                               setCoverImage(file);
-                               setCoverPreview(URL.createObjectURL(file));
-                             }
-                          }} />
-                       </label>
-                    </div>
-                 </section>
-
-                 <section className="space-y-4">
-                    <label className="text-lg font-bold text-gray-900">장르 선택</label>
-                    <div className="flex flex-wrap gap-2">
-                       {genreCategories.map(cat => (
-                         <button key={cat.id} onClick={() => setSelectedGenres(prev => prev.includes(cat.id) ? prev.filter(i => i !== cat.id) : [...prev, cat.id])} className={cn("px-4 py-2 rounded-full border-2 transition-all font-bold text-sm", selectedGenres.includes(cat.id) ? "bg-green-500 border-green-500 text-white shadow-md" : "border-gray-200 text-gray-400 hover:border-green-200")}>
-                           {cat.label}
-                         </button>
-                       ))}
-                    </div>
-                 </section>
-
-                  <section className="p-8 bg-zinc-900 rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-[80px] -mr-32 -mt-32" />
-                    <div className="flex items-center gap-6 relative z-10">
-                       <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center text-3xl">📡</div>
-                       <div className="space-y-1">
-                          <h3 className="font-black text-2xl tracking-tight">발견하기 메뉴에 등록</h3>
-                          <p className="text-gray-400 text-sm font-medium">바이브폴리오의 메인 갤러리 피드에 작업을 노출합니다.</p>
-                       </div>
-                    </div>
-                    <button 
-                       type="button"
-                       onClick={() => setShowInDiscover(!showInDiscover)}
-                       className={cn("w-20 h-10 rounded-full transition-all relative flex items-center px-1.5 shadow-inner z-10", showInDiscover ? "bg-green-500" : "bg-white/10")}
-                    >
-                       <div className={cn("w-7 h-7 rounded-full shadow-lg transition-all flex items-center justify-center font-black text-[10px]", showInDiscover ? "translate-x-10 bg-white text-green-600" : "translate-x-0 bg-white text-gray-300")}>
-                          {showInDiscover ? "YES" : "NO"}
-                       </div>
-                    </button>
-                  </section>
-
-                  <section className="p-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[80px] -mr-32 -mt-32" />
-                    <div className="flex items-center gap-6 relative z-10">
-                       <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center text-3xl">🌱</div>
-                       <div className="space-y-1">
-                          <h3 className="font-black text-2xl tracking-tight">성장하기 메뉴에 등록</h3>
-                          <p className="text-orange-50/80 text-sm font-medium">동료 전문가들에게 미슐랭 평점과 스티커 투표를 받을까요?</p>
-                       </div>
-                    </div>
-                    <button 
-                       type="button"
-                       onClick={() => setShowInGrowth(!showInGrowth)}
-                       className={cn("w-20 h-10 rounded-full transition-all relative flex items-center px-1.5 shadow-inner z-10", showInGrowth ? "bg-white" : "bg-black/20")}
-                    >
-                       <div className={cn("w-7 h-7 rounded-full shadow-lg transition-all flex items-center justify-center font-black text-[10px]", showInGrowth ? "translate-x-10 bg-orange-600 text-white" : "translate-x-0 bg-white text-gray-300")}>
-                          {showInGrowth ? "YES" : "NO"}
-                       </div>
-                    </button>
-                  </section>
-
-                  <div className="flex gap-4">
-                    <Button variant="ghost" onClick={() => setStep('content')} className="w-1/3 h-16 rounded-full font-bold text-gray-400">이전으로</Button>
-                    {showInGrowth ? (
-                       <Button onClick={() => setStep('audit')} className="flex-1 h-16 rounded-full bg-orange-600 hover:bg-orange-700 text-white text-xl font-black shadow-lg shadow-orange-200 transition-all flex items-center justify-center gap-3">
-                          피드백 상세 설정하기 <ChevronRight />
-                       </Button>
-                    ) : (
-                       <Button disabled={isSubmitting} onClick={handleSubmit} className="flex-1 h-16 rounded-full bg-black text-white text-xl font-black hover:bg-slate-900 transition-all shadow-xl">
-                          지금 발행하기
-                       </Button>
-                    )}
-                  </div>
-              </div>
-            )}
-          </div>
-        )}
+            ) : null}
       </main>
 
-      {/* Right Sidebar - Toolbox */}
-      <aside className="hidden xl:block w-[300px] fixed right-8 top-24 h-[calc(100vh-6rem)] overflow-y-auto no-scrollbar">
+      <aside className="hidden 2xl:block w-[300px] flex-shrink-0 pt-12 pr-6 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto no-scrollbar">
          {step === 'content' && editor && (
             <EditorSidebar 
                onAddText={() => editor.chain().focus().setParagraph().run()}
@@ -557,6 +551,7 @@ export default function ProjectUploadPage() {
          )}
       </aside>
 
+      </div>
       </div>
     </div>
   );
