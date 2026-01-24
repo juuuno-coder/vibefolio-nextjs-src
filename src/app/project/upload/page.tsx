@@ -41,6 +41,7 @@ import { Editor } from '@tiptap/react'; // Type import
 // Dynamic Imports
 const TiptapEditor = dynamic(() => import("@/components/editor/TiptapEditor.client"), { ssr: false });
 const CollaboratorManager = dynamic(() => import("@/components/CollaboratorManager").then(mod => mod.CollaboratorManager), { ssr: false });
+import { EditorSidebar } from "@/components/editor/EditorSidebar";
 
 export default function ProjectUploadPage() {
   const router = useRouter();
@@ -529,49 +530,30 @@ export default function ProjectUploadPage() {
       </main>
 
       {/* Right Sidebar - Toolbox */}
-      <aside className="hidden xl:block w-24 fixed right-8 top-32 flex flex-col gap-3">
-         {step === 'content' && (
-            <>
-               <div className="text-[10px] font-black text-slate-300 uppercase text-center mb-1 tracking-widest">Toolbox</div>
-               <button 
-                  onClick={() => document.querySelector<HTMLInputElement>('input[type="file"].hidden')?.click()}
-                  className="w-14 h-14 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:scale-105 hover:border-slate-300 transition-all flex flex-col items-center justify-center gap-1 mx-auto group"
-                  title="이미지 추가"
-               >
-                  <ImageIcon size={20} className="text-slate-400 group-hover:text-slate-900 transition-colors" />
-                  <span className="text-[9px] font-bold text-slate-400 group-hover:text-slate-900">Image</span>
-               </button>
-               
-               <button 
-                  onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
-                  className="w-14 h-14 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:scale-105 hover:border-slate-300 transition-all flex flex-col items-center justify-center gap-1 mx-auto group"
-                  title="코드 블록"
-               >
-                  <CodeIcon size={20} className="text-slate-400 group-hover:text-slate-900 transition-colors" />
-                  <span className="text-[9px] font-bold text-slate-400 group-hover:text-slate-900">Code</span>
-               </button>
-
-               <button 
-                  onClick={() => {
-                     const url = window.prompt("YouTube URL:");
-                     if(url && editor) editor.commands.setYoutubeVideo({ src: url });
-                  }}
-                  className="w-14 h-14 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:scale-105 hover:border-slate-300 transition-all flex flex-col items-center justify-center gap-1 mx-auto group"
-                  title="영상 추가"
-               >
-                  <Video size={20} className="text-slate-400 group-hover:text-slate-900 transition-colors" />
-                  <span className="text-[9px] font-bold text-slate-400 group-hover:text-slate-900">Video</span>
-               </button>
-               
-               <div className="h-px bg-slate-100 w-8 mx-auto my-2" />
-               
-               <button 
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all mx-auto"
-               >
-                  <ChevronRight className="-rotate-90 w-4 h-4" />
-               </button>
-            </>
+      <aside className="hidden xl:block w-[300px] fixed right-8 top-24 h-[calc(100vh-6rem)] overflow-y-auto no-scrollbar">
+         {step === 'content' && editor && (
+            <EditorSidebar 
+               onAddText={() => editor.chain().focus().setParagraph().run()}
+               onAddImage={() => document.querySelector<HTMLInputElement>('input[type="file"].hidden')?.click()}
+               onAddVideo={() => {
+                  const url = window.prompt("YouTube URL:");
+                  if(url) editor.commands.setYoutubeVideo({ src: url });
+               }}
+               onAddGrid={() => toast.info("그리드 기능 준비 중입니다.")}
+               onAddCode={() => editor.chain().focus().toggleCodeBlock().run()}
+               onAddEmbed={() => {
+                  const content = window.prompt("임베드 태그(iframe 등)를 입력하세요:");
+                  if (content) editor.chain().focus().insertContent(content).run();
+               }}
+               // Placeholder handlers for advanced features
+               onAddLightroom={() => toast.info("라이트룸 연동 준비 중")}
+               onAddPrototype={() => toast.info("프로토타입 연동 준비 중")}
+               onAdd3D={() => toast.info("3D 모델 뷰어 준비 중")}
+               onStyleClick={() => toast.info("스타일 설정 준비 중")}
+               onSettingsClick={() => toast.info("설정 메뉴 준비 중")}
+               onAddAsset={() => toast.info("에셋 첨부 기능 준비 중")}
+               isGrowthMode={showInGrowth}
+            />
          )}
       </aside>
 
