@@ -375,7 +375,7 @@ export default function ProjectUploadPage() {
         <div className="flex w-full max-w-[1600px] relative">
         
         {/* Left Sidebar - Versions / Navigation */}
-        <aside className="hidden md:block w-[260px] flex-shrink-0 pt-12 px-6 sticky top-24 self-start h-fit max-h-[calc(100vh-120px)] overflow-y-auto no-scrollbar">
+        <aside className="hidden md:block w-[260px] flex-shrink-0 pt-12 px-6 sticky top-20 self-start z-20">
            <div className="space-y-6">
               <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -533,7 +533,7 @@ export default function ProjectUploadPage() {
         </main>
 
         {/* Right Sidebar - Toolbox */}
-        <aside className="hidden md:block w-[300px] flex-shrink-0 pt-12 pr-6 sticky top-24 self-start h-fit max-h-[calc(100vh-120px)] overflow-y-auto no-scrollbar">
+        <aside className="hidden md:block w-[300px] flex-shrink-0 pt-12 pr-6 sticky top-20 self-start z-20">
            {editor && (
               <EditorSidebar 
                  onAddText={() => editor.chain().focus().setParagraph().run()}

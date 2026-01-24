@@ -501,7 +501,7 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
   if (!editor) return null;
   
   return (
-    <div className="sticky top-4 z-40 bg-white/90 backdrop-blur-md border border-slate-200 rounded-2xl px-3 py-2 flex flex-wrap gap-1.5 items-center mb-8 shadow-sm transition-all w-full max-w-[850px]">
+    <div className="sticky top-20 z-40 bg-white/90 backdrop-blur-md border border-slate-200 rounded-2xl px-3 py-2 flex flex-wrap gap-1.5 items-center mb-8 shadow-sm transition-all w-full max-w-[850px]">
       
       {/* Headings */}
       <DropdownMenu>

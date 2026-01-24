@@ -72,7 +72,7 @@ export function EditorSidebar({
   ];
 
   return (
-    <div className="w-[300px] flex-shrink-0 flex flex-col gap-6 pl-6 sticky top-24 h-[calc(100vh-6rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="w-full flex-shrink-0 flex flex-col gap-6">
       
       {/* 콘텐츠 추가 섹션 */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
