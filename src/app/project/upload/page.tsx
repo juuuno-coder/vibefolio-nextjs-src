@@ -374,8 +374,8 @@ export default function ProjectUploadPage() {
       <div className="flex justify-center min-h-[calc(100vh-64px)] relative bg-[#fafafa]">
         <div className="flex w-full max-w-[1600px] relative">
         
-        {/* Left Sidebar */}
-        <aside className="hidden 2xl:block w-[300px] flex-shrink-0 pt-12 px-6 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto no-scrollbar">
+        {/* Left Sidebar - Versions / Navigation */}
+        <aside className="hidden lg:block w-[300px] flex-shrink-0 pt-12 px-6 sticky top-24 h-[calc(100vh-120px)] overflow-y-auto no-scrollbar">
            <div className="space-y-6">
               <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -407,8 +407,8 @@ export default function ProjectUploadPage() {
            </div>
         </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 w-full max-w-[900px] mx-auto py-12 px-6 bg-white shadow-sm min-h-screen border-x border-slate-50">
+        {/* Center content */}
+        <main className="flex-1 w-full max-w-[900px] mx-auto py-12 px-6 bg-white shadow-sm min-h-screen border-x border-slate-50 relative">
            {mode === 'audit' && (
               <div className="mb-8 p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-center justify-between">
                  <div className="flex items-center gap-3">
@@ -532,14 +532,22 @@ export default function ProjectUploadPage() {
            </div>
         </main>
 
-        <aside className="hidden 2xl:block w-[300px] flex-shrink-0 pt-12 pr-6 sticky top-16 h-[calc(100vh-64px)]">
+        {/* Right Sidebar - Toolbox */}
+        <aside className="hidden xl:block w-[320px] flex-shrink-0 pt-12 pr-6 sticky top-24 h-[calc(100vh-120px)] overflow-y-auto no-scrollbar">
            {editor && (
               <EditorSidebar 
                  onAddText={() => editor.chain().focus().setParagraph().run()}
                  onAddImage={() => document.querySelector<HTMLInputElement>('input[type="file"].hidden')?.click()}
                  onAddVideo={() => {
                     const url = window.prompt("YouTube URL:");
-                    if(url) editor.commands.setYoutubeVideo({ src: url });
+                    if(url) {
+                        try {
+                            const newUrl = new URL(url);
+                            editor.commands.setYoutubeVideo({ src: url });
+                        } catch (e) {
+                            toast.error("올바른 YouTube URL을 입력해주세요.");
+                        }
+                    }
                  }}
                  onStyleClick={() => toast.info("준비 중")}
                  onSettingsClick={() => toast.info("준비 중")}
