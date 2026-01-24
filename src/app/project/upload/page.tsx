@@ -33,9 +33,10 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { uploadImage } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChefHat, Clock, Sparkles, Rocket, Zap, Eye, ChevronRight, BarChart3 } from "lucide-react";
+import { ChefHat, Clock, Sparkles, Rocket, Zap, Eye, ChevronRight, BarChart3, Image as ImageIcon, Video, Code as CodeIcon, Sticker, LayoutTemplate } from "lucide-react";
 import dynamic from "next/dynamic";
 import { genreCategories, fieldCategories } from "@/lib/categoryMap";
+import { Editor } from '@tiptap/react'; // Type import
 
 // Dynamic Imports
 const TiptapEditor = dynamic(() => import("@/components/editor/TiptapEditor.client"), { ssr: false });
@@ -93,6 +94,7 @@ export default function ProjectUploadPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [auditStep, setAuditStep] = useState(1); // Unifed into Step 3 flow
+  const [editor, setEditor] = useState<Editor | null>(null); // For sidebar control
 
   // 데이터 로딩 및 초기 설정
   useEffect(() => {
@@ -348,8 +350,47 @@ export default function ProjectUploadPage() {
         </h1>
         <div className="w-10" />
       </header>
+      
+      <div className="flex justify-center min-h-[calc(100vh-64px)] relative">
+        
+        {/* Left Sidebar - Versions / Navigation */}
+        <aside className="hidden xl:block w-64 fixed left-8 top-24 h-[calc(100vh-120px)]">
+           <div className="space-y-6">
+              <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Clock size={12} /> History
+                 </h3>
+                 {isVersionMode ? (
+                    <div className="space-y-2">
+                       <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                          <p className="text-xs font-bold text-slate-900">Current Version</p>
+                          <p className="text-[10px] text-slate-400 mt-1">Editing now...</p>
+                       </div>
+                       <div className="p-3 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer opacity-50">
+                          <p className="text-xs font-bold text-slate-700">v1.0.2</p>
+                          <p className="text-[10px] text-slate-400 mt-1">Last published</p>
+                       </div>
+                    </div>
+                 ) : (
+                    <div className="text-center py-8 opacity-50">
+                       <LayoutTemplate className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                       <p className="text-xs text-slate-400">새 프로젝트 작성 중</p>
+                    </div>
+                 )}
+              </div>
+              
+              <div className="bg-orange-50/50 rounded-2xl p-5 border border-orange-100/50">
+                 <h3 className="text-xs font-black text-orange-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    Tip
+                 </h3>
+                 <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    <strong className="text-orange-600">Enter</strong> 키로 단락을 나누고, <strong className="text-orange-600">/</strong> 키를 눌러 메뉴를 열 수 있습니다.
+                 </p>
+              </div>
+           </div>
+        </aside>
 
-      <main className="max-w-4xl mx-auto py-12 px-6">
+        <main className="w-full max-w-4xl py-12 px-6 bg-white shadow-sm min-h-screen border-x border-slate-50 mx-auto">
         {/* [New] Feedback Mode Indicator */}
         {mode === 'audit' && (
            <div className="mb-8 p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-center justify-between animate-in fade-in slide-in-from-top-4">
@@ -384,6 +425,7 @@ export default function ProjectUploadPage() {
                   content={content} 
                   onChange={setContent} 
                   placeholder="당신의 멋진 이야기를 들려주세요..." 
+                  onEditorReady={setEditor}
                 />
                 <div className="flex justify-end pt-8">
                   <Button onClick={() => setStep('info')} className="bg-green-600 hover:bg-green-700 text-white px-10 h-14 rounded-full text-lg font-bold shadow-lg shadow-green-200 transition-all">
@@ -485,6 +527,55 @@ export default function ProjectUploadPage() {
           </div>
         )}
       </main>
+
+      {/* Right Sidebar - Toolbox */}
+      <aside className="hidden xl:block w-24 fixed right-8 top-32 flex flex-col gap-3">
+         {step === 'content' && (
+            <>
+               <div className="text-[10px] font-black text-slate-300 uppercase text-center mb-1 tracking-widest">Toolbox</div>
+               <button 
+                  onClick={() => document.querySelector<HTMLInputElement>('input[type="file"].hidden')?.click()}
+                  className="w-14 h-14 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:scale-105 hover:border-slate-300 transition-all flex flex-col items-center justify-center gap-1 mx-auto group"
+                  title="이미지 추가"
+               >
+                  <ImageIcon size={20} className="text-slate-400 group-hover:text-slate-900 transition-colors" />
+                  <span className="text-[9px] font-bold text-slate-400 group-hover:text-slate-900">Image</span>
+               </button>
+               
+               <button 
+                  onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
+                  className="w-14 h-14 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:scale-105 hover:border-slate-300 transition-all flex flex-col items-center justify-center gap-1 mx-auto group"
+                  title="코드 블록"
+               >
+                  <CodeIcon size={20} className="text-slate-400 group-hover:text-slate-900 transition-colors" />
+                  <span className="text-[9px] font-bold text-slate-400 group-hover:text-slate-900">Code</span>
+               </button>
+
+               <button 
+                  onClick={() => {
+                     const url = window.prompt("YouTube URL:");
+                     if(url && editor) editor.commands.setYoutubeVideo({ src: url });
+                  }}
+                  className="w-14 h-14 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:scale-105 hover:border-slate-300 transition-all flex flex-col items-center justify-center gap-1 mx-auto group"
+                  title="영상 추가"
+               >
+                  <Video size={20} className="text-slate-400 group-hover:text-slate-900 transition-colors" />
+                  <span className="text-[9px] font-bold text-slate-400 group-hover:text-slate-900">Video</span>
+               </button>
+               
+               <div className="h-px bg-slate-100 w-8 mx-auto my-2" />
+               
+               <button 
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all mx-auto"
+               >
+                  <ChevronRight className="-rotate-90 w-4 h-4" />
+               </button>
+            </>
+         )}
+      </aside>
+
+      </div>
     </div>
   );
 }
