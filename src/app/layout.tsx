@@ -13,7 +13,7 @@ import RealtimeListener from "@/components/RealtimeListener";
 import { VisitTracker } from "@/components/VisitTracker";
 import { headers } from "next/headers";
 
-export const revalidate = 0; // 메타데이터 실시간 반영을 위해 캐시 끄기
+export const revalidate = 300; // 5분마다 갱신 (성능 최적화)
 
 const poppins = Poppins({
   weight: ['400', '500', '600', '700', '800'],

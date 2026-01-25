@@ -4,8 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server'; // For Session Auth
 import { GENRE_TO_CATEGORY_ID } from '@/lib/constants';
 
-// 캐시 설정 제거 (실시간 디버깅)
-export const revalidate = 0; 
+// 캐시 설정 (성능 최적화: 60초)
+export const revalidate = 60; 
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,41 +18,29 @@ export async function GET(request: NextRequest) {
     
     const offset = (page - 1) * limit;
 
-    // 필요한 필드만 선택 (최적화) - 안전하게 모든 컬럼 조회 (관계 제거)
+    // 필요한 필드만 선택 (최적화)
     let query = (supabaseAnon as any)
       .from('Project')
-      .select('*') 
+      .select('*', { count: 'exact' }) 
       .is('deleted_at', null) 
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    // [Scheduled Publishing] Filter out future posts unless it's the owner requesting
-    // Note: Since we don't have session verification here easily (without header parsing), 
-    // we default to filtering. The client usually requests 'mypage' data via client-side query 
-    // or specific API. If authentication is presented, we could bypass.
-    // However, for simplicity and safety: always filter details for public list.
-    // If 'userId' is present, we might want to check ownership, but let's stick to Safe Default.
-    // (MyPage uses client-side fetch usually with direct RLS, but here we enforce API logic)
-    
-    // Check Authorization header to see if the requester is the owner of the requested userId profile
+    // [Security Filter]
     const authHeader = request.headers.get('Authorization');
-    let isOwner = false;
+    let authenticatedUser = null;
     
-    if (userId && authHeader) {
+    if (authHeader) {
         try {
             const token = authHeader.replace('Bearer ', '');
             const { data: { user } } = await supabaseAnon.auth.getUser(token);
-            if (user && user.id === userId) {
-                isOwner = true;
-            }
+            authenticatedUser = user;
         } catch (e) {}
     }
 
-    if (!isOwner) {
-       // [Security Filter]
-       // 1. Scheduled Posts: Hide future posts
+    // 작성자가 본인 글을 요청하는 경우가 아니면 visibility 필터링
+    if (!(userId && authenticatedUser && authenticatedUser.id === userId)) {
        const nowISO = new Date().toISOString();
-       // 2. Visibility: Only show 'public' posts (hide 'private' and 'unlisted')
        query = query
          .eq('visibility', 'public')
          .or(`scheduled_at.is.null,scheduled_at.lte.${nowISO}`);
@@ -64,16 +52,15 @@ export async function GET(request: NextRequest) {
     }
 
     // 카테고리 필터
-    if (category && category !== 'korea' && category !== 'all') {
+    if (category && category !== 'all' && category !== 'korea') {
       const categoryId = GENRE_TO_CATEGORY_ID[category];
       if (categoryId) query = query.eq('category_id', categoryId);
     }
 
-    // [New] 분야 필터 (project_fields 테이블 조인 대체)
+    // 분야/성장모드 필터
     const field = searchParams.get('field');
     const mode = searchParams.get('mode');
 
-    // [Growth & Evaluation Mode] Filter
     if (mode === 'growth') {
        query = query.or(`is_growth_requested.eq.true,custom_data->>is_feedback_requested.eq.true`);
     } else if (mode === 'audit') {
@@ -81,12 +68,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (field && field !== 'all') {
-       // 1. 해당 슬러그의 Field ID 조회
        const { data: fieldData } = await (supabaseAnon as any)
          .from('fields').select('id').eq('slug', field).single();
        
        if (fieldData) {
-          // 2. 해당 Field를 가진 프로젝트 ID들 조회
           const { data: pFields } = await (supabaseAnon as any)
              .from('project_fields').select('project_id').eq('field_id', fieldData.id);
           
@@ -94,52 +79,55 @@ export async function GET(request: NextRequest) {
              const pIds = pFields.map((row:any) => row.project_id);
              query = query.in('project_id', pIds);
           } else {
-             // 해당 분야의 프로젝트가 없음 -> 빈 결과 반환
              query = query.eq('project_id', -1); 
           }
        }
     }
 
-    // 사용자 필터
     if (userId) query = query.eq('user_id', userId);
 
     const { data, error, count } = await query;
 
-    if (error) {
-      console.error('프로젝트 조회 실패:', error);
-      return NextResponse.json(
-        { error: '프로젝트 조회에 실패했습니다.', details: error.message },
-        { status: 500 }
-      );
-    }
+    if (error) throw error;
 
-    // 사용자 정보 병합 (Dual Fetching)
+    // 작성자 정보 병합 (최적화)
     if (data && data.length > 0) {
       const userIds = [...new Set(data.map((p: any) => p.user_id).filter(Boolean))] as string[];
 
       if (userIds.length > 0) {
-        // users 테이블 조회 (일반 클라이언트 사용 - Admin 키 없을 때 대비)
-        const targetClient = process.env.SUPABASE_SERVICE_ROLE_KEY ? supabaseAdmin : supabaseAnon;
+        const targetClient = supabaseAdmin || supabaseAnon;
         
-        // 가능한 테이블 이름들 (프로젝트마다 다를 수 있음)
-        const possibleTables = ['users', 'profiles', 'User'];
-        let usersData: any[] | null = null;
-        let usersError: any = null;
+        // profiles 테이블에서 우선 조회 (유저 인스턴스 당 1회 쿼리)
+        const { data: usersData } = await targetClient
+          .from('profiles')
+          .select('id, username, avatar_url, points, role')
+          .in('id', userIds);
 
-        for (const tableName of possibleTables) {
-          const result = await (targetClient
-            .from(tableName as any) as any)
-            .select('*') 
-            .in('id', userIds);
-          
-          if (!result.error && result.data && result.data.length > 0) {
-            usersData = result.data;
-            console.log(`[API] Successfully fetched users from table: ${tableName}`);
-            break;
-          } else {
-            console.log(`[API] Failed to fetch from ${tableName}:`, result.error?.message || 'No data');
-            usersError = result.error;
-          }
+        const userMap = new Map();
+        
+        if (usersData) {
+          usersData.forEach((u: any) => {
+            userMap.set(u.id, {
+              username: u.username || 'Unknown',
+              avatar_url: u.avatar_url || '/globe.svg',
+            });
+          });
+        }
+
+        // 부족한 유저 정보가 있다면 users 테이블에서 보충
+        const missingUserIds = userIds.filter(id => !userMap.has(id));
+        if (missingUserIds.length > 0) {
+           const { data: fallbackUsers } = await targetClient
+             .from('users')
+             .select('id, nickname, profile_image_url')
+             .in('id', missingUserIds);
+           
+           fallbackUsers?.forEach((u: any) => {
+             userMap.set(u.id, {
+               username: u.nickname || 'Unknown',
+               avatar_url: u.profile_image_url || '/globe.svg',
+             });
+           });
         }
 
         const userMap = new Map();
