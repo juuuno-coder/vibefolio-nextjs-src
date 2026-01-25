@@ -16,6 +16,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { uploadImage } from "@/lib/supabase/storage";
+import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, LayoutTemplate, Zap, BarChart3 } from "lucide-react";
@@ -26,6 +27,9 @@ import { Editor } from '@tiptap/react';
 // Dynamic Imports
 const TiptapEditor = dynamic(() => import("@/components/editor/TiptapEditor.client"), { ssr: false });
 import { EditorSidebar } from "@/components/editor/EditorSidebar";
+import { getProjectVersions, ProjectVersion } from "@/lib/versions";
+import { ChevronDown, ChevronUp, History, Rocket } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function ProjectUploadPage() {
   const router = useRouter();
@@ -35,7 +39,9 @@ export default function ProjectUploadPage() {
   // 모드 설정
   const mode = searchParams.get('mode');
   const editId = searchParams.get('edit');
-  const isVersionMode = mode === 'version';
+  const projectId = searchParams.get('projectId'); // For New Episode
+  const isVersionMode = mode === 'version' && !!projectId;
+  const isEditMode = !!editId;
   
   // 기본 정보 상태
   const [title, setTitle] = useState("");
@@ -68,6 +74,10 @@ export default function ProjectUploadPage() {
   // 심층 질문
   const [auditQuestions, setAuditQuestions] = useState<string[]>(["가장 인상적인 부분은 어디인가요?"]);
 
+  const [versions, setVersions] = useState<ProjectVersion[]>([]);
+  const [baseProject, setBaseProject] = useState<any>(null);
+  const [versionName, setVersionName] = useState("");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editor, setEditor] = useState<Editor | null>(null);
 
@@ -78,33 +88,49 @@ export default function ProjectUploadPage() {
       setShowInDiscover(true);
     }
     
-    if (editId) {
+    if (isEditMode || isVersionMode) {
       const loadProject = async () => {
+        const idToFetch = isEditMode ? editId : projectId;
         try {
-          const res = await fetch(`/api/projects/${editId}`);
+          const res = await fetch(`/api/projects/${idToFetch}`);
           const data = await res.json();
           if (data.project) {
             const p = data.project;
-            setTitle(p.title || "");
-            setContent(p.content_text || "");
-            setCoverPreview(p.thumbnail_url);
+            setBaseProject(p);
             
-            const cData = typeof p.custom_data === 'string' ? JSON.parse(p.custom_data) : p.custom_data;
-            setSelectedGenres(cData?.genres || []);
+            // For Edit Mode: Load everything
+            if (isEditMode) {
+                setTitle(p.title || "");
+                setContent(p.content_text || "");
+                setCoverPreview(p.thumbnail_url);
+                const cData = typeof p.custom_data === 'string' ? JSON.parse(p.custom_data) : p.custom_data;
+                setSelectedGenres(cData?.genres || []);
+                if (p.audit_deadline) setAuditDeadline(p.audit_deadline.split('T')[0]);
+                if (cData?.audit_config) {
+                  const cfg = cData.audit_config;
+                  if (cfg.categories) setCustomCategories(cfg.categories);
+                  if (cfg.poll) setPollOptions(cfg.poll.options || []);
+                  if (cfg.questions) setAuditQuestions(cfg.questions);
+                }
+                setShowInGrowth(p.is_growth_requested || cData?.is_feedback_requested || false);
+                setShowInDiscover(p.visibility === 'public');
+            } 
             
-            if (p.audit_deadline) setAuditDeadline(p.audit_deadline.split('T')[0]);
-            
-            if (cData?.audit_config) {
-              const cfg = cData.audit_config;
-              if (cfg.categories) setCustomCategories(cfg.categories);
-              if (cfg.poll) {
-                setPollOptions(cfg.poll.options || []);
-              }
-              if (cfg.questions) setAuditQuestions(cfg.questions);
+            // For Version Mode: Just copy basic metadata (genres, etc)
+            if (isVersionMode) {
+                setTitle(p.title || "");
+                const cData = typeof p.custom_data === 'string' ? JSON.parse(p.custom_data) : p.custom_data;
+                setSelectedGenres(cData?.genres || []);
+                // Load existing versions
+                const vList = await getProjectVersions(projectId!);
+                setVersions(vList);
+                setVersionName(`v1.0.${vList.length + 1}`);
+
+                // Load latest version content by default
+                if (vList.length > 0) {
+                    setContent(vList[0].content_text || "");
+                }
             }
-            
-            setShowInGrowth(p.is_growth_requested || cData?.is_feedback_requested || false);
-            setShowInDiscover(p.visibility === 'public');
           }
         } catch (e) {
           console.error("Failed to load project", e);
@@ -113,10 +139,11 @@ export default function ProjectUploadPage() {
       };
       loadProject();
     }
-  }, [editId, mode]);
+  }, [editId, mode, projectId]);
 
   const handleSubmit = async () => {
     if (!title.trim()) return toast.error("제목을 입력해주세요.");
+    if (isVersionMode && !versionName.trim()) return toast.error("버전 이름을 입력해주세요.");
     if (selectedGenres.length === 0) return toast.error("최소 1개의 장르를 선택해주세요.");
     
     setIsSubmitting(true);
@@ -124,6 +151,35 @@ export default function ProjectUploadPage() {
       let coverUrl = coverPreview;
       if (coverImage) {
         coverUrl = await uploadImage(coverImage);
+      }
+
+      // If Version Mode: Post to versions endpoint
+      if (isVersionMode) {
+          const versionData = {
+              version_name: versionName,
+              content_text: content,
+              content_html: content, // Tiptap content is HTML anyway
+              changelog: `Published new episode: ${versionName}`,
+              images: [] // images are usually embedded in content_text as <img> tags
+          };
+
+          const res = await fetch(`/api/projects/${projectId}/versions`, {
+              method: "POST",
+              headers: { 
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${ (await supabase.auth.getSession()).data.session?.access_token }`
+              },
+              body: JSON.stringify(versionData),
+          });
+
+          if (!res.ok) {
+              const err = await res.json();
+              throw new Error(err?.error || "에피소드 등록 실패");
+          }
+
+          toast.success("새 에피소가 발행되었습니다!");
+          router.push(`/project/${projectId}`);
+          return;
       }
 
       const projectData = {
@@ -149,19 +205,20 @@ export default function ProjectUploadPage() {
         is_growth_requested: showInGrowth
       } as any;
 
-      const res = await fetch("/api/projects", {
-        method: "POST",
+      const endpoint = isEditMode ? `/api/projects/${editId}` : "/api/projects";
+      const res = await fetch(endpoint, {
+        method: isEditMode ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(projectData),
+        body: JSON.stringify(isEditMode ? { ...projectData, project_id: editId } : projectData),
       });
 
       if (!res.ok) throw new Error("등록 실패");
       
       toast.success(showInGrowth ? "전문 피드백 설정이 완료되었습니다!" : "프로젝트가 발행되었습니다!");
       router.push(showInGrowth ? "/growth" : "/discover");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("등록 중 오류가 발생했습니다.");
+      toast.error(error.message || "등록 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
     }
@@ -382,10 +439,56 @@ export default function ProjectUploadPage() {
                     <Clock size={12} /> History
                  </h3>
                  {isVersionMode ? (
-                    <div className="space-y-2">
-                       <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                          <p className="text-xs font-bold text-slate-900">Current Version</p>
-                          <p className="text-[10px] text-slate-400 mt-1">Editing now...</p>
+                    <div className="space-y-4">
+                       <div className="p-3 bg-slate-100/50 rounded-xl border border-slate-200">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Editor Mode</p>
+                          <p className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                             <Rocket size={14} className="text-blue-500" /> New Episode
+                          </p>
+                          <input 
+                            value={versionName}
+                            onChange={e => setVersionName(e.target.value)}
+                            placeholder="버전 이름 (ex: v1.0.2)"
+                            className="mt-2 w-full bg-white border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                       </div>
+
+                       <div className="pt-2">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                             <History size={12} /> Episode History
+                          </p>
+                          {versions.length > 0 ? (
+                             <Accordion type="single" collapsible className="space-y-2">
+                                {versions.map((v, idx) => (
+                                   <AccordionItem key={v.id} value={`v-${v.id}`} className="border-none">
+                                      <AccordionTrigger className="p-3 bg-white rounded-xl border border-slate-100 hover:no-underline py-3 px-4">
+                                         <div className="flex flex-col items-start text-left gap-0.5">
+                                            <p className="text-xs font-bold text-slate-700">{v.version_name}</p>
+                                            <p className="text-[10px] text-slate-400 font-medium">Published {new Date(v.created_at).toLocaleDateString()}</p>
+                                         </div>
+                                      </AccordionTrigger>
+                                      <AccordionContent className="p-4 bg-slate-50/50 rounded-b-xl border-x border-b border-slate-100 mt-[-8px]">
+                                         <div 
+                                           className="text-[11px] text-slate-600 line-clamp-3 prose-xs"
+                                           dangerouslySetInnerHTML={{ __html: v.content_html || "" }}
+                                         />
+                                         <Button 
+                                           variant="ghost" 
+                                           size="sm" 
+                                           className="w-full mt-2 h-7 text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                           onClick={() => setContent(v.content_text || "")}
+                                         >
+                                            내용 불러오기
+                                         </Button>
+                                      </AccordionContent>
+                                   </AccordionItem>
+                                ))}
+                             </Accordion>
+                          ) : (
+                             <div className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center">
+                                <p className="text-[10px] text-slate-400 font-bold">이전 에피소드 없음</p>
+                             </div>
+                          )}
                        </div>
                     </div>
                  ) : (
