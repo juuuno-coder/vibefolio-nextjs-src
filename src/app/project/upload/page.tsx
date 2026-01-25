@@ -119,6 +119,7 @@ export default function ProjectUploadPage() {
             // For Version Mode: Just copy basic metadata (genres, etc)
             if (isVersionMode) {
                 setTitle(p.title || "");
+                setCoverPreview(p.thumbnail_url); // 기본적으로 프로젝트 썸네일을 커버로 사용
                 const cData = typeof p.custom_data === 'string' ? JSON.parse(p.custom_data) : p.custom_data;
                 setSelectedGenres(cData?.genres || []);
                 // Load existing versions
@@ -128,7 +129,7 @@ export default function ProjectUploadPage() {
 
                 // Load latest version content by default
                 if (vList.length > 0) {
-                    setContent(vList[0].content_text || "");
+                    setContent(vList[0].content_html || vList[0].content_text || "");
                 }
             }
           }
@@ -484,8 +485,15 @@ export default function ProjectUploadPage() {
                                               className="flex-1 h-8 text-[10px] font-black text-blue-600 hover:text-white hover:bg-blue-600 transition-all rounded-lg"
                                               onClick={() => {
                                                   if (editor) {
-                                                      editor.commands.setContent(v.content_html || "");
-                                                      setContent(v.content_html || "");
+                                                      const contentToLoad = v.content_html || v.content_text || "";
+                                                      editor.commands.setContent(contentToLoad);
+                                                      setContent(contentToLoad);
+                                                      
+                                                      // 에피소드에 저장된 이미지가 있다면 커버 이미지로도 제안/적용
+                                                      if (v.images && v.images.length > 0) {
+                                                          setCoverPreview(v.images[0]);
+                                                      }
+                                                      
                                                       toast.success(`'${v.version_name}' 내용을 불러왔습니다.`);
                                                   }
                                               }}
