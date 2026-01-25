@@ -206,6 +206,13 @@ export default function TiptapEditor({
     }
   }, [editor, onEditorReady]);
 
+  // Handle external content updates
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content);
+    }
+  }, [content, editor]);
+
   // Handle image replacement from CustomImageExtension
   useEffect(() => {
     if (!editor) return;

@@ -28,7 +28,7 @@ import { Editor } from '@tiptap/react';
 const TiptapEditor = dynamic(() => import("@/components/editor/TiptapEditor.client"), { ssr: false });
 import { EditorSidebar } from "@/components/editor/EditorSidebar";
 import { getProjectVersions, ProjectVersion } from "@/lib/versions";
-import { ChevronDown, ChevronUp, History, Rocket } from "lucide-react";
+import { ChevronDown, ChevronUp, History, Rocket, Edit } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function ProjectUploadPage() {
@@ -461,25 +461,38 @@ export default function ProjectUploadPage() {
                              <Accordion type="single" collapsible className="space-y-2">
                                 {versions.map((v, idx) => (
                                    <AccordionItem key={v.id} value={`v-${v.id}`} className="border-none">
-                                      <AccordionTrigger className="p-3 bg-white rounded-xl border border-slate-100 hover:no-underline py-3 px-4">
+                                      <AccordionTrigger className="p-3 bg-white rounded-xl border border-slate-100 hover:no-underline py-3 px-4 group/trigger">
                                          <div className="flex flex-col items-start text-left gap-0.5">
-                                            <p className="text-xs font-bold text-slate-700">{v.version_name}</p>
-                                            <p className="text-[10px] text-slate-400 font-medium">Published {new Date(v.created_at).toLocaleDateString()}</p>
+                                            <p className="text-xs font-black text-slate-800 flex items-center gap-2">
+                                               {v.version_name}
+                                               {idx === 0 && <span className="text-[8px] bg-green-100 text-green-600 px-1 rounded">LATEST</span>}
+                                            </p>
+                                            <p className="text-[10px] text-slate-400 font-medium">{new Date(v.created_at).toLocaleDateString()}</p>
                                          </div>
                                       </AccordionTrigger>
-                                      <AccordionContent className="p-4 bg-slate-50/50 rounded-b-xl border-x border-b border-slate-100 mt-[-8px]">
-                                         <div 
-                                           className="text-[11px] text-slate-600 line-clamp-3 prose-xs"
-                                           dangerouslySetInnerHTML={{ __html: v.content_html || "" }}
-                                         />
-                                         <Button 
-                                           variant="ghost" 
-                                           size="sm" 
-                                           className="w-full mt-2 h-7 text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                           onClick={() => setContent(v.content_text || "")}
-                                         >
-                                            내용 불러오기
-                                         </Button>
+                                      <AccordionContent className="p-0 bg-slate-50/50 rounded-b-xl border-x border-b border-slate-100 mt-[-8px] overflow-hidden">
+                                         <div className="p-4 max-h-[200px] overflow-y-auto no-scrollbar bg-white/50">
+                                            <div 
+                                              className="text-[11px] text-slate-500 prose-xs prose-p:my-1 prose-headings:my-1"
+                                              dangerouslySetInnerHTML={{ __html: v.content_html || "" }}
+                                            />
+                                         </div>
+                                         <div className="p-2 bg-slate-100/50 flex gap-1">
+                                            <Button 
+                                              variant="ghost" 
+                                              size="sm" 
+                                              className="flex-1 h-8 text-[10px] font-black text-blue-600 hover:text-white hover:bg-blue-600 transition-all rounded-lg"
+                                              onClick={() => {
+                                                  if (editor) {
+                                                      editor.commands.setContent(v.content_html || "");
+                                                      setContent(v.content_html || "");
+                                                      toast.success(`'${v.version_name}' 내용을 불러왔습니다.`);
+                                                  }
+                                              }}
+                                            >
+                                               내용 불러오기
+                                            </Button>
+                                         </div>
                                       </AccordionContent>
                                    </AccordionItem>
                                 ))}
@@ -489,6 +502,18 @@ export default function ProjectUploadPage() {
                                 <p className="text-[10px] text-slate-400 font-bold">이전 에피소드 없음</p>
                              </div>
                           )}
+                       </div>
+                       
+                       <div className="pt-6 border-t border-slate-100">
+                          <button 
+                            onClick={() => router.push(`/project/upload?edit=${projectId}`)}
+                            className="w-full py-3 px-4 rounded-xl border border-slate-200 text-[10px] font-black text-slate-400 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-300 transition-all uppercase tracking-widest flex items-center justify-center gap-2"
+                          >
+                             <Edit size={12} /> 프로젝트 자체 수정하기
+                          </button>
+                          <p className="text-[9px] text-slate-300 mt-2 text-center leading-relaxed">
+                            새 에피소드 발행이 아닌, 기존 프로젝트 정보(제목, 썸네일 등)를 수정합니다.
+                          </p>
                        </div>
                     </div>
                  ) : (
