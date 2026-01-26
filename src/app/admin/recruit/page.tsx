@@ -172,20 +172,22 @@ export default function AdminRecruitPage() {
     
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/recruit/crawl', { 
-        method: 'POST' 
+      const response = await fetch('/api/crawl', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'all' })
       });
       
       if (response.ok) {
         const result = await response.json();
-        alert(`업데이트 완료!\n- 발견: ${result.found}개\n- 새로 추가: ${result.added}개\n- 중복 제외: ${result.skipped}개`);
+        toast.success(`크롤링 완료! 발견: ${result.itemsFound}개, 추가: ${result.itemsAdded}개, 업데이트: ${result.itemsUpdated}개`);
         loadItems();
       } else {
-        alert("크롤러 실행 중 오류가 발생했습니다.");
+        toast.error("크롤러 실행 중 오류가 발생했습니다.");
       }
     } catch (error) {
       console.error('Crawl Error:', error);
-      alert("크롤링 중 서버 오류가 발생했습니다.");
+      toast.error("크롤링 중 서버 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }

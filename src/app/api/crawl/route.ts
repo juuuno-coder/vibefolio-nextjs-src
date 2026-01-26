@@ -17,165 +17,242 @@ const supabaseAdmin = createClient(
 );
 
 /**
- * GET 요청 처리 (Vercel Cron Jobs용)
+ * GET 요청 처리
+ * - Vercel Cron: CRON_SECRET 헤더와 함께 호출하여 크롤링 실행
+ * - Admin UI: 세션과 함께 호출하여 상태(로그/통계) 조회
  */
 export async function GET(request: NextRequest) {
-  // Vercel Cron Security: Authorization 헤더 확인 (옵션)
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
   
-  // URL 쿼리 파라미터에서 키워드 추출 (GET 방식 테스트용)
   const searchParams = request.nextUrl.searchParams;
   const keyword = searchParams.get('keyword') || undefined;
-  
-  // CRON_SECRET이 설정되어 있으면 확인
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    console.log('[Crawl API] Unauthorized cron request');
-    // 보안을 위해 401 반환 대신 로그만 남기고 진행 (Vercel cron은 헤더 없이 호출)
+  const force = searchParams.get('force') === 'true';
+
+  // 1. 크롤링 트리거 조건 확인 (Cron 또는 강제 실행)
+  const isCronRequest = cronSecret && authHeader === `Bearer ${cronSecret}`;
+  const isForceRequest = force;
+
+  if (isCronRequest || isForceRequest) {
+    return handleCrawl(keyword);
   }
 
-  return handleCrawl(keyword);
+  // 2. 관리자 권한 확인 (세션 체크)
+  const { data: { user } } = await supabaseAdmin.auth.getUser(authHeader?.replace('Bearer ', '') || '');
+  
+  // 관리자 권한 확인 로직 (이메일 등)
+  const isAdmin = user && [
+    "juuuno@naver.com", 
+    "juuuno1116@gmail.com", 
+    "admin@vibefolio.net"
+  ].includes(user.email || '');
+
+  if (isAdmin) {
+    return getCrawlStatus();
+  }
+
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 }
 
 /**
- * POST 요청 처리 (수동 실행용 - 키워드 검색 포함)
+ * POST 요청 처리 (수동 실행용)
  */
 export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+
+  // 권한 확인
+  const isCronRequest = cronSecret && authHeader === `Bearer ${cronSecret}`;
+  const { data: { user } } = await supabaseAdmin.auth.getUser(authHeader?.replace('Bearer ', '') || '');
+  const isAdmin = user && [
+    "juuuno@naver.com", 
+    "juuuno1116@gmail.com", 
+    "admin@vibefolio.net"
+  ].includes(user.email || '');
+
+  if (!isCronRequest && !isAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   let keyword: string | undefined;
+  let type: string = 'all';
+
   try {
     const body = await request.json();
     keyword = body.keyword;
+    type = body.type || 'all';
   } catch (e) {
-    // Body parsing error or empty body
+    // Body parsing error
   }
-  return handleCrawl(keyword);
+  
+  return handleCrawl(keyword, type);
 }
 
 /**
- * 크롤링 로직
+ * 크롤링 상태 조회 (로그 및 통계)
  */
-async function handleCrawl(keyword?: string) {
+async function getCrawlStatus() {
   try {
-    console.log(`🚀 [Crawl API] Starting crawl... (Keyword: ${keyword || 'Auto'})`);
-    const startTime = Date.now();
-    
-    // 키워드가 있으면 해당 키워드로 검색 크롤링 수행
-    const result = await crawlAll(keyword);
-    
-    if (!result.success) {
-      throw new Error(result.error || 'Crawl failed');
+    // 1. 최근 로그 20개 가져오기
+    const { data: logs, error: logsError } = await supabaseAdmin
+      .from('crawl_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (logsError) throw logsError;
+
+    // 2. 통계 계산
+    // 전체 항목 수
+    const { count: totalCount } = await supabaseAdmin
+      .from('recruit_items')
+      .select('*', { count: 'exact', head: true });
+
+    // 크롤링된 항목 수 (is_crawled = true 또는 crawled_at is not null)
+    const { count: crawledCount } = await supabaseAdmin
+      .from('recruit_items')
+      .select('*', { count: 'exact', head: true })
+      .not('crawled_at', 'is', null);
+
+    // 카테고리별 통계
+    const { data: typeStats } = await supabaseAdmin
+      .from('recruit_items')
+      .select('type');
+
+    const byType = {
+      job: typeStats?.filter(i => i.type === 'job').length || 0,
+      contest: typeStats?.filter(i => i.type === 'contest').length || 0,
+      event: typeStats?.filter(i => i.type === 'event').length || 0,
+    };
+
+    return NextResponse.json({
+      success: true,
+      logs: logs || [],
+      statistics: {
+        total: totalCount || 0,
+        crawled: crawledCount || 0,
+        manual: (totalCount || 0) - (crawledCount || 0),
+        byType
+      }
+    });
+
+  } catch (error) {
+    console.error('[Crawl Status API] Error:', error);
+    return NextResponse.json({ success: false, error: 'Failed to fetch status' }, { status: 500 });
+  }
+}
+
+/**
+ * 실제 크롤링 실행 및 로그 저장
+ */
+async function handleCrawl(keyword?: string, type: string = 'all') {
+  const startTime = Date.now();
+  console.log(`🚀 [Crawl API] Starting ${type} crawl... ${keyword ? `(Keyword: ${keyword})` : ''}`);
+  
+  let result;
+  try {
+    // 키워드가 있으면 검색 크롤링, 없으면 전체 크롤링
+    if (keyword) {
+      result = await crawlAll(keyword);
+    } else if (type !== 'all') {
+      // @ts-ignore
+      result = await crawlByType(type as any);
+    } else {
+      result = await crawlAll();
     }
+    
+    if (!result.success) throw new Error(result.error || 'Crawl logic failed');
 
     let addedCount = 0;
     let updatedCount = 0;
     let errorCount = 0;
 
-    // DB 저장 (중복 체크 및 업데이트)
     for (const item of result.items) {
       try {
-        // 제목 기반 중복 체크
+        // 중복 체크: 제목 또는 링크 기준 (유연하게)
         const { data: existing } = await supabaseAdmin
           .from('recruit_items')
-          .select('id')
-          .eq('title', item.title)
+          .select('id, is_approved, is_active')
+          .or(`title.eq."${item.title}",link.eq."${item.officialLink || item.link}"`)
           .maybeSingle();
 
-        const mainLink = item.officialLink || item.link;
-        const sourceLink = item.link;
-        
-        // 날짜 유효성 검사
-        const isValidDate = (dateStr: string) => {
-          if (!dateStr || dateStr === '상시' || dateStr === '상시모집') return false;
-          const parsed = Date.parse(dateStr);
-          return !isNaN(parsed);
-        };
-        
-        const validDate = isValidDate(item.date) ? item.date : null;
-        const validStartDate = item.startDate && isValidDate(item.startDate) ? item.startDate : null;
-
         const itemData = {
-            title: item.title,
-            description: item.description,
-            type: item.type,
-            date: validDate,
-            company: item.company,
-            link: mainLink,
-            source_link: sourceLink,
-            thumbnail: item.image || item.thumbnail,
-            location: item.location,
-            prize: item.prize,
-            salary: item.salary,
-            application_target: item.applicationTarget,
-            sponsor: item.sponsor,
-            total_prize: item.totalPrize,
-            first_prize: item.firstPrize,
-            start_date: validStartDate,
-            category_tags: item.categoryTags,
-            crawled_at: new Date().toISOString()
+          title: item.title,
+          description: item.description,
+          type: item.type,
+          date: item.date && !['상시', '상시모집'].includes(item.date) ? item.date : null,
+          company: item.company,
+          link: item.officialLink || item.link,
+          source_link: item.link,
+          thumbnail: item.image || item.thumbnail,
+          location: item.location,
+          prize: item.prize,
+          salary: item.salary,
+          application_target: item.applicationTarget,
+          sponsor: item.sponsor,
+          total_prize: item.totalPrize,
+          first_prize: item.firstPrize,
+          start_date: item.startDate,
+          category_tags: item.categoryTags,
+          crawled_at: new Date().toISOString()
         };
 
         if (!existing) {
-          // 신규 추가
           const { error: insertError } = await supabaseAdmin
             .from('recruit_items')
             .insert([{
               ...itemData,
-              is_approved: false,  // 관리자 승인 대기
-              is_active: false,    // 승인 전 비활성
+              is_approved: false,
+              is_active: false,
             }]);
-
-          if (insertError) {
-            console.error(`❌ Store Error [${item.title}]:`, insertError.message);
-            errorCount++;
-          } else {
-            addedCount++;
-          }
+          if (!insertError) addedCount++;
+          else console.error(`Insert error [${item.title}]:`, insertError.message);
         } else {
-          // 기존 항목 업데이트 (상세 정보 갱신)
+          // 기존 항목 업데이트 (이미 활성화된 상태면 정보만 갱신)
           const { error: updateError } = await supabaseAdmin
             .from('recruit_items')
             .update(itemData)
             .eq('id', existing.id);
-
-          if (updateError) {
-             console.error(`❌ Update Error [${item.title}]:`, updateError.message);
-             errorCount++;
-          } else {
-             updatedCount++;
-          }
+          if (!updateError) updatedCount++;
         }
-      } catch (itemError) {
-        console.error(`❌ Item Error [${item.title}]:`, itemError);
+      } catch (e) {
         errorCount++;
       }
     }
 
-    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    const duration = Date.now() - startTime;
     
-    console.log(`✅ [Crawl API] Completed in ${duration}s - Found: ${result.itemsFound}, Added: ${addedCount}, Updated: ${updatedCount}, Errors: ${errorCount}`);
+    // 로그 저장
+    await supabaseAdmin.from('crawl_logs').insert([{
+      type: type,
+      status: 'success',
+      items_found: result.itemsFound,
+      items_added: addedCount,
+      items_updated: updatedCount,
+      duration_ms: duration
+    }]);
 
     return NextResponse.json({
       success: true,
-      timestamp: new Date().toISOString(),
-      duration: `${duration}s`,
-      stats: {
-        found: result.itemsFound,
-        added: addedCount,
-        updated: updatedCount,
-        errors: errorCount,
-      }
+      itemsFound: result.itemsFound,
+      itemsAdded: addedCount,
+      itemsUpdated: updatedCount,
+      duration: `${(duration / 1000).toFixed(1)}s`
     });
 
-
   } catch (error) {
-    console.error('💥 [Crawl API] Fatal Error:', error);
-    return NextResponse.json(
-      { 
-        success: false,
-        error: error instanceof Error ? error.message : 'Internal Server Error',
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
+    const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown fatal error';
+    
+    // 실패 로그 저장
+    await supabaseAdmin.from('crawl_logs').insert([{
+      type: type,
+      status: 'failed',
+      error_message: errorMessage,
+      duration_ms: duration
+    }]);
+
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
+
