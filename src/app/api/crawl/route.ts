@@ -170,10 +170,12 @@ async function handleCrawl(keyword?: string, type: string = 'all') {
     for (const item of result.items) {
       try {
         // 중복 체크: 제목 또는 링크 기준 (유연하게)
+        // .or() 필터의 따옴표 사용 주의: 값에 따옴표가 있을 경우 에러 발생 가능
+        // 제목은 eq로, 링크는 정확히 일치하는지 확인
         const { data: existing } = await supabaseAdmin
           .from('recruit_items')
           .select('id, is_approved, is_active')
-          .or(`title.eq."${item.title}",link.eq."${item.officialLink || item.link}"`)
+          .or(`title.eq."${item.title.replace(/"/g, '')}",link.eq.${item.link}`)
           .maybeSingle();
 
         const itemData = {

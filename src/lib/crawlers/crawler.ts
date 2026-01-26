@@ -15,18 +15,15 @@ import { crawlMcpSearch } from './search_mcp';
 // Wevity (Contest) - 상세 요약 정보 강화
 // ============================================================
 async function crawlWevity(keyword?: string): Promise<CrawledItem[]> {
-  // AI/영상 관련 카테고리 추가, 키워드 있으면 검색 URL 사용
   let urls: string[] = [];
   
   if (keyword) {
-    // 키워드 검색 URL
     urls = [`https://www.wevity.com/?c=find&s=1&mode=total&keyword=${encodeURIComponent(keyword)}`];
   } else {
-    // 기본 카테고리 크롤링
     urls = [
-        'https://www.wevity.com/?c=find&s=1&gub=1&cidx=20', // 디자인/웹 분야
-        'https://www.wevity.com/?c=find&s=1&gub=1&cidx=22', // 영상/UCC 분야
-        'https://www.wevity.com/?c=find&s=1&gub=1&cidx=21', // IT/SW 분야
+        'https://www.wevity.com/?c=find&s=1&gub=1&cidx=21', // IT/SW
+        'https://www.wevity.com/?c=find&s=1&gub=1&cidx=20', // 디자인/웹
+        'https://www.wevity.com/?c=find&s=1&gub=1&cidx=22', // 영상/UCC
     ];
   }
   
@@ -44,75 +41,16 @@ async function crawlWevity(keyword?: string): Promise<CrawledItem[]> {
       const html = await res.text();
       const $ = cheerio.load(html);
       
-      // 상세 정보 파싱을 위한 헬퍼 함수
-      const fetchDetailInfo = async (detailUrl: string) => {
-        try {
-          const detailRes = await fetch(detailUrl, { 
-            headers: { 
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' 
-            } 
-          });
-          if (!detailRes.ok) return {};
-          const detailHtml = await detailRes.text();
-          const $detail = cheerio.load(detailHtml);
-          
-          // 공식 홈페이지 주소 추출
-          let officialUrl = $detail('.contest-detail .btn-area a:contains("홈페이지 바로가기")').attr('href') ||
-                            $detail('.contest-detail-info a:contains("홈페이지 바로가기")').attr('href') ||
-                            $detail('a:contains("홈페이지")').filter((_, el) => $detail(el).text().includes('바로가기')).attr('href');
-          
-          const info: any = { officialLink: officialUrl };
-          
-          $detail('.contest-detail-info li').each((_, el) => {
-            const rawText = $detail(el).text().replace(/\s+/g, ' ').trim();
-            
-            const extractValue = (label: string) => {
-              if (rawText.includes(label)) {
-                return rawText.split(label)[1]?.replace(/^[:\s]+/, '').trim();
-              }
-              return null;
-            };
-
-            const category = extractValue('분야'); if (category) info.categoryTags = category;
-            const target = extractValue('대상'); if (target) info.applicationTarget = target;
-            const host = extractValue('주최/주관'); if (host) info.company = host;
-            const sponsor = extractValue('후원/협찬'); if (sponsor) info.sponsor = sponsor;
-            const totalP = extractValue('총 상금'); if (totalP) info.totalPrize = totalP;
-            const firstP = extractValue('1등 상금'); if (firstP) info.firstPrize = firstP;
-            
-            const awardDetail = extractValue('시상내역') || extractValue('상금');
-            if (awardDetail) info.prize = awardDetail;
-
-            if (rawText.includes('접수기간')) {
-              const period = extractValue('접수기간');
-              if (period && period.includes('~')) {
-                const startPart = period.split('~')[0].trim();
-                info.startDate = formatDateString(startPart);
-              }
-            }
-          });
-
-          // 포스터 이미지
-          const posterImg = $detail('.thumb img').attr('src');
-          if (posterImg) {
-            info.image = posterImg.startsWith('http') ? posterImg : `https://www.wevity.com${posterImg.startsWith('/') ? '' : '/'}${posterImg}`;
-          }
-
-          return info;
-        } catch (e) {
-          return {};
-        }
-      };
-
-      const listElements = $('.list li, .contest-list li').toArray();
+      const listElements = $('.list li, .contest-list li, .contest-list > div').toArray();
 
       for (const el of listElements) {
-        if (allItems.length >= 25) break;
+        if (allItems.length >= 40) break;
 
         const $li = $(el);
-        const $titleLink = $li.find('.tit a, .hide-tit a, a.subject, .title a').first();
+        const $titleLink = $li.find('.tit a, .hide-tit a, a.subject, .title a, a').filter((_, a) => $(a).text().trim().length > 3).first();
         const title = $titleLink.text().trim();
-        if (!title || title.length < 2 || seenTitles.has(title)) continue;
+        
+        if (!title || title.length < 3 || seenTitles.has(title)) continue;
         seenTitles.add(title);
         
         const linkHref = $titleLink.attr('href');
@@ -120,55 +58,31 @@ async function crawlWevity(keyword?: string): Promise<CrawledItem[]> {
         if (link && !link.startsWith('http')) {
           link = `https://www.wevity.com${link.startsWith('/') ? '' : '/'}${link}`;
         }
-        
-        const detailInfo = await fetchDetailInfo(link);
 
-        let image = detailInfo.image || $li.find('.thumb img, .img img').attr('src');
-        if (image && !image.startsWith('http')) {
-          image = `https://www.wevity.com${image.startsWith('/') ? '' : '/'}${image}`;
-        }
-        
-        if (!image || image.includes('no_image')) {
-          image = getThemedPlaceholder(title, 'contest');
-        }
+        const image = $li.find('.thumb img, .img img').attr('src');
+        const formattedImage = image && !image.startsWith('http') 
+          ? `https://www.wevity.com${image.startsWith('/') ? '' : '/'}${image}` 
+          : image;
         
         const rawDate = $li.find('.dday, .hide-dday, .date').first().text().trim();
         const formattedDate = formatDateString(rawDate);
         
-        const category = detailInfo.categoryTags || $li.find('.cat, .hide-cat').first().text().trim();
-        const company = detailInfo.company || $li.find('.organ, .company').first().text().trim() || '주최측 미상';
+        const category = $li.find('.cat, .hide-cat').first().text().trim();
+        const company = $li.find('.organ, .company').first().text().trim() || '주최측 미상';
         
-        // AI 연관성 점수 계산
         const aiScore = getAIRelevanceScore(title, category || '');
 
-        // Description 생성 로직 개선 (상세 정보 조합)
-        const descParts = [];
-        if (detailInfo.applicationTarget) descParts.push(`대상: ${detailInfo.applicationTarget}`);
-        if (detailInfo.totalPrize || detailInfo.prize) descParts.push(`시상: ${detailInfo.totalPrize || detailInfo.prize}`);
-        if (category) descParts.push(`분야: ${category}`);
-        
-        const richDescription = descParts.length > 0 
-          ? descParts.join(' / ') 
-          : (category || '공모전 정보를 확인하세요.');
-        
         allItems.push({
           title,
-          description: richDescription,
+          description: category || '공모전 정보를 확인하세요.',
           type: 'contest',
           date: formattedDate || '상시모집',
           company: company,
           location: '온라인/기타',
           link: link, 
-          officialLink: detailInfo.officialLink,
           sourceUrl: 'https://www.wevity.com',
-          image,
-          prize: detailInfo.prize || detailInfo.totalPrize,
-          applicationTarget: detailInfo.applicationTarget,
-          sponsor: detailInfo.sponsor,
-          totalPrize: detailInfo.totalPrize,
-          firstPrize: detailInfo.firstPrize,
-          startDate: detailInfo.startDate,
-          categoryTags: (detailInfo.categoryTags || '') + (aiScore > 0 ? ', AI' : ''),
+          image: formattedImage || getThemedPlaceholder(title, 'contest'),
+          categoryTags: (category || '') + (aiScore > 0 ? ', AI' : ''),
         });
       }
     } catch (e) {
@@ -176,16 +90,16 @@ async function crawlWevity(keyword?: string): Promise<CrawledItem[]> {
     }
   }
   
-  // AI 관련 항목 우선 정렬 (키워드 검색 시에는 검색 정확도 우선이겠지만 여기서도 AI score가 유효)
   allItems.sort((a, b) => {
     const scoreA = getAIRelevanceScore(a.title, a.description);
     const scoreB = getAIRelevanceScore(b.title, b.description);
     return scoreB - scoreA;
   });
   
-  console.log(`[Wevity] Crawled ${allItems.length} items (Keyword: ${keyword || 'Basic'})`);
+  console.log(`[Wevity] Crawled ${allItems.length} items`);
   return allItems;
 }
+
 
 // ============================================================
 // Wanted (Job) - 상세 정보 크롤링 (주요업무, 자격요건)
