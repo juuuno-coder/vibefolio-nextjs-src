@@ -4,8 +4,10 @@ export function ProjectCardSkeleton() {
   return (
     <div className="break-inside-avoid mb-4">
       <div className="bg-white rounded-xl overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow">
-        {/* 이미지 영역 */}
-        <Skeleton className="w-full aspect-square" />
+        {/* 이미지 영역 - 실제 카드와 동일한 4:3 비율 */}
+        <div className="relative aspect-[4/3]">
+           <Skeleton className="w-full h-full" />
+        </div>
         
         {/* 카드 정보 */}
         <div className="p-4 space-y-3">

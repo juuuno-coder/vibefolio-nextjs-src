@@ -503,11 +503,12 @@ function HomeContent() {
             {/* 프로젝트 리스트 (Grid Layout) - 한 줄에 최대 4개 */}
             {sortedProjects.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-y-12 gap-x-6">
-                {sortedProjects.map((project) => (
+                {sortedProjects.map((project, index) => (
                   <div key={project.id} className="w-full">
                     <ImageCard
                       onClick={() => handleProjectClick(project)}
                       props={project}
+                      priority={index < 8}
                     />
                   </div>
                 ))}

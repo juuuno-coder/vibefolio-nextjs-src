@@ -51,11 +51,13 @@ interface ImageCardProps {
   className?: string;
   onClick?: () => void;
   onDelete?: (id: string) => void;
+  priority?: boolean;
 }
 
 // forwardRef를 사용하여 컴포넌트를 래핑
-export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
-  ({ props, onClick, onDelete, className, ...rest }, ref) => {
+// forwardRef 및 React.memo를 사용하여 컴포넌트 최적화
+export const ImageCard = React.memo(forwardRef<HTMLDivElement, ImageCardProps>(
+  ({ props, onClick, onDelete, className, priority, ...rest }, ref) => {
     const [imgError, setImgError] = useState(false);
     const [avatarError, setAvatarError] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
@@ -218,8 +220,9 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
             <OptimizedImage
               src={imageUrl}
               alt={altText}
-              className={`object-cover transition-all duration-300 group-hover:brightness-110 ${props.scheduled_at && new Date(props.scheduled_at) > new Date() ? 'grayscale-[0.8]' : ''}`}
+              className={`object-cover transition-all duration-500 group-hover:brightness-110 group-hover:scale-105 ${props.scheduled_at && new Date(props.scheduled_at) > new Date() ? 'grayscale-[0.8]' : ''}`}
               fill
+              priority={priority}
             />
           )}
         </div>
@@ -300,6 +303,6 @@ export const ImageCard = forwardRef<HTMLDivElement, ImageCardProps>(
       </div>
     );
   }
-);
+));
 
 ImageCard.displayName = "ImageCard";
