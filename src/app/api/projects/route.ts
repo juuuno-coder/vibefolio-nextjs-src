@@ -240,13 +240,24 @@ export async function POST(request: NextRequest) {
     const user_id = authenticatedUserId;
 
     // [Robustness] Handle category_id as slug or missing
-    if (typeof category_id === 'string' && isNaN(Number(category_id))) {
-        category_id = GENRE_TO_CATEGORY_ID[category_id] || 1;
-    } else if (!category_id) {
-        category_id = 1; // Default to 'photo' (1) if missing
+    if (category_id && typeof category_id === 'string') {
+        // Try parsing string to number first (e.g. "11")
+        const parsedNum = Number(category_id);
+        if (!isNaN(parsedNum)) {
+            category_id = parsedNum;
+        } else {
+             // If not a number string, try mapping from slug (e.g. "webapp")
+            const mappedId = GENRE_TO_CATEGORY_ID[category_id.toLowerCase()];
+            category_id = mappedId || 1; 
+        }
+    } else if (typeof category_id === 'number') {
+        // Already a number
     } else {
-        category_id = Number(category_id);
+        category_id = 1; // Default
     }
+    
+    // Safety check
+    if (isNaN(category_id)) category_id = 1;
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required.', code: 'MISSING_TITLE' }, { status: 400 });
