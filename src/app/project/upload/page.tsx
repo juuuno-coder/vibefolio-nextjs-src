@@ -142,7 +142,59 @@ export default function ProjectUploadPage() {
       };
       loadProject();
     }
-  }, [editId, mode, projectId]);
+
+    // [New] Auto-save & RestoreDraft Logic
+    // Only applied when NOT in specific edit mode (to avoid overwriting real data with stale local data)
+    if (!isEditMode && !isVersionMode) {
+        // 1. Restore
+        const savedDraft = localStorage.getItem("project_draft");
+        if (savedDraft) {
+            try {
+                const { title: sTitle, content: sContent, timestamp } = JSON.parse(savedDraft);
+                // Check if draft is recent (optional, but good UX)
+                const isRecent = (Date.now() - timestamp) < 24 * 60 * 60 * 1000; // 24h
+                
+                if (sTitle || sContent) {
+                     toast("작성 중인 임시 저장본이 있습니다.", {
+                         action: {
+                             label: "불러오기",
+                             onClick: () => {
+                                 if (sTitle) setTitle(sTitle);
+                                 if (sContent) {
+                                     setContent(sContent);
+                                     editor?.commands.setContent(sContent); // Sync Tiptap
+                                 }
+                                 toast.success("임시 저장된 내용을 불러왔습니다.");
+                             }
+                         },
+                         duration: 5000,
+                     });
+                }
+            } catch (e) {
+                console.error("Failed to parse draft", e);
+            }
+        }
+    }
+  }, [editId, mode, projectId, editor]); // Added editor dependency for restoration
+
+  // 2. Auto-save Effect
+  useEffect(() => {
+     if (isEditMode || isVersionMode) return; // Don't auto-save in edit/version mode to avoid conflicts
+
+     const timer = setTimeout(() => {
+         if (title || content) {
+             const draft = {
+                 title,
+                 content,
+                 timestamp: Date.now()
+             };
+             localStorage.setItem("project_draft", JSON.stringify(draft));
+             // console.log("Auto-saved draft");
+         }
+     }, 3000); // Save every 3 seconds of inactivity
+
+     return () => clearTimeout(timer);
+  }, [title, content, isEditMode, isVersionMode]);
 
   const handleSubmit = async () => {
     if (!title.trim()) return toast.error("제목을 입력해주세요.");
@@ -218,6 +270,9 @@ export default function ProjectUploadPage() {
 
       if (!res.ok) throw new Error("등록 실패");
       
+      // Clear Draft on Success
+      localStorage.removeItem("project_draft");
+
       toast.success(showInGrowth ? "전문 피드백 설정이 완료되었습니다!" : "프로젝트가 발행되었습니다!");
       router.push(showInGrowth ? "/growth" : "/discover");
     } catch (error: any) {
