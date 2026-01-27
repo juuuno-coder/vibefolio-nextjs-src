@@ -262,10 +262,14 @@ export default function ProjectUploadPage() {
         is_growth_requested: showInGrowth
       } as any;
 
+      const session = (await supabase.auth.getSession()).data.session;
       const endpoint = isEditMode ? `/api/projects/${editId}` : "/api/projects";
       const res = await fetch(endpoint, {
         method: isEditMode ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`
+        },
         body: JSON.stringify(isEditMode ? { ...projectData, project_id: editId } : projectData),
       });
 
