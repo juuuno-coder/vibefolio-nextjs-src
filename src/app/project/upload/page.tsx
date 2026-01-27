@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, LayoutTemplate, Zap, BarChart3 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { genreCategories } from "@/lib/categoryMap";
+import { genreCategories, fieldCategories } from "@/lib/categoryMap";
 import { Editor } from '@tiptap/react'; 
 
 // Dynamic Imports
@@ -49,6 +49,7 @@ export default function ProjectUploadPage() {
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [selectedFields, setSelectedFields] = useState<string[]>([]); // New State for Fields
   const [showInDiscover, setShowInDiscover] = useState(true);
   const [showInGrowth, setShowInGrowth] = useState(false); 
   const [auditDeadline, setAuditDeadline] = useState<string>(() => {
@@ -105,6 +106,7 @@ export default function ProjectUploadPage() {
                 setCoverPreview(p.thumbnail_url);
                 const cData = typeof p.custom_data === 'string' ? JSON.parse(p.custom_data) : p.custom_data;
                 setSelectedGenres(cData?.genres || []);
+                setSelectedFields(cData?.fields || []); // Load Fields
                 if (p.audit_deadline) setAuditDeadline(p.audit_deadline.split('T')[0]);
                 if (cData?.audit_config) {
                   const cfg = cData.audit_config;
@@ -145,7 +147,7 @@ export default function ProjectUploadPage() {
   const handleSubmit = async () => {
     if (!title.trim()) return toast.error("제목을 입력해주세요.");
     if (isVersionMode && !versionName.trim()) return toast.error("버전 이름을 입력해주세요.");
-    if (selectedGenres.length === 0) return toast.error("최소 1개의 장르를 선택해주세요.");
+    if (selectedGenres.length === 0 && selectedFields.length === 0) return toast.error("최소 1개의 장르 또는 분야를 선택해주세요.");
     
     setIsSubmitting(true);
     try {
@@ -188,10 +190,11 @@ export default function ProjectUploadPage() {
         content_text: content,
         thumbnail_url: coverUrl,
         visibility: showInDiscover ? 'public' : 'unlisted',
-        category_id: selectedGenres[0],
+        category_id: selectedGenres.length > 0 ? selectedGenres[0] : 1, // Default to 1 if only field selected
         audit_deadline: showInGrowth ? auditDeadline : null,
         custom_data: {
           genres: selectedGenres,
+          fields: selectedFields, // Save Fields
           show_in_discover: showInDiscover,
           show_in_growth: showInGrowth,
           audit_config: showInGrowth ? {
@@ -606,33 +609,58 @@ export default function ProjectUploadPage() {
                          </div>
                        )}
                        <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="outline" className="bg-white text-black font-bold">이미지 선택</Button>
-                          <input type="file" className="hidden" onChange={async e => {
-                             const file = e.target.files?.[0];
-                             if (file) {
-                               const url = await uploadImage(file);
-                               setCoverPreview(url);
-                             }
-                          }} />
-                       </label>
-                    </div>
-                 </div>
+                           <div className="px-4 py-2 bg-white text-black font-bold rounded-lg shadow-sm hover:bg-gray-100 transition-colors">이미지 선택</div>
+                           <input type="file" className="hidden" accept="image/*" onChange={async e => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                // Show preview immediately before upload if possible, or just set file
+                                setCoverImage(file); // Save file for submit
+                                
+                                // Optional: Upload immediately for preview (as established pattern)
+                                try {
+                                    const url = await uploadImage(file);
+                                    setCoverPreview(url);
+                                } catch (err) {
+                                    toast.error("이미지 업로드 실패");
+                                }
+                              }
+                           }} />
+                        </label>
+                     </div>
+                  </div>
 
-                 <div className="space-y-6">
-                    <h2 className="text-xl font-black text-gray-900">장르 섹션</h2>
-                    <div className="flex flex-wrap gap-2">
-                       {genreCategories.map(cat => (
-                         <button 
-                            key={cat.id} 
-                            onClick={() => setSelectedGenres(prev => prev.includes(cat.id) ? prev.filter(i => i !== cat.id) : [...prev, cat.id])} 
-                            className={cn("px-4 py-2 rounded-xl border-2 transition-all font-bold text-sm", selectedGenres.includes(cat.id) ? "bg-slate-900 border-slate-900 text-white shadow-md" : "border-gray-100 text-gray-400 hover:border-gray-300 bg-white")}
-                         >
-                           {cat.label}
-                         </button>
-                       ))}
-                    </div>
-                 </div>
-              </section>
+                  <div className="space-y-8">
+                     <div className="space-y-4">
+                        <h2 className="text-xl font-black text-gray-900">장르 (Genre)</h2>
+                        <div className="flex flex-wrap gap-2">
+                           {genreCategories.map(cat => (
+                             <button 
+                                key={cat.id} 
+                                onClick={() => setSelectedGenres(prev => prev.includes(cat.id) ? prev.filter(i => i !== cat.id) : [...prev, cat.id])} 
+                                className={cn("px-4 py-2 rounded-xl border-2 transition-all font-bold text-sm", selectedGenres.includes(cat.id) ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-200" : "border-gray-100 text-gray-400 hover:border-gray-300 bg-white")}
+                             >
+                               {cat.label}
+                             </button>
+                           ))}
+                        </div>
+                     </div>
+
+                     <div className="space-y-4">
+                        <h2 className="text-xl font-black text-gray-900">산업 분야 (Expertise)</h2>
+                        <div className="flex flex-wrap gap-2">
+                           {fieldCategories.map(cat => (
+                             <button 
+                                key={cat.id} 
+                                onClick={() => setSelectedFields(prev => prev.includes(cat.id) ? prev.filter(i => i !== cat.id) : [...prev, cat.id])} 
+                                className={cn("px-4 py-2 rounded-xl border-2 transition-all font-bold text-sm", selectedFields.includes(cat.id) ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200" : "border-gray-100 text-gray-400 hover:border-gray-300 bg-white")}
+                             >
+                               {cat.label}
+                             </button>
+                           ))}
+                        </div>
+                     </div>
+                  </div>
+               </section> 
 
               {/* Visibility Settings */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
