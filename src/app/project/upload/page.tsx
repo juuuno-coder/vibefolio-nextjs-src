@@ -68,13 +68,17 @@ export default function ProjectUploadPage() {
   
   // 스티커 폴
   const [pollOptions, setPollOptions] = useState<any[]>([
-    { id: 'p1', label: '당장 쓸게요!', desc: '매우 만족스러운 결과물입니다.', image_url: '/review/a1.jpeg' },
+    { id: 'p1', label: '당장 쓸게요!', desc: '매우 기대되는 프로젝트입니다.', image_url: '/review/a1.jpeg' },
     { id: 'p2', label: '조금 아쉬워요', desc: '개선이 필요해 보입니다.', image_url: '/review/a2.jpeg' },
     { id: 'p3', label: '더 연구해 주세요', desc: '방향성 재검토가 필요합니다.', image_url: '/review/a3.jpeg' }
   ]);
   
   // 심층 질문
-  const [auditQuestions, setAuditQuestions] = useState<string[]>(["가장 인상적인 부분은 어디인가요?"]);
+  const [auditQuestions, setAuditQuestions] = useState<string[]>([
+    "가장 인상적인 부분은 어디인가요?",
+    "가장 개선이 시급한 부분은 어디인가요?",
+    "종합적으로 평가해 주세요."
+  ]);
 
   const [versions, setVersions] = useState<ProjectVersion[]>([]);
   const [baseProject, setBaseProject] = useState<any>(null);
