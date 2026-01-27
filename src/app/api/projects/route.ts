@@ -336,9 +336,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+
     // [New] 표준화된 Fields 매핑 저장
     if (data && data.project_id && custom_data) {
         try {
+            // custom_data가 이미 객체일 수 있으므로 string일 때만 파싱
             const parsedCustom = typeof custom_data === 'string' ? JSON.parse(custom_data) : custom_data;
             const fieldSlugs = parsedCustom.fields; 
 
@@ -355,7 +357,7 @@ export async function POST(request: NextRequest) {
                      }));
                      
                      await (supabaseAdmin as any)
-                        .from('project_fields') // Changed from project_fields_mapping to project_fields based on GET handler
+                        .from('project_fields') 
                         .insert(mappingData);
                 }
             }
