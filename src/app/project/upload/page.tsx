@@ -268,7 +268,10 @@ export default function ProjectUploadPage() {
         body: JSON.stringify(isEditMode ? { ...projectData, project_id: editId } : projectData),
       });
 
-      if (!res.ok) throw new Error("등록 실패");
+      if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || errData.details || "등록 실패");
+      }
       
       // Clear Draft on Success
       localStorage.removeItem("project_draft");
