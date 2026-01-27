@@ -60,9 +60,10 @@ export default function ProjectUploadPage() {
   
   // 평가 항목
   const [customCategories, setCustomCategories] = useState<any[]>([
-    { id: 'score_1', label: '독창성', desc: '아이디어가 참신한가요?', sticker: '/review/s1.png' },
-    { id: 'score_2', label: '완성도', desc: '시각적 완성도가 높은가요?', sticker: '/review/s2.png' },
-    { id: 'score_3', label: '시장성', desc: '실제 사용 가치가 있나요?', sticker: '/review/s3.png' }
+    { id: 'score_1', label: '기획력', desc: '문제해결에 대한 논리적인 접근', sticker: '/review/s1.png' },
+    { id: 'score_2', label: '완성도', desc: '전체적인 완성도가 높은가?', sticker: '/review/s2.png' },
+    { id: 'score_3', label: '시장성', desc: '사용가치 및 잠재력이 있는가?', sticker: '/review/s3.png' },
+    { id: 'score_4', label: '독창성', desc: '아이디어가 참신한가?', sticker: '/review/s4.png' }
   ]);
   
   // 스티커 폴
