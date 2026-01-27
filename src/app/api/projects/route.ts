@@ -306,23 +306,33 @@ export async function POST(request: NextRequest) {
     }
     */
 
+    // [Fix] Ensure extended fields are in custom_data since they might not exist as columns
+    const safeCustomData = {
+        ...(typeof finalCustomData === 'object' ? finalCustomData : {}),
+        audit_deadline: audit_deadline,
+        is_growth_requested: is_growth_requested ?? false,
+        summary: summary,
+        alt_description: alt_description
+    };
+
     let { data, error } = await (supabaseAdmin as any)
       .from('Project')
       .insert([{ 
-        user_id, category_id, title, summary, 
-        content_text: finalContent, // Normalized Content
-        description: description || finalContent, // Fallback description
-        alt_description,
+        user_id, category_id, title, 
+        // summary removed (not in type)
+        content_text: finalContent, 
+        description: description || finalContent, 
+        // alt_description removed (not in type)
         thumbnail_url, 
         rendering_type: rendering_type || 'rich_text', 
-        custom_data: JSON.stringify(finalCustomData), // Updated custom_data with assets
+        custom_data: JSON.stringify(safeCustomData), 
         allow_michelin_rating: allow_michelin_rating ?? true, 
         allow_stickers: allow_stickers ?? true, 
         allow_secret_comments: allow_secret_comments ?? true,
-        scheduled_at: scheduled_at ? new Date(scheduled_at).toISOString() : null,
+        scheduled_at: scheduled_at ? new Date(scheduled_at).toISOString() : null, // Keeping scheduled_at as it might be used in GET
         visibility: visibility || 'public',
-        audit_deadline: audit_deadline ? new Date(audit_deadline).toISOString() : null,
-        is_growth_requested: is_growth_requested ?? false,
+        // audit_deadline removed (using custom_data)
+        // is_growth_requested removed (using custom_data only)
         likes_count: 0, views_count: 0 
       }] as any)
       .select()
