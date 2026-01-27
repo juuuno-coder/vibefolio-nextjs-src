@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { getSafeCustomData } from "@/lib/utils/data";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FontAwesomeIcon } from "./FaIcon";
@@ -233,7 +234,7 @@ export function ProjectDetailModalV2({
   const [activePinId, setActivePinId] = useState<string | null>(null);
 
   // [Growth Mode] Feedback Settings Derived State
-  const cData = project && typeof project.custom_data === 'string' ? JSON.parse(project.custom_data) : project?.custom_data;
+  const cData = getSafeCustomData(project);
   const isGrowthRequested = cData?.is_growth_requested === true || (project as any)?.is_growth_requested === true;
   // [Fix] Handle both legacy and new flags for showing feedback UI
   const isFeedbackRequested = cData?.is_feedback_requested === true || isGrowthRequested === true;
@@ -1053,13 +1054,7 @@ export function ProjectDetailModalV2({
                     {project.title || stripHtml(project.description || project.alt_description || "제목 없음")}
                   </h1>
                   {isAuditMode && (
-                    <Button 
-                      onClick={() => window.open(`https://review.vibefolio.net/viewer?projectId=${project.id}`, '_blank')}
-                      className="mt-2 bg-slate-900 hover:bg-black text-white font-black rounded-xl h-11 px-6 shadow-xl w-full md:w-fit gap-2 border-2 border-orange-500/20"
-                    >
-                       <FontAwesomeIcon icon={faStar} className="text-orange-400" />
-                       전문가 진단 리포트 확인
-                    </Button>
+         null
                   )}
                 </div>
 
@@ -1229,30 +1224,9 @@ export function ProjectDetailModalV2({
                    {isFeedbackRequested && ((project as any).allow_michelin_rating || (project as any).allow_stickers) && (
                      <div id="feedback-section" className="w-full mt-24 border-t-2 border-dashed border-gray-100 pt-16 pb-8 space-y-12">
                        {/* Audit Expert Section */}
+                       {/* Audit Expert Section Removed */}
                        {isAuditMode && (
-                         <div className="max-w-4xl mx-auto px-6 mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                           <div className="bg-slate-950 rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl border border-white/10">
-                              <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
-                                 <FontAwesomeIcon icon={faStar} className="text-9xl text-orange-500" />
-                              </div>
-                              <div className="relative z-10">
-                                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500 rounded-lg text-[10px] font-black uppercase mb-4 shadow-lg shadow-orange-500/20">
-                                    Expert Audit Report
-                                 </div>
-                                 <h3 className="text-3xl font-black mb-4">전문가가 진단한 리포트가 도착했습니다</h3>
-                                 <p className="text-slate-400 text-lg mb-8 leading-relaxed max-w-xl">
-                                   본 프로젝트는 Vibefolio 인증 전문가들에 의해 기획력, 완성도, 시장성 등 다각도 분석이 완료되었습니다. 자세한 분석 내용은 전용 뷰어에서 확인하실 수 있습니다.
-                                 </p>
-                                 <Button 
-                                   onClick={() => window.open(`https://review.vibefolio.net/viewer?projectId=${project.id}`, '_blank')}
-                                   className="h-14 px-8 rounded-2xl bg-white text-black font-black text-lg hover:bg-gray-100 transition-all shadow-xl gap-3"
-                                 >
-                                    <FontAwesomeIcon icon={faStar} className="text-orange-500" />
-                                    전체 리포트 열람하기
-                                 </Button>
-                              </div>
-                           </div>
-                         </div>
+                         null
                        )}
                        <div className="text-center mb-8 animate-in fade-in slide-in-from-bottom-2 duration-700">
                           <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-full border border-gray-200 text-gray-600 shadow-sm">

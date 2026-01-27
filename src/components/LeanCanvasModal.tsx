@@ -4,7 +4,15 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";  // Ensure Textarea is imported
-import { Check, Wand2, History, FileText, ChevronRight, Loader2 } from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { 
+  faCheck, 
+  faWandMagicSparkles, 
+  faClockRotateLeft, 
+  faFileAlt, 
+  faChevronRight, 
+  faSpinner 
+} from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -196,9 +204,9 @@ export function LeanCanvasModal({ open, onOpenChange, onApply, onSave, initialDa
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0 overflow-hidden bg-gray-50">
         <div className="p-6 border-b bg-white flex justify-between items-center">
-             <div>
+            <div>
                 <DialogTitle className="flex items-center gap-2 text-xl mb-1">
-                    <Wand2 className="w-5 h-5 text-purple-600" /> 
+                    <FontAwesomeIcon icon={faWandMagicSparkles} className="w-5 h-5 text-purple-600" /> 
                     AI 린 캔버스 생성
                 </DialogTitle>
                 <p className="text-sm text-gray-500">
@@ -222,7 +230,7 @@ export function LeanCanvasModal({ open, onOpenChange, onApply, onSave, initialDa
                         activeTab === 'import' ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-900"
                     )}
                 >
-                    <History className="w-4 h-4" />
+                    <FontAwesomeIcon icon={faClockRotateLeft} className="w-4 h-4" />
                     내 기획 불러오기
                 </button>
              </div>
@@ -234,7 +242,7 @@ export function LeanCanvasModal({ open, onOpenChange, onApply, onSave, initialDa
                     <h3 className="text-lg font-bold text-gray-900 mb-4">내 AI 기획 내역 (MyPage Chat)</h3>
                     {isLoadingHistory ? (
                         <div className="flex justify-center py-20">
-                            <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+                            <FontAwesomeIcon icon={faSpinner} className="w-8 h-8 animate-spin text-purple-500" />
                         </div>
                     ) : historyList.length > 0 ? (
                         <div className="grid gap-3">
@@ -247,7 +255,7 @@ export function LeanCanvasModal({ open, onOpenChange, onApply, onSave, initialDa
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex items-center gap-2">
                                             <div className={cn("p-2 rounded-lg", item.toolType?.includes('lean') ? 'bg-purple-100 text-purple-600' : 'bg-green-100 text-green-600')}>
-                                                {item.toolType?.includes('lean') ? <FileText className="w-4 h-4"/> : <Wand2 className="w-4 h-4"/>}
+                                                {item.toolType?.includes('lean') ? <FontAwesomeIcon icon={faFileAlt} className="w-4 h-4"/> : <FontAwesomeIcon icon={faWandMagicSparkles} className="w-4 h-4"/>}
                                             </div>
                                             <h4 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
                                                 {item.title || "제목 없음"}
@@ -262,7 +270,7 @@ export function LeanCanvasModal({ open, onOpenChange, onApply, onSave, initialDa
                                     </p>
                                     <div className="flex justify-end mt-2">
                                         <span className="text-xs font-medium text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                                            불러오기 <ChevronRight className="w-3 h-3" />
+                                            불러오기 <FontAwesomeIcon icon={faChevronRight} className="w-3 h-3" />
                                         </span>
                                     </div>
                                 </div>
@@ -380,8 +388,8 @@ export function LeanCanvasModal({ open, onOpenChange, onApply, onSave, initialDa
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
                     {onApply && (
-                         <Button onClick={handleApplyToProject} className="bg-purple-600 hover:bg-purple-700 text-white gap-2">
-                            <Check className="w-4 h-4" /> 프로젝트에 적용하기
+                        <Button onClick={handleApplyToProject} className="bg-purple-600 hover:bg-purple-700 text-white gap-2">
+                            <FontAwesomeIcon icon={faCheck} className="w-4 h-4" /> 프로젝트에 적용하기
                         </Button>
                     )}
                 </div>

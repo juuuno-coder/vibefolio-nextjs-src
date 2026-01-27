@@ -3,20 +3,21 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import { FontAwesomeIcon } from "@/components/FaIcon";
 import { 
-  Search, 
-  Menu, 
-  X, 
-  User as UserIcon, 
-  LogOut, 
-  LayoutDashboard,
-  Bell,
-  ChevronDown,
-  Plus,
-  Upload,
-  BarChart3,
-  Zap
-} from "lucide-react";
+  faSearch, 
+  faBars, 
+  faXmark, 
+  faUser, 
+  faSignOutAlt, 
+  faColumns, 
+  faBell, 
+  faChevronDown, 
+  faPlus, 
+  faUpload, 
+  faChartSimple, 
+  faBolt 
+} from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { Button } from "@/components/ui/button";
 import { VibeLogo } from "./Logo";
@@ -161,7 +162,7 @@ export function Header({
                     className="p-1 outline-none hover:scale-110 transition-transform"
                     onClick={() => setIsSearchOpen(!isSearchOpen)}
                  >
-                    <Search size={20} className={isSearchOpen ? "text-green-600" : "text-gray-900"} />
+                    <FontAwesomeIcon icon={faSearch} className={isSearchOpen ? "text-green-600" : "text-gray-900"} />
                   </button>
                   {isSearchOpen && (
                      <input 
@@ -178,11 +179,11 @@ export function Header({
                   <div className="absolute top-full mt-3 right-0 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 animate-in fade-in slide-in-from-top-2 duration-200 z-[101]">
                      <div className="flex items-center justify-between mb-4">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                           <Zap size={12} className="text-green-500 fill-green-500" />
+                           <FontAwesomeIcon icon={faBolt} className="text-green-500" />
                            실시간 인기 검색어
                         </h3>
                         <button onClick={() => setIsSearchOpen(false)} className="text-gray-300 hover:text-gray-500 transition-colors">
-                           <X size={14} />
+                           <FontAwesomeIcon icon={faXmark} className="w-3.5 h-3.5" />
                         </button>
                      </div>
                      <div className="flex flex-wrap gap-2">
@@ -215,7 +216,7 @@ export function Header({
                         onClick={() => router.push('/project/upload')}
                         className="flex items-center gap-2 bg-slate-900 hover:bg-black text-white rounded-full px-4 h-9 text-sm font-medium shadow-sm transition-all"
                       >
-                        <Plus className="w-4 h-4" />
+                        <FontAwesomeIcon icon={faPlus} className="w-4 h-4" />
                         프로젝트 등록
                       </Button>
                     </div>
@@ -249,28 +250,28 @@ export function Header({
                                <p className="text-xs text-black/60 truncate">{user.email}</p>
                                <div className="mt-2 flex items-center justify-between bg-gradient-to-r from-yellow-50 to-orange-50 px-3 py-1.5 rounded-lg border border-yellow-100">
                                    <div className="flex items-center gap-1.5">
-                                       <Zap size={12} className="text-orange-500 fill-orange-500" />
+                                       <FontAwesomeIcon icon={faBolt} className="text-orange-500" />
                                        <span className="text-xs font-bold text-gray-700">내공</span>
                                    </div>
                                    <span className="text-xs font-extrabold text-orange-600 font-mono">{userProfile?.points || 0} P</span>
                                </div>
                             </div>
                            <button onClick={() => router.push('/project/upload')} className="w-full text-left px-2 py-2 rounded-lg cursor-pointer text-green-600 hover:bg-green-50 text-sm font-medium flex items-center">
-                             <Upload className="mr-2 h-4 w-4" /> 프로젝트 등록
+                             <FontAwesomeIcon icon={faUpload} className="mr-2 h-4 w-4" /> 프로젝트 등록
                            </button>
                            <button onClick={() => router.push('/mypage')} className="w-full text-left px-2 py-2 rounded-lg cursor-pointer text-black hover:bg-gray-100 text-sm font-medium flex items-center">
-                             <UserIcon className="mr-2 h-4 w-4" /> 마이페이지
+                             <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4" /> 마이페이지
                            </button>
                            <button onClick={() => router.push('/mypage/evaluations')} className="w-full text-left px-2 py-2 rounded-lg cursor-pointer text-black hover:bg-gray-100 text-sm font-medium flex items-center">
-                             <BarChart3 className="mr-2 h-4 w-4" /> 내 피드백
+                             <FontAwesomeIcon icon={faChartSimple} className="mr-2 h-4 w-4" /> 내 피드백
                            </button>
                            {isAdmin && (
                              <button onClick={() => router.push('/admin')} className="w-full text-left px-2 py-2 mt-1 rounded-lg cursor-pointer text-indigo-600 bg-indigo-50 hover:bg-indigo-100 text-sm font-bold flex items-center">
-                                <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자 센터
+                                <FontAwesomeIcon icon={faColumns} className="mr-2 h-4 w-4" /> 관리자 센터
                              </button>
                            )}
                            <button onClick={handleLogout} className="w-full text-left px-2 py-2 rounded-lg cursor-pointer text-red-600 hover:bg-red-50 text-sm font-medium flex items-center">
-                              <LogOut className="mr-2 h-4 w-4" /> 로그아웃
+                              <FontAwesomeIcon icon={faSignOutAlt} className="mr-2 h-4 w-4" /> 로그아웃
                            </button>
                         </div>
                     </div>
@@ -295,7 +296,7 @@ export function Header({
             className="xl:hidden p-2 text-black"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+             {isMobileMenuOpen ? <FontAwesomeIcon icon={faXmark} className="w-6 h-6" /> : <FontAwesomeIcon icon={faBars} className="w-6 h-6" />}
           </button>
         </div>
       </div>
@@ -331,13 +332,13 @@ export function Header({
                          </div>
                      </div>
                      <Link href="/project/upload" onClick={() => setIsMobileMenuOpen(false)} className="text-black font-bold bg-gray-50 px-3 py-2 rounded-lg inline-flex items-center w-fit">
-                       <Plus className="mr-2 h-4 w-4" /> 프로젝트 등록
+                       <FontAwesomeIcon icon={faPlus} className="mr-2 h-4 w-4" /> 프로젝트 등록
                      </Link>
                       <Link href="/mypage" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-700 font-medium py-1">마이페이지</Link>
                       <Link href="/mypage/evaluations" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-700 font-medium py-1">내 피드백</Link>
                      {isAdmin && (
                        <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-indigo-600 font-bold bg-indigo-50 px-3 py-2 rounded-lg inline-flex items-center w-fit">
-                         <LayoutDashboard className="mr-2 h-4 w-4" /> 관리자 센터
+                         <FontAwesomeIcon icon={faColumns} className="mr-2 h-4 w-4" /> 관리자 센터
                        </Link>
                      )}
                      <button onClick={handleLogout} className="text-left text-red-500 font-medium py-1">로그아웃</button>

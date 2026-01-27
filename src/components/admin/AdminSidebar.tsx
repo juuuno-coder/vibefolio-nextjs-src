@@ -2,82 +2,83 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { FontAwesomeIcon } from "@/components/FaIcon";
 import { 
-  BarChart3, 
-  ImageIcon, 
-  Users, 
-  Briefcase, 
-  MessageCircle, 
-  FileText, 
-  Megaphone, 
-  HelpCircle, 
-  LayoutDashboard,
-  Bell,
-  Settings,
-  ArrowLeft,
-  ChevronRight,
-  Presentation
-} from "lucide-react";
+  faChartBar, 
+  faImage, 
+  faUsers, 
+  faBriefcase, 
+  faCommentDots, 
+  faFileAlt, 
+  faBullhorn, 
+  faQuestionCircle, 
+  faTachometerAlt, 
+  faBell, 
+  faCog, 
+  faArrowLeft, 
+  faChevronRight, 
+  faTv 
+} from "@fortawesome/free-solid-svg-icons";
 
 const menuItems = [
   {
     title: "대시보드",
     path: "/admin",
-    icon: LayoutDashboard,
+    icon: faTachometerAlt,
     color: "text-slate-600"
   },
   {
     title: "배너 관리",
     path: "/admin/banners",
-    icon: ImageIcon,
+    icon: faImage,
     color: "text-purple-500"
   },
   {
     title: "프로젝트 관리",
     path: "/admin/projects",
-    icon: FileText,
+    icon: faFileAlt,
     color: "text-blue-500"
   },
   {
     title: "채용/공모전 관리",
     path: "/admin/recruit",
-    icon: Briefcase,
+    icon: faBriefcase,
     color: "text-green-500"
   },
   {
     title: "공지사항 관리",
     path: "/admin/notices",
-    icon: Megaphone,
+    icon: faBullhorn,
     color: "text-amber-500"
   },
   {
     title: "FAQ 관리",
     path: "/admin/faqs",
-    icon: HelpCircle,
+    icon: faQuestionCircle,
     color: "text-cyan-500"
   },
   {
     title: "문의 내역",
     path: "/admin/inquiries",
-    icon: MessageCircle,
+    icon: faCommentDots,
     color: "text-orange-500"
   },
   {
     title: "사용자 관리",
     path: "/admin/users",
-    icon: Users,
+    icon: faUsers,
     color: "text-pink-500"
   },
   {
     title: "방문 통계",
     path: "/admin/stats",
-    icon: BarChart3,
+    icon: faChartBar,
     color: "text-indigo-500"
   },
   {
     title: "설정 관리",
     path: "/admin/settings",
-    icon: Settings,
+    icon: faCog,
     color: "text-slate-600"
   },
 
@@ -114,10 +115,10 @@ export function AdminSidebar() {
               }`}
             >
               <div className="flex items-center gap-3">
-                <item.icon size={20} className={isActive ? "text-white" : item.color} />
+                <FontAwesomeIcon icon={item.icon} className={`w-5 h-5 ${isActive ? "text-white" : item.color}`} />
                 <span className="font-medium text-sm">{item.title}</span>
               </div>
-              {isActive && <ChevronRight size={14} className="opacity-50" />}
+              {isActive && <FontAwesomeIcon icon={faChevronRight} className="w-3.5 h-3.5 opacity-50" />}
             </Link>
           );
         })}
@@ -129,7 +130,7 @@ export function AdminSidebar() {
           href="/"
           className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium text-sm"
         >
-          <ArrowLeft size={18} />
+          <FontAwesomeIcon icon={faArrowLeft} className="w-[18px] h-[18px]" />
           사이트로 돌아가기
         </Link>
       </div>

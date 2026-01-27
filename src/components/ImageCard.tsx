@@ -3,7 +3,21 @@
 import React, { forwardRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { Heart, BarChart3, Image as ImageIcon, Edit, Rocket, Trash2, Eye, Megaphone, Zap, Clock } from 'lucide-react';
+import { FontAwesomeIcon } from "./FaIcon";
+import { 
+  faHeart, 
+  faChartSimple, 
+  faImage, 
+  faPenToSquare, 
+  faRocket, 
+  faTrash, 
+  faEye, 
+  faBullhorn, 
+  faBolt, 
+  faClock,
+  faSpinner
+} from "@fortawesome/free-solid-svg-icons";
+import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 import { supabase } from "@/lib/supabase/client";
 import { addCommas } from "@/lib/format/comma";
 import { useLikes } from "@/hooks/useLikes";
@@ -126,7 +140,7 @@ export const ImageCard = React.memo(forwardRef<HTMLDivElement, ImageCardProps>(
                   }}
                   className="bg-gray-100 text-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-white transition-colors transform hover:scale-105 shadow-lg w-36 justify-center"
                 >
-                  <Eye className="w-4 h-4" /> 보기
+                  <FontAwesomeIcon icon={faEye} className="w-4 h-4" /> 보기
                 </button>
 
                 {/* 2. 피드백 요청 */}
@@ -135,7 +149,7 @@ export const ImageCard = React.memo(forwardRef<HTMLDivElement, ImageCardProps>(
                       onClick={handlePromote}
                       className="bg-gradient-to-r from-orange-400 to-red-500 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:from-orange-500 hover:to-red-600 transition-colors transform hover:scale-105 shadow-lg w-36 justify-center"
                     >
-                      <Megaphone className="w-4 h-4" /> 피드백 요청
+                      <FontAwesomeIcon icon={faBullhorn} className="w-4 h-4" /> 피드백 요청
                     </button>
                 )}
                 
@@ -144,7 +158,7 @@ export const ImageCard = React.memo(forwardRef<HTMLDivElement, ImageCardProps>(
                   onClick={(e) => { e.stopPropagation(); router.push(`/project/upload?mode=version&projectId=${props.id}`); }}
                   className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-colors transform hover:scale-105 shadow-lg w-36 justify-center"
                 >
-                  <Rocket className="w-4 h-4" /> 새 에피소드
+                  <FontAwesomeIcon icon={faRocket} className="w-4 h-4" /> 새 에피소드
                 </button>
 
                 {/* 4. 수정 */}
@@ -157,7 +171,7 @@ export const ImageCard = React.memo(forwardRef<HTMLDivElement, ImageCardProps>(
                   }}
                   className="bg-white text-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-green-500 hover:text-white transition-colors transform hover:scale-105 shadow-lg w-36 justify-center"
                 >
-                  <Edit className="w-4 h-4" /> 수정
+                  <FontAwesomeIcon icon={faPenToSquare} className="w-4 h-4" /> 수정
                 </button>
                 
                 {/* 5. 삭제 */}
@@ -169,7 +183,7 @@ export const ImageCard = React.memo(forwardRef<HTMLDivElement, ImageCardProps>(
                     }}
                     className="bg-red-50 text-red-600 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-red-100 transition-colors transform hover:scale-105 shadow-lg w-36 justify-center"
                   >
-                    <Trash2 className="w-4 h-4" /> 삭제
+                    <FontAwesomeIcon icon={faTrash} className="w-4 h-4" /> 삭제
                   </button>
                 )}
 
@@ -182,7 +196,7 @@ export const ImageCard = React.memo(forwardRef<HTMLDivElement, ImageCardProps>(
                       }}
                       className="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-indigo-700 transition-colors transform hover:scale-105 shadow-lg w-36 justify-center"
                     >
-                      <BarChart3 className="w-4 h-4" /> 진단 리포트
+                      <FontAwesomeIcon icon={faChartSimple} className="w-4 h-4" /> 진단 리포트
                     </button>
                 )}
              </div>
@@ -191,12 +205,12 @@ export const ImageCard = React.memo(forwardRef<HTMLDivElement, ImageCardProps>(
           <div className="absolute top-3 left-3 z-10 flex flex-col gap-2 items-start pointer-events-none">
               {(props.custom_data?.audit_config || props.audit_deadline) && (
                 <div className="bg-orange-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1 backdrop-blur-md">
-                   <Zap size={12} fill="currentColor" /> <span>피드백 진행 중</span>
+                   <FontAwesomeIcon icon={faBolt} className="w-3 h-3" /> <span>피드백 진행 중</span>
                 </div>
               )}
               {props.scheduled_at && new Date(props.scheduled_at) > new Date() && (
                  <div className="bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-1 rounded-full shadow-md flex items-center gap-1 animate-pulse">
-                   <Clock size={12} strokeWidth={3} />
+                   <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
                    <span>{new Date(props.scheduled_at).toLocaleDateString()}</span>
                  </div>
               )}
@@ -214,7 +228,7 @@ export const ImageCard = React.memo(forwardRef<HTMLDivElement, ImageCardProps>(
           
             {imgError ? (
             <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
-              <ImageIcon className="w-12 h-12" />
+              <FontAwesomeIcon icon={faImage} className="w-12 h-12" />
             </div>
           ) : (
             <OptimizedImage
@@ -250,7 +264,7 @@ export const ImageCard = React.memo(forwardRef<HTMLDivElement, ImageCardProps>(
                      className="inline-flex items-center justify-center w-3.5 h-3.5 bg-blue-100 text-blue-600 rounded-full"
                      title={`전문가: ${props.user.expertise.fields.join(', ')}`}
                    >
-                      <Rocket className="w-2.5 h-2.5 fill-current" />
+                      <FontAwesomeIcon icon={faRocket} className="w-2.5 h-2.5" />
                    </span>
                  )}
                </span>
@@ -270,11 +284,11 @@ export const ImageCard = React.memo(forwardRef<HTMLDivElement, ImageCardProps>(
                       toggleLike();
                   }}
                >
-                  <Heart className={`w-3.5 h-3.5 transition-colors ${isLiked ? "fill-red-500 text-red-500" : "group-hover:text-red-400"}`} />
+                  <FontAwesomeIcon icon={isLiked ? faHeart : faHeartRegular} className={`w-3.5 h-3.5 transition-colors ${isLiked ? "text-red-500" : "group-hover:text-red-400"}`} />
                   <span className={isLiked ? "text-red-500 font-bold" : ""}>{addCommas(displayLikes)}</span>
                </div>
                <div className="flex items-center gap-1" title={`조회수 ${views}`}>
-                  <BarChart3 className="w-3.5 h-3.5" />
+                  <FontAwesomeIcon icon={faChartSimple} className="w-3.5 h-3.5" />
                   <span>{addCommas(views || 0)}</span>
                </div>
             </div>

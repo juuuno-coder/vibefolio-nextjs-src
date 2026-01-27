@@ -8,18 +8,20 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Heart,
-  Share2,
-  MessageCircle,
-  Bookmark,
-  Send,
-  User,
-  X,
-  UserPlus,
-  UserCheck,
-  Loader2,
-} from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { 
+  faHeart, 
+  faShareAlt, 
+  faComment, 
+  faBookmark, 
+  faPaperPlane, 
+  faUser, 
+  faXmark, 
+  faUserPlus, 
+  faUserCheck, 
+  faSpinner 
+} from "@fortawesome/free-solid-svg-icons";
+import { faHeart as faHeartRegular, faBookmark as faBookmarkRegular } from "@fortawesome/free-regular-svg-icons";
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { addCommas } from "@/lib/format/comma";
 import dayjs from "dayjs";
@@ -278,7 +280,7 @@ export function ProjectDetailModal({
                 onClick={() => onOpenChange(false)}
                 className="fixed top-6 right-6 z-[60] p-2 text-white/70 hover:text-white transition-colors bg-black/20 rounded-full backdrop-blur-md"
             >
-                <X size={32} />
+                <FontAwesomeIcon icon={faXmark} size="2x" />
             </button>
 
             {/* 메인 컨텐츠 */}
@@ -290,7 +292,7 @@ export function ProjectDetailModal({
                         <Link href={`/creator/${project.user.username}`} className="flex items-center gap-3 group">
                             <Avatar className="w-12 h-12 border border-gray-100">
                                 <AvatarImage src={project.user.profile_image.large} alt={project.user.username} />
-                                <AvatarFallback><User /></AvatarFallback>
+                                <AvatarFallback><FontAwesomeIcon icon={faUser} /></AvatarFallback>
                             </Avatar>
                             <div>
                                 <h3 className="text-lg font-bold text-gray-900 group-hover:text-green-600 transition-colors">
@@ -312,7 +314,7 @@ export function ProjectDetailModal({
                                         }`}
                                       >
                                         {loading.follow ? (
-                                          <Loader2 size={12} className="animate-spin" />
+                                          <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
                                         ) : following ? (
                                           '팔로잉'
                                         ) : (
@@ -373,9 +375,9 @@ export function ProjectDetailModal({
                 </div>
 
                 {/* 제안하기 */}
-                <div className="flex flex-col items-center gap-1 group cursor-pointer">
+                 <div className="flex flex-col items-center gap-1 group cursor-pointer">
                     <div className="w-12 h-12 rounded-full bg-gray-800/80 backdrop-blur-sm flex items-center justify-center text-white hover:bg-green-600 transition-colors">
-                        <Send size={20} />
+                        <FontAwesomeIcon icon={faPaperPlane} />
                     </div>
                     <span className="text-[10px] text-white/80 font-medium opacity-0 group-hover:opacity-100 transition-opacity">제안하기</span>
                 </div>
@@ -384,11 +386,11 @@ export function ProjectDetailModal({
                 <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={handleLike}>
                     <div className={`w-12 h-12 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors ${
                       liked ? 'bg-red-500 text-white' : 'bg-gray-800/80 text-white hover:bg-red-500'
-                    }`}>
+                     }`}>
                         {loading.like ? (
-                          <Loader2 size={20} className="animate-spin" />
+                          <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
                         ) : (
-                          <Heart size={20} fill={liked ? "currentColor" : "none"} />
+                          <FontAwesomeIcon icon={liked ? faHeart : faHeartRegular} />
                         )}
                     </div>
                     <span className="text-[10px] text-white/80 font-medium">{addCommas(likesCount)}</span>
@@ -398,28 +400,28 @@ export function ProjectDetailModal({
                 <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={handleBookmark}>
                     <div className={`w-12 h-12 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors ${
                       bookmarked ? 'bg-blue-500 text-white' : 'bg-gray-800/80 text-white hover:bg-blue-500'
-                    }`}>
+                     }`}>
                         {loading.bookmark ? (
-                          <Loader2 size={20} className="animate-spin" />
+                          <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
                         ) : (
-                          <Bookmark size={20} fill={bookmarked ? "currentColor" : "none"} />
+                          <FontAwesomeIcon icon={bookmarked ? faBookmark : faBookmarkRegular} />
                         )}
                     </div>
                     <span className="text-[10px] text-white/80 font-medium opacity-0 group-hover:opacity-100 transition-opacity">컬렉션</span>
                 </div>
 
                 {/* 댓글 */}
-                <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={() => setCommentModalOpen(true)}>
+                 <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={() => setCommentModalOpen(true)}>
                     <div className="w-12 h-12 rounded-full bg-gray-800/80 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors">
-                        <MessageCircle size={20} />
+                        <FontAwesomeIcon icon={faComment} />
                     </div>
                     <span className="text-[10px] text-white/80 font-medium">{comments.length}</span>
                 </div>
 
                 {/* 공유하기 */}
-                <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={handleShare}>
+                 <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={handleShare}>
                     <div className="w-12 h-12 rounded-full bg-gray-800/80 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors">
-                        <Share2 size={20} />
+                        <FontAwesomeIcon icon={faShareAlt} />
                     </div>
                     <span className="text-[10px] text-white/80 font-medium opacity-0 group-hover:opacity-100 transition-opacity">공유하기</span>
                 </div>

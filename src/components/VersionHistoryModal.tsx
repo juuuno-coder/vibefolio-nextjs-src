@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ProjectVersion } from "@/lib/versions";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
-import { Plus, Calendar, Tag, ChevronRight } from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { faPlus, faCalendar, faTag, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 
 interface VersionHistoryModalProps {
   open: boolean;
@@ -44,20 +45,20 @@ export function VersionHistoryModal({
              {selectedVersion ? (
                  <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" onClick={() => setSelectedVersion(null)} className="pl-0 gap-1 text-gray-500 hover:text-black hover:bg-transparent">
-                        <ChevronRight className="w-5 h-5 rotate-180" /> 
+                        <FontAwesomeIcon icon={faChevronRight} className="w-5 h-5 rotate-180" /> 
                         <span className="text-lg font-bold text-gray-900">목록으로</span>
                     </Button>
                  </div>
              ) : (
                  <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                    <Tag className="w-5 h-5" />
+                    <FontAwesomeIcon icon={faTag} className="w-5 h-5" />
                     릴리즈 히스토리 (Release History)
                  </DialogTitle>
              )}
              
              {!selectedVersion && isOwner && (
                <Button onClick={handleCreateClick} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1 rounded-full px-4">
-                 <Plus className="w-4 h-4" /> 새 에피소드
+                 <FontAwesomeIcon icon={faPlus} className="w-4 h-4" /> 새 에피소드
                </Button>
              )}
           </div>
@@ -70,7 +71,7 @@ export function VersionHistoryModal({
                   <div className="border-b border-gray-100 pb-4">
                       <h2 className="text-2xl font-bold text-gray-900">{selectedVersion.version_name}</h2>
                       <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
-                          <Calendar className="w-4 h-4" />
+                          <FontAwesomeIcon icon={faCalendar} className="w-4 h-4" />
                           {dayjs(selectedVersion.created_at).format("YYYY년 MM월 DD일 HH:mm")}
                       </div>
                   </div>
@@ -108,7 +109,7 @@ export function VersionHistoryModal({
                           <div className="flex items-center justify-between mb-2">
                              <h4 className="font-bold text-lg text-gray-800">{version.version_name}</h4>
                              <span className="text-xs text-gray-400 flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
-                                <Calendar className="w-3 h-3" />
+                                <FontAwesomeIcon icon={faCalendar} className="w-3 h-3" />
                                 {dayjs(version.created_at).format("YYYY.MM.DD")}
                              </span>
                           </div>
@@ -120,7 +121,7 @@ export function VersionHistoryModal({
                           )}
                           
                           <div className="mt-3 flex items-center text-xs text-blue-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-200">
-                             전체 내용 보기 <ChevronRight className="w-3 h-3 ml-0.5" />
+                             전체 내용 보기 <FontAwesomeIcon icon={faChevronRight} className="w-3 h-3 ml-0.5" />
                           </div>
                        </div>
                     </div>

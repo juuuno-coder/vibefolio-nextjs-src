@@ -4,7 +4,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trash2, UserPlus, Mail, ShieldCheck } from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { 
+  faTrash, 
+  faUserPlus, 
+  faEnvelope, 
+  faShieldHalved 
+} from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 
 interface Collaborator {
@@ -126,7 +132,7 @@ export function CollaboratorManager({ projectId, initialCollaborators = [], onCh
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-2">
-         <ShieldCheck className="w-5 h-5 text-indigo-600" />
+         <FontAwesomeIcon icon={faShieldHalved} className="w-5 h-5 text-indigo-600" />
          <h3 className="text-lg font-bold text-gray-900">공동 제작자 관리</h3>
       </div>
       <p className="text-sm text-gray-500 mb-4">
@@ -135,7 +141,7 @@ export function CollaboratorManager({ projectId, initialCollaborators = [], onCh
 
       <div className="flex gap-2">
         <div className="relative flex-1">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <FontAwesomeIcon icon={faEnvelope} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input 
                 value={inputEmail}
                 onChange={(e) => setInputEmail(e.target.value)}
@@ -145,7 +151,7 @@ export function CollaboratorManager({ projectId, initialCollaborators = [], onCh
             />
         </div>
         <Button onClick={handleAdd} disabled={loading} variant="secondary">
-            <UserPlus className="w-4 h-4 mr-2" />
+            <FontAwesomeIcon icon={faUserPlus} className="w-4 h-4 mr-2" />
             추가
         </Button>
       </div>
@@ -167,7 +173,7 @@ export function CollaboratorManager({ projectId, initialCollaborators = [], onCh
                   onClick={() => handleRemove(c)}
                   className="text-gray-400 hover:text-red-500 p-2 transition-colors"
                 >
-                    <Trash2 className="w-4 h-4" />
+                    <FontAwesomeIcon icon={faTrash} className="w-4 h-4" />
                 </button>
             </div>
         ))}

@@ -4,8 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server'; // For Session Auth
 import { GENRE_TO_CATEGORY_ID } from '@/lib/constants';
 
-// 캐시 설정 (성능 최적화: 60초)
-export const revalidate = 60; 
+// 캐시 설정 (성능 최적화: 0초 - 실시간 반영)
+export const revalidate = 0; 
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,15 +16,31 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const search = searchParams.get('search');
     
+    // [Optimization] Get sorting option
+    const sortBy = searchParams.get('sortBy') || 'latest';
     const offset = (page - 1) * limit;
 
-    // 필요한 필드만 선택 (최적화)
+    // [Optimization] Select only necessary fields for grid display to reduce payload size
     let query = (supabaseAnon as any)
       .from('Project')
-      .select('*', { count: 'exact' }) 
-      .is('deleted_at', null) 
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .select(`
+        project_id, user_id, category_id, title, rendering_type, 
+        thumbnail_url, views_count, likes_count, created_at, 
+        custom_data, allow_michelin_rating, allow_stickers, 
+        allow_secret_comments, visibility, scheduled_at, audit_deadline, is_growth_requested
+      `, { count: 'exact' }) 
+      .is('deleted_at', null);
+
+    // Apply Sorting based on sortBy parameter
+    if (sortBy === 'popular' || sortBy === 'views') {
+      query = query.order('views_count', { ascending: false });
+    } else if (sortBy === 'likes') {
+      query = query.order('likes_count', { ascending: false });
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+
+    query = query.range(offset, offset + limit - 1);
 
     // [Security Filter]
     const authHeader = request.headers.get('Authorization');
@@ -68,7 +84,7 @@ export async function GET(request: NextRequest) {
     // (field and mode are already declared above)
     if (mode === 'growth') {
        // is_growth_requested column might not exist, so we check custom_data
-       query = query.or(`custom_data->>is_growth_requested.eq.true,custom_data->>is_feedback_requested.eq.true`);
+       query = query.or(`is_growth_requested.is.true,custom_data->>is_growth_requested.eq.true,custom_data->>is_feedback_requested.eq.true,custom_data->>show_in_growth.eq.true`);
     } else if (mode === 'audit') {
        query = query.not('custom_data->audit_config', 'is', null);
     }

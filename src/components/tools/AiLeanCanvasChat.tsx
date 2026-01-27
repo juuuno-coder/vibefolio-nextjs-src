@@ -3,7 +3,15 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Wand2, Send, Bot, User, Grid } from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { 
+  faSpinner, 
+  faWandMagicSparkles, 
+  faPaperPlane, 
+  faRobot, 
+  faUser, 
+  faThLarge 
+} from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
 import { LeanCanvasData } from "../LeanCanvasModal";
 
@@ -137,7 +145,7 @@ export function AiLeanCanvasChat({ onGenerate }: AiLeanCanvasChatProps) {
       <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white/95 backdrop-blur-sm z-10 shrink-0">
         <div>
             <h2 className="text-xl font-black text-gray-900 flex items-center gap-2 mb-1">
-                <Grid className="mb-0.5 w-6 h-6 text-purple-600"/> 
+                <FontAwesomeIcon icon={faThLarge} className="mb-0.5 w-6 h-6 text-purple-600"/> 
                 AI 린 캔버스
             </h2>
             <p className="text-sm text-gray-500 pl-8">
@@ -152,7 +160,7 @@ export function AiLeanCanvasChat({ onGenerate }: AiLeanCanvasChatProps) {
             <div key={m.id} className={`flex gap-4 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {m.role === 'assistant' && (
                     <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center shrink-0 border border-purple-200 shadow-sm">
-                        <Bot className="w-6 h-6 text-purple-600" />
+                        <FontAwesomeIcon icon={faRobot} className="w-6 h-6 text-purple-600" />
                     </div>
                 )}
                 <div className={`p-4 rounded-2xl max-w-[80%] md:max-w-[70%] text-sm md:text-base shadow-sm leading-relaxed whitespace-pre-wrap animate-in fade-in slide-in-from-bottom-2 duration-300 ${
@@ -164,7 +172,7 @@ export function AiLeanCanvasChat({ onGenerate }: AiLeanCanvasChatProps) {
                 </div>
                 {m.role === 'user' && (
                     <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center shrink-0 border border-gray-300">
-                        <User className="w-6 h-6 text-gray-600" />
+                        <FontAwesomeIcon icon={faUser} className="w-6 h-6 text-gray-600" />
                     </div>
                 )}
             </div>
@@ -172,10 +180,10 @@ export function AiLeanCanvasChat({ onGenerate }: AiLeanCanvasChatProps) {
         {isLoading && (
             <div className="flex gap-4 justify-start">
                 <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center shrink-0 border border-purple-200">
-                    <Bot className="w-6 h-6 text-purple-600" />
+                    <FontAwesomeIcon icon={faRobot} className="w-6 h-6 text-purple-600" />
                 </div>
                 <div className="p-4 rounded-2xl bg-white border border-gray-200 text-gray-500 rounded-tl-none flex items-center gap-2 shadow-sm">
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin" />
                     <span className="animate-pulse">분석 중입니다...</span>
                 </div>
             </div>
@@ -204,7 +212,7 @@ export function AiLeanCanvasChat({ onGenerate }: AiLeanCanvasChatProps) {
                     disabled={!input.trim() || isLoading}
                     className="h-[56px] w-[56px] rounded-xl bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-xl transition-all active:scale-95"
                 >
-                    <Send className="w-5 h-5 ml-0.5" />
+                    <FontAwesomeIcon icon={faPaperPlane} className="w-5 h-5 ml-0.5" />
                 </Button>
             </div>
         </div>
@@ -216,7 +224,7 @@ export function AiLeanCanvasChat({ onGenerate }: AiLeanCanvasChatProps) {
                 disabled={isLoading || messages.length < 2} // Require at least some conversation
                 className="text-purple-700 border-purple-200 hover:bg-purple-50 gap-2 font-semibold shadow-sm"
             >
-                <Wand2 className="w-4 h-4" />
+                <FontAwesomeIcon icon={faWandMagicSparkles} className="w-4 h-4" />
                 현재 대화로 린 캔버스 결과물 열기
             </Button>
         </div>

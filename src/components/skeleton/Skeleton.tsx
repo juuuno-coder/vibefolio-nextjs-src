@@ -3,7 +3,8 @@
 import React from "react";
 // 🚨 상위 components/ui 폴더에서 Skeleton 컴포넌트를 임포트합니다.
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart2, Heart } from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { faChartBar, faHeart } from "@fortawesome/free-solid-svg-icons";
 
 /**
  * ImageCard 컴포넌트의 로딩 상태를 표시하는 스켈레톤 UI입니다.
@@ -21,15 +22,15 @@ export function SkeletonImageCard() {
         <div className="flex items-center gap-3">
           {/* 조회수 스켈레톤 */}
           <div className="flex items-center gap-1">
-            <BarChart2
-              size={18}
+            <FontAwesomeIcon
+              icon={faChartBar}
               className="text-neutral-400"
             />
             <Skeleton className="w-8 h-4" />
           </div>
           {/* 좋아요 스켈레톤 */}
           <div className="flex items-center gap-1">
-            <Heart size={18} className="text-neutral-400" />
+            <FontAwesomeIcon icon={faHeart} className="text-neutral-400" />
             <Skeleton className="w-8 h-4" />
           </div>
         </div>

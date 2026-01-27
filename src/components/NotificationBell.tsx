@@ -1,23 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
 import { 
-  Bell, 
-  Check, 
-  Heart, 
-  MessageCircle, 
-  UserPlus, 
-  AtSign, 
-  Info, 
-  Briefcase, 
-  Rocket,
-  Sparkles,
-  FlaskConical,
-  Upload,
-  User as UserIcon,
-  LayoutDashboard,
-  LogOut
-} from "lucide-react";
+  faBell, 
+  faCheck, 
+  faHeart, 
+  faComment, 
+  faUserPlus, 
+  faAt, 
+  faInfoCircle, 
+  faBriefcase, 
+  faRocket,
+  faStar,
+  faFlask,
+  faUpload,
+  faUser,
+  faColumns,
+  faSignOutAlt 
+} from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -44,11 +45,11 @@ dayjs.locale("ko");
 
 // 알림 타입별 아이콘 및 스타일
 const notificationStyles = {
-  like: { icon: Heart, color: "text-red-500", bg: "bg-red-50" },
-  comment: { icon: MessageCircle, color: "text-blue-500", bg: "bg-blue-50" },
-  follow: { icon: UserPlus, color: "text-green-600", bg: "bg-green-50" },
-  mention: { icon: AtSign, color: "text-purple-500", bg: "bg-purple-50" },
-  system: { icon: Info, color: "text-gray-500", bg: "bg-gray-50" },
+  like: { icon: faHeart, color: "text-red-500", bg: "bg-red-50" },
+  comment: { icon: faComment, color: "text-blue-500", bg: "bg-blue-50" },
+  follow: { icon: faUserPlus, color: "text-green-600", bg: "bg-green-50" },
+  mention: { icon: faAt, color: "text-purple-500", bg: "bg-purple-50" },
+  system: { icon: faInfoCircle, color: "text-gray-500", bg: "bg-gray-50" },
 };
 
 // 시간 포맷 (Day.js 적용)
@@ -98,7 +99,7 @@ function NotificationItem({ notification, onRead }: NotificationItemProps) {
           style.color
         )}
       >
-        <Icon className="w-5 h-5" />
+        <FontAwesomeIcon icon={style.icon} className="w-5 h-5" />
       </div>
 
       <div className="flex-1 min-w-0 pt-0.5">
@@ -196,10 +197,10 @@ export function NotificationBell() {
           className="relative w-10 h-10 rounded-full hover:bg-green-50 transition-all active:scale-95 group"
           aria-label="알림 센터"
         >
-          <Bell className={cn(
+          <FontAwesomeIcon icon={faBell} className={cn(
             "w-[22px] h-[22px] transition-colors", 
             unreadCount > 0 
-              ? "text-green-600 fill-green-100 animate-pulse-gentle" 
+              ? "text-green-600 animate-pulse-gentle" 
               : "text-gray-600 group-hover:text-green-600"
           )} />
           {unreadCount > 0 && (
@@ -235,7 +236,7 @@ export function NotificationBell() {
                 onClick={markAllAsRead}
                 disabled={unreadCount === 0}
               >
-                <Check className="w-3.5 h-3.5 mr-1.5" />
+                <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 mr-1.5" />
                 모두 읽음
               </Button>
             </div>
@@ -251,7 +252,7 @@ export function NotificationBell() {
               ) : notifications.length === 0 ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
                   <div className="w-20 h-20 bg-gradient-to-br from-green-50 to-blue-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                    <Sparkles className="w-10 h-10 text-green-400" />
+                    <FontAwesomeIcon icon={faStar} className="w-10 h-10 text-green-400" />
                   </div>
                   <p className="text-base font-bold text-gray-600">아직 도착한 알림이 없어요</p>
                   <p className="text-xs text-gray-400 mt-2 max-w-[200px] leading-relaxed">
@@ -284,7 +285,7 @@ export function NotificationBell() {
                   href="/mypage/notifications"
                   className="text-xs font-bold text-gray-400 hover:text-green-600 transition-colors flex items-center justify-center gap-1"
                 >
-                  모든 알림 보기 <Sparkles className="w-3 h-3" />
+                  모든 알림 보기 <FontAwesomeIcon icon={faStar} className="w-3 h-3" />
                 </Link>
               </div>
             )}
@@ -302,7 +303,7 @@ export function NotificationBell() {
                     <div className="flex items-center justify-between group">
                       <div className="space-y-0.5">
                         <Label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                          <Rocket className="w-4 h-4 text-blue-500" /> 신규 프로젝트
+                          <FontAwesomeIcon icon={faRocket} className="w-4 h-4 text-blue-500" /> 신규 프로젝트
                         </Label>
                         <p className="text-[10px] text-gray-400 pl-6">내 관심사 일치 시 수신</p>
                       </div>
@@ -316,7 +317,7 @@ export function NotificationBell() {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                          <Briefcase className="w-4 h-4 text-emerald-500" /> 연결하기
+                          <FontAwesomeIcon icon={faBriefcase} className="w-4 h-4 text-emerald-500" /> 연결하기
                         </Label>
                         <p className="text-[10px] text-gray-400 pl-6">채용/공모전 관심 분야 알림</p>
                       </div>
@@ -329,7 +330,7 @@ export function NotificationBell() {
 
                     <div className="flex items-center justify-between">
                       <Label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                        <Heart className="w-4 h-4 text-red-500" /> 좋아요
+                        <FontAwesomeIcon icon={faHeart} className="w-4 h-4 text-red-500" /> 좋아요
                       </Label>
                       <Switch 
                         checked={settings.likes}
@@ -340,7 +341,7 @@ export function NotificationBell() {
 
                     <div className="flex items-center justify-between">
                       <Label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                        <MessageCircle className="w-4 h-4 text-orange-500" /> 소통/제안
+                        <FontAwesomeIcon icon={faComment} className="w-4 h-4 text-orange-500" /> 소통/제안
                       </Label>
                       <Switch 
                         checked={settings.proposals}
@@ -384,7 +385,7 @@ export function NotificationBell() {
                     className="w-full border-dashed border-gray-300 text-gray-500 hover:text-green-600 hover:border-green-300 hover:bg-green-50 h-10 text-xs font-bold"
                     onClick={handleTestNotification}
                   >
-                    <FlaskConical className="w-3.5 h-3.5 mr-2" />
+                    <FontAwesomeIcon icon={faFlask} className="w-3.5 h-3.5 mr-2" />
                     알림 UI 테스트 (Test Notification)
                   </Button>
                   <p className="text-[10px] text-gray-400 text-center mt-2">

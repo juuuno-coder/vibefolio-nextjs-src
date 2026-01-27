@@ -9,7 +9,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Calendar, Mail, Phone, Check, X, Loader2 } from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { 
+  faUser, 
+  faCalendar, 
+  faEnvelope, 
+  faPhone, 
+  faCheck, 
+  faXmark, 
+  faSpinner 
+} from "@fortawesome/free-solid-svg-icons";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/ko";
@@ -115,7 +124,7 @@ export function ProposalDetailModal({
           <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
             <Avatar className="w-12 h-12">
               <AvatarImage src={proposal.sender?.profile_image_url || '/globe.svg'} />
-              <AvatarFallback><User size={20} /></AvatarFallback>
+              <AvatarFallback><FontAwesomeIcon icon={faUser} /></AvatarFallback>
             </Avatar>
             <div>
               <p className="font-medium text-gray-900">{proposal.sender?.nickname || '알 수 없음'}</p>
@@ -157,9 +166,9 @@ export function ProposalDetailModal({
           {proposal.contact && (
             <div className="flex items-center gap-2 text-sm">
               {proposal.contact.includes('@') ? (
-                <Mail size={16} className="text-gray-400" />
+                <FontAwesomeIcon icon={faEnvelope} className="text-gray-400" />
               ) : (
-                <Phone size={16} className="text-gray-400" />
+                <FontAwesomeIcon icon={faPhone} className="text-gray-400" />
               )}
               <span className="text-gray-700">{proposal.contact}</span>
             </div>
@@ -173,7 +182,7 @@ export function ProposalDetailModal({
                 disabled={loading}
                 className="flex-1 bg-green-500 hover:bg-green-600"
               >
-                {loading ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} className="mr-2" />}
+                {loading ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faCheck} className="mr-2" />}
                 수락
               </Button>
               <Button
@@ -182,7 +191,7 @@ export function ProposalDetailModal({
                 variant="outline"
                 className="flex-1 text-red-500 border-red-200 hover:bg-red-50"
               >
-                <X size={16} className="mr-2" />
+                <FontAwesomeIcon icon={faXmark} className="mr-2" />
                 거절
               </Button>
             </div>

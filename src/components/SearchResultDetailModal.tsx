@@ -3,7 +3,19 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Calendar, MapPin, Building, Tag, X, Globe, Copy, Check } from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { 
+  faExternalLinkAlt, 
+  faCalendar, 
+  faMapMarkerAlt, 
+  faBuilding, 
+  faTag, 
+  faXmark, 
+  faGlobe, 
+  faCopy, 
+  faCheck,
+  faHashtag
+} from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
 
 interface SearchResultDetailModalProps {
@@ -35,7 +47,7 @@ export function SearchResultDetailModal({ open, onOpenChange, category, item }: 
                 {item.type || (category === 'job' ? '채용' : category === 'trend' ? '뉴스' : category === 'recipe' ? '프롬프트' : '도구')}
             </span>
             <span className="text-gray-400 text-xs ml-auto flex items-center gap-1">
-                <Calendar className="w-3 h-3" /> {item.date || 'The Latest'}
+                <FontAwesomeIcon icon={faCalendar} className="w-3 h-3" /> {item.date || 'The Latest'}
             </span>
           </div>
           <DialogTitle className="text-xl md:text-2xl font-bold text-gray-900 leading-snug">
@@ -43,11 +55,11 @@ export function SearchResultDetailModal({ open, onOpenChange, category, item }: 
           </DialogTitle>
           {item.company && (
               <DialogDescription className="flex items-center gap-2 text-gray-600 mt-1">
-                  <Building className="w-4 h-4" /> {item.company}
+                  <FontAwesomeIcon icon={faBuilding} className="w-4 h-4" /> {item.company}
                   {item.location && (
                       <>
                         <span className="text-gray-300">|</span>
-                        <MapPin className="w-4 h-4" /> {item.location}
+                        <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4" /> {item.location}
                       </>
                   )}
               </DialogDescription>
@@ -74,7 +86,7 @@ export function SearchResultDetailModal({ open, onOpenChange, category, item }: 
                             onClick={() => handleCopy(item.snippet)}
                             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white hover:bg-gray-200"
                         >
-                            <Copy className="w-3.5 h-3.5" />
+                            <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />
                         </Button>
                     </div>
                 )}
@@ -85,7 +97,7 @@ export function SearchResultDetailModal({ open, onOpenChange, category, item }: 
                 <div className="mt-6 flex flex-wrap gap-2">
                     {item.tags.map((tag: string, i: number) => (
                         <div key={i} className="px-3 py-1.5 bg-gray-100 text-gray-600 text-sm rounded-full flex items-center gap-1.5">
-                            <HashIcon className="w-3 h-3 text-gray-400" />
+                            <FontAwesomeIcon icon={faHashtag} className="w-3 h-3 text-gray-400" />
                             {tag}
                         </div>
                     ))}
@@ -109,7 +121,7 @@ export function SearchResultDetailModal({ open, onOpenChange, category, item }: 
                     'bg-gray-900 hover:bg-gray-800'
                 }`}
             >
-                <ExternalLink className="w-4 h-4" />
+                <FontAwesomeIcon icon={faExternalLinkAlt} className="w-4 h-4" />
                 원문 보러가기
             </Button>
         </div>

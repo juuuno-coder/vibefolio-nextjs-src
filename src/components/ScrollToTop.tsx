@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowUp } from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { faArrowUp } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 
 export function ScrollToTop() {
@@ -46,7 +47,7 @@ export function ScrollToTop() {
       size="icon"
       aria-label="Scroll to top"
     >
-      <ArrowUp size={20} strokeWidth={2.5} />
+      <FontAwesomeIcon icon={faArrowUp} className="w-5 h-5" />
     </Button>
   );
 }

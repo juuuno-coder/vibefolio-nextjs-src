@@ -3,21 +3,22 @@
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { FontAwesomeIcon } from "@/components/FaIcon";
 import { 
-  ArrowLeft, 
-  Calendar, 
-  MapPin, 
-  Building2, 
-  Award, 
-  Briefcase, 
-  ChevronRight,
-  Clock,
-  Share2,
-  Eye,
-  CalendarDays,
-  Download,
-  FileText
-} from "lucide-react";
+  faArrowLeft, 
+  faCalendar, 
+  faMapMarkerAlt, 
+  faBuilding, 
+  faAward, 
+  faBriefcase, 
+  faChevronRight,
+  faClock,
+  faShareAlt,
+  faEye,
+  faCalendarAlt,
+  faDownload,
+  faFileAlt
+} from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -91,11 +92,11 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
             className="rounded-full hover:bg-slate-100 -ml-2 text-slate-600 font-bold"
             onClick={() => router.back()}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" /> 뒤로가기
+            <FontAwesomeIcon icon={faArrowLeft} className="mr-2" /> 뒤로가기
           </Button>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="rounded-full" onClick={handleShare}>
-              <Share2 className="h-4 w-4 text-slate-600" />
+              <FontAwesomeIcon icon={faShareAlt} className="text-slate-600" />
             </Button>
           </div>
         </div>
@@ -118,7 +119,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col items-center justify-center text-slate-200 gap-6">
                   <div className="w-24 h-24 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center shadow-inner">
-                    {item.type === 'contest' ? <Award size={48} strokeWidth={1.5} className="text-slate-300" /> : <Briefcase size={48} strokeWidth={1.5} className="text-slate-300" />}
+                    {item.type === 'contest' ? <FontAwesomeIcon icon={faAward} size="3x" className="text-slate-300" /> : <FontAwesomeIcon icon={faBriefcase} size="3x" className="text-slate-300" />}
                   </div>
                   <div className="flex flex-col items-center gap-1">
                     <span className="text-slate-400 font-black text-[10px] tracking-[0.3em] uppercase opacity-60">Visual Pending</span>
@@ -141,7 +142,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
               <div className="space-y-3">
                 {item.company && (
                   <div className="flex items-center gap-2 text-[#16A34A] font-black tracking-wider uppercase text-sm">
-                    <Building2 size={16} />
+                    <FontAwesomeIcon icon={faBuilding} />
                     {item.company}
                   </div>
                 )}
@@ -159,7 +160,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-slate-50">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16A34A] shrink-0">
-                      <CalendarDays size={20} />
+                      <FontAwesomeIcon icon={faCalendarAlt} />
                     </div>
                     <div>
                       <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">접수 기간</p>
@@ -173,7 +174,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                   {item.application_target && (
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16A34A] shrink-0">
-                        <Briefcase size={20} />
+                        <FontAwesomeIcon icon={faBriefcase} />
                       </div>
                       <div>
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">응모 대상</p>
@@ -185,7 +186,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                   {item.category_tags && (
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16A34A] shrink-0">
-                        <Award size={20} />
+                        <FontAwesomeIcon icon={faAward} />
                       </div>
                       <div>
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">분야</p>
@@ -197,7 +198,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                   {item.total_prize && (
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16A34A] shrink-0">
-                        <Award size={20} />
+                        <FontAwesomeIcon icon={faAward} />
                       </div>
                       <div>
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">총 상금</p>
@@ -209,7 +210,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                   {item.first_prize && (
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16A34A] shrink-0">
-                        <Award size={20} />
+                        <FontAwesomeIcon icon={faAward} />
                       </div>
                       <div>
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">1등 상금</p>
@@ -221,7 +222,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                   {item.sponsor && (
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16A34A] shrink-0">
-                        <Building2 size={20} />
+                        <FontAwesomeIcon icon={faBuilding} />
                       </div>
                       <div>
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">후원/협찬</p>
@@ -233,7 +234,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                   {item.location && (
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16A34A] shrink-0">
-                        <MapPin size={20} />
+                        <FontAwesomeIcon icon={faMapMarkerAlt} />
                       </div>
                       <div>
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">장소</p>
@@ -262,7 +263,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                   {item.attachments && item.attachments.length > 0 && (
                     <div className="space-y-3 pb-4 border-b border-slate-100 relative z-10">
                       <p className="text-slate-500 font-bold text-xs uppercase tracking-widest flex items-center gap-2">
-                         <FileText size={12} /> Documents
+                         <FontAwesomeIcon icon={faFileAlt} /> Documents
                       </p>
                       <div className="space-y-2">
                         {item.attachments.map((file, idx) => (
@@ -274,14 +275,14 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                           >
                             <div className="flex items-center gap-3 min-w-0 pr-3">
                                <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-200 text-slate-400 shrink-0 group-hover:border-slate-300 group-hover:text-slate-600 transition-colors">
-                                  <FileText size={16} />
+                                  <FontAwesomeIcon icon={faFileAlt} />
                                </div>
                                <div className="flex flex-col min-w-0">
                                    <span className="text-slate-900 text-xs font-bold truncate max-w-[160px] leading-tight mb-0.5">{file.name}</span>
                                    <span className="text-slate-400 text-[10px] font-medium">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
                                </div>
                             </div>
-                            <Download size={14} className="text-slate-300 group-hover:text-slate-600 transition-colors shrink-0 ml-2" />
+                            <FontAwesomeIcon icon={faDownload} />
                           </Button>
                         ))}
                       </div>
@@ -295,7 +296,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                       disabled={isExpired}
                     >
                       {item.type === 'job' ? '채용 신청하기' : item.type === 'contest' ? '공모전 신청하기' : '참여하기'}
-                      <ChevronRight className="ml-1" size={18} />
+                      <FontAwesomeIcon icon={faChevronRight} />
                     </Button>
                   )}
                   <p className="text-center text-slate-400 text-[10px] font-bold">
@@ -306,13 +307,13 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
                 <div className="pt-5 border-t border-slate-100 space-y-3 relative z-10">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-500 font-bold flex items-center gap-2 uppercase tracking-tighter">
-                       <Eye size={12} /> Views
+                       <FontAwesomeIcon icon={faEye} /> Views
                     </span>
                     <span className="font-black text-slate-900">{item.views_count?.toLocaleString() || 0}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-500 font-bold flex items-center gap-2 uppercase tracking-tighter">
-                      <CalendarDays size={12} /> Posted
+                      <FontAwesomeIcon icon={faCalendarAlt} /> Posted
                     </span>
                     <span className="font-black text-slate-900">
                       {item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}
@@ -324,7 +325,7 @@ export default function RecruitDetailClient({ item }: { item: Item }) {
               {/* Tips Section */}
               <div className="p-8 rounded-[40px] bg-white border border-slate-100 shadow-sm space-y-4">
                 <p className="text-slate-900 font-black flex items-center gap-2">
-                  <Award className="text-[#16A34A]" size={18} />
+                  <FontAwesomeIcon icon={faAward} className="text-[#16A34A]" />
                   에디터의 팁
                 </p>
                 <div className="text-sm text-slate-500 font-medium leading-relaxed space-y-2">

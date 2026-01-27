@@ -8,11 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase/client";
+import { FontAwesomeIcon } from "@/components/FaIcon";
 import { 
-  Loader2, Globe, Github, Twitter, Instagram, 
-  Settings, Check, X, Copy, ExternalLink, 
-  Eye, EyeOff, Terminal, Key, Plus, Trash2, RefreshCw, AlertTriangle, Camera
-} from "lucide-react";
+  faSpinner, faGlobe, faCog, faCheck, faTimes, faCopy, faExternalLinkAlt, 
+  faEye, faEyeSlash, faTerminal, faKey, faPlus, faTrashAlt, faSync, 
+  faExclamationTriangle, faCamera 
+} from "@fortawesome/free-solid-svg-icons";
+import { faGithub, faTwitter, faInstagram } from "@fortawesome/free-brands-svg-icons";
 import { GENRE_CATEGORIES_WITH_ICONS, FIELD_CATEGORIES_WITH_ICONS } from "@/lib/ui-constants";
 
 interface ProfileManagerProps {
@@ -267,11 +269,11 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
         <section className="space-y-6">
             <div className="flex items-center justify-between border-b pb-4">
                 <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <Settings className="w-6 h-6" />
+                    <FontAwesomeIcon icon={faCog} className="w-6 h-6" />
                     기본 설정
                 </h2>
                 <Button onClick={handleSave} disabled={loading} className="bg-green-600 hover:bg-green-700">
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "변경사항 저장"}
+                    {loading ? <FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin" /> : "변경사항 저장"}
                 </Button>
             </div>
 
@@ -289,7 +291,7 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
                             <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10 w-full h-full">
                                 <div className="text-white text-xs font-bold flex flex-col items-center gap-1">
                                     <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm">
-                                        <Camera className="w-5 h-5" />
+                                        <FontAwesomeIcon icon={faCamera} className="w-5 h-5" />
                                     </div>
                                     <span>변경하기</span>
                                 </div>
@@ -303,7 +305,7 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
                         </div>
                         {/* Camera Icon Badge */}
                         <div className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-md border border-gray-100 text-gray-500 group-hover:text-green-600 transition-colors pointer-events-none z-20">
-                            <Camera className="w-5 h-5" />
+                            <FontAwesomeIcon icon={faCamera} className="w-5 h-5" />
                         </div>
                      </div>
                      <p className="text-sm text-gray-400 mt-3 font-medium">프로필 이미지를 변경하려면 클릭하세요</p>
@@ -313,7 +315,7 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
                 <div className="col-span-full bg-gray-50 p-6 rounded-xl border border-gray-200 flex items-center justify-between">
                      <div className="flex items-center gap-4">
                         <div className={`p-3 rounded-full ${isPublic ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'}`}>
-                            {isPublic ? <Eye className="w-6 h-6" /> : <EyeOff className="w-6 h-6" />}
+                            {isPublic ? <FontAwesomeIcon icon={faEye} className="w-6 h-6" /> : <FontAwesomeIcon icon={faEyeSlash} className="w-6 h-6" />}
                         </div>
                         <div>
                             <h3 className="font-bold text-gray-900">프로필 공개 설정</h3>
@@ -341,16 +343,16 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
                                 placeholder="username"
                             />
                             <div className="absolute right-3 top-2.5">
-                                {checking ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> :
-                                 usernameAvailable === true ? <Check className="w-4 h-4 text-green-500" /> :
-                                 usernameAvailable === false ? <X className="w-4 h-4 text-red-500" /> : null}
+                                {checking ? <FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin text-gray-400" /> :
+                                 usernameAvailable === true ? <FontAwesomeIcon icon={faCheck} className="w-4 h-4 text-green-500" /> :
+                                 usernameAvailable === false ? <FontAwesomeIcon icon={faTimes} className="w-4 h-4 text-red-500" /> : null}
                             </div>
                         </div>
                         {usernameAvailable === false && <p className="text-xs text-red-500">사용할 수 없는 아이디입니다.</p>}
                         {formData.username && usernameAvailable !== false && (
                             <div className="flex items-center gap-2 text-xs text-gray-500">
                                 <span className="truncate max-w-[200px]">{profileUrl}</span>
-                                <Copy className="w-3 h-3 cursor-pointer hover:text-green-600" onClick={() => {
+                                <FontAwesomeIcon icon={faCopy} className="w-3 h-3 cursor-pointer hover:text-green-600" onClick={() => {
                                     navigator.clipboard.writeText(profileUrl);
                                     toast.success("복사됨");
                                 }} />
@@ -453,19 +455,19 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
             <h2 className="text-xl font-bold border-b pb-4">소셜 링크</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Globe className="w-4 h-4"/>웹사이트</Label>
+                    <Label className="flex items-center gap-2"><FontAwesomeIcon icon={faGlobe} className="w-4 h-4"/>웹사이트</Label>
                     <Input value={formData.website} onChange={e => setFormData({...formData, website: e.target.value})} placeholder="https://" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Github className="w-4 h-4"/>GitHub</Label>
+                    <Label className="flex items-center gap-2"><FontAwesomeIcon icon={faGithub} className="w-4 h-4"/>GitHub</Label>
                     <Input value={formData.github} onChange={e => setFormData({...formData, github: e.target.value})} placeholder="URL" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Twitter className="w-4 h-4"/>Twitter (X)</Label>
+                    <Label className="flex items-center gap-2"><FontAwesomeIcon icon={faTwitter} className="w-4 h-4"/>Twitter (X)</Label>
                     <Input value={formData.twitter} onChange={e => setFormData({...formData, twitter: e.target.value})} placeholder="URL" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Instagram className="w-4 h-4"/>Instagram</Label>
+                    <Label className="flex items-center gap-2"><FontAwesomeIcon icon={faInstagram} className="w-4 h-4"/>Instagram</Label>
                     <Input value={formData.instagram} onChange={e => setFormData({...formData, instagram: e.target.value})} placeholder="URL" />
                 </div>
             </div>
@@ -476,7 +478,7 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900">
-                        <Terminal className="w-6 h-6 text-gray-700" />
+                        <FontAwesomeIcon icon={faTerminal} className="w-6 h-6 text-gray-700" />
                         Developer API
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">
@@ -486,7 +488,7 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
                     </p>
                 </div>
                 <Button onClick={generateApiKey} className="bg-gray-900 text-white hover:bg-gray-800">
-                    <Plus className="w-4 h-4 mr-2" /> 새 키 발급
+                    <FontAwesomeIcon icon={faPlus} className="w-4 h-4 mr-2" /> 새 키 발급
                 </Button>
             </div>
 
@@ -494,13 +496,13 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
             {newKey && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-6 animate-in zoom-in-95 duration-300">
                     <h4 className="font-bold text-green-800 mb-2 flex items-center gap-2">
-                        <Check className="w-5 h-5" /> 새 API Key가 발급되었습니다!
+                        <FontAwesomeIcon icon={faCheck} className="w-5 h-5" /> 새 API Key가 발급되었습니다!
                     </h4>
                     <p className="text-sm text-green-700 mb-4">
                         이 키는 <strong>지금만 확인할 수 있습니다.</strong> 반드시 복사하여 안전한 곳에 보관하세요.
                     </p>
                     <div className="flex items-center gap-2 bg-white p-3 rounded border border-green-200 font-mono text-sm shadow-inner overflow-hidden">
-                        <Key className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <FontAwesomeIcon icon={faKey} className="w-4 h-4 text-gray-400 flex-shrink-0" />
                         <span className="flex-1 truncate select-all font-bold text-gray-800">{newKey}</span>
                         <Button
                             size="sm" variant="ghost" className="text-green-600 hover:text-green-700 hover:bg-green-50"
@@ -509,7 +511,7 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
                                 toast.success("API Key 복사 완료!");
                             }}
                         >
-                            <Copy className="w-4 h-4" />
+                            <FontAwesomeIcon icon={faCopy} className="w-4 h-4" />
                         </Button>
                     </div>
                 </div>
@@ -518,7 +520,7 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
             {/* 키 목록 */}
             <div className="space-y-3">
                  {loadingKeys ? (
-                     <div className="text-center py-4 text-gray-400"><Loader2 className="w-6 h-6 animate-spin mx-auto"/></div>
+                     <div className="text-center py-4 text-gray-400"><FontAwesomeIcon icon={faSpinner} className="w-6 h-6 animate-spin mx-auto"/></div>
                  ) : apiKeys.length === 0 ? (
                      <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-gray-400">
                          발급된 API Key가 없습니다.
@@ -529,7 +531,7 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
                              <div key={key.key_id} className="p-4 bg-white flex items-center justify-between hover:bg-gray-50">
                                  <div className="flex items-center gap-3">
                                      <div className="bg-gray-100 p-2 rounded text-gray-600">
-                                         <Terminal className="w-4 h-4" />
+                                         <FontAwesomeIcon icon={faTerminal} className="w-4 h-4" />
                                      </div>
                                      <div>
                                          <div className="font-bold text-sm text-gray-900">{key.key_name || 'Personal Key'}</div>
@@ -544,7 +546,7 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
                                         size="icon" variant="ghost" className="text-red-400 hover:text-red-500 hover:bg-red-50 w-8 h-8"
                                         onClick={() => deleteApiKey(key.key_id)}
                                      >
-                                        <Trash2 className="w-4 h-4" />
+                                        <FontAwesomeIcon icon={faTrashAlt} className="w-4 h-4" />
                                      </Button>
                                  </div>
                              </div>
@@ -564,7 +566,7 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
         {/* 5. 계정 관리 (Danger Zone) */}
         <section className="space-y-6 pt-8 border-t border-red-100">
              <h2 className="text-xl font-bold text-red-600 flex items-center gap-2">
-                 <AlertTriangle className="w-6 h-6" /> Danger Zone
+                 <FontAwesomeIcon icon={faExclamationTriangle} className="w-6 h-6" /> Danger Zone
              </h2>
              <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-center justify-between">
                  <div>
@@ -584,7 +586,7 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
         {/* 하단 저장 버튼 (Floating also possible) */}
         <div className="flex justify-end pt-8">
              <Button onClick={handleSave} size="lg" disabled={loading} className="bg-green-600 hover:bg-green-700 shadow-lg px-8">
-                {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "모든 설정 저장"}
+                {loading ? <FontAwesomeIcon icon={faSpinner} className="w-5 h-5 animate-spin mr-2" /> : "모든 설정 저장"}
             </Button>
         </div>
 

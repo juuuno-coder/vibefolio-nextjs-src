@@ -14,7 +14,7 @@ import {
   Skeleton,
 } from "@/components/ui/index";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+
 import Image from "next/image";
 
 interface Banner {
@@ -63,19 +63,12 @@ export function MainBanner() {
       const hasCache = checkCache();
       
       try {
-        // 1. 전용 배너 테이블 조회
-        const { data: dedicatedBanners, error: dbError } = await supabase
-          .from("banners")
-          .select("*")
-          .eq("is_active", true);
-
-        // 2. 관리자 페이지에서 배너로 설정된 공모전/행사 조회
-        const { data: promotedRecruits, error: prError } = await supabase
-          .from("recruit_items")
-          .select("*")
-          .eq("show_as_banner", true)
-          .eq("is_active", true)
-          .eq("is_approved", true);
+        const [bnRes, prRes] = await Promise.all([
+          supabase.from("banners").select("*").eq("is_active", true),
+          supabase.from("recruit_items").select("*").eq("show_as_banner", true).eq("is_active", true).eq("is_approved", true)
+        ]);
+        const { data: dedicatedBanners, error: dbError } = bnRes;
+        const { data: promotedRecruits, error: prError } = prRes;
 
         if (dbError) throw dbError;
         if (prError) throw prError;

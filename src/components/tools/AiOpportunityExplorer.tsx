@@ -4,15 +4,16 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { FontAwesomeIcon } from "@/components/FaIcon";
 import { 
-  Search, 
-  ExternalLink,
-  Loader2,
-  Calendar,
-  Building,
-  MapPin,
-  Bot
-} from "lucide-react";
+  faSearch, 
+  faExternalLinkAlt, 
+  faSpinner, 
+  faCalendar, 
+  faBuilding, 
+  faMapMarkerAlt, 
+  faRobot 
+} from "@fortawesome/free-solid-svg-icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 
@@ -140,7 +141,7 @@ export function AiOpportunityExplorer({
                 className="flex justify-center mb-4"
             >
                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-2xl shadow-lg">
-                <Bot className="w-8 h-8 text-white" />
+                <FontAwesomeIcon icon={faRobot} className="w-8 h-8 text-white" />
                 </div>
             </motion.div>
             <motion.h1 
@@ -227,7 +228,7 @@ export function AiOpportunityExplorer({
           <CardContent className="p-4">
             <div className="flex gap-2 items-center">
               <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <FontAwesomeIcon icon={faSearch} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input 
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
@@ -241,7 +242,7 @@ export function AiOpportunityExplorer({
                 disabled={loading || !keyword.trim()}
                 className="h-12 px-6 text-sm md:text-base font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl shadow-md transition-all hover:scale-105"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "검색"}
+                {loading ? <FontAwesomeIcon icon={faSpinner} className="w-5 h-5 animate-spin" /> : "검색"}
               </Button>
             </div>
           </CardContent>
@@ -251,7 +252,7 @@ export function AiOpportunityExplorer({
         <div className={`space-y-4 ${embedded ? 'flex-1 overflow-y-auto custom-scrollbar pr-2 -mr-2 max-h-[500px]' : ''}`}>
           {loading && (
             <div className="text-center py-12">
-              <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-4" />
+              <FontAwesomeIcon icon={faSpinner} className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-4" />
               <p className="text-gray-500 text-sm animate-pulse">
                 AI가 정보를 수집하고 분석 중입니다...
               </p>
@@ -292,13 +293,13 @@ export function AiOpportunityExplorer({
 
                     <div className="flex flex-wrap gap-3 text-xs text-gray-400 mb-3">
                         {item.company && (
-                            <div className="flex items-center gap-1"><Building className="w-3 h-3" /> {item.company}</div>
+                            <div className="flex items-center gap-1"><FontAwesomeIcon icon={faBuilding} className="w-3 h-3" /> {item.company}</div>
                         )}
                         {item.date && (
-                            <div className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {item.date}</div>
+                            <div className="flex items-center gap-1"><FontAwesomeIcon icon={faCalendar} className="w-3 h-3" /> {item.date}</div>
                         )}
                         {item.location && (
-                            <div className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {item.location}</div>
+                            <div className="flex items-center gap-1"><FontAwesomeIcon icon={faMapMarkerAlt} className="w-3 h-3" /> {item.location}</div>
                         )}
                     </div>
                     
@@ -313,7 +314,7 @@ export function AiOpportunityExplorer({
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800"
                             >
-                                자세히 보기 <ExternalLink className="w-3 h-3" />
+                                자세히 보기 <FontAwesomeIcon icon={faExternalLinkAlt} className="w-3 h-3" />
                             </a>
                         )}
                     </div>

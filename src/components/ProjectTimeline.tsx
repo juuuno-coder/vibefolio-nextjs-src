@@ -2,7 +2,12 @@
 
 import React from "react";
 import dayjs from "dayjs";
-import { GitCommit, History, Clock, Tag } from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { 
+  faClockRotateLeft, 
+  faClock, 
+  faTag 
+} from "@fortawesome/free-solid-svg-icons";
 import { ProjectVersion } from "@/lib/versions";
 
 interface ProjectTimelineProps {
@@ -17,7 +22,7 @@ export function ProjectTimeline({ versions }: ProjectTimelineProps) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
       <div className="flex items-center gap-2 mb-6">
-        <History className="w-5 h-5 text-green-600" />
+        <FontAwesomeIcon icon={faClockRotateLeft} className="w-5 h-5 text-green-600" />
         <h3 className="font-bold text-lg text-gray-900">업데이트 히스토리</h3>
       </div>
 
@@ -48,13 +53,13 @@ export function ProjectTimeline({ versions }: ProjectTimelineProps) {
                           ? "bg-green-50 text-green-700 border-green-200" 
                           : "bg-gray-50 text-gray-600 border-gray-200"
                       }`}
-                    >
-                      <Tag className="w-3 h-3" />
+                     >
+                      <FontAwesomeIcon icon={faTag} className="w-3 h-3" />
                       {version.version_name}
                       {isLatest && <span className="ml-1 text-[9px] bg-green-600 text-white px-1 rounded-sm">LATEST</span>}
                     </span>
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
+                     <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
                       {dayjs(version.created_at).format("YYYY.MM.DD")}
                     </span>
                   </div>

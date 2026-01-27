@@ -7,28 +7,29 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Image as ImageIcon,
-  Users,
-  Briefcase,
-  MessageCircle,
-  FileText,
-  Settings,
-  BarChart3,
-  Shield,
-  Eye,
-  Trash2,
-  AlertCircle,
-  Loader2,
-  Megaphone,
-  HelpCircle,
-  ChevronRight,
-  Plus,
-  ArrowUpRight,
-  ArrowDownRight,
-  TrendingUp,
-  Mail,
-} from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { 
+  faImage, 
+  faUsers, 
+  faBriefcase, 
+  faCommentDots, 
+  faFileAlt, 
+  faCog, 
+  faChartBar, 
+  faShieldAlt, 
+  faEye, 
+  faTrashAlt, 
+  faExclamationCircle, 
+  faSpinner, 
+  faBullhorn, 
+  faQuestionCircle, 
+  faChevronRight, 
+  faPlus, 
+  faArrowUp, 
+  faArrowDown, 
+  faChartLine, 
+  faEnvelope 
+} from "@fortawesome/free-solid-svg-icons";
 import {
   ComposedChart,
   Line,
@@ -248,7 +249,7 @@ export default function AdminPage() {
     {
       title: "공지사항 관리",
       description: "서비스 공지 및 이벤트 소식 등록",
-      icon: Megaphone,
+      icon: faBullhorn,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
       path: "/admin/notices",
@@ -257,7 +258,7 @@ export default function AdminPage() {
     {
       title: "FAQ 관리",
       description: "자주 묻는 질문 등록 및 관리",
-      icon: HelpCircle,
+      icon: faQuestionCircle,
       color: "text-green-600",
       bgColor: "bg-green-50",
       path: "/admin/faqs",
@@ -266,7 +267,7 @@ export default function AdminPage() {
     {
       title: "배너 관리",
       description: "메인 페이지 배너 업로드 및 관리",
-      icon: ImageIcon,
+      icon: faImage,
       color: "text-purple-500",
       bgColor: "bg-purple-50",
       path: "/admin/banners",
@@ -275,7 +276,7 @@ export default function AdminPage() {
     {
       title: "프로젝트 관리",
       description: "등록된 프로젝트 조회 및 관리",
-      icon: FileText,
+      icon: faFileAlt,
       color: "text-blue-500",
       bgColor: "bg-blue-50",
       path: "/admin/projects",
@@ -284,7 +285,7 @@ export default function AdminPage() {
     {
       title: "채용/공모전 관리",
       description: "채용, 공모전, 이벤트 관리",
-      icon: Briefcase,
+      icon: faBriefcase,
       color: "text-green-500",
       bgColor: "bg-green-50",
       path: "/admin/recruit",
@@ -293,7 +294,7 @@ export default function AdminPage() {
     {
       title: "문의 관리",
       description: "1:1 문의 내역 조회 및 답변",
-      icon: MessageCircle,
+      icon: faCommentDots,
       color: "text-orange-500",
       bgColor: "bg-orange-50",
       path: "/admin/inquiries",
@@ -302,7 +303,7 @@ export default function AdminPage() {
     {
       title: "이메일 관리",
       description: "이메일 발송 및 수신 관리",
-      icon: Mail,
+      icon: faEnvelope,
       color: "text-cyan-500",
       bgColor: "bg-cyan-50",
       path: "/admin/emails",
@@ -311,7 +312,7 @@ export default function AdminPage() {
     {
       title: "사용자 관리",
       description: "회원 정보 조회 및 관리",
-      icon: Users,
+      icon: faUsers,
       color: "text-pink-500",
       bgColor: "bg-pink-50",
       path: "/admin/users",
@@ -320,7 +321,7 @@ export default function AdminPage() {
     {
       title: "통계",
       description: "사이트 통계 및 분석",
-      icon: BarChart3,
+      icon: faChartBar,
       color: "text-indigo-500",
       bgColor: "bg-indigo-50",
       path: "/admin/stats",
@@ -333,7 +334,7 @@ export default function AdminPage() {
     return (
       <div className="h-[80vh] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 size={40} className="animate-spin text-slate-300 mx-auto mb-4" />
+          <FontAwesomeIcon icon={faSpinner} className="w-10 h-10 animate-spin text-slate-300 mx-auto mb-4" />
           <p className="text-slate-400 font-medium">관리자 데이터를 불러오는 중...</p>
         </div>
       </div>
@@ -392,16 +393,16 @@ export default function AdminPage() {
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "오늘 방문자수", value: stats.todayVisits, icon: Eye, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "전체 회원수", value: stats.totalUsers, icon: Users, color: "text-pink-600", bg: "bg-pink-50" },
-          { label: "프로젝트 등록수", value: stats.totalProjects, icon: FileText, color: "text-indigo-600", bg: "bg-indigo-50" },
-          { label: "채용/공모 등록수", value: stats.totalRecruitItems, icon: Briefcase, color: "text-green-600", bg: "bg-green-50" },
+          { label: "오늘 방문자수", value: stats.todayVisits, icon: faEye, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "전체 회원수", value: stats.totalUsers, icon: faUsers, color: "text-pink-600", bg: "bg-pink-50" },
+          { label: "프로젝트 등록수", value: stats.totalProjects, icon: faFileAlt, color: "text-indigo-600", bg: "bg-indigo-50" },
+          { label: "채용/공모 등록수", value: stats.totalRecruitItems, icon: faBriefcase, color: "text-green-600", bg: "bg-green-50" },
         ].map((item, i) => (
           <Card key={i} className="border-none shadow-sm hover:shadow-md transition-shadow duration-300 rounded-[24px] overflow-hidden">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className={`${item.bg} ${item.color} p-3 rounded-2xl`}>
-                  <item.icon size={22} />
+                  <FontAwesomeIcon icon={item.icon} className="w-[22px] h-[22px]" />
                 </div>
                 <div className="text-[10px] font-black uppercase text-slate-300 tracking-widest leading-none bg-slate-50 px-2 py-1 rounded">Total</div>
               </div>
@@ -427,7 +428,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
                   <CardTitle className="text-xl font-black flex items-center gap-2">
-                    <BarChart3 className="text-[#16A34A]" />
+                    <FontAwesomeIcon icon={faChartBar} className="text-[#16A34A]" />
                     플랫폼 통계
                   </CardTitle>
                   <div className="flex items-center gap-4 text-xs font-bold text-slate-400 bg-slate-50 px-4 py-2 rounded-full">
@@ -535,11 +536,11 @@ export default function AdminPage() {
                                 <span className="text-[11px] text-slate-400">{new Date(project.created_at).toLocaleDateString()}</span>
                             </div>
                         </div>
-                        <ChevronRight size={16} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                        <FontAwesomeIcon icon={faChevronRight} className="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
                     </div>
                 )) : (
                     <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-2">
-                        <FileText size={32} strokeWidth={1.5} />
+                        <FontAwesomeIcon icon={faFileAlt} className="w-8 h-8" />
                         <span className="text-xs">등록된 프로젝트가 없습니다.</span>
                     </div>
                 )}
@@ -559,7 +560,7 @@ export default function AdminPage() {
                 {recentInquiries.length > 0 ? recentInquiries.map((inq, idx) => (
                     <div key={idx} className="flex items-start gap-3 group cursor-pointer hover:bg-orange-50/50 p-3 rounded-xl transition-all border border-transparent hover:border-orange-100">
                       <div className="mt-1 w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 shrink-0 shadow-sm group-hover:bg-orange-100 transition-colors">
-                        <MessageCircle size={16} />
+                        <FontAwesomeIcon icon={faCommentDots} className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between mb-1">
@@ -574,7 +575,7 @@ export default function AdminPage() {
                    </div>
                 )) : (
                     <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-2">
-                        <MessageCircle size={32} strokeWidth={1.5} />
+                        <FontAwesomeIcon icon={faCommentDots} className="w-8 h-8" />
                         <span className="text-xs">새로운 문의가 없습니다.</span>
                     </div>
                 )}

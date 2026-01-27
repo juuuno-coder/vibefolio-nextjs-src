@@ -10,7 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 interface ProposalModalProps {
   open: boolean;
@@ -146,7 +147,7 @@ export function ProposalModal({
   
             <div className="flex flex-col gap-3 pt-2">
               <Button type="submit" className="h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base shadow-xl transition-all" disabled={loading}>
-                {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "제안 보내기"}
+                {loading ? <FontAwesomeIcon icon={faSpinner} className="mr-2 h-5 w-5 animate-spin" /> : "제안 보내기"}
               </Button>
             </div>
           </form>

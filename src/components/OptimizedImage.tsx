@@ -2,7 +2,8 @@
 
 import React, { Suspense, useState, useEffect, useCallback } from "react";
 import Image from 'next/image';
-import { ImageOff } from 'lucide-react';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faImage } from "@fortawesome/free-solid-svg-icons";
 
 interface OptimizedImageProps {
   src: string;
@@ -45,7 +46,7 @@ export function OptimizedImage({
   if (error) {
     return (
       <div className={`bg-gray-100 flex items-center justify-center ${className}`}>
-        <ImageOff className="w-12 h-12 text-gray-300" />
+        <FontAwesomeIcon icon={faImage} className="w-12 h-12 text-gray-300" />
       </div>
     );
   }

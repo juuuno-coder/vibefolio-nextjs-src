@@ -4,18 +4,19 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FontAwesomeIcon } from "@/components/FaIcon";
 import { 
-  BarChart3, 
-  PieChart, 
-  Target, 
-  MessageSquare, 
-  TrendingUp, 
-  Download, 
-  Sparkles,
-  ArrowRight,
-  ShieldCheck,
-  Calendar
-} from "lucide-react";
+  faChartBar, 
+  faChartPie, 
+  faBullseye, 
+  faCommentAlt, 
+  faChartLine, 
+  faDownload, 
+  faWandMagicSparkles,
+  faArrowRight,
+  faShieldAlt,
+  faCalendarAlt
+} from "@fortawesome/free-solid-svg-icons";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ReportData {
@@ -99,7 +100,7 @@ export function ReviewReportModal({ open, onOpenChange, projectId, projectTitle 
         <div className="sticky top-0 z-20 bg-white border-b border-slate-100 p-8 flex justify-between items-center">
             <div className="flex items-center gap-4">
                <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-white shadow-lg">
-                  <BarChart3 size={24} />
+                  <FontAwesomeIcon icon={faChartBar} className="w-6 h-6" />
                </div>
                <div>
                   <h2 className="text-xl font-black text-slate-900 leading-tight">평가 결과 상세 분석 리포트</h2>
@@ -108,10 +109,10 @@ export function ReviewReportModal({ open, onOpenChange, projectId, projectTitle 
             </div>
             <div className="flex items-center gap-2">
                 <Button variant="outline" className="rounded-xl font-bold gap-2" onClick={() => window.print()}>
-                    <Download size={16} /> PDF 저장
+                    <FontAwesomeIcon icon={faDownload} className="w-4 h-4" /> PDF 저장
                 </Button>
                 <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center opacity-50 cursor-not-allowed">
-                    <ShieldCheck size={20} />
+                    <FontAwesomeIcon icon={faShieldAlt} className="w-5 h-5" />
                 </div>
             </div>
         </div>
@@ -135,7 +136,7 @@ export function ReviewReportModal({ open, onOpenChange, projectId, projectTitle 
                         <p className="text-xs font-black text-slate-400 uppercase mb-2">Total Reviewers</p>
                         <h3 className="text-4xl font-black text-slate-900">{data.totalReviewers}<span className="text-lg font-bold ml-1 text-slate-400">명</span></h3>
                         <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full w-fit">
-                            <TrendingUp size={12} /> 실시간 참여 중
+                            <FontAwesomeIcon icon={faChartLine} className="w-3 h-3" /> 실시간 참여 중
                         </div>
                     </motion.div>
 
@@ -169,7 +170,7 @@ export function ReviewReportModal({ open, onOpenChange, projectId, projectTitle 
                     {/* Radar Chart Section */}
                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
                         <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-8 flex items-center gap-2">
-                            <Target size={16} className="text-orange-500" /> 다면적 가치 분석 (Audit)
+                            <FontAwesomeIcon icon={faBullseye} className="w-4 h-4 text-orange-500" /> 다면적 가치 분석 (Audit)
                         </h4>
                         <div className="flex justify-center relative py-4">
                             <svg width="240" height="240" viewBox="0 0 200 200" className="overflow-visible drop-shadow-xl">
@@ -189,7 +190,7 @@ export function ReviewReportModal({ open, onOpenChange, projectId, projectTitle 
                     {/* Poll Result Chart */}
                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
                         <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-8 flex items-center gap-2">
-                            <PieChart size={16} className="text-indigo-500" /> 유저 반응 분포 (Sentiment)
+                            <FontAwesomeIcon icon={faChartPie} className="w-4 h-4 text-indigo-500" /> 유저 반응 분포 (Sentiment)
                         </h4>
                         <div className="space-y-6">
                             {[
@@ -222,7 +223,7 @@ export function ReviewReportModal({ open, onOpenChange, projectId, projectTitle 
                 <div className="space-y-4">
                     <div className="flex items-center justify-between px-2">
                         <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                            <MessageSquare size={16} className="text-pink-500" /> 시크릿 평가 의견 전체보기
+                            <FontAwesomeIcon icon={faCommentAlt} className="w-4 h-4 text-pink-500" /> 시크릿 평가 의견 전체보기
                         </h4>
                         <Badge variant="outline" className="rounded-lg text-slate-400">{data.secretReviews.length}건</Badge>
                     </div>
@@ -239,11 +240,11 @@ export function ReviewReportModal({ open, onOpenChange, projectId, projectTitle 
                                 >
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
-                                           <Sparkles size={18} className="text-slate-300 group-hover:text-indigo-400" />
+                                           <FontAwesomeIcon icon={faWandMagicSparkles} className="w-[18px] h-[18px] text-slate-300 group-hover:text-indigo-400" />
                                         </div>
                                         <div className="text-right">
                                             <p className="text-[10px] font-black text-slate-400 flex items-center justify-end gap-1">
-                                                <Calendar size={10} /> {new Date(review.created_at).toLocaleDateString()}
+                                                <FontAwesomeIcon icon={faCalendarAlt} className="w-2.5 h-2.5" /> {new Date(review.created_at).toLocaleDateString()}
                                             </p>
                                         </div>
                                     </div>
@@ -252,7 +253,7 @@ export function ReviewReportModal({ open, onOpenChange, projectId, projectTitle 
                                     <div className="pt-4 border-t border-slate-50 flex justify-between items-center text-[10px] font-bold">
                                         <span className="text-indigo-500">{review.contact || "비공개 연락처"}</span>
                                         <button className="text-slate-300 hover:text-indigo-500 transition-colors flex items-center gap-1">
-                                            전문보기 <ArrowRight size={12} />
+                                            전문보기 <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
                                         </button>
                                     </div>
                                 </motion.div>
@@ -261,7 +262,7 @@ export function ReviewReportModal({ open, onOpenChange, projectId, projectTitle 
                         
                         {data.secretReviews.length === 0 && (
                             <div className="col-span-full py-20 bg-white rounded-3xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-slate-300">
-                                <MessageSquare size={40} className="mb-4 opacity-50" />
+                                <FontAwesomeIcon icon={faCommentAlt} className="w-10 h-10 mb-4 opacity-50" />
                                 <p className="font-bold">아직 접수된 시크릿 평가 의견이 없습니다.</p>
                             </div>
                         )}
@@ -271,7 +272,7 @@ export function ReviewReportModal({ open, onOpenChange, projectId, projectTitle 
                 {/* Footer Insight */}
                 <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-12 opacity-10">
-                        <Sparkles size={120} />
+                        <FontAwesomeIcon icon={faWandMagicSparkles} className="w-[120px] h-[120px]" />
                     </div>
                     <div className="relative z-10 max-w-2xl">
                         <Badge className="bg-indigo-500 hover:bg-indigo-500 mb-4 px-3 py-1 font-black">Vibefolio AI Insight</Badge>

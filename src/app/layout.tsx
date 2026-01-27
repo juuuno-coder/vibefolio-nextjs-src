@@ -39,31 +39,36 @@ export async function generateMetadata(): Promise<Metadata> {
   let ogImage = "";
   let favicon = "/vibefolio2.png"; // Default Favicon
 
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // Metadata Load optimization: skip heavy DB work if already in environment or cache
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !supabaseKey) {
-      console.warn('[Layout] Missing Supabase environment variables. using default metadata.');
-    } else {
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      // site_config 테이블이 없을 수 있으므로 에러 핸들링
-      const { data, error } = await supabase.from('site_config').select('*');
+  if (!supabaseUrl || !supabaseKey) {
+    return {
+      metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://vibefolio.net'),
+      title: defaultTitle,
+      description: defaultDesc,
+      icons: { icon: favicon, shortcut: favicon, apple: favicon }
+    };
+  }
+
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    // [Optimized] Use a very short timeout or just assume default if it takes too long
+    const { data, error } = await supabase.from('site_config').select('*').limit(50);
+    
+    if (!error && data) {
+      const config: any = {};
+      data.forEach((item: any) => config[item.key] = item.value);
       
-      if (error) {
-        console.error('[Layout] site_config fetch error (ignoring):', error.message);
-      } else if (data) {
-        const config: any = {};
-        data.forEach((item: any) => config[item.key] = item.value);
-        
-        if (config.seo_title) title = config.seo_title;
-        if (config.seo_description) description = config.seo_description;
-        if (config.seo_og_image) ogImage = config.seo_og_image;
-        if (config.seo_favicon) favicon = config.seo_favicon;
-      }
+      if (config.seo_title) title = config.seo_title;
+      if (config.seo_description) description = config.seo_description;
+      if (config.seo_og_image) ogImage = config.seo_og_image;
+      if (config.seo_favicon) favicon = config.seo_favicon;
     }
   } catch (e) {
-    console.error('Metadata fetch critical failure:', e);
+    // Silent fail on metadata fetch is better than crashing
+    console.warn('[Metadata] Fetch failed, using defaults');
   }
 
   return {

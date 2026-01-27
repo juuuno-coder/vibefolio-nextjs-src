@@ -1,10 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { LucideIcon } from "lucide-react";
+import { IconDefinition } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@/components/FaIcon";
 
 interface StatCardProps {
   title: string;
   value: string | number;
-  icon: LucideIcon;
+  icon: IconDefinition;
   trend?: {
     value: number;
     isPositive: boolean;
@@ -37,7 +38,7 @@ export function StatCard({
             )}
           </div>
           <div className={`p-3 rounded-xl ${iconBgColor}`}>
-            <Icon className={`w-6 h-6 ${iconColor}`} />
+            <FontAwesomeIcon icon={Icon} className={`w-6 h-6 ${iconColor}`} />
           </div>
         </div>
       </CardContent>

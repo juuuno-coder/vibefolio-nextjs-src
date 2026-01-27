@@ -11,9 +11,16 @@ import { ImageCard } from "@/components/ImageCard";
 import { StickyMenu } from "@/components/StickyMenu";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getCategoryName, getCategoryNameById, getCategoryValue } from "@/lib/categoryMap";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faWandSparkles, faXmark, faCheck, faBullhorn } from "@fortawesome/free-solid-svg-icons";
-import { Megaphone, ChefHat, Clock } from "lucide-react";
+import { getSafeCustomData } from "@/lib/utils/data";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { 
+  faWandSparkles, 
+  faXmark, 
+  faCheck, 
+  faBullhorn, 
+  faStar, 
+  faClock 
+} from "@fortawesome/free-solid-svg-icons";
 
 
 const ProjectDetailModalV2 = dynamic(() => 
@@ -157,8 +164,9 @@ function HomeContent() {
         }
 
         const fieldParam = selectedFields.length > 0 ? `&field=${selectedFields[0]}` : "";
+        const sortParam = `&sortBy=${sortBy}`;
         
-        const res = await fetch(`/api/projects?page=${pageNum}&limit=${limit}${searchParam}${categoryParam}${fieldParam}${modeParam}`);
+        const res = await fetch(`/api/projects?page=${pageNum}&limit=${limit}${searchParam}${categoryParam}${fieldParam}${modeParam}${sortParam}`);
         const data = await res.json();
         
         // API 응답 키가 'data'일 수도 있고 'projects'일 수도 있음 (Dual Support)
@@ -179,7 +187,7 @@ function HomeContent() {
             let primaryField = "it";
             
             try {
-               const cData = typeof proj.custom_data === 'string' ? JSON.parse(proj.custom_data) : proj.custom_data;
+               const cData = getSafeCustomData(proj);
                
                // Fields Parsing
                if (cData?.fields && Array.isArray(cData.fields)) {
@@ -242,7 +250,7 @@ function HomeContent() {
               allow_stickers: proj.allow_stickers,
               allow_secret_comments: proj.allow_secret_comments,
               custom_data: proj.custom_data,
-              is_feedback_requested: typeof proj.custom_data === 'string' ? JSON.parse(proj.custom_data)?.is_feedback_requested : proj.custom_data?.is_feedback_requested,
+              is_feedback_requested: getSafeCustomData(proj)?.is_feedback_requested,
               is_growth_requested: proj.is_growth_requested,
               audit_deadline: proj.audit_deadline,
             } as ImageDialogProps;
@@ -264,13 +272,12 @@ function HomeContent() {
         isFetchingRef.current = false;
       }
     },
-    [searchQuery, selectedCategory, selectedFields]
+    [searchQuery, selectedCategory, selectedFields, sortBy]
   );
 
-  // 검색어, 카테고리, 분야 변경 시 데이터 리셋 및 로드
   useEffect(() => {
     loadProjects(1, true);
-  }, [searchQuery, selectedCategory, selectedFields, loadProjects]);
+  }, [searchQuery, selectedCategory, selectedFields, sortBy, loadProjects]);
 
   // 카테고리 필터링
   const categoryNames = Array.isArray(selectedCategory) 
@@ -358,7 +365,9 @@ function HomeContent() {
     }
   }, [selectedCategory, isAuthenticated, userInterests, router]);
   
-  const sortedProjects = useMemo(() => sortProjects(filtered, sortBy), [filtered, sortBy, sortProjects]);
+  // [Changed] Now sorting is handled by API, so we just use the projects state Directly
+  // filtered is still needed if we do local filtering, but it's better to keep it for robustness
+  const sortedProjects = filtered;
 
   const handleProjectClick = (proj: ImageDialogProps) => {
     setSelectedProject(proj);
@@ -436,7 +445,7 @@ function HomeContent() {
                             <div className="flex flex-col gap-3">
                                 <div className="flex items-center gap-3">
                                    <div className="bg-orange-600 text-white p-2.5 rounded-2xl shadow-lg shadow-orange-200">
-                                      <ChefHat size={22} strokeWidth={2.5} />
+                                      <FontAwesomeIcon icon={faStar} className="w-5 h-5" />
                                    </div>
                                    <span className="text-orange-600 font-black text-[10px] tracking-[0.2em] uppercase">Special Mission</span>
                                 </div>
@@ -472,7 +481,7 @@ function HomeContent() {
                                         </div>
                                         <div className="flex justify-between items-center text-[11px] font-bold">
                                             <div className="flex items-center gap-2 text-slate-400">
-                                                <Clock size={14} className="text-orange-500" />
+                                                <FontAwesomeIcon icon={faClock} className="text-orange-500 w-3.5 h-3.5" />
                                                 마감 D-3
                                             </div>
                                             <div className="px-2.5 py-1 bg-orange-600 text-white rounded-lg text-[9px] font-black uppercase tracking-tighter shadow-md">

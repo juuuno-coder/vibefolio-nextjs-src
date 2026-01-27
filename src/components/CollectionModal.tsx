@@ -10,7 +10,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Folder, Plus, Check } from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { 
+  faFolder, 
+  faPlus, 
+  faCheck 
+} from "@fortawesome/free-solid-svg-icons";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -174,7 +179,7 @@ export function CollectionModal({
               className="w-full"
               onClick={() => setShowNewForm(true)}
             >
-              <Plus size={16} className="mr-2" />
+              <FontAwesomeIcon icon={faPlus} className="mr-2" />
               새 컬렉션 만들기
             </Button>
           )}
@@ -198,10 +203,10 @@ export function CollectionModal({
                       : 'hover:bg-gray-50 border-gray-200'
                   }`}
                 >
-                  <Folder size={18} className={selectedCollectionId === collection.collection_id ? 'text-white' : 'text-gray-600'} />
+                  <FontAwesomeIcon icon={faFolder} className={selectedCollectionId === collection.collection_id ? 'text-white' : 'text-gray-600'} />
                   <span className="flex-1 font-medium">{collection.name}</span>
                   {selectedCollectionId === collection.collection_id && (
-                    <Check size={18} className="text-white" />
+                    <FontAwesomeIcon icon={faCheck} className="text-white" />
                   )}
                 </button>
               ))

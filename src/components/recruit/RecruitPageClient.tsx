@@ -23,7 +23,29 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { MainBanner } from "@/components/MainBanner";
-import { Plus, Trash2, Edit, Calendar, MapPin, Award, Briefcase, DollarSign, ExternalLink, Clock, Sparkles, Loader2, Eye, ChevronRight, Upload, FileText, X } from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { 
+  faPlus, 
+  faTrash, 
+  faEdit, 
+  faCalendar, 
+  faMapMarkerAlt, 
+  faAward, 
+  faBriefcase, 
+  faDollarSign, 
+  faExternalLinkAlt, 
+  faClock, 
+  faStar, 
+  faSpinner, 
+  faEye, 
+  faChevronRight, 
+  faUpload, 
+  faFileAlt, 
+  faXmark,
+  faFilter,
+  faSort,
+  faWandMagicSparkles
+} from "@fortawesome/free-solid-svg-icons";
 import { supabase } from "@/lib/supabase/client";
 import { uploadImage, uploadFile } from "@/lib/supabase/storage";
 import { toast } from "sonner";
@@ -35,7 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ListFilter, ArrowUpDown } from "lucide-react";
+
 
 
 interface Item {
@@ -603,7 +625,7 @@ export default function RecruitPage() {
                   className={isAdmin ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-600 text-green-600 hover:bg-green-50"}
                   onClick={() => handleDialogClose()}
                 >
-                  <Plus size={18} className="mr-2" />
+                  <FontAwesomeIcon icon={faPlus} className="mr-2" />
                   {isAdmin ? "새 항목 추가" : "정보 제보하기"}
                 </Button>
               </DialogTrigger>
@@ -715,7 +737,7 @@ export default function RecruitPage() {
                   {formData.type === "contest" && (
                     <div className="space-y-4 border-l-4 border-[#16A34A] pl-4 py-2 bg-[#16A34A]/5 rounded-r-lg">
                       <h3 className="font-bold text-[#16A34A] text-sm flex items-center gap-2">
-                        <Award size={16} /> 공모전 상세 정보
+                        <FontAwesomeIcon icon={faAward} /> 공모전 상세 정보
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -781,7 +803,7 @@ export default function RecruitPage() {
                   <div className="space-y-6 pt-6 border-t border-slate-100">
                     <div className="space-y-3">
                       <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                        <Plus size={16} className="text-[#16A34A]" /> 포스터 이미지 (썸네일)
+                        <FontAwesomeIcon icon={faPlus} className="text-[#16A34A]" /> 포스터 이미지 (썸네일)
                       </label>
                       
                       <div 
@@ -812,14 +834,14 @@ export default function RecruitPage() {
                             <img src={formData.thumbnail} alt="Poster" className="absolute inset-0 w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                               <p className="text-white font-bold flex items-center gap-2">
-                                <Upload size={18} /> 이미지 변경하기 (클릭/드래그)
+                                <FontAwesomeIcon icon={faUpload} /> 이미지 변경하기 (클릭/드래그)
                               </p>
                             </div>
                           </>
                         ) : (
                           <div className="text-center space-y-2 px-4">
                             <div className="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center mx-auto text-slate-400 group-hover:text-[#16A34A] transition-colors">
-                              <Upload size={24} />
+                              <FontAwesomeIcon icon={faUpload} />
                             </div>
                             <p className="text-xs font-bold text-slate-500">포스터 이미지를 끌어다 놓거나 클릭하여 업로드하세요</p>
                             <p className="text-[10px] text-slate-400">4:5 비율 권장 (JPG, PNG, WebP)</p>
@@ -856,7 +878,7 @@ export default function RecruitPage() {
                     {isAdmin && (
                       <div className="space-y-3">
                         <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                          <Sparkles size={16} className="text-amber-500" /> 상세 페이지 히어로 배너 (와이드)
+                          <FontAwesomeIcon icon={faWandMagicSparkles} className="text-amber-500" /> 상세 페이지 히어로 배너 (와이드)
                         </label>
                         
                         <div 
@@ -887,14 +909,14 @@ export default function RecruitPage() {
                               <img src={formData.banner_image_url} alt="Banner" className="absolute inset-0 w-full h-full object-cover" />
                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <p className="text-white font-bold flex items-center gap-2">
-                                  <Upload size={18} /> 이미지 변경하기 (클릭/드래그)
+                                  <FontAwesomeIcon icon={faUpload} /> 이미지 변경하기 (클릭/드래그)
                                 </p>
                               </div>
                             </>
                           ) : (
                             <div className="text-center space-y-2 px-4">
                               <div className="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center mx-auto text-slate-400 group-hover:text-amber-500 transition-colors">
-                                <Upload size={24} />
+                                <FontAwesomeIcon icon={faUpload} />
                               </div>
                               <p className="text-xs font-bold text-slate-500">와이드 이미지를 끌어다 놓거나 클릭하여 업로드하세요</p>
                               <p className="text-[10px] text-slate-400">16:6 비율 권장 (JPG, PNG, WebP)</p>
@@ -934,7 +956,7 @@ export default function RecruitPage() {
                   {/* 파일 첨부 영역 */}
                   <div className="space-y-3 pt-2">
                     <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                       <FileText size={16} className="text-slate-500" /> 공고문 파일 첨부 (최대 10개, 개당 20MB)
+                       <FontAwesomeIcon icon={faFileAlt} /> 공고문 파일 첨부 (최대 10개, 개당 20MB)
                     </label>
                     <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                         {formData.attachments && formData.attachments.length > 0 && (
@@ -942,7 +964,7 @@ export default function RecruitPage() {
                                 {formData.attachments.map((file, idx) => (
                                     <div key={idx} className="flex items-center justify-between bg-white px-3 py-2 rounded-lg text-xs font-medium text-slate-700 border border-slate-100 shadow-sm">
                                         <div className="flex items-center gap-2 overflow-hidden">
-                                            <FileText size={14} className="text-[#16A34A] shrink-0" />
+                                            <FontAwesomeIcon icon={faFileAlt} />
                                             <span className="truncate max-w-[200px]">{file.name}</span>
                                             <span className="text-slate-400 shrink-0">({(file.size / 1024 / 1024).toFixed(2)}MB)</span>
                                         </div>
@@ -955,7 +977,7 @@ export default function RecruitPage() {
                                             }}
                                             className="text-slate-400 hover:text-red-500 p-1"
                                         >
-                                            <X size={14} />
+                                            <FontAwesomeIcon icon={faXmark} />
                                         </button>
                                     </div>
                                 ))}
@@ -1008,7 +1030,7 @@ export default function RecruitPage() {
                                 className="h-10 border-dashed border-slate-300 text-slate-500 hover:text-[#16A34A] hover:border-[#16A34A] w-full"
                                 disabled={(formData.attachments?.length || 0) >= 10}
                             >
-                                <Plus size={16} className="mr-2" /> 파일 추가하기
+                                <FontAwesomeIcon icon={faPlus} /> 파일 추가하기
                             </Button>
                         </div>
                         <p className="text-[10px] text-slate-400 text-center">PDF, HWP, DOCX 등 공고문 파일 권장</p>
@@ -1035,7 +1057,7 @@ export default function RecruitPage() {
                         onClick={handleExtractInfo}
                         disabled={isExtracting}
                       >
-                        {isExtracting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                        {isExtracting ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faStar} />}
                         AI 추출
                       </Button>
                     </div>
@@ -1094,7 +1116,7 @@ export default function RecruitPage() {
             <div className="flex items-center gap-3">
               {/* 분야 필터 */}
               <div className="flex items-center gap-2">
-                <ListFilter size={16} className="text-slate-300" />
+                <FontAwesomeIcon icon={faFilter} />
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                   <SelectTrigger className="w-[120px] h-10 rounded-xl border-slate-100 bg-slate-50 text-[11px] font-black uppercase tracking-wider focus:ring-[#16A34A]/20">
                     <SelectValue placeholder="분야별" />
@@ -1110,7 +1132,7 @@ export default function RecruitPage() {
 
               {/* 정렬 필터 */}
               <div className="flex items-center gap-2">
-                <ArrowUpDown size={16} className="text-slate-300" />
+                <FontAwesomeIcon icon={faSort} />
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="w-[120px] h-10 rounded-xl border-slate-100 bg-slate-50 text-[11px] font-black uppercase tracking-wider focus:ring-[#16A34A]/20">
                     <SelectValue placeholder="정렬" />
@@ -1133,7 +1155,7 @@ export default function RecruitPage() {
                  {/* 마감 임박 */}
                  <section>
                     <div className="flex items-center gap-2 mb-6">
-                      <Clock className="text-red-500" size={20} />
+                      <FontAwesomeIcon icon={faClock} />
                       <h2 className="text-xl font-bold text-slate-900">마감 임박! 놓치지 마세요</h2>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-6">
@@ -1156,7 +1178,7 @@ export default function RecruitPage() {
                  {/* 최신 등록 (나머지 또는 전체를 최신순으로) */}
                  <section>
                     <div className="flex items-center gap-2 mb-6">
-                      <Sparkles className="text-[#16A34A]" size={20} />
+                      <FontAwesomeIcon icon={faStar} />
                       <h2 className="text-xl font-bold text-slate-900">따끈따끈한 새 소식</h2>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-6">
@@ -1287,13 +1309,13 @@ function ItemCard({
   const getTypeInfo = (type: string) => {
     switch (type) {
       case "job":
-        return { label: "채용", color: "bg-blue-50 text-blue-600 border-blue-100", icon: Briefcase };
+        return { label: "채용", color: "bg-blue-50 text-blue-600 border-blue-100", icon: faBriefcase };
       case "contest":
-        return { label: "공모전", color: "bg-purple-50 text-purple-600 border-purple-100", icon: Award };
+        return { label: "공모전", color: "bg-purple-50 text-purple-600 border-purple-100", icon: faAward };
       case "event":
-        return { label: "이벤트", color: "bg-emerald-50 text-emerald-600 border-emerald-100", icon: Calendar };
+        return { label: "이벤트", color: "bg-emerald-50 text-emerald-600 border-emerald-100", icon: faCalendar };
       default:
-        return { label: "기타", color: "bg-gray-50 text-gray-600 border-gray-100", icon: Calendar };
+        return { label: "기타", color: "bg-gray-50 text-gray-600 border-gray-100", icon: faCalendar };
     }
   };
 
@@ -1316,7 +1338,7 @@ function ItemCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-300">
-            <typeInfo.icon size={40} strokeWidth={1} />
+            <FontAwesomeIcon icon={typeInfo.icon} className="w-10 h-10" />
           </div>
         )}
         
@@ -1348,7 +1370,7 @@ function ItemCard({
               className="w-8 h-8 rounded-full bg-white/90 hover:bg-white text-slate-600 shadow-sm" 
               onClick={(e) => { e.stopPropagation(); onEdit(item); }}
             >
-              <Edit size={14} />
+              <FontAwesomeIcon icon={faEdit} />
             </Button>
             <Button 
               size="icon" 
@@ -1356,7 +1378,7 @@ function ItemCard({
               className="w-8 h-8 rounded-full bg-red-500/90 hover:bg-red-500 text-white shadow-sm border-none" 
               onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
             >
-              <Trash2 size={14} />
+              <FontAwesomeIcon icon={faTrash} />
             </Button>
           </div>
         )}
@@ -1394,17 +1416,17 @@ function ItemCard({
           <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
-                <Clock size={12} className="text-[#16A34A]" />
+                <FontAwesomeIcon icon={faClock} />
                 <span>~ {new Date(item.date).toLocaleDateString("ko-KR")}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <Eye size={12} className="text-slate-300" />
+                <FontAwesomeIcon icon={faEye} />
                 <span>{item.views_count?.toLocaleString() || 0}</span>
               </div>
             </div>
             {item.location && (
               <div className="flex items-center gap-1.5">
-                <MapPin size={12} className="text-slate-300" />
+                <FontAwesomeIcon icon={faMapMarkerAlt} />
                 <span>{item.location}</span>
               </div>
             )}
@@ -1417,7 +1439,7 @@ function ItemCard({
             disabled={isExpired}
           >
             자세히 보기
-            <ExternalLink size={14} className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+            <FontAwesomeIcon icon={faExternalLinkAlt} className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
           </Button>
         </div>
       </CardContent>

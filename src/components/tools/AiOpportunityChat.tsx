@@ -3,7 +3,18 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea"; 
-import { Loader2, Send, Bot, User, Building, MapPin, Newspaper, Lightbulb, ExternalLink } from "lucide-react";
+import { FontAwesomeIcon } from "@/components/FaIcon";
+import { 
+  faSpinner, 
+  faPaperPlane, 
+  faRobot, 
+  faUser, 
+  faBuilding, 
+  faMapMarkerAlt, 
+  faNewspaper, 
+  faLightbulb, 
+  faExternalLinkAlt 
+} from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
 import { SearchResultDetailModal } from "@/components/SearchResultDetailModal";
 
@@ -113,7 +124,7 @@ export function AiOpportunityChat({ category }: AiOpportunityChatProps) {
             <div key={m.id} className={`flex gap-4 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {m.role === 'assistant' && (
                     <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 border border-indigo-200 shadow-sm mt-1">
-                        <Bot className="w-6 h-6 text-indigo-600" />
+                        <FontAwesomeIcon icon={faRobot} className="w-6 h-6 text-indigo-600" />
                     </div>
                 )}
                 
@@ -146,7 +157,7 @@ export function AiOpportunityChat({ category }: AiOpportunityChatProps) {
 
                 {m.role === 'user' && (
                     <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center shrink-0 border border-gray-300 mt-1">
-                        <User className="w-6 h-6 text-gray-600" />
+                        <FontAwesomeIcon icon={faUser} className="w-6 h-6 text-gray-600" />
                     </div>
                 )}
             </div>
@@ -155,10 +166,10 @@ export function AiOpportunityChat({ category }: AiOpportunityChatProps) {
         {isLoading && (
             <div className="flex gap-4 justify-start">
                 <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 border border-indigo-200">
-                    <Bot className="w-6 h-6 text-indigo-600" />
+                    <FontAwesomeIcon icon={faRobot} className="w-6 h-6 text-indigo-600" />
                 </div>
                 <div className="p-4 rounded-2xl bg-white border border-gray-200 text-gray-500 rounded-tl-none flex items-center gap-2 shadow-sm">
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin" />
                     <span className="animate-pulse">정보를 찾고 있습니다...</span>
                 </div>
             </div>
@@ -186,7 +197,7 @@ export function AiOpportunityChat({ category }: AiOpportunityChatProps) {
                     disabled={!input.trim() || isLoading}
                     className="h-[56px] w-[56px] rounded-xl bg-indigo-600 hover:bg-indigo-700 shadow-lg hover:shadow-xl transition-all active:scale-95"
                 >
-                    <Send className="w-5 h-5 ml-0.5" />
+                    <FontAwesomeIcon icon={faPaperPlane} className="w-5 h-5 ml-0.5" />
                 </Button>
             </div>
         </div>
@@ -213,9 +224,9 @@ function ResultCard({ category, item, onClick }: { category: string, item: any, 
                 </div>
                 <h4 className="font-bold text-gray-900 mb-1">{item.title}</h4>
                 <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                    <Building className="w-3.5 h-3.5" /> {item.company}
+                    <FontAwesomeIcon icon={faBuilding} className="w-3.5 h-3.5" /> {item.company}
                     <span className="w-px h-2 bg-gray-300 mx-1"></span>
-                    <MapPin className="w-3.5 h-3.5" /> {item.location}
+                    <FontAwesomeIcon icon={faMapMarkerAlt} className="w-3.5 h-3.5" /> {item.location}
                 </div>
                 <div className="flex gap-2 mb-3 max-w-full overflow-hidden">
                     {item.tags?.map((t: string, i: number) => (
@@ -234,7 +245,7 @@ function ResultCard({ category, item, onClick }: { category: string, item: any, 
                         }
                     }}
                 >
-                    {item.link ? '원문 보기' : '상세 보기'} <ExternalLink className="w-3 h-3 ml-1" />
+                    {item.link ? '원문 보기' : '상세 보기'} <FontAwesomeIcon icon={faExternalLinkAlt} className="w-3 h-3 ml-1" />
                 </Button>
             </div>
         )
@@ -243,7 +254,7 @@ function ResultCard({ category, item, onClick }: { category: string, item: any, 
         return (
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-2 mb-2">
-                    <Newspaper className="w-4 h-4 text-purple-500" />
+                    <FontAwesomeIcon icon={faNewspaper} className="w-4 h-4 text-purple-500" />
                     <span className="text-xs font-bold text-purple-600">AI 트렌드</span>
                 </div>
                 <h4 className="font-bold text-gray-900 mb-2">{item.title}</h4>
@@ -260,7 +271,7 @@ function ResultCard({ category, item, onClick }: { category: string, item: any, 
                         }} 
                         className="flex items-center text-indigo-600 hover:underline"
                     >
-                        원문 <ExternalLink className="w-3 h-3 ml-1" />
+                        원문 <FontAwesomeIcon icon={faExternalLinkAlt} className="w-3 h-3 ml-1" />
                     </button>
                 </div>
             </div>
@@ -277,7 +288,7 @@ function ResultCard({ category, item, onClick }: { category: string, item: any, 
             }}>
                 <div className="w-20 h-20 bg-gray-100 rounded-lg shrink-0 overflow-hidden">
                     <div className="w-full h-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-                        <Lightbulb className="w-8 h-8 text-amber-500/50" />
+                        <FontAwesomeIcon icon={faLightbulb} className="w-8 h-8 text-amber-500/50" />
                     </div>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -323,7 +334,7 @@ function ResultCard({ category, item, onClick }: { category: string, item: any, 
                      </div>
                  </div>
                  <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-400 hover:text-blue-600">
-                    <ExternalLink className="w-4 h-4" />
+                    <FontAwesomeIcon icon={faExternalLinkAlt} className="w-4 h-4" />
                  </Button>
              </div>
         </div>
