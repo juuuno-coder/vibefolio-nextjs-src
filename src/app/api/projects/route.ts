@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
         // profiles 테이블에서 우선 조회 (유저 인스턴스 당 1회 쿼리)
         const { data: usersData } = await targetClient
           .from('profiles')
-          .select('id, username, avatar_url, points, role')
+          .select('id, username, avatar_url, points, role, expertise')
           .in('id', userIds);
 
         const userMap = new Map();
@@ -110,6 +110,7 @@ export async function GET(request: NextRequest) {
             userMap.set(u.id, {
               username: u.username || 'Unknown',
               avatar_url: u.avatar_url || '/globe.svg',
+              expertise: u.expertise || null,
             });
           });
         }
@@ -126,22 +127,9 @@ export async function GET(request: NextRequest) {
              userMap.set(u.id, {
                username: u.nickname || 'Unknown',
                avatar_url: u.profile_image_url || '/globe.svg',
+               expertise: null,
              });
            });
-        }
-
-        const userMap = new Map();
-
-        if (usersData && usersData.length > 0) {
-          usersData.forEach((u: any) => {
-            userMap.set(u.id, {
-              username: u.username || u.nickname || u.name || u.display_name || u.email?.split('@')[0] || 'Unknown',
-              avatar_url: u.avatar_url || u.profile_image_url || u.profileImage || u.image || '/globe.svg',
-              expertise: u.expertise || null,
-            });
-          });
-        } else {
-          console.warn('[API] No user data found from any table. Users will show as Unknown.');
         }
 
         data.forEach((project: any) => {
