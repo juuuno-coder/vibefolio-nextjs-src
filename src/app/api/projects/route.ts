@@ -38,12 +38,20 @@ export async function GET(request: NextRequest) {
         } catch (e) {}
     }
 
+    // 분야/성장모드 필터
+    const field = searchParams.get('field');
+    const mode = searchParams.get('mode');
+
     // 작성자가 본인 글을 요청하는 경우가 아니면 visibility 필터링
     if (!(userId && authenticatedUser && authenticatedUser.id === userId)) {
        const nowISO = new Date().toISOString();
-       query = query
-         .eq('visibility', 'public')
-         .or(`scheduled_at.is.null,scheduled_at.lte.${nowISO}`);
+       if (mode === 'growth' || mode === 'audit') {
+          // 성장/심사 모드인 경우 public 또는 unlisted 모두 허용 (심사 필요하므로)
+          query = query.in('visibility', ['public', 'unlisted']);
+       } else {
+          query = query.eq('visibility', 'public');
+       }
+       query = query.or(`scheduled_at.is.null,scheduled_at.lte.${nowISO}`);
     }
 
     // 검색어 필터
@@ -57,12 +65,10 @@ export async function GET(request: NextRequest) {
       if (categoryId) query = query.eq('category_id', categoryId);
     }
 
-    // 분야/성장모드 필터
-    const field = searchParams.get('field');
-    const mode = searchParams.get('mode');
-
+    // (field and mode are already declared above)
     if (mode === 'growth') {
-       query = query.or(`is_growth_requested.eq.true,custom_data->>is_feedback_requested.eq.true`);
+       // is_growth_requested column might not exist, so we check custom_data
+       query = query.or(`custom_data->>is_growth_requested.eq.true,custom_data->>is_feedback_requested.eq.true`);
     } else if (mode === 'audit') {
        query = query.not('custom_data->audit_config', 'is', null);
     }

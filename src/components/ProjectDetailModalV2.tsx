@@ -235,7 +235,8 @@ export function ProjectDetailModalV2({
   // [Growth Mode] Feedback Settings Derived State
   const cData = project && typeof project.custom_data === 'string' ? JSON.parse(project.custom_data) : project?.custom_data;
   const isGrowthRequested = cData?.is_growth_requested === true || (project as any)?.is_growth_requested === true;
-  const isFeedbackRequested = cData?.is_feedback_requested === true;
+  // [Fix] Handle both legacy and new flags for showing feedback UI
+  const isFeedbackRequested = cData?.is_feedback_requested === true || isGrowthRequested === true;
   const isAuditMode = isGrowthRequested && cData?.audit_config;
   const isGrowthMode = isGrowthRequested && !cData?.audit_config;
   const allowMichelin = project?.allow_michelin_rating ?? true;
