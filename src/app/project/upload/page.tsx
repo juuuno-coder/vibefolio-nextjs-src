@@ -147,13 +147,7 @@ export default function ProjectUploadPage() {
   const handleSubmit = async () => {
     if (!title.trim()) return toast.error("제목을 입력해주세요.");
     if (isVersionMode && !versionName.trim()) return toast.error("버전 이름을 입력해주세요.");
-    
-    // 장르/분야 선택은 권장이지만 필수는 아님으로 완화 (또는 필수 유지하되 UI 안내 강화)
-    // 여기서는 사용자의 요청("잘 되던 UI에서 평가하기만 추가")을 반영하여 최대한 허용
-    if (selectedGenres.length === 0 && selectedFields.length === 0) {
-        // 기본값 설정 (기타)
-        // return toast.error("최소 1개의 장르 또는 분야를 선택해주세요."); 
-    }
+    // if (selectedGenres.length === 0 && selectedFields.length === 0) return toast.error("최소 1개의 장르 또는 분야를 선택해주세요.");
     
     setIsSubmitting(true);
     try {
@@ -194,9 +188,9 @@ export default function ProjectUploadPage() {
       const projectData = {
         title,
         content_text: content,
-        thumbnail_url: coverUrl, // Optional
+        thumbnail_url: coverUrl,
         visibility: showInDiscover ? 'public' : 'unlisted',
-        category_id: selectedGenres.length > 0 ? selectedGenres[0] : 1, // Default to 1 (Photo/Basic) if nothing selected
+        category_id: selectedGenres.length > 0 ? selectedGenres[0] : 1, // Default to 1 if only field selected
         audit_deadline: showInGrowth ? auditDeadline : null,
         custom_data: {
           genres: selectedGenres,
