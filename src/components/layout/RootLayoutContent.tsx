@@ -26,7 +26,7 @@ export function RootLayoutContent({
           {children}
         </Suspense>
       </main>
-      {!hideLayout && false && <Footer />}
+      {!hideLayout && <Footer />}
     </div>
   );
 }
