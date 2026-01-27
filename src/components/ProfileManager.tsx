@@ -11,7 +11,7 @@ import { supabase } from "@/lib/supabase/client";
 import { 
   Loader2, Globe, Github, Twitter, Instagram, 
   Settings, Check, X, Copy, ExternalLink, 
-  Eye, EyeOff, Terminal, Key, Plus, Trash2, RefreshCw, AlertTriangle
+  Eye, EyeOff, Terminal, Key, Plus, Trash2, RefreshCw, AlertTriangle, Camera
 } from "lucide-react";
 import { GENRE_CATEGORIES_WITH_ICONS, FIELD_CATEGORIES_WITH_ICONS } from "@/lib/ui-constants";
 
@@ -53,6 +53,10 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
   const [loadingKeys, setLoadingKeys] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
 
+  // Image State
+  const [profileImage, setProfileImage] = useState<string>("/globe.svg");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
   // Initialize
   useEffect(() => {
     if (user) {
@@ -64,6 +68,7 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
         twitter: user.social_links?.twitter || "",
         instagram: user.social_links?.instagram || "",
       });
+      setProfileImage(user.profile_image_url || "/globe.svg");
       setIsPublic(user.is_public !== false);
       
       // Load interests
@@ -159,6 +164,22 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
     }
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("이미지 크기는 5MB 이하여야 합니다.");
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSave = async () => {
     if (usernameAvailable === false) {
       toast.error("사용할 수 없는 아이디입니다.");
@@ -167,11 +188,33 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
 
     setLoading(true);
     try {
+      let imageUrl = profileImage;
+
+      // Upload new image if selected
+      if (imageFile) {
+         const fileExt = imageFile.name.split('.').pop();
+         const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+         const filePath = `${fileName}`;
+
+         const { error: uploadError } = await supabase.storage
+            .from('profiles')
+            .upload(filePath, imageFile);
+
+         if (uploadError) throw uploadError;
+
+         const { data: { publicUrl } } = supabase.storage
+            .from('profiles')
+            .getPublicUrl(filePath);
+            
+         imageUrl = publicUrl;
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({
           username: formData.username,
           bio: formData.bio,
+          profile_image_url: imageUrl,
           social_links: {
             website: formData.website,
             github: formData.github,
@@ -188,6 +231,7 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
       toast.success("설정이 저장되었습니다!");
       onUpdate();
     } catch (error: any) {
+      console.error(error);
       toast.error(error.message || "저장 실패");
     } finally {
       setLoading(false);
@@ -232,6 +276,39 @@ export function ProfileManager({ user, onUpdate, onDeleteClick }: ProfileManager
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Profile Image Upload */}
+                <div className="col-span-full flex flex-col items-center justify-center py-4">
+                     <div className="relative group cursor-pointer">
+                        <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white relative">
+                            <img 
+                                src={profileImage} 
+                                alt="Profile" 
+                                className="w-full h-full object-cover"
+                                onError={(e) => { (e.target as HTMLImageElement).src = '/globe.svg'; }}
+                            />
+                            <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10 w-full h-full">
+                                <div className="text-white text-xs font-bold flex flex-col items-center gap-1">
+                                    <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm">
+                                        <Camera className="w-5 h-5" />
+                                    </div>
+                                    <span>변경하기</span>
+                                </div>
+                                <input 
+                                    type="file" 
+                                    accept="image/*" 
+                                    onChange={handleImageUpload} 
+                                    className="hidden" 
+                                />
+                            </label>
+                        </div>
+                        {/* Camera Icon Badge */}
+                        <div className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-md border border-gray-100 text-gray-500 group-hover:text-green-600 transition-colors pointer-events-none z-20">
+                            <Camera className="w-5 h-5" />
+                        </div>
+                     </div>
+                     <p className="text-sm text-gray-400 mt-3 font-medium">프로필 이미지를 변경하려면 클릭하세요</p>
+                </div>
+
                 {/* 공개 여부 */}
                 <div className="col-span-full bg-gray-50 p-6 rounded-xl border border-gray-200 flex items-center justify-between">
                      <div className="flex items-center gap-4">
