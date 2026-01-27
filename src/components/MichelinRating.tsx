@@ -315,44 +315,46 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
       <div className="flex flex-col gap-12 items-center">
         {/* Radar Chart Visual with Recharts */}
         <div className="relative w-full aspect-square max-w-[400px] flex justify-center items-center py-8">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
-                <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-                <PolarAngleAxis 
-                  dataKey="subject" 
-                  tick={renderCustomPolarAngleAxis}
-                />
-                <PolarRadiusAxis 
-                  angle={30} 
-                  domain={[0, 5]} 
-                  tick={false} 
-                  axisLine={false} 
-                />
-                
-                {/* Community Average */}
-                {totalAvg > 0 && (
-                  <Radar
-                    name="Community"
-                    dataKey="B"
-                    stroke="#cbd5e1"
-                    strokeWidth={1}
-                    fill="#f1f5f9"
-                    fillOpacity={0.4}
-                  />
-                )}
-                
-                {/* My Score */}
-                <Radar
-                  name="My Score"
-                  dataKey="A"
-                  stroke={activeCategoryIndex !== undefined ? categories[activeCategoryIndex]?.color || "#f59e0b" : "#f59e0b"}
-                  strokeWidth={4}
-                  fill="#f59e0b"
-                  fillOpacity={0.15}
-                  animationBegin={0}
-                  animationDuration={500}
-                />
-              </RadarChart>
+            <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100}>
+                {categories.length > 0 ? (
+                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
+                    <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
+                    <PolarAngleAxis 
+                      dataKey="subject" 
+                      tick={renderCustomPolarAngleAxis}
+                    />
+                    <PolarRadiusAxis 
+                      angle={30} 
+                      domain={[0, 5]} 
+                      tick={false} 
+                      axisLine={false} 
+                    />
+                    
+                    {/* Community Average */}
+                    {totalAvg > 0 && (
+                      <Radar
+                        name="Community"
+                        dataKey="B"
+                        stroke="#cbd5e1"
+                        strokeWidth={1}
+                        fill="#f1f5f9"
+                        fillOpacity={0.4}
+                      />
+                    )}
+                    
+                    {/* My Score */}
+                    <Radar
+                      name="My Score"
+                      dataKey="A"
+                      stroke={activeCategoryIndex !== undefined ? categories[activeCategoryIndex]?.color || "#f59e0b" : "#f59e0b"}
+                      strokeWidth={4}
+                      fill="#f59e0b"
+                      fillOpacity={0.15}
+                      animationBegin={0}
+                      animationDuration={500}
+                    />
+                  </RadarChart>
+                ) : <div />}
             </ResponsiveContainer>
            
            {/* Center Score Badge */}

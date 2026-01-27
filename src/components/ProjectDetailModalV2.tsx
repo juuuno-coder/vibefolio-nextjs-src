@@ -9,6 +9,8 @@ import { useLikes } from "@/hooks/useLikes";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -232,9 +234,10 @@ export function ProjectDetailModalV2({
 
   // [Growth Mode] Feedback Settings Derived State
   const cData = project && typeof project.custom_data === 'string' ? JSON.parse(project.custom_data) : project?.custom_data;
+  const isGrowthRequested = cData?.is_growth_requested === true || (project as any)?.is_growth_requested === true;
   const isFeedbackRequested = cData?.is_feedback_requested === true;
-  const isAuditMode = (project as any)?.is_growth_requested === true && cData?.audit_config;
-  const isGrowthMode = (project as any)?.is_growth_requested === true && !cData?.audit_config;
+  const isAuditMode = isGrowthRequested && cData?.audit_config;
+  const isGrowthMode = isGrowthRequested && !cData?.audit_config;
   const allowMichelin = project?.allow_michelin_rating ?? true;
   const allowStickers = project?.allow_stickers ?? true;
 
@@ -714,6 +717,8 @@ export function ProjectDetailModalV2({
           className="!max-w-none !w-screen !h-[90vh] md:!h-[90vh] !p-0 !m-0 !gap-0 !top-auto !bottom-0 !left-1/2 !-translate-x-1/2 !translate-y-0 bg-transparent border-none shadow-none overflow-hidden flex items-end justify-center"
           showCloseButton={false}
         >
+          <DialogTitle className="sr-only">{project.title || "Project Detail"}</DialogTitle>
+          <DialogDescription className="sr-only">Project Details</DialogDescription>
           {/* 모바일 뷰 - 노트폴리오 스타일 */}
           <div className="md:hidden w-full h-full bg-white flex flex-col rounded-t-xl overflow-hidden">
             {/* X 버튼: 시인성 개선 (검정 반투명 배경) */}
@@ -1567,6 +1572,8 @@ export function ProjectDetailModalV2({
           className="!max-w-none !w-screen !h-screen !p-0 !m-0 !gap-0 bg-black/95 border-none shadow-none flex flex-col items-center justify-center outline-none z-[60]"
           showCloseButton={false}
         >
+          <DialogTitle className="sr-only">Image Lightbox</DialogTitle>
+          <DialogDescription className="sr-only">Full screen view</DialogDescription>
           {/* 닫기 버튼 */}
           <button 
             onClick={() => setLightboxOpen(false)}
