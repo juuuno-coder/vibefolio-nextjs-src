@@ -151,88 +151,67 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
          <Rocket className="w-32 h-32 text-gray-900" />
       </div>
       
-      <div className="relative z-10">
-        <div className={cn(
-          "grid gap-6",
-          options.length === 2 ? "md:grid-cols-2" : 
-          options.length === 4 ? "md:grid-cols-2 lg:grid-cols-4" :
-          options.length >= 5 ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-3"
-        )}>
-          {options.map((opt) => {
-            const Icon = opt.icon;
-            const isSelected = selected === opt.id;
-            
-            return (
-              <button
-                key={opt.id}
-                onClick={() => handleVote(opt.id)}
-                disabled={isVoting}
-                className={cn(
-                  "relative group flex flex-col items-center justify-center p-6 rounded-[2rem] border-2 transition-all duration-500 overflow-hidden min-h-[200px]",
-                  isSelected 
-                    ? cn(opt.activeBorder, "bg-gradient-to-br", opt.bgFrom, opt.bgTo, "shadow-2xl scale-[1.03] -translate-y-1") 
-                    : cn("bg-gray-50/50 hover:bg-white hover:shadow-xl hover:-translate-y-1 border-gray-100")
+      <div className="relative z-10 w-full space-y-3">
+        {options.map((opt) => {
+          const Icon = opt.icon;
+          const isSelected = selected === opt.id;
+          
+          return (
+            <button
+              key={opt.id}
+              onClick={() => handleVote(opt.id)}
+              disabled={isVoting}
+              className={cn(
+                "w-full group relative flex items-center p-3 rounded-xl border transition-all duration-300 overflow-hidden text-left",
+                isSelected 
+                  ? cn(opt.activeBorder, "bg-white shadow-md ring-1 ring-[inherit]") 
+                  : cn("bg-slate-50 hover:bg-white hover:shadow-sm border-transparent hover:border-slate-200")
+              )}
+            >
+              {/* Sticker / Icon Area */}
+              <div className={cn(
+                "w-12 h-12 rounded-lg flex items-center justify-center shrink-0 mr-4 transition-transform group-hover:scale-110",
+                isSelected ? "bg-white shadow-sm" : "bg-white/50"
+              )}>
+                {opt.image_url ? (
+                  <Image src={opt.image_url} alt={opt.label} width={48} height={48} className="object-cover rounded-md" />
+                ) : (
+                  <Icon className={cn("w-6 h-6", opt.color)} />
                 )}
-              >
+              </div>
+              
+              {/* Text Area */}
+              <div className="flex-1 min-w-0 pr-8">
                 <div className={cn(
-                  "w-20 h-20 rounded-2xl flex items-center justify-center mb-5 shadow-sm transition-all duration-500 group-hover:rotate-12 overflow-hidden",
-                  isSelected ? "bg-white scale-110 shadow-lg rotate-0" : "bg-white"
+                  "font-bold text-sm leading-tight transition-colors mb-0.5",
+                  isSelected ? "text-slate-900" : "text-slate-700"
                 )}>
-                  {opt.image_url ? (
-                    <Image src={opt.image_url} alt={opt.label} width={80} height={80} className="object-cover" />
-                  ) : (
-                    <Icon className={cn("w-10 h-10", opt.color)} />
-                  )}
+                  {opt.label}
                 </div>
-                
-                <span className={cn(
-                  "font-black text-[15px] leading-tight text-center transition-colors px-2 whitespace-pre-line",
-                  isSelected ? "text-gray-900" : "text-gray-700"
-                )}>{opt.label}</span>
-                
-                {isSelected && (
-                  <div className="absolute top-4 right-4 animate-in zoom-in duration-300">
-                    <div className={cn("px-2 py-0.5 rounded-full text-[9px] font-black tracking-widest text-white shadow-sm", opt.color?.includes('green') ? 'bg-green-500' : opt.color?.includes('amber') ? 'bg-amber-500' : 'bg-blue-500')}>
-                      선택됨
-                    </div>
+                <div className="text-[11px] text-slate-500 font-medium line-clamp-1 group-hover:line-clamp-none transition-all">
+                  {opt.desc || "상세 설명이 없습니다."}
+                </div>
+              </div>
+              
+              {/* Selection Indicator */}
+              {isSelected && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 animate-in zoom-in duration-200">
+                  <div className={cn("w-6 h-6 rounded-full flex items-center justify-center shadow-sm", opt.color?.includes('green') ? 'bg-green-500' : opt.color?.includes('amber') ? 'bg-amber-500' : 'bg-blue-500')}>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                   </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-        
-        {/* Recommendation Guide - Optimized to explain choosing criteria */}
-        <div className="mt-10 p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
-           <div className="flex items-center gap-4 w-full">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
-                 <Rocket className="w-5 h-5 text-indigo-500" />
-              </div>
-              <div className="space-y-1 flex-1">
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">피드백 가이드라인</p>
-                <div className="text-[13px] font-medium text-slate-600 leading-relaxed">
-                   {selectedOption ? (
-                      <div className="animate-in fade-in slide-in-from-left-2 duration-300">
-                         <span className={cn("font-black mr-2", selectedOption.color)}>{selectedOption.label}:</span>
-                         {selectedOption.desc || "상세 설명이 없습니다."}
-                      </div>
-                   ) : (
-                     <div className="grid gap-1">
-                        {projectData?.custom_data?.poll_desc ? (
-                          <p>{projectData.custom_data.poll_desc}</p>
-                        ) : (
-                          <>
-                             <p><span className="font-black text-green-600">합격:</span> 시장에 바로 출시 가능하며 즉시 사용 가치가 검증된 프로젝트</p>
-                             <p><span className="font-black text-amber-500">보류:</span> 기획은 좋으나 디테일이나 UI/UX 측면의 보완이 필요한 경우</p>
-                             <p><span className="font-black text-red-500">불합격:</span> 컨셉의 전면적인 재검토나 핵심 기능의 재정의가 필요한 상태</p>
-                          </>
-                        )}
-                     </div>
-                   )}
                 </div>
+              )}
+
+              {/* Count (Optional visual) */}
+              <div className={cn(
+                "absolute right-3 top-2 text-[10px] font-black text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity",
+                isSelected && "opacity-0"
+              )}>
+                 {/* {opt.count > 0 && `+${opt.count}`} */}
               </div>
-           </div>
-        </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
