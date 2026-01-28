@@ -16,9 +16,11 @@ interface FeedbackPollProps {
   };
   userVote?: 'launch' | 'research' | 'more' | null;
   isDemo?: boolean; // [New] Demo Mode
+  onVote?: (type: string | null) => void; 
+  offline?: boolean; 
 }
 
-export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = false }: FeedbackPollProps) {
+export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = false, onVote, offline = false }: FeedbackPollProps) {
   const [selected, setSelected] = useState<string | null>(userVote || null);
   const [counts, setCounts] = useState<Record<string, number>>(initialCounts || { launch: 0, research: 0, more: 0 });
   const [isVoting, setIsVoting] = useState(false);
@@ -77,8 +79,9 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
       });
     }
 
-    if (isDemo) {
-        toast.success(newVoteType ? "[데모] 소중한 의견 감사합니다! 🎉" : "[데모] 투표를 취소했습니다.");
+    if (isDemo || offline) {
+        if (!offline) toast.success(newVoteType ? "[데모] 소중한 의견 감사합니다! 🎉" : "[데모] 투표를 취소했습니다.");
+        if (onVote) onVote(newVoteType);
         return;
     }
 
@@ -103,6 +106,7 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
        
        if (!newVoteType) toast.info("투표를 취소했습니다.");
        else toast.success("참여해주셔서 감사합니다! 🎉");
+       if (onVote) onVote(newVoteType);
 
     } catch (error) {
       console.error(error);

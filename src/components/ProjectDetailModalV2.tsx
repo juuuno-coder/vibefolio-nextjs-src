@@ -232,6 +232,13 @@ export function ProjectDetailModalV2({
   const [isPinMode, setIsPinMode] = useState(false);
   const [tempPin, setTempPin] = useState<{x: number, y: number} | null>(null);
   const [activePinId, setActivePinId] = useState<string | null>(null);
+  
+  // [Unified Evaluation States]
+  const [evalScores, setEvalScores] = useState<Record<string, number>>({});
+  const [evalSticker, setEvalSticker] = useState<string | null>(null);
+  const [evalProposal, setEvalProposal] = useState("");
+  const [evalSubmitting, setEvalSubmitting] = useState(false);
+  const [evalSaved, setEvalSaved] = useState(false);
 
   // [Growth Mode] Feedback Settings Derived State
   const cData = getSafeCustomData(project);
@@ -593,6 +600,66 @@ export function ProjectDetailModalV2({
       console.error('팔로우 실패:', error);
     } finally {
       setLoading(prev => ({ ...prev, follow: false }));
+    }
+  };
+
+  const handleFinalEvaluationSubmit = async () => {
+    if (!isLoggedIn || !project) {
+        setLoginModalOpen(true);
+        return;
+    }
+    
+    setEvalSubmitting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+
+      const projectId = project.id;
+      const results = [];
+
+      // 1. Submit Michelin Rating (Scores + Detailed Comment)
+      if (allowMichelin && (Object.keys(evalScores).length > 0 || evalProposal.trim())) {
+        const ratingRes = await fetch(`/api/projects/${projectId}/rating`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            ...evalScores,
+            proposal: evalProposal
+          })
+        });
+        if (ratingRes.ok) results.push('rating_saved');
+      }
+
+      // 2. Submit Sticker Poll
+      if (allowStickers && evalSticker) {
+        const voteRes = await fetch(`/api/projects/${projectId}/vote`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ voteType: evalSticker })
+        });
+        if (voteRes.ok) results.push('vote_saved');
+      }
+
+      setEvalSaved(true);
+      toast.success("평가가 성공적으로 등록되었습니다! 🎉");
+      
+      // Refresh comments to show the system comment
+      const commentRes = await fetch(`/api/comments?projectId=${parseInt(project.id)}`);
+      const commentData = await commentRes.json();
+      if (commentData.comments) setComments(commentData.comments);
+      
+      await refreshUserProfile();
+    } catch (error) {
+      console.error("Evaluation submission failed", error);
+      toast.error("평가 등록 중 오류가 발생했습니다.");
+    } finally {
+      setEvalSubmitting(false);
     }
   };
 
@@ -1253,24 +1320,81 @@ export function ProjectDetailModalV2({
                 )}
 
                 <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-white custom-scrollbar">
-                   {/* [KEY CHANGE] Inject Evaluation UI within Comments Panel */}
-                   {isFeedbackRequested && ((project as any).allow_michelin_rating || (project as any).allow_stickers) && (
-                       <div className="mb-6 space-y-6">
-                           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                               <div className="flex items-center gap-2 mb-3">
-                                   <FontAwesomeIcon icon={faStar} className="text-amber-400" />
-                                   <h4 className="font-bold text-sm text-slate-800">평가 남기기</h4>
-                                   <span className="text-[10px] bg-white border border-slate-200 text-slate-500 px-2 py-0.5 rounded-full">비공개 가능</span>
+                   {/* [KEY CHANGE] Unified Evaluation Flow */}
+                   {isFeedbackRequested && (allowMichelin || allowStickers) && !evalSaved && (
+                       <div className="mb-6 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                           <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
+                               <div className="flex items-center justify-between mb-4">
+                                   <div className="flex items-center gap-2">
+                                       <FontAwesomeIcon icon={faStar} className="text-amber-400" />
+                                       <h4 className="font-bold text-sm text-slate-800 tracking-tight">상세 평가 리포트</h4>
+                                   </div>
+                                   <span className="text-[10px] font-bold bg-white border border-slate-200 text-slate-400 px-2 py-0.5 rounded-full uppercase tracking-tighter">Evaluation</span>
                                </div>
-                               {(project as any).allow_michelin_rating && <MichelinRating projectId={project.id} />}
+
+                               {/* Step 1: Michelin Rating */}
+                               {allowMichelin && (
+                                   <div className="mb-8">
+                                       <MichelinRating 
+                                           projectId={project.id} 
+                                           hideSubmit={true} 
+                                           onChange={(scores) => setEvalScores(scores)} 
+                                       />
+                                   </div>
+                               )}
+
+                               {/* Step 2: Sticker Poll */}
+                               {allowStickers && (
+                                   <div className="pt-6 border-t border-slate-200 border-dashed">
+                                       <h5 className="font-bold text-[11px] text-slate-400 mb-4 flex items-center gap-2 uppercase tracking-widest px-1">
+                                         <FontAwesomeIcon icon={faFaceSmile} className="text-blue-500" /> 간편 평판 선택
+                                       </h5>
+                                       <FeedbackPoll 
+                                           projectId={project.id} 
+                                           offline={true} 
+                                           onVote={(type) => setEvalSticker(type)} 
+                                       />
+                                   </div>
+                               )}
+
+                               {/* Step 3: Detailed Feedback (Proposal/Comment) */}
+                               <div className="mt-8 pt-6 border-t border-slate-200 border-dashed">
+                                   <h5 className="font-bold text-[11px] text-slate-400 mb-3 flex items-center gap-2 uppercase tracking-widest px-1">
+                                      <FontAwesomeIcon icon={faCommentRegular} /> 상세 피드백 & 제안
+                                   </h5>
+                                   <textarea 
+                                       value={evalProposal}
+                                       onChange={(e) => setEvalProposal(e.target.value)}
+                                       placeholder="작가의 성장을 돕는 구체적인 조언이나 응원의 메시지를 남겨주세요."
+                                       className="w-full min-h-[100px] p-4 text-[13px] bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900/5 transition-all resize-none leading-relaxed"
+                                   />
+                               </div>
+
+                               {/* Unified Submit Button */}
+                               <div className="mt-8">
+                                   <Button 
+                                       onClick={handleFinalEvaluationSubmit}
+                                       disabled={evalSubmitting || (!Object.keys(evalScores).length && !evalSticker && !evalProposal.trim())}
+                                       className="w-full h-14 bg-slate-900 hover:bg-black text-white rounded-2xl font-black text-base shadow-lg hover:translate-y-[-2px] transition-all"
+                                   >
+                                       {evalSubmitting ? (
+                                           <span className="flex items-center gap-2"><FontAwesomeIcon icon={faSpinner} className="animate-spin" /> 제출 중...</span>
+                                       ) : "평가 등록하기"}
+                                   </Button>
+                                   <p className="text-center text-[10px] text-slate-400 mt-3 font-medium">정성스러운 평가는 크리에이터에게 큰 힘이 됩니다. ❤️</p>
+                               </div>
                            </div>
-                           {(project as any).allow_stickers && (
-                               <div className="pt-4 border-t border-slate-100 border-dashed">
-                                   <h5 className="font-bold text-xs text-slate-500 mb-3 ml-1">간편 리액션</h5>
-                                   <FeedbackPoll projectId={project.id} />
-                               </div>
-                           )}
-                           <div className="h-1 bg-gray-100 rounded-full w-full my-4" />
+                           <div className="h-0.5 bg-slate-100 rounded-full w-full my-6" />
+                       </div>
+                   )}
+
+                   {evalSaved && (
+                       <div className="mb-6 p-6 bg-green-50 border border-green-100 rounded-2xl text-center animate-in zoom-in duration-300">
+                           <div className="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg shadow-green-200">
+                               <FontAwesomeIcon icon={faCheck} className="w-6 h-6" />
+                           </div>
+                           <h4 className="font-black text-green-900 mb-1">평가가 성공적으로 전달되었습니다!</h4>
+                           <p className="text-xs text-green-700 font-medium">소중한 피드백 감사합니다. 분석 리포트에 반영되었습니다.</p>
                        </div>
                    )}
 

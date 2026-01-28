@@ -22,6 +22,8 @@ interface MichelinRatingProps {
   ratingId?: string; 
   isDemo?: boolean; 
   activeCategoryIndex?: number; // [New] 단계별 노출을 위한 인덱스
+  onChange?: (scores: Record<string, number>) => void; // [New] External change handler
+  hideSubmit?: boolean; // [New] Hide internal submit button
 }
 
 const DEFAULT_CATEGORIES = [
@@ -35,7 +37,7 @@ const ICON_MAP: Record<string, any> = {
   Lightbulb, Zap, Target, TrendingUp, Star, Info, Sparkles, MessageSquareQuote
 };
 
-export function MichelinRating({ projectId, ratingId, isDemo = false, activeCategoryIndex }: MichelinRatingProps) {
+export function MichelinRating({ projectId, ratingId, isDemo = false, activeCategoryIndex, onChange, hideSubmit = false }: MichelinRatingProps) {
   const [projectData, setProjectData] = useState<any>(null);
   const [categories, setCategories] = useState<any[]>(DEFAULT_CATEGORIES);
   const [scores, setScores] = useState<Record<string, number>>({});
@@ -388,18 +390,21 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
                 </div>
                 
                 <div className="relative h-6 flex items-center">
-                   <input 
-                     type="range" 
-                     min="0" 
-                     max="5" 
-                     step="0.1" 
-                     value={scores[cat.id] || 0} 
-                     onChange={(e) => { 
-                       setScores(prev => ({ ...prev, [cat.id]: parseFloat(e.target.value) })); 
-                       setIsEditing(true); 
-                     }} 
-                     className="w-full h-2 bg-slate-100 rounded-full appearance-none cursor-pointer accent-amber-500 hover:accent-amber-600 transition-all z-10" 
-                   />
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="5" 
+                      step="0.1" 
+                      value={scores[cat.id] || 0} 
+                      onChange={(e) => { 
+                        const val = parseFloat(e.target.value);
+                        const newScores = { ...scores, [cat.id]: val };
+                        setScores(newScores); 
+                        setIsEditing(true); 
+                        if (onChange) onChange(newScores);
+                      }} 
+                      className="w-full h-2 bg-slate-100 rounded-full appearance-none cursor-pointer accent-amber-500 hover:accent-amber-600 transition-all z-10" 
+                    />
                    <div className="absolute inset-0 flex justify-between px-1 pointer-events-none">
                      {[0, 1, 2, 3, 4, 5].map(v => (
                        <div key={v} className="w-0.5 h-1 bg-slate-200 mt-5" />
@@ -415,21 +420,22 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
       <div className="mt-8 flex items-center justify-center gap-2 text-xs text-gray-400 font-medium italic">
          <Info className="w-4 h-4 flex-shrink-0" />
          <p>평가 완료 시 작가에게 분석 레포트 데이터가 전달됩니다. 각 항목을 신중히 조절하여 작품의 다면적인 가치를 기록해 주세요.</p>
-         <p>평가 완료 시 작가에게 분석 레포트 데이터가 전달됩니다. 각 항목을 신중히 조절하여 작품의 다면적인 가치를 기록해 주세요.</p>
       </div>
 
-      <div className="mt-8 flex justify-center">
-        <Button 
-          onClick={handleRatingSubmit} 
-          disabled={isSubmitting || !isEditing}
-          className={cn(
-            "w-full h-14 rounded-2xl font-black text-lg shadow-lg hover:scale-[1.02] transition-all",
-            saved && !isEditing ? "bg-green-600 hover:bg-green-700" : "bg-slate-900 hover:bg-slate-800"
-          )}
-        >
-          {isSubmitting ? "저장 중..." : (saved && !isEditing ? "평가 저장 완료" : "평가 등록하기")}
-        </Button>
-      </div>
+      {!hideSubmit && (
+        <div className="mt-8 flex justify-center">
+          <Button 
+            onClick={handleRatingSubmit} 
+            disabled={isSubmitting || !isEditing}
+            className={cn(
+              "w-full h-14 rounded-2xl font-black text-lg shadow-lg hover:scale-[1.02] transition-all",
+              saved && !isEditing ? "bg-green-600 hover:bg-green-700" : "bg-slate-900 hover:bg-slate-800"
+            )}
+          >
+            {isSubmitting ? "저장 중..." : (saved && !isEditing ? "평가 저장 완료" : "평가 등록하기")}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
