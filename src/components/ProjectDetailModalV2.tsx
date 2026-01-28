@@ -1014,311 +1014,328 @@ export function ProjectDetailModalV2({
             </div>
           </div>
 
-          {/* 데스크톱 뷰 - New Split Layout (Feedback Sidebar) */}
+          {/* 데스크톱 뷰 - Classic Layout Restored + Feedback Integrated in Panel */}
           <div 
-             className="hidden md:flex items-center justify-center w-full h-full p-8"
+             className="hidden md:flex h-full items-end justify-center gap-4 w-full"
              onClick={(e) => {
                if (e.target === e.currentTarget) onOpenChange(false);
              }}
           >
-             {/* Main Modal Container */}
-             <div className="bg-white w-[95vw] max-w-[1600px] h-[90vh] rounded-[2rem] shadow-2xl overflow-hidden flex relative ring-1 ring-slate-900/5 animate-in zoom-in-95 duration-300">
+            {/* 1. 메인 이미지/콘텐츠 영역 */}
+            <div className="w-[66vw] h-full bg-white flex flex-col relative rounded-t-xl overflow-hidden shadow-2xl transition-all duration-500">
+              
+              {/* 닫기 버튼 */}
+              <button
+                onClick={() => onOpenChange(false)}
+                className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors backdrop-blur-sm shadow-md"
+              >
+                <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
+              </button>
+
+              {/* 헤더 */}
+              <div className="p-6 bg-white border-b border-gray-100 flex-shrink-0 z-20">
+                <div className="flex flex-col gap-2 mb-3">
+                  <div className="flex gap-2">
+                    {isAuditMode ? (
+                      <span className="px-2.5 py-1 bg-orange-500 text-white text-[9px] font-black rounded-full shadow-lg shadow-orange-100 flex items-center gap-1.5 uppercase tracking-wider">
+                         <FontAwesomeIcon icon={faStar} className="w-2.5 h-2.5" /> 평가 진단 중
+                      </span>
+                    ) : isGrowthMode ? (
+                      <span className="px-2.5 py-1 bg-green-500 text-white text-[9px] font-black rounded-full shadow-lg shadow-green-100 flex items-center gap-1.5 uppercase tracking-wider">
+                         <FontAwesomeIcon icon={faRocket} className="w-2.5 h-2.5" /> 성장 피드백 중
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 bg-gray-100 text-gray-500 text-[9px] font-black rounded-full flex items-center gap-1.5 uppercase tracking-wider border border-gray-200">
+                         <FontAwesomeIcon icon={faFolder} className="w-2.5 h-2.5" /> 일반 전시
+                      </span>
+                    )}
+                  </div>
+                  <h1 className="text-2xl font-bold text-gray-900 truncate">
+                    {project.title || stripHtml(project.description || project.alt_description || "제목 없음")}
+                  </h1>
+                </div>
+
+                {isAuthor && !isAuditMode && !isGrowthMode && (
+                   <div className="mb-4 p-3 bg-orange-50 rounded-xl border border-orange-100 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-orange-200 text-orange-600 flex items-center justify-center text-xs">🚀</div>
+                        <div>
+                          <p className="text-[11px] font-bold text-orange-900">이 작품으로 피드백을 받아볼까요?</p>
+                          <p className="text-[9px] text-orange-600">성장 섹션에 노출되어 조언을 얻을 수 있습니다.</p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => router.push(`/project/upload?mode=audit&edit=${project?.id}`)}
+                        size="sm" 
+                        className="bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-full text-[10px] h-7"
+                      >
+                         전환하기
+                      </Button>
+                   </div>
+                )}
                 
-                {/* Close Button */}
-                <button
-                  onClick={() => onOpenChange(false)}
-                  className="absolute top-6 right-6 z-50 w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors shadow-sm"
-                >
-                  <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
-                </button>
-
-                {/* LEFT PANEL: Content (Scrollable) */}
-                <div className="flex-1 h-full bg-slate-50 flex flex-col min-w-0">
-                   <div className="flex-1 overflow-y-auto custom-scrollbar p-10 flex flex-col items-center">
-                      {/* Project Meta Header */}
-                      <div className="w-full max-w-5xl mb-8">
-                          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight mb-3">
-                            {project.title || stripHtml(project.description || project.alt_description || "제목 없음")}
-                          </h1>
-                          <div className="flex items-center gap-4 text-xs font-bold text-slate-400 uppercase tracking-wide">
-                              <span className="flex items-center gap-1.5 px-2.5 py-1 bg-white rounded-full border border-slate-200 shadow-sm text-slate-600">
-                                <FontAwesomeIcon icon={faUser} /> {project.user.username}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <FontAwesomeIcon icon={faClock} /> {dayjs(project.created_at).fromNow()}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <FontAwesomeIcon icon={faEye} /> {addCommas(viewsCount)}
-                              </span>
-                          </div>
-                      </div>
-
-                      {/* Content Render */}
-                      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-sm p-2 min-h-[500px]">
-                        {project.rendering_type === 'rich_text' ? (
-                            <div 
-                              className="prose prose-lg prose-h1:text-3xl max-w-none w-full bg-white p-8 whitespace-pre-wrap"
-                              dangerouslySetInnerHTML={{ __html: unescapeHtml(project?.description || '') }}
-                            />
-                        ) : (
-                            <div 
-                              className={`relative w-full h-full flex flex-col gap-4 ${isPinMode ? 'cursor-crosshair' : 'cursor-zoom-in'}`}
-                              onClick={(e) => {
-                                  if (isPinMode) {
-                                      const rect = e.currentTarget.getBoundingClientRect();
-                                      const x = ((e.clientX - rect.left) / rect.width) * 100;
-                                      const y = ((e.clientY - rect.top) / rect.height) * 100;
-                                      setTempPin({ x, y });
-                                      // Sidebar의 comments panel이 열리도록 트리거
-                                      setCommentsPanelOpen(true);
-                                  } else {
-                                      setLightboxOpen(true);
-                                  }
-                              }}
-                            >
-                                <OptimizedImage
-                                    src={project.urls.full}
-                                    alt={project.alt_description || "Project Image"}
-                                    className="w-full h-auto object-contain rounded-xl"
-                                    width={1600}
-                                    height={1200}
-                                    priority={true}
-                                />
-                                
-                                {/* Existing Pins */}
-                                {comments.map((comment) => {
-                                    if (comment.location_x != null && comment.location_y != null) {
-                                        return (
-                                            <div
-                                                key={`pin-${comment.comment_id}`}
-                                                className="absolute w-8 h-8 -ml-4 -mt-8 z-10 group"
-                                                style={{ left: `${comment.location_x}%`, top: `${comment.location_y}%` }}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setActivePinId(comment.comment_id);
-                                                    setCommentsPanelOpen(true);
-                                                }}
-                                            >
-                                                <div className={`w-full h-full flex items-center justify-center drop-shadow-md transition-transform hover:scale-110 cursor-pointer ${activePinId === comment.comment_id ? 'text-green-600 scale-125' : 'text-red-500'}`}>
-                                                    <FontAwesomeIcon icon={faMapPin} className="w-full h-full filter drop-shadow-sm" />
-                                                </div>
-                                            </div>
-                                        );
-                                    }
-                                    return null;
-                                })}
-                                
-                                {/* Temp Pin */}
-                                {tempPin && (
-                                    <div
-                                        className="absolute w-8 h-8 -ml-4 -mt-8 z-20 animate-bounce"
-                                        style={{ left: `${tempPin.x}%`, top: `${tempPin.y}%` }}
-                                    >
-                                        <FontAwesomeIcon icon={faMapPin} className="w-full h-full text-green-500 drop-shadow-lg" />
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                      </div>
-                      
-                      {/* Description Text (if not rich text) */}
-                      {project.rendering_type !== 'rich_text' && project.description && (
-                         <div className="mt-8 max-w-4xl w-full whitespace-pre-wrap leading-relaxed text-slate-600 p-6 bg-white rounded-2xl border border-slate-100 italic">
-                            {stripHtml(project.description)}
-                         </div>
-                      )}
-
-                      {/* Bottom Space */}
-                      <div className="h-20" />
-                   </div>
-                </div>
-
-                {/* RIGHT PANEL: Sidebar (Interaction) */}
-                <div className="w-[450px] h-full bg-white border-l border-slate-100 flex flex-col shrink-0 relative z-20 shadow-xl">
-                   
-                   {/* 1. Sidebar Header: Author Profile */}
-                   <div className="p-6 border-b border-slate-100 flex items-center gap-4 bg-white z-10">
-                      <Avatar className="w-12 h-12 border border-slate-200 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.location.href=`/creator/${project.user.username}`}>
-                        <AvatarImage src={project.user.profile_image.large} />
-                        <AvatarFallback><FontAwesomeIcon icon={faUser} /></AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                             <h3 className="font-bold text-slate-900 truncate hover:underline cursor-pointer" onClick={() => window.location.href=`/creator/${project.user.username}`}>
-                                {project.user.username}
-                             </h3>
-                             {isAuthor && <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-bold">ME</span>}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10 bg-white border border-gray-100">
+                      <AvatarImage src={project.user.profile_image.large} />
+                      <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-4 h-4" /></AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-sm">{project.user.username}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[10px] text-gray-500">{dayjs(project.created_at).format('YYYY.MM.DD')}</p>
+                        <span className="text-[10px] text-gray-300">|</span>
+                        <div className="flex items-center gap-3 text-[10px] text-gray-500 font-medium">
+                          <span className="flex items-center gap-1"><FontAwesomeIcon icon={faEye} className="w-3 h-3 opacity-60" /> {viewsCount}</span>
+                          <span className="flex items-center gap-1"><FontAwesomeIcon icon={faHeart} className="w-3 h-3 opacity-60 text-red-400" /> {likesCount}</span>
+                          <span className="flex items-center gap-1"><FontAwesomeIcon icon={faComment} className="w-3 h-3 opacity-60" /> {comments.length}</span>
                         </div>
-                        <p className="text-xs text-slate-500 line-clamp-1">{authorBio}</p>
                       </div>
-                      <div className="ml-auto">
-                        {!isAuthor && (
-                           <Button 
-                             size="sm" 
-                             variant={following ? "outline" : "default"} 
-                             onClick={handleFollow} 
-                             className={`h-8 text-xs rounded-full font-bold px-4 ${following ? 'border-slate-200 text-slate-500' : 'bg-slate-900 text-white'}`}
-                           >
-                              {following ? "Following" : "Follow"}
-                           </Button>
-                        )}
-                      </div>
-                   </div>
+                    </div>
+                  </div>
+                  {versions.length > 0 && (
+                    <Button onClick={() => setHistoryModalOpen(true)} variant="outline" size="sm" className="text-xs gap-2">
+                      <FontAwesomeIcon icon={faClock} className="w-3 h-3" /> 히스토리 ({versions.length})
+                    </Button>
+                  )}
+                </div>
+              </div>
 
-                   {/* 2. Sidebar Scrollable Content */}
-                   <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-white">
-                      
-                      {/* [SECTION] Evaluation UI */}
-                      {isFeedbackRequested && ((project as any).allow_michelin_rating || (project as any).allow_stickers) && (
-                         <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-                            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                               <h4 className="font-black text-lg text-slate-900 flex items-center gap-2 tracking-tight">
-                                  <FontAwesomeIcon icon={faStar} className="text-amber-400" />
-                                  평가 및 피드백
-                               </h4>
-                               <span className="text-[10px] font-bold bg-green-50 text-green-600 px-2 py-0.5 rounded-full uppercase tracking-wide border border-green-100">Active</span>
-                            </div>
-                            
-                            {/* Michelin Rating Component */}
-                            {(project as any).allow_michelin_rating && (
-                                <div className="bg-slate-50 rounded-2xl p-1 border border-slate-100">
-                                   <MichelinRating projectId={project.id} />
-                                </div>
-                            )}
-
-                            {/* Sticker Poll Component */}
-                            {(project as any).allow_stickers && (
-                                <div className="pt-4 border-t border-slate-100 border-dashed">
-                                   <h5 className="font-bold text-sm text-slate-900 mb-3 flex items-center gap-2">
-                                     <FontAwesomeIcon icon={faFaceSmile} className="text-blue-500" /> 스티커 반응
-                                   </h5>
-                                   <FeedbackPoll projectId={project.id} />
-                                </div>
-                            )}
-                         </div>
-                      )}
-
-                      {/* [SECTION] Comments & Activity */}
-                      <div className="space-y-4 pt-4">
-                         <div className="flex items-center justify-between">
-                            <h4 className="font-bold text-slate-900 flex items-center gap-2 text-sm">
-                               <FontAwesomeIcon icon={faComment} className="text-slate-400" />
-                               댓글 및 활동 ({comments.length})
-                            </h4>
-                         </div>
-                         
-                         <div className="space-y-6">
-                            {comments.length > 0 ? (
-                                comments.map((comment, idx) => (
-                                    <CommentItem 
-                                        key={comment.comment_id + '_sb_' + idx} 
-                                        comment={comment} 
-                                        onReply={(id, username) => setReplyingTo({ id, username })} 
-                                        onDelete={handleDeleteComment} 
-                                        currentUserId={currentUserId} 
-                                        projectOwnerId={project.userId} 
-                                        depth={0} 
-                                    />
-                                ))
-                            ) : (
-                                <div className="py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                    <p className="text-xs text-slate-400">아직 작성된 댓글이 없습니다.<br/>첫 번째 의견을 남겨보세요!</p>
-                                </div>
-                            )}
-                         </div>
-                      </div>
-                   </div>
-
-                   {/* 3. Sidebar Bottom (Input & Actions) */}
-                   <div className="p-4 border-t border-slate-100 bg-white z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.02)]">
-                      {isLoggedIn ? (
-                        <div className="space-y-3">
-                           {replyingTo && (
-                                <div className="flex items-center justify-between text-xs text-green-600 px-1 bg-green-50 py-1 rounded-lg">
-                                  <span>@{replyingTo.username}에게 답글 작성</span>
-                                  <button onClick={() => setReplyingTo(null)} className="hover:underline font-bold">취소</button>
-                                </div>
-                           )}
-                           <div className="flex gap-2 relative">
-                               <textarea 
-                                 value={newComment} 
-                                 onChange={(e) => setNewComment(e.target.value)} 
-                                 placeholder={isPinMode ? "핀 위치에 댓글 남기기..." : "댓글을 입력하세요..."}
-                                 className="flex-1 px-4 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-slate-900 focus:bg-white resize-none h-[48px] leading-tight transition-all"
-                                 onKeyDown={(e) => {
-                                    if(e.key === 'Enter' && !e.shiftKey) {
-                                       e.preventDefault();
-                                       handleCommentSubmit();
-                                    }
-                                 }}
-                               />
-                               <Button 
-                                 onClick={handleCommentSubmit} 
-                                 disabled={loading.comment || !newComment.trim()}
-                                 className="h-[48px] w-[48px] rounded-xl bg-slate-900 hover:bg-black text-white shrink-0 flex items-center justify-center"
-                               >
-                                 <FontAwesomeIcon icon={faPaperPlane} className="w-4 h-4" />
-                               </Button>
-                           </div>
-                           <div className="flex items-center justify-between">
-                               <div className="flex gap-2">
-                                  <button 
-                                     onClick={() => setNewCommentSecret(!newCommentSecret)}
-                                     className={`p-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 ${newCommentSecret ? 'bg-amber-100 text-amber-600' : 'text-slate-400 hover:bg-slate-100'}`}
-                                     title="비밀 댓글"
+              {/* 본문 스크롤 영역 */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar bg-white p-8 flex flex-col items-center">
+                  {project.rendering_type === 'rich_text' ? (
+                    <div 
+                      className="prose prose-lg prose-h1:text-3xl max-w-4xl w-full bg-white p-4 whitespace-pre-wrap"
+                      dangerouslySetInnerHTML={{ __html: unescapeHtml(project?.description || '') }}
+                    />
+                  ) : (
+                    <div 
+                       className={`relative inline-block w-full max-w-5xl ${isPinMode ? 'cursor-crosshair' : 'cursor-zoom-in'}`}
+                       onClick={(e) => {
+                          if (isPinMode) {
+                             const rect = e.currentTarget.getBoundingClientRect();
+                             const x = ((e.clientX - rect.left) / rect.width) * 100;
+                             const y = ((e.clientY - rect.top) / rect.height) * 100;
+                             setTempPin({ x, y });
+                             setCommentsPanelOpen(true);
+                          } else {
+                             setLightboxOpen(true);
+                          }
+                       }}
+                    >
+                      <OptimizedImage
+                        src={project.urls.full}
+                        alt={project.alt_description || "Project Image"}
+                        className="w-full h-auto object-contain shadow-sm rounded-lg"
+                        width={1600}
+                        height={1200}
+                        priority={true}
+                      />
+                      {/* Pins Layer */}
+                      {comments.map((comment) => {
+                          if (comment.location_x != null && comment.location_y != null) {
+                              return (
+                                  <div
+                                      key={`pin-${comment.comment_id}`}
+                                      className="absolute w-8 h-8 -ml-4 -mt-8 z-10 group"
+                                      style={{ left: `${comment.location_x}%`, top: `${comment.location_y}%` }}
+                                      onClick={(e) => {
+                                          e.stopPropagation();
+                                          setActivePinId(comment.comment_id);
+                                          setCommentsPanelOpen(true);
+                                      }}
                                   >
-                                     <FontAwesomeIcon icon={newCommentSecret ? faLock : faUnlock} />
-                                  </button>
-                                  {(project as any).allow_stickers && (
-                                     <button 
-                                      onClick={() => setIsPinMode(!isPinMode)}
-                                      className={`p-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 ${isPinMode ? 'bg-green-100 text-green-600' : 'text-slate-400 hover:bg-slate-100'}`}
-                                      title="이미지에 핀 찍기"
-                                     >
-                                         <FontAwesomeIcon icon={faMapPin} /> 핀 모드
-                                     </button>
-                                  )}
-                               </div>
-                               <div className="flex gap-2">
-                                   <Button 
-                                     variant="ghost" 
-                                     size="icon" 
-                                     onClick={toggleLike}
-                                     className={`rounded-full w-9 h-9 ${isLiked ? 'text-red-500 bg-red-50' : 'text-slate-400 hover:bg-slate-100'}`}
-                                   >
-                                      <FontAwesomeIcon icon={isLiked ? faHeart : faHeartRegular} />
-                                   </Button>
-                                   <Button 
-                                     variant="ghost" 
-                                     size="icon" 
-                                     onClick={handleCollectionClick}
-                                     className={`rounded-full w-9 h-9 ${bookmarked ? 'text-blue-500 bg-blue-50' : 'text-slate-400 hover:bg-slate-100'}`}
-                                   >
-                                      <FontAwesomeIcon icon={bookmarked ? faBookmark : faBookmarkRegular} />
-                                   </Button>
-                                   <Button 
-                                     variant="ghost" 
-                                     size="icon"
-                                     onClick={() => setShareModalOpen(true)}
-                                     className="rounded-full w-9 h-9 text-slate-400 hover:bg-slate-100"
-                                   >
-                                      <FontAwesomeIcon icon={faShareNodes} />
-                                   </Button>
-                               </div>
-                           </div>
-                        </div>
-                      ) : (
-                         <div 
-                           className="bg-slate-50 border border-dashed border-slate-200 rounded-xl p-4 text-center cursor-pointer hover:bg-slate-100 transition-colors"
-                           onClick={() => setLoginModalOpen(true)}
-                         >
-                            <p className="text-xs font-bold text-slate-500">로그인하고 의견을 남겨보세요 👋</p>
-                         </div>
+                                      <div className={`w-full h-full flex items-center justify-center drop-shadow-md transition-transform hover:scale-110 cursor-pointer ${activePinId === comment.comment_id ? 'text-green-600 scale-125' : 'text-red-500'}`}>
+                                          <FontAwesomeIcon icon={faMapPin} className="w-full h-full filter drop-shadow-sm" />
+                                      </div>
+                                  </div>
+                              );
+                          }
+                          return null;
+                      })}
+                      {tempPin && (
+                           <div className="absolute w-8 h-8 -ml-4 -mt-8 z-20 animate-bounce" style={{ left: `${tempPin.x}%`, top: `${tempPin.y}%` }}>
+                              <FontAwesomeIcon icon={faMapPin} className="w-full h-full text-green-500 drop-shadow-lg" />
+                          </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* 설명 텍스트 (Rich Text 아닐 경우) */}
+                  {project.rendering_type !== 'rich_text' && project.description && (
+                     <div className="max-w-3xl w-full mt-10 text-lg text-gray-700 leading-8 whitespace-pre-wrap break-keep">
+                        {stripHtml(project.description)}
+                     </div>
+                  )}
+                  
+                  <div className="h-20" />
+              </div>
+            </div>
+
+            {/* 2. 액션바 (우측 사이드바) - Restore */}
+            <div className="h-full bg-transparent flex flex-col items-center py-8 gap-4">
+              <button 
+                onClick={() => { window.location.href = `/creator/${project.user.username}`; }} 
+                className="flex flex-col items-center gap-1 group cursor-pointer mb-2"
+              >
+                <Avatar className={`w-12 h-12 border-2 bg-white transition-all shadow-md group-hover:scale-105 ${following ? 'border-green-600' : 'border-white group-hover:border-green-600'}`}>
+                  <AvatarImage src={project.user.profile_image.large} />
+                  <AvatarFallback className="bg-white"><FontAwesomeIcon icon={faUser} className="w-4 h-4" /></AvatarFallback>
+                </Avatar>
+              </button>
+
+              {isLoggedIn && project.userId && currentUserId !== project.userId && (
+                <div className="flex flex-col items-center mb-2">
+                  <Button onClick={handleFollow} disabled={loading.follow} size="sm" className={`text-xs px-3 py-1 h-8 rounded-full transition-all shadow-md ${following ? 'bg-white text-gray-700 border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200' : 'bg-green-600 text-white hover:bg-green-700 hover:scale-105'}`}>
+                    {loading.follow ? '...' : (following ? '팔로잉' : '팔로우')}
+                  </Button>
+                </div>
+              )}
+
+              {/* Proposal to Author */}
+              {String(currentUserId) !== String(project.userId) && (
+                <div className="relative group flex items-center mt-2">
+                   <button 
+                    onClick={() => { 
+                      if (!isLoggedIn) { setLoginModalOpen(true); return; } 
+                      setProposalModalOpen(true); 
+                    }} 
+                    className="w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 bg-white text-gray-700 hover:bg-green-600 hover:text-white"
+                  >
+                    <FontAwesomeIcon icon={faPaperPlane} className="w-5 h-5" />
+                  </button>
+                  <div className="absolute right-full mr-3 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-md">
+                     제안하기
+                  </div>
+                </div>
+              )}
+
+              <button onClick={() => toggleLike()} disabled={!isLoggedIn} className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 ${isLiked ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 hover:bg-red-50'}`}>
+                <FontAwesomeIcon icon={isLiked ? faHeart : faHeartRegular} className="w-5 h-5" />
+              </button>
+
+              <button onClick={handleCollectionClick} className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 ${bookmarked ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-blue-50'}`}>
+                <FontAwesomeIcon icon={bookmarked ? faBookmark : faBookmarkRegular} className="w-5 h-5" />
+              </button>
+
+              <button onClick={() => setShareModalOpen(true)} className="w-12 h-12 rounded-full bg-white text-gray-700 border border-gray-100 shadow-lg hover:bg-green-600 hover:text-white hover:scale-105 flex items-center justify-center transition-all">
+                <FontAwesomeIcon icon={faShareNodes} className="w-5 h-5" />
+              </button>
+
+              <button onClick={() => setCommentsPanelOpen(!commentsPanelOpen)} className={`w-12 h-12 rounded-full border border-gray-100 shadow-lg flex items-center justify-center transition-all hover:scale-105 ${commentsPanelOpen ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-700 hover:bg-green-600 hover:text-white'}`}>
+                <FontAwesomeIcon icon={faComment} className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* 3. 댓글 패널 (사이드바) - Restore & Integrate Evaluation */}
+            {commentsPanelOpen && (
+              <div className="w-[28vw] max-w-[450px] h-full bg-white flex flex-col border-l border-gray-200 ml-4 rounded-t-xl overflow-hidden shadow-xl animate-in slide-in-from-right duration-500">
+                <div className={`p-4 border-b flex items-center justify-between z-10 ${isFeedbackRequested ? 'bg-green-50/50 border-green-100' : 'bg-white border-gray-100'}`}>
+                  <h3 className={`font-bold text-sm ${isFeedbackRequested ? 'text-green-800 flex items-center gap-2' : ''}`}>
+                    {isFeedbackRequested ? <><FontAwesomeIcon icon={faRocket} /> 피드백 & 상세리뷰</> : `활동 및 댓글 (${comments.length})`}
+                  </h3>
+                  <button onClick={() => setCommentsPanelOpen(false)} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
+                    <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* 작가의 한마디 */}
+                {project.summary && (
+                  <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                     <div className="flex items-start gap-2">
+                        <FontAwesomeIcon icon={faUser} className="w-3 h-3 mt-1 text-gray-400" />
+                        <div>
+                           <p className="text-xs font-bold text-gray-700 mb-0.5">작가의 한마디</p>
+                           <p className="text-sm text-gray-800 leading-relaxed text-pretty">{project.summary}</p>
+                        </div>
+                     </div>
+                  </div>
+                )}
+
+                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-white custom-scrollbar">
+                   {/* [KEY CHANGE] Inject Evaluation UI within Comments Panel */}
+                   {isFeedbackRequested && ((project as any).allow_michelin_rating || (project as any).allow_stickers) && (
+                       <div className="mb-6 space-y-6">
+                           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                               <div className="flex items-center gap-2 mb-3">
+                                   <FontAwesomeIcon icon={faStar} className="text-amber-400" />
+                                   <h4 className="font-bold text-sm text-slate-800">평가 남기기</h4>
+                                   <span className="text-[10px] bg-white border border-slate-200 text-slate-500 px-2 py-0.5 rounded-full">비공개 가능</span>
+                               </div>
+                               {(project as any).allow_michelin_rating && <MichelinRating projectId={project.id} />}
+                           </div>
+                           {(project as any).allow_stickers && (
+                               <div className="pt-4 border-t border-slate-100 border-dashed">
+                                   <h5 className="font-bold text-xs text-slate-500 mb-3 ml-1">간편 리액션</h5>
+                                   <FeedbackPoll projectId={project.id} />
+                               </div>
+                           )}
+                           <div className="h-1 bg-gray-100 rounded-full w-full my-4" />
+                       </div>
+                   )}
+
+                   {/* 댓글 리스트 */}
+                   <div className="space-y-4">
+                       <div className="flex items-center gap-2 mb-2 text-[10px] font-black text-gray-300 px-1 uppercase tracking-widest">
+                           Latest Discussions
+                       </div>
+                       {comments.length > 0 ? (
+                           comments.map((comment) => (
+                              <CommentItem key={comment.id + 'panel'} comment={comment} onReply={(id, username) => setReplyingTo({ id, username })} onDelete={handleDeleteComment} currentUserId={currentUserId} projectOwnerId={project.userId} depth={0} />
+                           ))
+                       ) : (
+                           <div className="text-center py-6 text-gray-400 text-xs">
+                              <p>작성된 댓글이 없습니다.<br/>첫 번째 의견을 남겨주세요!</p>
+                           </div>
+                       )}
                    </div>
                 </div>
 
-             </div>
+                {/* 댓글 입력창 */}
+                {isLoggedIn ? (
+                  <div className="p-3 border-t border-gray-100 bg-white">
+                     {replyingTo && (
+                       <div className="flex items-center justify-between text-xs text-green-600 mb-2 px-1">
+                         <span>@{replyingTo.username}님에게 답글 작성</span>
+                         <button onClick={() => setReplyingTo(null)} className="hover:underline">취소</button>
+                       </div>
+                     )}
+                     <div className="flex gap-2">
+                       <textarea 
+                         value={newComment} 
+                         onChange={(e) => setNewComment(e.target.value)} 
+                         onKeyDown={(e) => {
+                            if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCommentSubmit(); }
+                         }}
+                         placeholder={isPinMode ? "핀 위치에 댓글 남기기..." : "댓글을 입력하세요..."}
+                         className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-green-500 resize-none h-[42px] leading-tight" 
+                       />
+                       <Button onClick={handleCommentSubmit} size="sm" disabled={loading.comment || !newComment.trim()} className="bg-green-600 hover:bg-green-700 text-white h-[42px] px-4 rounded-lg">
+                         <FontAwesomeIcon icon={faPaperPlane} className="w-3 h-3" />
+                       </Button>
+                     </div>
+                     <div className="flex items-center justify-between mt-2 px-1">
+                        <div className="flex gap-2">
+                            {(project as any).allow_stickers && (
+                                <button onClick={() => setIsPinMode(!isPinMode)} className={`text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 ${isPinMode ? 'text-green-600 bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
+                                    <FontAwesomeIcon icon={faMapPin} /> 핀 모드
+                                </button>
+                            )}
+                        </div>
+                        {(project as any).allow_secret_comments && (
+                          <button onClick={() => setNewCommentSecret(!newCommentSecret)} className={`flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded transition-colors ${newCommentSecret ? 'text-amber-600 bg-amber-50' : 'text-gray-400 hover:text-gray-600'}`}>
+                            <FontAwesomeIcon icon={newCommentSecret ? faLock : faUnlock} /> {newCommentSecret ? "비밀글" : "공개"}
+                          </button>
+                        )}
+                     </div>
+                  </div>
+                ) : (
+                   <div className="p-4 border-t border-gray-100 bg-gray-50 text-center cursor-pointer" onClick={() => setLoginModalOpen(true)}> 
+                      <p className="text-xs text-green-600 font-bold hover:underline">로그인 후 활동에 참여해보세요 👋</p>
+                   </div>
+                )}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
