@@ -137,27 +137,31 @@ export function FeedbackReportModal({ open, onOpenChange, projectTitle, projectI
             <div className="p-8 md:p-12 bg-white grid grid-cols-1 md:grid-cols-2 gap-10">
                
                {/* 1. Michelin Radar Chart */}
-               <div className="space-y-6 md:col-span-2">
+                <div className="space-y-6 md:col-span-2">
                   <h3 className="font-black text-slate-900 flex items-center gap-2 text-2xl tracking-tighter">
                      <FontAwesomeIcon icon={faStar} className="text-amber-500" /> 평가단 정밀 분석 리포트
                   </h3>
                   <div className="bg-slate-50 p-8 rounded-[3rem] grid grid-cols-1 lg:grid-cols-2 gap-12 items-center border border-slate-100 shadow-inner">
-                     <div className="h-80 w-full bg-white rounded-[2.5rem] p-4 shadow-sm border border-slate-100">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                                <PolarGrid stroke="#f1f5f9" />
-                                <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 13, fontWeight: 900 }} />
-                                <PolarRadiusAxis angle={30} domain={[0, 5]} tick={false} axisLine={false} />
-                                <Radar
-                                    name="Score"
-                                    dataKey="A"
-                                    stroke="#0f172a"
-                                    strokeWidth={3}
-                                    fill="#6366f1"
-                                    fillOpacity={0.2}
-                                />
-                            </RadarChart>
-                        </ResponsiveContainer>
+                     <div className="h-80 w-full bg-white rounded-[2.5rem] p-4 shadow-sm border border-slate-100 flex items-center justify-center">
+                        {open && radarData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%" minHeight={100}>
+                                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                                    <PolarGrid stroke="#f1f5f9" />
+                                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 13, fontWeight: 900 }} />
+                                    <PolarRadiusAxis angle={30} domain={[0, 5]} tick={false} axisLine={false} />
+                                    <Radar
+                                        name="Score"
+                                        dataKey="A"
+                                        stroke="#0f172a"
+                                        strokeWidth={3}
+                                        fill="#6366f1"
+                                        fillOpacity={0.2}
+                                    />
+                                </RadarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="w-10 h-10 border-4 border-slate-100 border-t-indigo-500 rounded-full animate-spin" />
+                        )}
                      </div>
                      <div className="space-y-8">
                         <div className="flex flex-col items-center lg:items-start text-center lg:text-left">

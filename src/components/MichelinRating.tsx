@@ -210,6 +210,14 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
     }
   };
 
+  // [Performance] Recharts Render Hack to avoid width/height 0 warnings in modals
+  const [showChart, setShowChart] = useState(false);
+  useEffect(() => {
+    // Wait for modal animation to finish or for DOM to stabilize
+    const timer = setTimeout(() => setShowChart(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Recharts Data Transformation
   const chartData = useMemo(() => {
     return categories.map(cat => ({
@@ -290,10 +298,10 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
               />
               <div className="absolute inset-0 flex justify-between px-1 pointer-events-none items-center">
                  {[0, 1, 2, 3, 4, 5].map(v => (
-                   <div key={v} className="flex flex-col items-center gap-2">
-                      <div className="w-1 h-3 bg-slate-200 mt-8" />
-                      <span className="text-[10px] font-bold text-slate-300">{v}</span>
-                   </div>
+                    <div key={v} className="flex flex-col items-center gap-2">
+                       <div className="w-1 h-3 bg-slate-200 mt-8" />
+                       <span className="text-[10px] font-bold text-slate-300">{v}</span>
+                    </div>
                  ))}
               </div>
            </div>
@@ -311,21 +319,22 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
       {/* Header Section */}
       <div className="flex flex-col gap-12 items-center">
         {/* Radar Chart Visual with Recharts */}
-        <div className="relative w-full aspect-square max-w-[400px] flex justify-center items-center py-8">
-            <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100}>
-                {categories.length > 0 ? (
-                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
-                    <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-                    <PolarAngleAxis 
-                      dataKey="subject" 
-                      tick={renderCustomPolarAngleAxis}
-                    />
-                    <PolarRadiusAxis 
-                      angle={30} 
-                      domain={[0, 5]} 
-                      tick={false} 
-                      axisLine={false} 
-                    />
+        <div className="relative w-full aspect-square max-w-[400px] flex justify-center items-center py-8 min-h-[300px]">
+            {showChart ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100}>
+                  {categories.length > 0 ? (
+                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
+                      <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
+                      <PolarAngleAxis 
+                        dataKey="subject" 
+                        tick={renderCustomPolarAngleAxis}
+                      />
+                      <PolarRadiusAxis 
+                        angle={30} 
+                        domain={[0, 5]} 
+                        tick={false} 
+                        axisLine={false} 
+                      />
                     
                     {/* Community Average */}
                     {totalAvg > 0 && (
@@ -351,8 +360,13 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
                       animationDuration={500}
                     />
                   </RadarChart>
-                ) : <div />}
-            </ResponsiveContainer>
+                  ) : <div />}
+              </ResponsiveContainer>
+            ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-10 h-10 border-4 border-slate-100 border-t-amber-400 rounded-full animate-spin" />
+                </div>
+            )}
            
            {/* Center Score Badge */}
            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none scale-110">

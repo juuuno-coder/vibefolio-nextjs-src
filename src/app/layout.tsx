@@ -54,8 +54,12 @@ export async function generateMetadata(): Promise<Metadata> {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
-    // [Optimized] Use a very short timeout or just assume default if it takes too long
-    const { data, error } = await supabase.from('site_config').select('*').limit(50);
+    
+    // [Optimization] Use Promise.race to prevent blocking more than 1.5s
+    const fetchConfig = supabase.from('site_config').select('*').limit(50);
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1500));
+    
+    const { data, error } = await Promise.race([fetchConfig, timeout]) as any;
     
     if (!error && data) {
       const config: any = {};
@@ -67,8 +71,8 @@ export async function generateMetadata(): Promise<Metadata> {
       if (config.seo_favicon) favicon = config.seo_favicon;
     }
   } catch (e) {
-    // Silent fail on metadata fetch is better than crashing
-    console.warn('[Metadata] Fetch failed, using defaults');
+    // Falls back to defaults silently if fetch fails or times out
+    console.warn('[Metadata] Fetch timed out or failed, using defaults');
   }
 
   return {

@@ -29,6 +29,15 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  // [Optimization] Fast-path: Only run Supabase logic for specific routes
+  const isProtectedPath = url.pathname.startsWith('/admin') || 
+                           url.pathname.startsWith('/mypage') ||
+                           url.pathname.startsWith('/project/upload');
+
+  if (!isProtectedPath) {
+    return response;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -38,48 +47,25 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
+          request.cookies.set({ name, value, ...options });
+          response = NextResponse.next({ request: { headers: request.headers } });
+          response.cookies.set({ name, value, ...options });
         },
         remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
+          request.cookies.set({ name, value: '', ...options });
+          response = NextResponse.next({ request: { headers: request.headers } });
+          response.cookies.set({ name, value: '', ...options });
         },
       },
     }
   );
 
+  // [Performance] Only call getUser() for protected routes.
+  // getUser() is a network request, while getSession() is just a cookie check.
   const { data: { user } } = await supabase.auth.getUser();
 
   // Admin protection
   if (request.nextUrl.pathname.startsWith('/admin')) {
-    // 임시: 특정 이메일 허용
     const adminEmails = [
       "juuuno@naver.com", 
       "juuuno1116@gmail.com", 
@@ -90,11 +76,9 @@ export async function middleware(request: NextRequest) {
     const isHardcodedAdmin = user?.email && adminEmails.includes(user.email);
     const isRoleAdmin = user?.app_metadata?.role === 'admin';
 
-    /* 
     if (!user || (!isRoleAdmin && !isHardcodedAdmin)) {
       return NextResponse.redirect(new URL('/', request.url));
     }
-    */
   }
 
   return response;

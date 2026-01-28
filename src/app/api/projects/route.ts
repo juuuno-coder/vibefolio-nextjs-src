@@ -4,8 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server'; // For Session Auth
 import { GENRE_TO_CATEGORY_ID } from '@/lib/constants';
 
-// 캐시 설정 (성능 최적화: 0초 - 실시간 반영)
-export const revalidate = 0; 
+// 캐시 설정 (성능 최적화: 60초 캐싱으로 초기 로드 속도 개선)
+export const revalidate = 60; 
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     // [Optimization] Select only necessary fields for grid display to reduce payload size
+    // [Performance] Using 'estimated' count instead of 'exact' for faster responses
     let query = (supabaseAnon as any)
       .from('Project')
       .select(`
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
         thumbnail_url, views_count, likes_count, created_at, 
         custom_data, allow_michelin_rating, allow_stickers, 
         allow_secret_comments, visibility, scheduled_at, audit_deadline, is_growth_requested
-      `, { count: 'exact' }) 
+      `, { count: 'estimated' }) 
       .is('deleted_at', null);
 
     // Apply Sorting based on sortBy parameter
