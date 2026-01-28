@@ -69,28 +69,6 @@ export default function RealtimeListener() {
       .channel('vibefolio_user_notifications')
       .on(
         'postgres_changes',
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}` 
-        },
-        (payload) => {
-          const newNoti = payload.new as any;
-          
-          // 알림 수신 (Toast 표시)
-          toast(newNoti.title, {
-            description: newNoti.message,
-            action: newNoti.link ? { label: "보기", onClick: () => router.push(newNoti.link) } : undefined,
-          });
-          
-          // 전역 이벤트나 상태 업데이트 트리거가 필요하면 여기서 처리
-          // useNotifications 훅이 실시간 갱신을 지원하지 않는다면 여기서 강제 리로드 신호를 줄 수 있음
-        }
-      )
-      // ... (기타 공지사항      // 1. 공지사항 (전체 수신)
-      .on(
-        'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notices' },
         (payload) => {
           if (!settings.notices) return;

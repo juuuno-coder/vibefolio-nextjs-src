@@ -54,18 +54,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // ====== 상태 업데이트 통합 관리 ======
+  // ====== 상태 업데이트 통합 관리 (권한 분리 및 최적화) ======
   const updateState = useCallback(async (s: Session | null, u: User | null) => {
-    // 1. 상태 업데이트 (로딩 중에도 유저가 있으면 세팅)
+    // 1. [Optimistic] 즉시 상태 업데이트 (UI 블로킹 해제)
     setSession(s);
     setUser(u);
-    
+
     if (u) {
-      // 2. 기초 프로필 생성 (Metadata에서)
+      // 2. 메타데이터 기반으로 기초 프로필 즉시 생성 (DB 조회 전 표시)
       const base = loadProfileFromMetadata(u);
       
+      // 일단 메타데이터 프로필로 설정하고 로딩 해제 -> 로그인 체감 속도 0초
+      setUserProfile(base);
+      setLoading(false); // <--- Key Performance Optimization
+
       try {
-        // 3. DB 상세 프로필 조회
+        // 3. [Background] DB 상세 프로필 비동기 조회
         const { data: db, error } = await supabase
           .from('profiles')
           .select('username, avatar_url, profile_image_url, role, interests, expertise, points')
@@ -85,17 +89,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             interests: (db as any).interests || base.interests,
             expertise: (db as any).expertise || base.expertise,
           };
-          setUserProfile(finalProfile);
-        } else {
-          setUserProfile(base);
+          
+          // 상세 정보로 업데이트 (Silent Update)
+          setUserProfile(prev => {
+             // 변경사항이 있을 때만 업데이트하여 불필요한 리렌더링 방지
+             if (JSON.stringify(prev) !== JSON.stringify(finalProfile)) {
+                 return finalProfile;
+             }
+             return prev;
+          });
         }
       } catch (e) {
-        setUserProfile(base);
+        // DB 조회 실패시 메타데이터 프로필 유지 (Silent Fail)
+        console.warn('Background profile fetch failed', e);
       }
     } else {
       setUserProfile(null);
+      setLoading(false);
     }
-    setLoading(false);
   }, [loadProfileFromMetadata]);
 
   // ====== 초기화 및 관찰자 설정 ======

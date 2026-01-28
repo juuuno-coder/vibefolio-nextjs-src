@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { Button } from "@/components/ui/button";
 import { 
   Radar, 
   RadarChart, 
@@ -45,6 +46,7 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
   const [isEditing, setIsEditing] = useState(false);
   const [analysis, setAnalysis] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   // 현재 내 점수들의 평균 계산 (실시간)
   const currentTotalAvg = useMemo(() => {
@@ -155,16 +157,8 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
     }
   }, [projectId]);
 
-  useEffect(() => {
-    const hasValues = Object.values(scores).some(v => v > 0);
-    if (!hasValues) return;
-
-    const timer = setTimeout(() => {
-      handleRatingSubmit();
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, [scores]);
+  // [Changed] Removed auto-save useEffect to prevent real-time DB writes.
+  // User must click the submit button.
 
   const handleRatingSubmit = async () => {
     if (isDemo) {
@@ -200,6 +194,7 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
       if (!res.ok) throw new Error('Failed to submit rating');
       
       setIsEditing(false);
+      setSaved(true);
       toast.success(ratingId ? "평가가 수정되었습니다!" : "전문 평가가 등록되었습니다!");
       fetchRatingData();
       
@@ -420,6 +415,20 @@ export function MichelinRating({ projectId, ratingId, isDemo = false, activeCate
       <div className="mt-8 flex items-center justify-center gap-2 text-xs text-gray-400 font-medium italic">
          <Info className="w-4 h-4 flex-shrink-0" />
          <p>평가 완료 시 작가에게 분석 레포트 데이터가 전달됩니다. 각 항목을 신중히 조절하여 작품의 다면적인 가치를 기록해 주세요.</p>
+         <p>평가 완료 시 작가에게 분석 레포트 데이터가 전달됩니다. 각 항목을 신중히 조절하여 작품의 다면적인 가치를 기록해 주세요.</p>
+      </div>
+
+      <div className="mt-8 flex justify-center">
+        <Button 
+          onClick={handleRatingSubmit} 
+          disabled={isSubmitting || !isEditing}
+          className={cn(
+            "w-full h-14 rounded-2xl font-black text-lg shadow-lg hover:scale-[1.02] transition-all",
+            saved && !isEditing ? "bg-green-600 hover:bg-green-700" : "bg-slate-900 hover:bg-slate-800"
+          )}
+        >
+          {isSubmitting ? "저장 중..." : (saved && !isEditing ? "평가 저장 완료" : "평가 등록하기")}
+        </Button>
       </div>
     </div>
   );
