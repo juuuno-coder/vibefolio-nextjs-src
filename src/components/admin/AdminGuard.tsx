@@ -37,6 +37,8 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
          const adminEmails = [
            "juuuno@naver.com", 
            "juuuno1116@gmail.com", 
+           "designd@designd.co.kr",
+           "designdlab@designdlab.co.kr",
            "admin@vibefolio.net"
          ];
          if (user?.email && adminEmails.includes(user.email)) {

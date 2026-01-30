@@ -87,68 +87,32 @@ export default function AdminPage() {
     const loadStats = async () => {
       setIsLoadingStats(true);
       try {
-        // 프로젝트 수
-        const { count: projectCount } = await supabase
-          .from('Project')
-          .select('*', { count: 'exact', head: true });
-
-        // 사용자 수
-        const { count: userCount } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-
-        // 공지사항 수
-        const { count: noticeCount } = await supabase
-          .from('notices')
-          .select('*', { count: 'exact', head: true });
-
-        // 문의사항 수
-        const { count: inquiryCount } = await supabase
-          .from('inquiries')
-          .select('*', { count: 'exact', head: true });
-
-        // 채용/공모전 수
-        const { count: recruitCount } = await supabase
-          .from('recruit_items')
-          .select('*', { count: 'exact', head: true });
-
-        // 활성 배너 수
-        const { count: bannerCount } = await supabase
-          .from('banners')
-          .select('*', { count: 'exact', head: true });
-
-        // FAQ 수
-        const { count: faqCount } = await supabase
-          .from('faqs')
-          .select('*', { count: 'exact', head: true });
-
-        // 팝업 수 (공지사항 중 팝업으로 설정된 것)
-        const { count: popupCount } = await supabase
-          .from('notices')
-          .select('*', { count: 'exact', head: true })
-          .eq('is_popup', true);
-
-        // 평가(Audit) 수
-        const { count: ratingCount } = await (supabase as any)
-          .from('ProjectRating')
-          .select('*', { count: 'exact', head: true });
-
-        // 최근 프로젝트
-        const { data: projects } = await supabase
-          .from('Project')
-          .select(`
-            *,
-            profiles (username, avatar_url)
-          `)
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        // 최근 문의
-        const { data: recentInqs } = await supabase
-          .from('inquiries')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(5);
+        // 병렬 처리를 통한 통계 로딩 속도 최적화
+        const [
+          { count: projectCount },
+          { count: userCount },
+          { count: noticeCount },
+          { count: inquiryCount },
+          { count: recruitCount },
+          { count: bannerCount },
+          { count: faqCount },
+          { count: popupCount },
+          { count: ratingCount },
+          { data: projects },
+          { data: recentInqs }
+        ] = await Promise.all([
+          supabase.from('Project').select('*', { count: 'exact', head: true }),
+          supabase.from('profiles').select('*', { count: 'exact', head: true }),
+          supabase.from('notices').select('*', { count: 'exact', head: true }),
+          supabase.from('inquiries').select('*', { count: 'exact', head: true }),
+          supabase.from('recruit_items').select('*', { count: 'exact', head: true }),
+          supabase.from('banners').select('*', { count: 'exact', head: true }),
+          supabase.from('faqs').select('*', { count: 'exact', head: true }),
+          supabase.from('notices').select('*', { count: 'exact', head: true }).eq('is_popup', true),
+          (supabase as any).from('ProjectRating').select('*', { count: 'exact', head: true }),
+          supabase.from('Project').select('*').order('created_at', { ascending: false }).limit(5),
+          supabase.from('inquiries').select('*').order('created_at', { ascending: false }).limit(5)
+        ]);
 
         setRecentInquiries(recentInqs || []);
 
