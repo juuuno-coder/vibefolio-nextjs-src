@@ -192,7 +192,7 @@ export function FeedbackPoll({ projectId, initialCounts, userVote, isDemo = fals
                 )}>
                   {opt.label}
                 </div>
-                <div className="text-[11px] text-slate-500 font-medium line-clamp-1 group-hover:line-clamp-none transition-all">
+                <div className="text-[10px] text-slate-400 font-medium line-clamp-1 group-hover:line-clamp-none transition-all leading-tight">
                   {opt.desc || "상세 설명이 없습니다."}
                 </div>
               </div>

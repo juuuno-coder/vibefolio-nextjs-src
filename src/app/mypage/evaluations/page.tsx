@@ -72,6 +72,7 @@ export default function MyEvaluationsPage() {
           .select(`
             *,
             Project (
+              project_id,
               title,
               thumbnail_url,
               user_id

@@ -38,6 +38,11 @@ ALTER TABLE "ProjectRating" ENABLE ROW LEVEL SECURITY;
 
 -- 3. Policies
 -- -------------------------------------------------------------
+-- Drop policies if they already exist to allow re-running this script
+DROP POLICY IF EXISTS "Public ratings are viewable by everyone" ON "ProjectRating";
+DROP POLICY IF EXISTS "Users can insert their own ratings" ON "ProjectRating";
+DROP POLICY IF EXISTS "Users can update their own ratings" ON "ProjectRating";
+
 -- Allow everyone to read ratings (for displaying averages)
 CREATE POLICY "Public ratings are viewable by everyone" 
 ON "ProjectRating" FOR SELECT 

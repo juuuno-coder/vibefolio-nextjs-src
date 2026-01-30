@@ -28,7 +28,8 @@ import {
   faArrowUp, 
   faArrowDown, 
   faChartLine, 
-  faEnvelope 
+  faEnvelope,
+  faStar
 } from "@fortawesome/free-solid-svg-icons";
 import {
   ComposedChart,
@@ -59,6 +60,7 @@ export default function AdminPage() {
     totalFaqs: 0,
     totalPopups: 0,
     projectGrowth: 0,
+    totalEvaluations: 0,
   });
   const [activeTab, setActiveTab] = useState<'projects' | 'inquiries'>('projects');
   const [hoveredChartData, setHoveredChartData] = useState<any | null>(null);
@@ -125,6 +127,11 @@ export default function AdminPage() {
           .from('notices')
           .select('*', { count: 'exact', head: true })
           .eq('is_popup', true);
+
+        // 평가(Audit) 수
+        const { count: ratingCount } = await (supabase as any)
+          .from('ProjectRating')
+          .select('*', { count: 'exact', head: true });
 
         // 최근 프로젝트
         const { data: projects } = await supabase
@@ -232,6 +239,7 @@ export default function AdminPage() {
           totalFaqs: faqCount || 0,
           totalPopups: popupCount || 0,
           projectGrowth: growth,
+          totalEvaluations: ratingCount || 0,
         });
 
         setRecentProjects(projects || []);
@@ -396,7 +404,7 @@ export default function AdminPage() {
           { label: "오늘 방문자수", value: stats.todayVisits, icon: faEye, color: "text-blue-600", bg: "bg-blue-50" },
           { label: "전체 회원수", value: stats.totalUsers, icon: faUsers, color: "text-pink-600", bg: "bg-pink-50" },
           { label: "프로젝트 등록수", value: stats.totalProjects, icon: faFileAlt, color: "text-indigo-600", bg: "bg-indigo-50" },
-          { label: "채용/공모 등록수", value: stats.totalRecruitItems, icon: faBriefcase, color: "text-green-600", bg: "bg-green-50" },
+          { label: "총 평가(Audit) 수", value: stats.totalEvaluations, icon: faStar, color: "text-yellow-600", bg: "bg-yellow-50" },
         ].map((item, i) => (
           <Card key={i} className="border-none shadow-sm hover:shadow-md transition-shadow duration-300 rounded-[24px] overflow-hidden">
             <CardContent className="p-6">

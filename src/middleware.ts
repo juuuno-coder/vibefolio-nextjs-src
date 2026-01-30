@@ -65,18 +65,12 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   // Admin protection
+  // Admin protection
   if (request.nextUrl.pathname.startsWith('/admin')) {
-    const adminEmails = [
-      "juuuno@naver.com", 
-      "juuuno1116@gmail.com", 
-      "designd@designd.co.kr", 
-      "designdlab@designdlab.co.kr", 
-      "admin@vibefolio.net"
-    ];
-    const isHardcodedAdmin = user?.email && adminEmails.includes(user.email);
-    const isRoleAdmin = user?.app_metadata?.role === 'admin';
-
-    if (!user || (!isRoleAdmin && !isHardcodedAdmin)) {
+    // [Changed] Middleware only checks if user is logged in.
+    // Detailed Role check is delegated to Client-Side AdminGuard (which checks 'profiles' table).
+    // This allows admins defined in DB but not in metadata to access the page without redirect loop.
+    if (!user) {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }

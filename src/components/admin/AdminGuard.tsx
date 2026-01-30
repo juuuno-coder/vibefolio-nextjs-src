@@ -29,14 +29,33 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
     if (isAdmin) {
       setShowContent(true);
     } else {
-      // 충분히 기다린 후에도 관리자가 아니면 리다이렉트
+      // Manage backup auth check (double safety)
+      // Sometimes isAdmin from context might be delayed or false due to RLS/profile sync issues.
+      // We do a direct hard check for the master admin email here just in case.
+      const checkHardcodedAdmin = async () => {
+         const { data: { user } } = await import("@/lib/supabase/client").then(m => m.supabase.auth.getUser());
+         const adminEmails = [
+           "juuuno@naver.com", 
+           "juuuno1116@gmail.com", 
+           "admin@vibefolio.net"
+         ];
+         if (user?.email && adminEmails.includes(user.email)) {
+            setShowContent(true);
+            return true;
+         }
+         return false;
+      };
+
       if (checkCount >= 2) {
-        router.replace("/");
+         // Last resort check before kick
+         checkHardcodedAdmin().then(isRealAdmin => {
+             if (!isRealAdmin) router.replace("/");
+         });
       } else {
-        // 한 번 더 체크
-        timerRef.current = setTimeout(() => {
-          setCheckCount(prev => prev + 1);
-        }, 500);
+         // 한 번 더 체크
+         timerRef.current = setTimeout(() => {
+           setCheckCount(prev => prev + 1);
+         }, 500);
       }
     }
 
