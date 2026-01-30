@@ -15,24 +15,14 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // 로딩 중이면 대기
-    if (isLoading) {
-      // 직접 URL 접속 시 인증 상태 로드 대기
-      if (checkCount < maxChecks) {
-        timerRef.current = setTimeout(() => {
-          setCheckCount(prev => prev + 1);
-        }, 500);
-      }
-      return;
-    }
+    if (isLoading) return;
 
-    // 로딩 완료 후 권한 확인
     if (isAdmin) {
+      // Context에서 이미 관리자로 판별됨
       setShowContent(true);
     } else {
-      // Manage backup auth check (double safety)
-      // Sometimes isAdmin from context might be delayed or false due to RLS/profile sync issues.
-      // We do a direct hard check for the master admin email here just in case.
-      const checkHardcodedAdmin = async () => {
+      // Context가 관리자가 아니라고 할 때, 마지막으로 이메일 직접 체크 (Failsafe)
+      const verifyFallback = async () => {
          const { data: { user } } = await import("@/lib/supabase/client").then(m => m.supabase.auth.getUser());
          const adminEmails = [
            "juuuno@naver.com", 
@@ -41,32 +31,18 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
            "designdlab@designdlab.co.kr",
            "admin@vibefolio.net"
          ];
+         
          if (user?.email && adminEmails.includes(user.email)) {
             setShowContent(true);
-            return true;
+         } else {
+            // 진짜 관리자가 아님 -> 홈으로
+            router.replace("/");
          }
-         return false;
       };
-
-      if (checkCount >= 2) {
-         // Last resort check before kick
-         checkHardcodedAdmin().then(isRealAdmin => {
-             if (!isRealAdmin) router.replace("/");
-         });
-      } else {
-         // 한 번 더 체크
-         timerRef.current = setTimeout(() => {
-           setCheckCount(prev => prev + 1);
-         }, 500);
-      }
+      
+      verifyFallback();
     }
-
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [isAdmin, isLoading, router, checkCount]);
+  }, [isAdmin, isLoading, router]);
 
   if (isLoading || !showContent) {
     return (

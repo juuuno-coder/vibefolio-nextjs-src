@@ -45,6 +45,7 @@ import Link from "next/link";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/lib/supabase/client";
 import { Badge } from "@/components/ui/badge";
+export const dynamic = 'force-dynamic';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -142,9 +143,9 @@ export default function AdminPage() {
           // 4가지 지표 병렬 조회
           const [visitRes, userRes, projectRes, recruitRes] = await Promise.all([
             (supabase as any).from('site_stats').select('visits').eq('date', dateStr).maybeSingle(),
-            supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
-            supabase.from('Project').select('project_id', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
-            supabase.from('recruit_items').select('id', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
+            supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
+            supabase.from('Project').select('*', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
+            supabase.from('recruit_items').select('*', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
           ]);
           
           const pCount = projectRes.count || 0;
