@@ -13,6 +13,8 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   const maxChecks = 10; // 최대 10번 체크 (약 5초)
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const [deniedEmail, setDeniedEmail] = useState<string | null>(null);
+
   useEffect(() => {
     // 로딩 중이면 대기
     if (isLoading) return;
@@ -35,14 +37,33 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
          if (user?.email && adminEmails.includes(user.email)) {
             setShowContent(true);
          } else {
-            // 진짜 관리자가 아님 -> 홈으로
-            router.replace("/");
+            // 관리자가 아님 -> 거부 화면 표시 (디버깅용 이메일 노출)
+            setDeniedEmail(user?.email || "알 수 없음");
+            // router.replace("/"); // 기존 리다이렉트 제거
          }
       };
       
       verifyFallback();
     }
   }, [isAdmin, isLoading, router]);
+
+  if (deniedEmail) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
+        <h1 className="text-2xl font-bold text-red-600">접근 거부됨</h1>
+        <p className="text-slate-600">현재 계정은 관리자 권한이 없습니다.</p>
+        <div className="bg-white p-4 rounded border">
+            <p className="font-mono text-sm">Email: {deniedEmail}</p>
+        </div>
+        <button 
+           onClick={() => router.push('/')}
+           className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-700"
+        >
+            홈으로 돌아가기
+        </button>
+      </div>
+    );
+  }
 
   if (isLoading || !showContent) {
     return (
