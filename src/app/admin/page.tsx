@@ -71,13 +71,13 @@ export default function AdminPage() {
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
   const [statsRange, setStatsRange] = useState(7); // 최근 7일(기본) or 30일
 
-  // 관리자가 아니면 접근 차단
-  useEffect(() => {
-    if (!isAdminLoading && !isAdmin) {
-      alert('관리자 권한이 필요합니다.');
-      router.push('/');
-    }
-  }, [isAdmin, isAdminLoading, router]);
+  // 관리자가 아니면 접근 차단 - AdminGuard에서 처리하므로 중복 체크 제거
+  // useEffect(() => {
+  //   if (!isAdminLoading && !isAdmin) {
+  //     alert('관리자 권한이 필요합니다.');
+  //     router.push('/');
+  //   }
+  // }, [isAdmin, isAdminLoading, router]);
 
   // 통계 및 최근 데이터 로드 (CSR 안전)
   useEffect(() => {
