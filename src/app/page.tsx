@@ -432,7 +432,7 @@ function HomeContent() {
           currentFields={selectedFields}
         />
         
-        <div className="max-w-[1800px] mx-auto px-4 md:px-8 pb-20 pt-8">
+        <div className="max-w-[1800px] mx-auto px-2 md:px-8 pb-20 pt-8">
             {/* [New] Growth Mode Highlighting - Only show in 'growth' category tab */}
             {!searchQuery && selectedCategory === 'growth' && projects.some(p => p.is_growth_requested || p.is_feedback_requested) && (
                  <div className="mb-20 relative px-8 py-10 bg-gradient-to-br from-orange-50 via-white to-white rounded-[3rem] border border-orange-100/50 shadow-sm overflow-hidden group">

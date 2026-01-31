@@ -11,7 +11,8 @@ import {
   CheckCircle2, 
   ChefHat,
   Share2,
-  X
+  X,
+  Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -130,6 +131,10 @@ function ViewerContent() {
     return () => clearTimeout(timer);
   }, []);
 
+  const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [vote, setVote] = useState<string | null>(null);
+  const [isInfoOpen, setIsInfoOpen] = useState(false); // [New] Project Info Toggle
+
   const handleNextStep = () => {
     if (!user) {
       toast.error("진단 완료를 위해 로그인이 필요합니다.");
@@ -155,19 +160,39 @@ function ViewerContent() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const res = await fetch(`/api/projects/${projectId}/rating`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          proposal: proposalContent,
-          custom_answers: customAnswers
-        })
-      });
+      const promises = [];
 
-      if (!res.ok) throw new Error("Failed to save evaluation");
+      // 1. Rating & Proposal & Custom Answers
+      promises.push(
+        fetch(`/api/projects/${projectId}/rating`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            ...ratings,
+            proposal: proposalContent,
+            custom_answers: customAnswers
+          })
+        })
+      );
+
+      // 2. Vote
+      if (vote) {
+          promises.push(
+            fetch(`/api/projects/${projectId}/vote`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                 },
+                body: JSON.stringify({ voteType: vote })
+            })
+          );
+      }
+
+      await Promise.all(promises);
       
       setIsSubmitted(true);
       toast.success("진단이 최종 완료되었습니다! 🎉");
@@ -201,7 +226,12 @@ function ViewerContent() {
 
     // Handle All-in-One Rating Page
     if (stepType === 'rating') {
-       return <MichelinRating projectId={projectId || ""} ratingId={ratingId || undefined} />;
+       return <MichelinRating 
+                projectId={projectId || ""} 
+                ratingId={ratingId || undefined} 
+                onChange={setRatings} 
+                hideSubmit={true} 
+              />;
     }
 
     // Handle Custom Question Steps (Deprecated in favor of combined final_review, but keeping for logic)
@@ -210,7 +240,7 @@ function ViewerContent() {
     }
 
     switch (stepType) {
-      case 'voting': return <FeedbackPoll projectId={projectId || ""} />;
+      case 'voting': return <FeedbackPoll projectId={projectId || ""} offline={true} onVote={setVote} />;
       case 'final_review': 
         const questions = project?.custom_data?.audit_config?.questions || project?.custom_data?.audit_questions || [];
         return (
@@ -317,16 +347,41 @@ function ViewerContent() {
                 <span className="text-xs font-black text-slate-300 tracking-widest uppercase">Project Live Preview</span>
               </div>
               
-              <div className="hidden md:flex items-center gap-3">
-                <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100 shadow-inner">
-                  <button onClick={() => setViewerMode('desktop')} className={cn("flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all", viewerMode === 'desktop' ? "bg-white text-slate-900 shadow-md" : "text-slate-400 hover:text-slate-600")}><Monitor size={14} /> PC</button>
-                  <button onClick={() => setViewerMode('mobile')} className={cn("flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all", viewerMode === 'mobile' ? "bg-white text-slate-900 shadow-md" : "text-slate-400 hover:text-slate-600")}><Smartphone size={14} /> Mobile</button>
-                </div>
-                <Button variant="ghost" size="sm" className="h-10 px-4 text-slate-400 hover:text-slate-900 font-bold text-xs gap-2 rounded-xl" onClick={() => window.open(url1 || '', '_blank')}><Maximize2 size={14} /> 새 창</Button>
+              <div className="flex items-center gap-2">
+                 {/* [New] Project Info Toggle */}
+                 <Button 
+                    variant={isInfoOpen ? "secondary" : "ghost"}
+                    size="sm" 
+                    onClick={() => setIsInfoOpen(!isInfoOpen)} 
+                    className="h-9 px-3 text-xs font-bold gap-2 rounded-xl border border-transparent hover:border-slate-200"
+                  >
+                    <Info size={14} className={isInfoOpen ? "text-green-600" : "text-slate-400"} />
+                    {isInfoOpen ? "Info ON" : "Info"}
+                 </Button>
+
+                 <div className="hidden md:flex items-center gap-3 border-l border-slate-100 pl-3">
+                    <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100 shadow-inner">
+                      <button onClick={() => setViewerMode('desktop')} className={cn("flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all", viewerMode === 'desktop' ? "bg-white text-slate-900 shadow-md" : "text-slate-400 hover:text-slate-600")}><Monitor size={14} /> PC</button>
+                      <button onClick={() => setViewerMode('mobile')} className={cn("flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all", viewerMode === 'mobile' ? "bg-white text-slate-900 shadow-md" : "text-slate-400 hover:text-slate-600")}><Smartphone size={14} /> Mobile</button>
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-10 px-4 text-slate-400 hover:text-slate-900 font-bold text-xs gap-2 rounded-xl" onClick={() => window.open(url1 || '', '_blank')}><Maximize2 size={14} /> 새 창</Button>
+                 </div>
               </div>
             </div>
             {/* Preview Area */}
-            <div className="flex-1 bg-slate-50 flex items-center justify-center p-4 md:p-10 overflow-auto custom-scrollbar">
+            <div className="flex-1 bg-slate-50 flex items-center justify-center p-4 md:p-10 overflow-auto custom-scrollbar relative">
+              {isInfoOpen && project && (
+                 <div className="absolute inset-4 md:inset-10 z-20 bg-white/95 backdrop-blur-md rounded-[2.5rem] p-8 md:p-12 shadow-2xl overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+                    <div className="max-w-3xl mx-auto space-y-8">
+                       <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">{project.title}</h2>
+                       <div className="prose prose-lg prose-slate w-full max-w-none">
+                          <p className="whitespace-pre-wrap leading-relaxed text-slate-600 font-medium">
+                            {project.description || "작품 설명이 없습니다."}
+                          </p>
+                       </div>
+                    </div>
+                 </div>
+              )}
               <div className={cn(
                 "transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-[0_40px_100px_rgba(0,0,0,0.15)] overflow-hidden bg-white relative",
                 viewerMode === 'mobile' ? "w-[375px] h-[812px] flex-shrink-0 rounded-[3.5rem] border-[12px] border-slate-900" : "w-full h-full rounded-3xl"

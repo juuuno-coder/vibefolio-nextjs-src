@@ -48,7 +48,7 @@
     --input: 214 32% 91%;
     --ring: 142 76% 36%;
     
-    --radius: 0.75rem;
+    --radius: 0.25rem; /* Reduced rounding (~4px) */
 
     /* Vibe 전용 변수 (Green Theme) */
     --vibe-green: 142 76% 36%;

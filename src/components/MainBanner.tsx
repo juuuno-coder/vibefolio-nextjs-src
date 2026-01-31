@@ -189,11 +189,11 @@ export function MainBanner() {
           {banners.map((banner, index) => (
             <CarouselItem
               key={banner.id}
-              className="basis-[88vw] md:basis-[50%] lg:basis-[42%] px-3"
+              className="basis-[95vw] md:basis-[50%] lg:basis-[42%] px-1 md:px-3"
             >
               <Link href={banner.link_url || "#"} className={banner.link_url ? "cursor-pointer" : "cursor-default"}>
                 <div 
-                  className="w-full aspect-video overflow-hidden rounded-[40px] relative group isolate shadow-lg"
+                  className="w-full aspect-video overflow-hidden rounded-xl md:rounded-[40px] relative group isolate shadow-lg"
                 >
                   <div className="absolute inset-0 z-0">
                     <Image 
@@ -208,7 +208,7 @@ export function MainBanner() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
                   </div>
 
-                  <div className="absolute bottom-0 left-0 w-full p-6 md:p-8 z-10 flex flex-col items-start justify-end h-full">
+                  <div className="absolute bottom-0 left-0 w-full p-4 md:p-8 z-10 flex flex-col items-start justify-end h-full">
                     {banner.subtitle && (
                       <span className="inline-block px-2 py-1 mb-2 text-[10px] font-bold tracking-wider text-white uppercase bg-black/30 backdrop-blur-sm rounded-md border border-white/10">
                         {banner.subtitle}
@@ -220,7 +220,7 @@ export function MainBanner() {
                     </h2>
 
                     {(banner.description_one_line || banner.description) && (
-                      <p className="text-xs md:text-sm text-slate-200 line-clamp-1 max-w-2xl font-medium drop-shadow-sm">
+                      <p className="hidden md:block text-xs md:text-sm text-slate-200 line-clamp-1 max-w-2xl font-medium drop-shadow-sm">
                         {banner.description_one_line || banner.description}
                       </p>
                     )}
