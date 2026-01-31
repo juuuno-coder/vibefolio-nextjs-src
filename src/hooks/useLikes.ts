@@ -91,7 +91,7 @@ export function useLikes(projectId?: string, initialLikes: number = 0, enableRea
 
       if (currentIsLiked) {
         const { error } = await supabase
-          .from("like")
+          .from("Like")
           .delete()
           .match({ project_id: numericId, user_id: userId });
         if (error) throw error;
