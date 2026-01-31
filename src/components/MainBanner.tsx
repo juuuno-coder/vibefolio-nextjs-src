@@ -189,11 +189,11 @@ export function MainBanner() {
           {banners.map((banner, index) => (
             <CarouselItem
               key={banner.id}
-              className="basis-[95vw] md:basis-[50%] lg:basis-[42%] px-1 md:px-3"
+              className="basis-[92%] md:basis-[48%] lg:basis-[40%] pl-2 md:pl-4"
             >
               <Link href={banner.link_url || "#"} className={banner.link_url ? "cursor-pointer" : "cursor-default"}>
                 <div 
-                  className="w-full aspect-video overflow-hidden rounded-xl md:rounded-[40px] relative group isolate shadow-lg"
+                  className="w-full aspect-[16/9] md:aspect-[21/9] overflow-hidden rounded-lg relative group isolate shadow-md ring-1 ring-black/5"
                 >
                   <div className="absolute inset-0 z-0">
                     <Image 
@@ -204,26 +204,22 @@ export function MainBanner() {
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
                       priority={index === 0}
                     />
-                    {/* Simple Gradient Overlay for text readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
+                    {/* Stronger Gradient for Clarity */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-90" />
                   </div>
 
-                  <div className="absolute bottom-0 left-0 w-full p-4 md:p-8 z-10 flex flex-col items-start justify-end h-full">
+                  <div className="absolute bottom-0 left-0 w-full p-5 md:p-8 z-10 flex flex-col items-start justify-end h-full">
                     {banner.subtitle && (
-                      <span className="inline-block px-2 py-1 mb-2 text-[10px] font-bold tracking-wider text-white uppercase bg-black/30 backdrop-blur-sm rounded-md border border-white/10">
+                      <span className="inline-block px-2.5 py-1 mb-3 text-[10px] font-black tracking-widest text-white uppercase bg-white/20 backdrop-blur-md rounded-full border border-white/10 shadow-sm">
                         {banner.subtitle}
                       </span>
                     )}
                     
-                    <h2 className="text-xl md:text-2xl font-bold text-white mb-2 leading-tight tracking-tight drop-shadow-md">
+                    <h2 className="text-xl md:text-3xl font-black text-white leading-tight tracking-tight drop-shadow-lg max-w-2xl break-keep">
                       {banner.title}
                     </h2>
-
-                    {(banner.description_one_line || banner.description) && (
-                      <p className="hidden md:block text-xs md:text-sm text-slate-200 line-clamp-1 max-w-2xl font-medium drop-shadow-sm">
-                        {banner.description_one_line || banner.description}
-                      </p>
-                    )}
+                    
+                    {/* Description Hidden for Cleanliness */}
                   </div>
                 </div>
               </Link>
