@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     // 이미 위시리스트에 있는지 확인
     const { data: existingWishlist } = await supabaseAdmin
-      .from('bookmark')
+      .from('Wishlist')
       .select()
       .eq('user_id', user.id)
       .eq('project_id', targetProjectId)
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     if (existingWishlist) {
       // 위시리스트에서 제거
       const { error } = await supabaseAdmin
-        .from('bookmark')
+        .from('Wishlist')
         .delete()
         .eq('user_id', user.id)
         .eq('project_id', targetProjectId);
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     } else {
       // 위시리스트에 추가
       const { error } = await supabaseAdmin
-        .from('bookmark')
+        .from('Wishlist')
         .insert({ user_id: user.id, project_id: targetProjectId });
 
       if (error) {
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     if (userId && projectId) {
       // 특정 프로젝트에 대한 위시리스트 여부 확인
       const { data } = await supabaseAdmin
-        .from('bookmark')
+        .from('Wishlist')
         .select()
         .eq('user_id', userId)
         .eq('project_id', projectId)
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
     } else if (userId) {
       // 사용자의 위시리스트 조회
       const { data, error } = await supabaseAdmin
-        .from('bookmark')
+        .from('Wishlist')
         .select(`
           *,
           Project (

@@ -21,7 +21,7 @@ export interface Comment {
  */
 export async function getProjectComments(projectId: string | number): Promise<Comment[]> {
   const { data, error } = await supabase
-    .from("comment")
+    .from("Comment")
     .select("id, project_id, user_id, content, created_at, username, user_avatar_url, is_secret")
     .eq("project_id", Number(projectId))
     .order("created_at", { ascending: false });
@@ -57,7 +57,7 @@ export async function addComment(
   isSecret: boolean = false
 ): Promise<Comment | null> {
   const { data, error } = await supabase
-    .from("comment")
+    .from("Comment")
     .insert({
       project_id: Number(projectId),
       user_id: userId,
@@ -95,7 +95,7 @@ export async function addComment(
  */
 export async function deleteComment(commentId: string, userId: string): Promise<void> {
   const { error } = await supabase
-    .from("comment")
+    .from("Comment")
     .delete()
     .eq("id", commentId)
     .eq("user_id", userId);
@@ -111,7 +111,7 @@ export async function deleteComment(commentId: string, userId: string): Promise<
  */
 export async function getCommentCount(projectId: string | number): Promise<number> {
   const { count, error } = await supabase
-    .from("comment")
+    .from("Comment")
     .select("*", { count: "exact", head: true })
     .eq("project_id", Number(projectId));
 
