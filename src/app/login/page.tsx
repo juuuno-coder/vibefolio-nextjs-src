@@ -80,6 +80,19 @@ function LoginContent() {
     }
   };
 
+  useEffect(() => {
+    // 네이버 인앱 브라우저 감지 및 처리
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const isNaverApp = userAgent.includes('naver'); 
+    
+    if (isNaverApp) {
+        toast.info("네이버 앱에서는 Google 로그인이 제한될 수 있습니다.", {
+             description: "원활한 로그인을 위해 크롬이나 사파리 등 기본 브라우저를 이용해주세요.",
+             duration: 5000
+        });
+    }
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-lg shadow-lg">

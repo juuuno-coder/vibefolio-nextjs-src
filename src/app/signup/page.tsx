@@ -18,6 +18,19 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+     // 네이버 인앱 브라우저 감지 및 처리
+     const userAgent = window.navigator.userAgent.toLowerCase();
+     const isNaverApp = userAgent.includes('naver'); 
+     
+     if (isNaverApp) {
+         toast.info("네이버 앱에서는 Google 로그인이 제한될 수 있습니다.", {
+              description: "원활한 로그인을 위해 크롬이나 사파리 등 기본 브라우저를 이용해주세요.",
+              duration: 5000
+         });
+     }
+  }, []);
+
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
