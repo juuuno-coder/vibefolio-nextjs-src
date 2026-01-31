@@ -117,12 +117,13 @@ export default function AdminPage() {
 
         setRecentInquiries(recentInqs || []);
 
-        // 주간 데이터 (최근 statsRange일) - 실제 데이터 병렬 조회
+        // 주간 데이터 (최근 statsRange일) - 전체 병렬 조회로 성능 최적화
         const days = ['일', '월', '화', '수', '목', '금', '토'];
-        const statsData = [];
         let currentWeekProjectCount = 0; // 성장률 계산용 (최근 7일 기준)
 
-        for (let i = statsRange - 1; i >= 0; i--) {
+        // [Performance] 모든 날짜에 대한 쿼리를 병렬로 실행
+        const dateQueries = Array.from({ length: statsRange }, (_, idx) => {
+          const i = statsRange - 1 - idx;
           const d = new Date();
           d.setDate(d.getDate() - i);
           
@@ -140,30 +141,38 @@ export default function AdminPage() {
           const queryDateStart = startDate.toISOString();
           const queryDateEnd = endDate.toISOString();
 
-          // 4가지 지표 병렬 조회
-          const [visitRes, userRes, projectRes, recruitRes] = await Promise.all([
-            (supabase as any).from('site_stats').select('visits').eq('date', dateStr).maybeSingle(),
-            supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
-            supabase.from('Project').select('*', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
-            supabase.from('recruit_items').select('*', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
-          ]);
-          
-          const pCount = projectRes.count || 0;
-          if (i < 7) currentWeekProjectCount += pCount;
+          return {
+            d, i, dateStr, queryDateStart, queryDateEnd,
+            fetchPromise: Promise.all([
+              (supabase as any).from('site_stats').select('visits').eq('date', dateStr).maybeSingle(),
+              supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
+              supabase.from('Project').select('*', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
+              supabase.from('recruit_items').select('*', { count: 'exact', head: true }).gte('created_at', queryDateStart).lte('created_at', queryDateEnd),
+            ])
+          };
+        });
 
-          statsData.push({
-            day: days[d.getDay()],
+        // 모든 쿼리 병렬 실행
+        const results = await Promise.all(dateQueries.map(q => q.fetchPromise));
+
+        const statsData = dateQueries.map((q, idx) => {
+          const [visitRes, userRes, projectRes, recruitRes] = results[idx];
+          const pCount = projectRes.count || 0;
+          if (q.i < 7) currentWeekProjectCount += pCount;
+
+          return {
+            day: days[q.d.getDay()],
             visits: visitRes.data?.visits || 0,
             users: userRes.count || 0,
             projects: pCount,
             recruits: recruitRes.count || 0,
-            date: dateStr,
-            fullDate: `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`,
+            date: q.dateStr,
+            fullDate: `${q.d.getFullYear()}.${String(q.d.getMonth() + 1).padStart(2, '0')}.${String(q.d.getDate()).padStart(2, '0')}`,
             displayDate: statsRange > 7 
-              ? `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-              : `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} (${days[d.getDay()]})`
-          });
-        }
+              ? `${String(q.d.getMonth() + 1).padStart(2, '0')}.${String(q.d.getDate()).padStart(2, '0')}`
+              : `${String(q.d.getMonth() + 1).padStart(2, '0')}.${String(q.d.getDate()).padStart(2, '0')} (${days[q.d.getDay()]})`
+          };
+        });
         
         setWeeklyData(statsData);
 

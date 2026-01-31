@@ -9,8 +9,8 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 1분간 캐시 유지
-            gcTime: 5 * 60 * 1000, // 5분간 가비지 컬렉션 방지
+            staleTime: 5 * 60 * 1000, // 5분간 캐시 유지 (기존 1분에서 증가)
+            gcTime: 15 * 60 * 1000, // 15분간 가비지 컬렉션 방지
             retry: 1,
             refetchOnWindowFocus: false,
           },

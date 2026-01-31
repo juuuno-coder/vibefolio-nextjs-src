@@ -5,7 +5,7 @@ import "./globals.css";
 import { ClientProviders } from "@/components/ClientProviders";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+// TooltipProvider is already in ClientProviders.tsx
 import { AutoLogoutProvider } from "@/components/AutoLogoutProvider";
 import NextTopLoader from 'nextjs-toploader';
 import { RootLayoutContent } from "@/components/layout/RootLayoutContent";
@@ -104,6 +104,9 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        {/* Supabase Storage Preconnect for faster image loading */}
+        <link rel="preconnect" href="https://cakhdvthnufjaxdbgqzg.supabase.co" />
+        <link rel="dns-prefetch" href="https://cakhdvthnufjaxdbgqzg.supabase.co" />
         {/* Naver Search Advisor */}
         {process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION && (
           <meta name="naver-site-verification" content={process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION} />
@@ -139,14 +142,14 @@ export default function RootLayout({
         <NextTopLoader color="#000000" showSpinner={false} />
         <ClientProviders>
           <AutoLogoutProvider>
-            <TooltipProvider>
+            <>
               <RealtimeListener />
               <RootLayoutContent isReviewServer={headers().get('host')?.includes('review')}>
                 {children}
               </RootLayoutContent>
               <Toaster position="top-center" />
               <ScrollToTop />
-            </TooltipProvider>
+            </>
           </AutoLogoutProvider>
         </ClientProviders>
       </body>

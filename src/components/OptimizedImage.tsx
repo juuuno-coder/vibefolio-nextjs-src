@@ -51,6 +51,9 @@ export function OptimizedImage({
     );
   }
 
+  // Check if external URL (not our Supabase)
+  const isExternal = imgSrc.startsWith('http') && !imgSrc.includes('supabase.co');
+
   if (fill) {
     return (
       <Image
@@ -60,7 +63,9 @@ export function OptimizedImage({
         className={className}
         onError={handleError}
         priority={priority}
+        loading={priority ? 'eager' : 'lazy'}
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1536px) 33vw, 25vw"
+        unoptimized={isExternal}
       />
     );
   }
